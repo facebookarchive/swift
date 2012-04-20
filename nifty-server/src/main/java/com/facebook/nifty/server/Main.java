@@ -1,4 +1,4 @@
-package com.facebook.nifty.example;
+package com.facebook.nifty.server;
 
 import com.facebook.fb303.FacebookBase;
 import com.facebook.fb303.FacebookService;
@@ -15,6 +15,7 @@ import com.google.inject.Stage;
 import com.google.inject.multibindings.Multibinder;
 import com.proofpoint.bootstrap.LifeCycleManager;
 import com.proofpoint.bootstrap.LifeCycleModule;
+import com.proofpoint.configuration.Config;
 import com.proofpoint.configuration.ConfigurationFactory;
 import com.proofpoint.configuration.ConfigurationLoader;
 import com.proofpoint.configuration.ConfigurationModule;
@@ -38,7 +39,6 @@ public class Main {
                 mbinder.addBinding().toProvider(ExampleThriftServerProvider.class).asEagerSingleton();
             }
         };
-
         Guice.createInjector
             (
                 Stage.PRODUCTION,
@@ -103,6 +103,36 @@ public class Main {
                 }.start();
                 super.shutdown();
             }
+        }
+    }
+
+    /**
+     * Created with IntelliJ IDEA.
+     * User: jaxlaw
+     * Date: 4/19/12
+     * Time: 10:01 AM
+     * To change this template use File | Settings | File Templates.
+     */
+    public static class ExampleConfig {
+        private int serverPort = 8080;
+        private int maxFrameSize = 1048576;
+
+        public int getServerPort() {
+            return serverPort;
+        }
+
+        @Config("serverPort")
+        public void setServerPort(int serverPort) {
+            this.serverPort = serverPort;
+        }
+
+        public int getMaxFrameSize() {
+            return maxFrameSize;
+        }
+
+        @Config("maxFrameSize")
+        public void setMaxFrameSize(int maxFrameSize) {
+            this.maxFrameSize = maxFrameSize;
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.facebook.nifty.client;
+package com.facebook.nifty.server;
 
 import com.facebook.fb303.FacebookService;
 import org.apache.thrift.TException;
@@ -6,15 +6,8 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jaxlaw
- * Date: 4/19/12
- * Time: 4:01 PM
- * To change this template use File | Settings | File Templates.
- */
 public class Client {
-    public static void main(String[] args) throws TException {
+    public static void main(String[] args) throws TException, InterruptedException {
         TSocket socket = new TSocket("localhost", 8080);
         try {
             socket.open();
@@ -28,8 +21,11 @@ public class Client {
             System.out.println(client.getName());
             System.out.println(client.getMemoryUsage());
             client.shutdown();
+
+
         } finally {
             socket.close();
         }
+        Thread.sleep(5000L);
     }
 }

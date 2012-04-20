@@ -6,7 +6,7 @@ import org.apache.thrift.protocol.TProtocolFactory;
 import java.util.concurrent.Executor;
 
 /**
- * Descriptor for a Thrift Server
+ * Descriptor for a Thrift Server. This defines a listener port that Nifty need to start a Thrift endpoint.
  *
  * @author jaxlaw
  */

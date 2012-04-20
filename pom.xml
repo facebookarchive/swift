@@ -7,84 +7,10 @@
     <groupId>com.facebook</groupId>
     <artifactId>nifty</artifactId>
     <version>1.0.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
 
-    <dependencies>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>11.0.1</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.inject</groupId>
-            <artifactId>guice</artifactId>
-            <version>3.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty</artifactId>
-            <version>3.4.0.Final</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.facebook.jcommon</groupId>
-            <artifactId>concurrency</artifactId>
-            <version>0.1.0-SNAPSHOT</version>
-        </dependency>
-
-
-        <dependency>
-            <groupId>com.proofpoint.platform</groupId>
-            <artifactId>bootstrap</artifactId>
-            <version>0.51</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.proofpoint.platform</groupId>
-            <artifactId>configuration</artifactId>
-            <version>0.51</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.facebook</groupId>
-            <artifactId>fb303</artifactId>
-            <version>2012-02-03T18.30.33-05e33</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.facebook</groupId>
-            <artifactId>fb303-if</artifactId>
-            <version>2012-02-03T18.30.33-05e33</version>
-        </dependency>
-
-        <dependency>
-            <groupId>commons-configuration</groupId>
-            <artifactId>commons-configuration</artifactId>
-            <version>1.6</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.thrift</groupId>
-            <artifactId>libthrift</artifactId>
-            <version>0.8.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.6.4</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>1.6.4</version>
-        </dependency>
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>1.2.13</version>
-        </dependency>
-    </dependencies>
+    <modules>
+      <module>nifty-core</module>
+      <module>nifty-server</module>
+    </modules>
 </project>

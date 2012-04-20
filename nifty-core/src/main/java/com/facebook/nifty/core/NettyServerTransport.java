@@ -58,12 +58,12 @@ public class NettyServerTransport {
                 bossExecutor,
                 workerExecutor));
         bootstrap.setPipelineFactory(pipelineFactory);
-        log.info("starting core transport at {}", port);
+        log.info("starting transport {}:{}", def.getName(), port);
         serverChannel = bootstrap.bind(new InetSocketAddress(port));
     }
 
     public void stop() throws InterruptedException {
-        log.info("stopping core transport at {}", port);
+        log.info("stopping transport {}:{}", def.getName(), port);
         // first stop accepting
         final CountDownLatch latch = new CountDownLatch(1);
         serverChannel.close().addListener(new ChannelFutureListener() {

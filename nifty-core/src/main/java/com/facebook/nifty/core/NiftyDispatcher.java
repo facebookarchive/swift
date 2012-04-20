@@ -71,6 +71,8 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-        log.error("Exception caught in dispatcher : ", e.getCause());
+        // most of the time this is just socket close by client
+        // thrift protocol does not define any connection shutdown
+        log.debug("Exception caught in dispatcher : ", e.getCause());
     }
 }

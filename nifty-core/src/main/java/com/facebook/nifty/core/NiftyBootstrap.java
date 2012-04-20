@@ -14,7 +14,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A lifecycle object that manages starting up and shutting down multiple core channels
+ * A lifecycle object that manages starting up and shutting down multiple core channels.
  *
  * @author jaxlaw
  */
@@ -26,6 +26,10 @@ public class NiftyBootstrap {
     private ExecutorService bossExecutor;
     private ExecutorService workerExecutor;
 
+    /**
+     * This takes a Set of ThriftServerDef. Use Guice Multibinder to inject.
+     * @param thriftServerDefs
+     */
     @Inject
     public NiftyBootstrap(Set<ThriftServerDef> thriftServerDefs) {
         this.thriftServerDefs = thriftServerDefs;
@@ -64,6 +68,7 @@ public class NiftyBootstrap {
 
     }
 
+    // TODO : make wait time configurable ?
     static void shutdownExecutor(ExecutorService executor, final String name) {
         executor.shutdown();
         try {
