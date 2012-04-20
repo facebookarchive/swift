@@ -29,9 +29,39 @@
         </dependency>
 
         <dependency>
+            <groupId>com.proofpoint.platform</groupId>
+            <artifactId>bootstrap</artifactId>
+            <version>0.51</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.proofpoint.platform</groupId>
+            <artifactId>configuration</artifactId>
+            <version>0.51</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.facebook</groupId>
+            <artifactId>fb303</artifactId>
+            <version>2012-02-03T18.30.33-05e33</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.facebook</groupId>
+            <artifactId>fb303-if</artifactId>
+            <version>2012-02-03T18.30.33-05e33</version>
+        </dependency>
+
+        <dependency>
             <groupId>commons-configuration</groupId>
             <artifactId>commons-configuration</artifactId>
             <version>1.6</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.thrift</groupId>
+            <artifactId>libthrift</artifactId>
+            <version>0.8.0</version>
         </dependency>
 
         <dependency>
