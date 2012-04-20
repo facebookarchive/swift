@@ -4,11 +4,9 @@ import com.google.inject.AbstractModule;
 import com.proofpoint.configuration.ConfigurationModule;
 
 /**
- * Created with IntelliJ IDEA.
- * User: jaxlaw
- * Date: 4/19/12
- * Time: 5:03 PM
- * To change this template use File | Settings | File Templates.
+ * Binds NitfyConfig with magic.
+ *
+ * @author jaxlaw
  */
 public class NiftyModule extends AbstractModule {
     @Override

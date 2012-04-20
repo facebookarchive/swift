@@ -9,11 +9,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Created with IntelliJ IDEA.
- * User: jaxlaw
- * Date: 4/19/12
- * Time: 10:27 AM
- * To change this template use File | Settings | File Templates.
+ * Builder for the Thrift Server descriptor
+ *
+ * @author jaxlaw
  */
 public class ThriftServerDefBuilder {
     private static final AtomicInteger ID = new AtomicInteger(1);

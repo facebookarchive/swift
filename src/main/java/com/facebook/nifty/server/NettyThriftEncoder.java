@@ -5,11 +5,9 @@ import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
 
 /**
- * Created with IntelliJ IDEA.
- * User: jaxlaw
- * Date: 4/19/12
- * Time: 3:54 PM
- * To change this template use File | Settings | File Templates.
+ * Converts TNiftyTransport back to ChannelBuffer.
+ *
+ * @author jaxlaw
  */
 public class NettyThriftEncoder extends OneToOneEncoder {
     @Override

@@ -3,9 +3,9 @@ package com.facebook.nifty.server;
 import com.proofpoint.configuration.Config;
 
 /**
- * Author @jaxlaw
- * Date: 4/19/12
- * Time: 5:01 PM
+ * Netty bootstrap config.
+ *
+ * @author jaxlaw
  */
 public class NiftyConfig {
     int numBossThreads = 0;

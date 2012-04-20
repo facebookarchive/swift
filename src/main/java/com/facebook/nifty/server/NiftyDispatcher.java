@@ -18,11 +18,9 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.Executor;
 
 /**
- * Created with IntelliJ IDEA.
- * User: jaxlaw
- * Date: 4/19/12
- * Time: 3:15 PM
- * To change this template use File | Settings | File Templates.
+ * Dispatch TNiftyTransper to the TProcessor and write output back.
+ *
+ * @author jaxlaw
  */
 public class NiftyDispatcher extends SimpleChannelUpstreamHandler {
 

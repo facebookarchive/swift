@@ -20,11 +20,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Created with IntelliJ IDEA.
- * User: jaxlaw
- * Date: 4/18/12
- * Time: 3:53 PM
- * To change this template use File | Settings | File Templates.
+ * A server channel the decode framed Thrift message, dispatches to the TProcessor given
+ * and then encode message back to Thrift frame.
+ *
+ * @author jaxlaw
  */
 public class NettyServerTransport {
     private static final Logger log = LoggerFactory.getLogger(NettyServerTransport.class);

@@ -40,6 +40,7 @@ public class Main {
             }
         };
         NiftyModule niftyModule = new NiftyModule();
+
         Guice.createInjector
             (
                 Stage.PRODUCTION,

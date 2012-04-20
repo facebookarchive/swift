@@ -6,11 +6,9 @@ import org.apache.thrift.protocol.TProtocolFactory;
 import java.util.concurrent.Executor;
 
 /**
- * Created with IntelliJ IDEA.
- * User: jaxlaw
- * Date: 4/19/12
- * Time: 10:27 AM
- * To change this template use File | Settings | File Templates.
+ * Descriptor for a Thrift Server
+ *
+ * @author jaxlaw
  */
 public class ThriftServerDef {
     private final int serverPort;

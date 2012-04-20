@@ -7,11 +7,9 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 
 /**
- * Created with IntelliJ IDEA.
- * User: jaxlaw
- * Date: 4/19/12
- * Time: 3:22 PM
- * To change this template use File | Settings | File Templates.
+ * Wraps incoming channel buffer into TTransport and provides a output buffer.
+ *
+ * @author jaxlaw
  */
 public class TNiftyTransport extends TTransport {
     private final Channel channel;
@@ -27,7 +25,7 @@ public class TNiftyTransport extends TTransport {
 
     @Override
     public boolean isOpen() {
-        return true;
+        return channel.isOpen();
     }
 
     @Override

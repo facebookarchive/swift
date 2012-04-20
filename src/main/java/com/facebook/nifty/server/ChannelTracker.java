@@ -6,11 +6,9 @@ import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
 
 /**
- * Created with IntelliJ IDEA.
- * User: jaxlaw
- * Date: 4/19/12
- * Time: 4:49 PM
- * To change this template use File | Settings | File Templates.
+ * Counters for number of channels open, generic traffic stats and maybe cleanup logic here.
+ *
+ * @author jaxlaw
  */
 public class ChannelTracker extends SimpleChannelHandler {
     // TODO : add channel stats here

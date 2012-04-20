@@ -8,11 +8,9 @@ import java.util.ArrayList;
 import java.util.Set;
 
 /**
- * Created with IntelliJ IDEA.
- * User: jaxlaw
- * Date: 4/19/12
- * Time: 10:36 AM
- * To change this template use File | Settings | File Templates.
+ * A lifecycle object that manages starting up and shutting down multiple server channels
+ *
+ * @author jaxlaw
  */
 public class NiftyBootstrap {
     private final Set<ThriftServerDef> thriftServerDefs;
