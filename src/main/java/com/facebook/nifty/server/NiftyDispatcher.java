@@ -51,19 +51,20 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler {
                     TProtocol outProtocol = outProtocolFactory.getProtocol(t);
                     try {
                         processerFactory.getProcessor(t).process(
-                                inProtocol,
-                                outProtocol,
-                                new TConnectionContext(inProtocol, outProtocol) {
-                                    @Override
-                                    public InetAddress getPeerAddress() {
-                                        return ((InetSocketAddress) ctx.getChannel().getRemoteAddress()).getAddress();
-                                    }
+                            inProtocol,
+                            outProtocol,
+                            new TConnectionContext(inProtocol, outProtocol) {
+                                @Override
+                                public InetAddress getPeerAddress() {
+                                    return ((InetSocketAddress) ctx.getChannel().getRemoteAddress()).getAddress();
                                 }
+                            }
                         );
+                        ctx.getChannel().write(t);
                     } catch (TException e1) {
                         log.error("Exception during thrift message dispatch", e1);
                     }
-                    ctx.getChannel().write(t);
+
                 }
             });
         } else

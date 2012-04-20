@@ -13,6 +13,7 @@ import org.jboss.netty.channel.SimpleChannelHandler;
  * To change this template use File | Settings | File Templates.
  */
 public class ChannelTracker extends SimpleChannelHandler {
+    // TODO : add channel stats here
 
     @Override
     public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e) throws Exception {

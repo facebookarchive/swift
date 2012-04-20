@@ -1,7 +1,12 @@
 package com.facebook.nifty.server;
 
 import org.jboss.netty.bootstrap.ServerBootstrap;
-import org.jboss.netty.channel.*;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelFuture;
+import org.jboss.netty.channel.ChannelFutureListener;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
 import org.jboss.netty.handler.codec.frame.LengthFieldPrepender;
@@ -57,9 +62,9 @@ public class NettyServerTransport {
         bossExecutor = config.getNumBossThreads() > 0 ? Executors.newFixedThreadPool(config.getNumBossThreads()) : Executors.newCachedThreadPool();
         workerExecutor = config.getNumWorkerThreads() > 0 ? Executors.newFixedThreadPool(config.getNumWorkerThreads()) : Executors.newCachedThreadPool();
         bootstrap = new ServerBootstrap(
-                new NioServerSocketChannelFactory(
-                        bossExecutor,
-                        workerExecutor));
+            new NioServerSocketChannelFactory(
+                bossExecutor,
+                workerExecutor));
         bootstrap.setPipelineFactory(pipelineFactory);
         log.info("starting server transport at {}", port);
         serverChannel = bootstrap.bind(new InetSocketAddress(port));
