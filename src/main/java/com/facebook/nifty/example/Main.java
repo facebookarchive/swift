@@ -3,10 +3,9 @@ package com.facebook.nifty.example;
 import com.facebook.fb303.FacebookBase;
 import com.facebook.fb303.FacebookService;
 import com.facebook.fb303.fb_status;
-import com.facebook.nifty.server.NiftyBootstrap;
-import com.facebook.nifty.server.NiftyModule;
-import com.facebook.nifty.server.ThriftServerDef;
-import com.facebook.nifty.server.ThriftServerDefBuilder;
+import com.facebook.nifty.core.NiftyBootstrap;
+import com.facebook.nifty.core.ThriftServerDef;
+import com.facebook.nifty.core.ThriftServerDefBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -39,15 +38,13 @@ public class Main {
                 mbinder.addBinding().toProvider(ExampleThriftServerProvider.class).asEagerSingleton();
             }
         };
-        NiftyModule niftyModule = new NiftyModule();
 
         Guice.createInjector
             (
                 Stage.PRODUCTION,
                 new ConfigurationModule(cf),
-                new ValidationErrorModule(new ConfigurationValidator(cf, null).validate(exampleModule, niftyModule)),
+                new ValidationErrorModule(new ConfigurationValidator(cf, null).validate(exampleModule)),
                 new LifeCycleModule(),
-                niftyModule,
                 exampleModule
             )
             .getInstance(LifeCycleManager.class)
@@ -72,34 +69,40 @@ public class Main {
             return new ThriftServerDefBuilder()
                 .listen(config.getServerPort())
                 .limitFrameSizeTo(config.getMaxFrameSize())
-                .withProcessor(new FacebookService.Processor(new FacebookBase("nifty") {
-                    @Override
-                    public String getVersion() throws TException {
-                        return "1.0";
-                    }
-
-                    @Override
-                    public int getStatus() {
-                        return fb_status.ALIVE;
-                    }
-
-                    @Override
-                    public void shutdown() {
-                        new Thread() {
-                            @Override
-                            public void run() {
-                                try {
-                                    lifeCycleManager.stop();
-                                } catch (Exception e) {
-                                    log.error("Exception caught during shutdown :", e);
-                                }
-                            }
-                        }.start();
-                        super.shutdown();
-                    }
-                }))
+                .withProcessor(new FacebookService.Processor(new MyFacebookBase()))
                 .using(Executors.newFixedThreadPool(5))
                 .build();
+        }
+
+        private class MyFacebookBase extends FacebookBase {
+            public MyFacebookBase() {
+                super("nifty");
+            }
+
+            @Override
+            public String getVersion() throws TException {
+                return "1.0";
+            }
+
+            @Override
+            public int getStatus() {
+                return fb_status.ALIVE;
+            }
+
+            @Override
+            public void shutdown() {
+                new Thread() {
+                    @Override
+                    public void run() {
+                        try {
+                            lifeCycleManager.stop();
+                        } catch (Exception e) {
+                            log.error("Exception caught during shutdown :", e);
+                        }
+                    }
+                }.start();
+                super.shutdown();
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.facebook.nifty.server;
+package com.facebook.nifty.core;
 
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.TProcessorFactory;

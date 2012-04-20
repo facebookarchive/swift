@@ -1,4 +1,4 @@
-package com.facebook.nifty.server;
+package com.facebook.nifty.core;
 
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;

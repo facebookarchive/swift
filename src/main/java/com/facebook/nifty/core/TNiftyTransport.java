@@ -1,4 +1,4 @@
-package com.facebook.nifty.server;
+package com.facebook.nifty.core;
 
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
