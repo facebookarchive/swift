@@ -1,4 +1,3 @@
-Add support for builders (builder class and getters on generated type)
 Verify java types are compatible for fields with the same id
 Implement required fields
 Implement multi-arity method injection

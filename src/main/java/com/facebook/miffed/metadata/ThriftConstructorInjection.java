@@ -11,23 +11,23 @@ import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class ThriftConstructorInjection<T>
+public class ThriftConstructorInjection
 {
-    private final Constructor<T> constructor;
+    private final Constructor<?> constructor;
     private final List<ThriftParameterInjection> parameters;
 
-    public ThriftConstructorInjection(Constructor<T> constructor, ThriftParameterInjection... parameters)
+    public ThriftConstructorInjection(Constructor<?> constructor, ThriftParameterInjection... parameters)
     {
         this(checkNotNull(constructor, "constructor is null"), ImmutableList.copyOf(checkNotNull(parameters, "parameters is null")));
     }
 
-    public ThriftConstructorInjection(Constructor<T> constructor, List<ThriftParameterInjection> parameters)
+    public ThriftConstructorInjection(Constructor<?> constructor, List<ThriftParameterInjection> parameters)
     {
         this.constructor = checkNotNull(constructor, "constructor is null");
         this.parameters = ImmutableList.copyOf(checkNotNull(parameters, "parameters is null"));
     }
 
-    public Constructor<T> getConstructor()
+    public Constructor<?> getConstructor()
     {
         return constructor;
     }

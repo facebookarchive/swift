@@ -48,6 +48,7 @@ public class ThriftStructMetadataBuilder<T>
 {
     private final String structName;
     private final Class<T> structClass;
+    private final Class<?> builderClass;
 
     private final List<FieldMetadata> fields = newArrayList();
 
@@ -55,7 +56,8 @@ public class ThriftStructMetadataBuilder<T>
     private final List<Extractor> extractors = newArrayList();
 
     // writers
-    private final List<ConstructorInjection<T>> constructorInjections = newArrayList();
+    private final List<MethodInjection> builderMethodInjections = newArrayList();
+    private final List<ConstructorInjection> constructorInjections = newArrayList();
     private final List<FieldInjection> fieldInjections = newArrayList();
     private final List<MethodInjection> methodInjections = newArrayList();
 
@@ -91,17 +93,50 @@ public class ThriftStructMetadataBuilder<T>
             structName = structClass.getSimpleName();
         }
 
+        // builder class
+        if (!annotation.builder().equals(void.class)) {
+            builderClass = annotation.builder();
+        } else {
+            builderClass = null;
+        }
+
         // constructors
-        addConstructors();
-        if (constructorInjections.size() > 1) {
-            problems.addError("Multiple constructors are annotated with @ThriftConstructor ", constructorInjections);
+        if (builderClass != null) {
+            // builder class must have a valid constructor
+            addConstructors(builderClass);
+
+            // builder class must have a build method annotated with @ThriftConstructor
+            addBuilderMethods();
+
+            // verify struct class does not have @ThriftConstructors
+            for (Constructor<?> constructor : structClass.getConstructors()) {
+                if (constructor.isAnnotationPresent(ThriftConstructor.class)) {
+                    problems.addWarning("Struct class [%s] has a builder class, but constructor %s annotated with @ThriftConstructor", structClass.getName(), constructor);
+                }
+            }
+        }
+        else {
+            // struct class must have a valid constructor
+            addConstructors(structClass);
         }
 
         // fields
-        addFields(true, true);
+        if (builderClass != null) {
+            addFields(builderClass, false, true);
+            addFields(structClass, true, false);
+        }
+        else {
+            addFields(structClass, true, true);
+        }
 
         // methods
-        addMethods(true, true);
+        if (builderClass != null) {
+            addMethods(builderClass, false, true);
+            addMethods(structClass, true, false);
+        }
+        else {
+            addMethods(structClass, true, true);
+        }
 
         // group fields by explicit name or by name extracted from field, method or property
         Multimap<String, FieldMetadata> fieldsByName = Multimaps.index(fields, getOrExtractThriftFieldName());
@@ -142,7 +177,7 @@ public class ThriftStructMetadataBuilder<T>
             String name;
             if (!names.isEmpty()) {
                 if (names.size() > 1) {
-                    problems.addWarning("Field %i has multiple names %s", id, names);
+                    problems.addWarning("Field %s has multiple names %s", id, names);
                 }
                 name = names.iterator().next();
             }
@@ -158,7 +193,7 @@ public class ThriftStructMetadataBuilder<T>
             Set<ThriftProtocolFieldType> protocolTypes = ImmutableSet.copyOf(filter(transform(fields, getThriftFieldProtocolType()), notNull()));
             if (protocolTypes.size() > 1) {
                 // todo allow primitive widening and narrowing conversions
-                problems.addError("Field %i has multiple conflicting protocol types %s", id, protocolTypes);
+                problems.addError("Field %s has multiple conflicting protocol types %s", id, protocolTypes);
                 continue;
             }
             ThriftProtocolFieldType type = protocolTypes.iterator().next();
@@ -170,7 +205,7 @@ public class ThriftStructMetadataBuilder<T>
             Set<ThriftType> types = ImmutableSet.copyOf(filter(transform(fields, getThriftFieldType(catalog)), notNull()));
             if (!types.isEmpty()) {
                 if (protocolTypes.size() > 1) {
-                    problems.addError("Field %i has multiple conflicting thrift types %s", id, protocolTypes);
+                    problems.addError("Field %s has multiple conflicting thrift types %s", id, protocolTypes);
                 }
             }
         }
@@ -186,7 +221,12 @@ public class ThriftStructMetadataBuilder<T>
         // we can only build if there are no errors
         problems.throwIfHasErrors();
 
-        ConstructorInjection<T> constructor = constructorInjections.get(0);
+        ThriftMethodInjection builderMethodInjection = null;
+        if (builderClass != null) {
+            MethodInjection builderMethod = builderMethodInjections.get(0);
+            builderMethodInjection = new ThriftMethodInjection(builderMethod.getMethod(), toThriftParameterInjections(builderMethod.getParameters()));
+        }
+        ConstructorInjection constructor = constructorInjections.get(0);
 
         Multimap<Short, FieldMetadata> fieldsById = Multimaps.index(fields, getThriftFieldId());
         Iterable<ThriftFieldMetadata> fieldsMetadata = Iterables.transform(fieldsById.asMap().values(), new Function<Collection<FieldMetadata>, ThriftFieldMetadata>()
@@ -229,8 +269,10 @@ public class ThriftStructMetadataBuilder<T>
 
         return new ThriftStructMetadata<>(structName,
                 structClass,
+                builderClass,
+                builderMethodInjection,
                 ImmutableList.copyOf(fieldsMetadata),
-                new ThriftConstructorInjection<>(constructor.getConstructor(), toThriftParameterInjections(constructor.getParameters())),
+                new ThriftConstructorInjection(constructor.getConstructor(), toThriftParameterInjections(constructor.getParameters())),
                 toThriftMethodInjections(methodInjections)
         );
     }
@@ -259,9 +301,40 @@ public class ThriftStructMetadataBuilder<T>
         });
     }
 
-    private void addConstructors()
+    private void addBuilderMethods()
     {
-        for (Constructor<T> constructor : (Constructor<T>[]) structClass.getConstructors()) {
+        for (Method method : ReflectionHelper.findAnnotatedMethods(builderClass, ThriftConstructor.class)) {
+            List<ParameterInjection> parameters = getParameterInjections(method.toGenericString(), method.getParameterAnnotations(), method.getGenericParameterTypes());
+            // parameters are null if the method is misconfigured
+            if (parameters != null) {
+                fields.addAll(parameters);
+                builderMethodInjections.add(new MethodInjection(method, parameters));
+            }
+        }
+
+        // find invalid methods not skipped by findAnnotatedMethods()
+        for (Method method : getAllDeclaredMethods(builderClass)) {
+            if (method.isAnnotationPresent(ThriftConstructor.class) || hasThriftFieldAnnotation(method)) {
+                if (!Modifier.isPublic(method.getModifiers())) {
+                    problems.addError("@ThriftConstructor method [%s] is not public", method.toGenericString());
+                }
+                if (Modifier.isStatic(method.getModifiers())) {
+                    problems.addError("@ThriftConstructor method [%s] is static", method.toGenericString());
+                }
+            }
+        }
+
+        if (builderMethodInjections.isEmpty()) {
+            problems.addError("Struct builder class [%s] does not have a public builder method annotated with @ThriftConstructor", builderClass.getName());
+        }
+        if (builderMethodInjections.size() > 1) {
+            problems.addError("Multiple builder methods are annotated with @ThriftConstructor ", builderMethodInjections);
+        }
+    }
+
+    private void addConstructors(Class<?> clazz)
+    {
+        for (Constructor<?> constructor : clazz.getConstructors()) {
             if (constructor.isSynthetic()) {
                 continue;
             }
@@ -277,7 +350,7 @@ public class ThriftStructMetadataBuilder<T>
             List<ParameterInjection> parameters = getParameterInjections(constructor.toGenericString(), constructor.getParameterAnnotations(), constructor.getGenericParameterTypes());
             if (parameters != null) {
                 fields.addAll(parameters);
-                constructorInjections.add(new ConstructorInjection<>(constructor, parameters));
+                constructorInjections.add(new ConstructorInjection(constructor, parameters));
             }
         }
 
@@ -285,26 +358,30 @@ public class ThriftStructMetadataBuilder<T>
         if (constructorInjections.isEmpty()) {
             // todo look for builder class
             try {
-                Constructor<T> constructor = structClass.getDeclaredConstructor();
+                Constructor<?> constructor = clazz.getDeclaredConstructor();
                 if (!Modifier.isPublic(constructor.getModifiers())) {
                     problems.addError("Default constructor [%s] is not public", constructor.toGenericString());
                 }
-                constructorInjections.add(new ConstructorInjection<>(constructor));
+                constructorInjections.add(new ConstructorInjection(constructor));
             }
             catch (Exception e) {
-                problems.addError("Struct class [%s] does not have a public no-arg constructor", structClass.getName());
+                problems.addError("Struct class [%s] does not have a public no-arg constructor", clazz.getName());
             }
+        }
+
+        if (constructorInjections.size() > 1) {
+            problems.addError("Multiple constructors are annotated with @ThriftConstructor ", constructorInjections);
         }
     }
 
-    private void addFields(boolean allowReaders, boolean allowWriters)
+    private void addFields(Class<?> clazz, boolean allowReaders, boolean allowWriters)
     {
-        for (Field fieldField : ReflectionHelper.findAnnotatedFields(structClass, ThriftField.class)) {
+        for (Field fieldField : ReflectionHelper.findAnnotatedFields(clazz, ThriftField.class)) {
             addField(fieldField, allowReaders, allowWriters);
         }
 
         // find invalid fields not skipped by findAnnotatedFields()
-        for (Field field : getAllDeclaredFields(structClass)) {
+        for (Field field : getAllDeclaredFields(clazz)) {
             if (field.isAnnotationPresent(ThriftField.class)) {
                 if (!Modifier.isPublic(field.getModifiers())) {
                     problems.addError("@ThriftField field [%s] is not public", field.toGenericString());
@@ -333,14 +410,14 @@ public class ThriftStructMetadataBuilder<T>
         }
     }
 
-    private void addMethods(boolean allowReaders, boolean allowWriters)
+    private void addMethods(Class<?> clazz, boolean allowReaders, boolean allowWriters)
     {
-        for (Method fieldMethod : ReflectionHelper.findAnnotatedMethods(structClass, ThriftField.class)) {
-            addMethod(fieldMethod, allowReaders, allowWriters);
+        for (Method fieldMethod : ReflectionHelper.findAnnotatedMethods(clazz, ThriftField.class)) {
+            addMethod(clazz, fieldMethod, allowReaders, allowWriters);
         }
 
         // find invalid methods not skipped by findAnnotatedMethods()
-        for (Method method : getAllDeclaredMethods(structClass)) {
+        for (Method method : getAllDeclaredMethods(clazz)) {
             if (method.isAnnotationPresent(ThriftField.class) || hasThriftFieldAnnotation(method)) {
                 if (!Modifier.isPublic(method.getModifiers())) {
                     problems.addError("@ThriftField method [%s] is not public", method.toGenericString());
@@ -352,7 +429,7 @@ public class ThriftStructMetadataBuilder<T>
         }
     }
 
-    private void addMethod(Method method, boolean allowReaders, boolean allowWriters)
+    private void addMethod(Class<?> clazz, Method method, boolean allowReaders, boolean allowWriters)
     {
         checkArgument(method.isAnnotationPresent(ThriftField.class));
 
@@ -366,7 +443,7 @@ public class ThriftStructMetadataBuilder<T>
                 extractors.add(methodExtractor);
             }
             else {
-                problems.addError("Reader method %s.%s is not allowed on a builder class", structClass.getName(), method.getName());
+                problems.addError("Reader method %s.%s is not allowed on a builder class", clazz.getName(), method.getName());
             }
         }
         else if (isValidateSetter(method)) {
@@ -376,11 +453,11 @@ public class ThriftStructMetadataBuilder<T>
                 methodInjections.add(new MethodInjection(method, parameterInjection));
             }
             else {
-                problems.addError("Inject method %s.%s is not allowed on struct class, since struct has a builder", structClass.getName(), method.getName());
+                problems.addError("Inject method %s.%s is not allowed on struct class, since struct has a builder", clazz.getName(), method.getName());
             }
         }
         else {
-            problems.addError("Method %s.%s is not a supported getter or setter", structClass.getName(), method.getName());
+            problems.addError("Method %s.%s is not a supported getter or setter", clazz.getName(), method.getName());
         }
     }
 
@@ -398,7 +475,7 @@ public class ThriftStructMetadataBuilder<T>
 
     private List<ParameterInjection> getParameterInjections(String methodSignature, Annotation[][] parameterAnnotations, Type[] parameterTypes)
     {
-        boolean invalidConstructor = false;
+        boolean invalid = false;
 
         List<ParameterInjection> parameters = newArrayListWithCapacity(parameterAnnotations.length);
         for (int parameterIndex = 0; parameterIndex < parameterAnnotations.length; parameterIndex++) {
@@ -406,7 +483,7 @@ public class ThriftStructMetadataBuilder<T>
             Type parameterType = parameterTypes[parameterIndex];
             for (Annotation annotation : annotations) {
                 if (!(annotation instanceof ThriftField)) {
-                    invalidConstructor = true;
+                    invalid = true;
                     continue;
                 }
 
@@ -417,15 +494,15 @@ public class ThriftStructMetadataBuilder<T>
                 // verify either id or name is set
                 // todo add name discovery
                 if (parameterInjection.getId() == null && parameterInjection.getName() == null) {
-                    problems.addError("@ThriftConstructor %s parameter %i does not have name or id specified", methodSignature, parameterIndex);
-                    invalidConstructor = true;
+                    problems.addError("@ThriftConstructor %s parameter %s does not have name or id specified", methodSignature, parameterIndex);
+                    invalid = true;
                     continue;
                 }
 
                 parameters.add(parameterInjection);
             }
         }
-        if (invalidConstructor) {
+        if (invalid) {
             return null;
         }
         return parameters;
@@ -713,24 +790,24 @@ public class ThriftStructMetadataBuilder<T>
         }
     }
 
-    public class ConstructorInjection<T>
+    public class ConstructorInjection
     {
-        private final Constructor<T> constructor;
+        private final Constructor<?> constructor;
         private final List<ParameterInjection> parameters;
 
-        public ConstructorInjection(Constructor<T> constructor, List<ParameterInjection> parameters)
+        public ConstructorInjection(Constructor<?> constructor, List<ParameterInjection> parameters)
         {
             this.constructor = constructor;
             this.parameters = ImmutableList.copyOf(parameters);
         }
 
-        public ConstructorInjection(Constructor<T> constructor, ParameterInjection... parameters)
+        public ConstructorInjection(Constructor<?> constructor, ParameterInjection... parameters)
         {
             this.constructor = constructor;
             this.parameters = ImmutableList.copyOf(parameters);
         }
 
-        public Constructor<T> getConstructor()
+        public Constructor<?> getConstructor()
         {
             return constructor;
         }

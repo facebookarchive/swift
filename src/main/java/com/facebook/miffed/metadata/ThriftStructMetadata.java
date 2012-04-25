@@ -3,6 +3,7 @@
  */
 package com.facebook.miffed.metadata;
 
+import com.facebook.miffed.metadata.ThriftStructMetadataBuilder.MethodInjection;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
@@ -19,17 +20,24 @@ public class ThriftStructMetadata<T>
     private final String structName;
     private final Class<T> structClass;
 
+    private final Class<?> builderClass;
+    private final ThriftMethodInjection builderMethod;
+
     private final Map<Short, ThriftFieldMetadata> fields;
 
-    private final ThriftConstructorInjection<T> constructor;
+    private final ThriftConstructorInjection constructor;
     private final List<ThriftMethodInjection> methodInjections;
 
     public ThriftStructMetadata(String structName,
             Class<T> structClass,
+            Class<?> builderClass,
+            ThriftMethodInjection builderMethod,
             List<ThriftFieldMetadata> fields,
-            ThriftConstructorInjection<T> constructor,
+            ThriftConstructorInjection constructor,
             List<ThriftMethodInjection> methodInjections)
     {
+        this.builderClass = builderClass;
+        this.builderMethod = builderMethod;
         this.structName = checkNotNull(structName, "structName is null");
         this.structClass = checkNotNull(structClass, "structClass is null");
         this.constructor = checkNotNull(constructor, "constructor is null");
@@ -54,6 +62,16 @@ public class ThriftStructMetadata<T>
         return structClass;
     }
 
+    public Class<?> getBuilderClass()
+    {
+        return builderClass;
+    }
+
+    public ThriftMethodInjection getBuilderMethod()
+    {
+        return builderMethod;
+    }
+
     public ThriftFieldMetadata getField(int id)
     {
         return fields.get((short)id);
@@ -64,7 +82,7 @@ public class ThriftStructMetadata<T>
         return fields.values();
     }
 
-    public ThriftConstructorInjection<T> getConstructor()
+    public ThriftConstructorInjection getConstructor()
     {
         return constructor;
     }
@@ -80,7 +98,9 @@ public class ThriftStructMetadata<T>
         final StringBuilder sb = new StringBuilder();
         sb.append("ThriftStructMetadata");
         sb.append("{structName='").append(structName).append('\'');
-        sb.append(", structClass=").append(structClass.getName());
+        sb.append(", structClass=").append(structClass);
+        sb.append(", builderClass=").append(builderClass);
+        sb.append(", builderMethod=").append(builderMethod);
         sb.append(", fields=").append(fields);
         sb.append(", constructor=").append(constructor);
         sb.append(", methodInjections=").append(methodInjections);

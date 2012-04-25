@@ -18,7 +18,6 @@ public class ThriftMethodInjection
     {
         Preconditions.checkNotNull(method, "method is null");
         Preconditions.checkNotNull(parameters, "parameters is null");
-        Preconditions.checkArgument(!parameters.isEmpty(), "parameters is empty");
 
         this.method = method;
         this.parameters = parameters;

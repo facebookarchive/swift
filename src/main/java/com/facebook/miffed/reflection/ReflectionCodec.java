@@ -74,9 +74,9 @@ public class ReflectionCodec
             throws Exception
     {
         // construct instance
-        T instance;
+        Object instance;
         {
-            ThriftConstructorInjection<T> constructor = metadata.getConstructor();
+            ThriftConstructorInjection constructor = metadata.getConstructor();
             Object[] parametersValues = new Object[constructor.getParameters().size()];
             for (ThriftParameterInjection parameter : constructor.getParameters()) {
                 parametersValues[parameter.getParameterIndex()] = data.get(parameter.getId());
@@ -123,7 +123,36 @@ public class ReflectionCodec
                 throw e;
             }
         }
-        return instance;
+
+        // builder method
+        if (metadata.getBuilderMethod() != null) {
+            ThriftMethodInjection builderMethod = metadata.getBuilderMethod();
+            Object[] parametersValues = new Object[builderMethod.getParameters().size()];
+            for (ThriftParameterInjection parameter : builderMethod.getParameters()) {
+                parametersValues[parameter.getParameterIndex()] = data.get(parameter.getId());
+            }
+
+            try {
+                instance = builderMethod.getMethod().invoke(instance, parametersValues);
+                if (instance == null) {
+                    throw new IllegalArgumentException("Builder method returned a null instance");
+
+                }
+                if (!metadata.getStructClass().isInstance(instance)) {
+                    throw new IllegalArgumentException(String.format("Builder method returned instance of type %s, but an instance of %s is required",
+                            instance.getClass().getName(),
+                            metadata.getStructClass().getName()));
+                }
+            }
+            catch (InvocationTargetException e) {
+                if (e.getTargetException() != null) {
+                    Throwables.propagateIfInstanceOf(e.getTargetException(), Exception.class);
+                }
+                throw e;
+            }
+        }
+
+        return (T) instance;
     }
 
     private Object readValue(ThriftType type, TProtocol protocol)

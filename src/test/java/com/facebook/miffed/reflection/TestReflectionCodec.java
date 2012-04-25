@@ -7,6 +7,7 @@
 package com.facebook.miffed.reflection;
 
 import com.facebook.miffed.BonkBean;
+import com.facebook.miffed.BonkBuilder;
 import com.facebook.miffed.BonkConstructor;
 import com.facebook.miffed.BonkField;
 import com.facebook.miffed.metadata.ThriftCatalog;
@@ -30,6 +31,7 @@ public class TestReflectionCodec
 
         testMetadataBuild(bonkField);
     }
+
     @Test
     public void testBean()
             throws Exception
@@ -40,12 +42,21 @@ public class TestReflectionCodec
 
         testMetadataBuild(bonkBean);
     }
+
     @Test
     public void testConstructor()
             throws Exception
     {
         BonkConstructor bonkConstructor = new BonkConstructor("message", 42);
         testMetadataBuild(bonkConstructor);
+    }
+
+    @Test
+    public void testBuilder()
+            throws Exception
+    {
+        BonkBuilder bonkBuilder = new BonkBuilder("message", 42);
+        testMetadataBuild(bonkBuilder);
     }
 
     private <T> void testMetadataBuild(T structInstance)
