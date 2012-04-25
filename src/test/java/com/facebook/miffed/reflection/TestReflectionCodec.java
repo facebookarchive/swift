@@ -10,6 +10,7 @@ import com.facebook.miffed.BonkBean;
 import com.facebook.miffed.BonkBuilder;
 import com.facebook.miffed.BonkConstructor;
 import com.facebook.miffed.BonkField;
+import com.facebook.miffed.BonkMethod;
 import com.facebook.miffed.metadata.ThriftCatalog;
 import com.facebook.miffed.metadata.ThriftStructMetadata;
 import org.apache.thrift.protocol.TCompactProtocol;
@@ -41,6 +42,16 @@ public class TestReflectionCodec
         bonkBean.setType(42);
 
         testMetadataBuild(bonkBean);
+    }
+
+    @Test
+    public void testMethod()
+            throws Exception
+    {
+        BonkMethod bonkMethod = new BonkMethod();
+        bonkMethod.setData("message", 42);
+
+        testMetadataBuild(bonkMethod);
     }
 
     @Test

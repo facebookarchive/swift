@@ -1,6 +1,5 @@
 Verify java types are compatible for fields with the same id
 Implement required fields
-Implement multi-arity method injection
 
 Coerce types - later
 

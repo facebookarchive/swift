@@ -9,6 +9,7 @@ import com.facebook.miffed.ThriftProtocolFieldType;
 import com.facebook.miffed.ThriftStruct;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -43,6 +44,7 @@ import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.transform;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Lists.newArrayListWithCapacity;
+import static java.util.Arrays.asList;
 
 public class ThriftStructMetadataBuilder<T>
 {
@@ -448,9 +450,26 @@ public class ThriftStructMetadataBuilder<T>
         }
         else if (isValidateSetter(method)) {
             if (allowWriters) {
-                ParameterInjection parameterInjection = new ParameterInjection(0, annotation, extractFieldName(method), method.getGenericParameterTypes()[0]);
-                fields.add(parameterInjection);
-                methodInjections.add(new MethodInjection(method, parameterInjection));
+                List<ParameterInjection> parameters;
+                if (method.getParameterTypes().length > 1 || Iterables.any(asList(method.getParameterAnnotations()[0]), Predicates.instanceOf(ThriftField.class))) {
+                    parameters = getParameterInjections(method.toGenericString(), method.getParameterAnnotations(), method.getGenericParameterTypes());
+                    if (annotation.id() != Short.MIN_VALUE) {
+                        problems.addError("A method with annotated parameters can not have a field id specified: %s.%s ", clazz.getName(), method.getName());
+                    }
+                    if (!annotation.name().isEmpty()) {
+                        problems.addError("A method with annotated parameters can not have a field name specified: %s.%s ", clazz.getName(), method.getName());
+                    }
+                    if (annotation.protocolType() != ThriftProtocolFieldType.STOP) {
+                        problems.addError("A method with annotated parameters can not have a field type specified: %s.%s ", clazz.getName(), method.getName());
+                    }
+                    if (annotation.required()) {
+                        problems.addError("A method with annotated parameters can not be marked as required: %s.%s ", clazz.getName(), method.getName());
+                    }
+                } else {
+                    parameters = ImmutableList.of(new ParameterInjection(0, annotation, extractFieldName(method), method.getGenericParameterTypes()[0]));
+                }
+                fields.addAll(parameters);
+                methodInjections.add(new MethodInjection(method, parameters));
             }
             else {
                 problems.addError("Inject method %s.%s is not allowed on struct class, since struct has a builder", clazz.getName(), method.getName());
@@ -515,8 +534,7 @@ public class ThriftStructMetadataBuilder<T>
 
     private boolean isValidateSetter(Method method)
     {
-        // todo allow multiple parameters with annotations
-        return method.getParameterTypes().length == 1;
+        return method.getParameterTypes().length >= 1;
     }
 
     private static String extractFieldName(Method method)
@@ -824,12 +842,6 @@ public class ThriftStructMetadataBuilder<T>
         private final List<ParameterInjection> parameters;
 
         public MethodInjection(Method method, List<ParameterInjection> parameters)
-        {
-            this.method = method;
-            this.parameters = ImmutableList.copyOf(parameters);
-        }
-
-        public MethodInjection(Method method, ParameterInjection... parameters)
         {
             this.method = method;
             this.parameters = ImmutableList.copyOf(parameters);

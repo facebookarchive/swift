@@ -7,6 +7,7 @@ import com.facebook.miffed.BonkBean;
 import com.facebook.miffed.BonkBuilder;
 import com.facebook.miffed.BonkConstructor;
 import com.facebook.miffed.BonkField;
+import com.facebook.miffed.BonkMethod;
 import org.testng.annotations.Test;
 
 import static org.fest.assertions.Assertions.assertThat;
@@ -77,6 +78,16 @@ public class TestThriftStructMetadata
     public void testConstructor()
     {
         ThriftStructMetadata<?> metadata = testMetadataBuild(BonkConstructor.class, 2, 0);
+        verifyParameterInjection(metadata, 1, "message", 0);
+        verifyMethodExtraction(metadata, 1, "message", "getMessage");
+        verifyParameterInjection(metadata, 2, "type", 1);
+        verifyMethodExtraction(metadata, 2, "type", "getType");
+    }
+
+    @Test
+    public void testMethod()
+    {
+        ThriftStructMetadata<?> metadata = testMetadataBuild(BonkMethod.class, 0, 1);
         verifyParameterInjection(metadata, 1, "message", 0);
         verifyMethodExtraction(metadata, 1, "message", "getMessage");
         verifyParameterInjection(metadata, 2, "type", 1);
