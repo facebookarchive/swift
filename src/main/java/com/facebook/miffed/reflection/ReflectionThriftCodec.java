@@ -3,6 +3,8 @@
  */
 package com.facebook.miffed.reflection;
 
+import com.facebook.miffed.ThriftCodec;
+import com.facebook.miffed.metadata.ThriftCatalog;
 import com.facebook.miffed.metadata.ThriftConstructorInjection;
 import com.facebook.miffed.metadata.ThriftExtraction;
 import com.facebook.miffed.metadata.ThriftFieldExtractor;
@@ -14,7 +16,6 @@ import com.facebook.miffed.metadata.ThriftMethodExtractor;
 import com.facebook.miffed.metadata.ThriftMethodInjection;
 import com.facebook.miffed.metadata.ThriftParameterInjection;
 import com.facebook.miffed.metadata.ThriftStructMetadata;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -33,8 +34,104 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ReflectionCodec
+import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+public class ReflectionThriftCodec implements ThriftCodec
 {
+    private final ThriftCatalog catalog;
+
+    public ReflectionThriftCodec(ThriftCatalog catalog)
+    {
+        this.catalog = checkNotNull(catalog, "catalog is null");
+    }
+
+    @Override
+    public <T> T read(Class<T> type, TProtocol protocol)
+            throws Exception
+    {
+        ThriftType thriftType = catalog.getThriftType(type);
+        return (T) read(thriftType, protocol);
+    }
+
+    @Override
+    public Object read(ThriftType type, TProtocol protocol)
+            throws Exception
+    {
+        switch (type.getProtocolType()) {
+            case BOOL: {
+                return protocol.readBool();
+            }
+            case BYTE: {
+                return protocol.readByte();
+            }
+            case DOUBLE: {
+                return protocol.readDouble();
+            }
+            case I16: {
+                return protocol.readI16();
+            }
+            case I32: {
+                return protocol.readI32();
+            }
+            case I64: {
+                return protocol.readI64();
+            }
+            case STRING: {
+                return protocol.readString();
+            }
+            case STRUCT: {
+                return read(type.getStructMetadata(), protocol);
+            }
+            case MAP: {
+                ThriftType keyType = type.getKeyType();
+                ThriftType valueType = type.getValueType();
+
+                TMap tMap = protocol.readMapBegin();
+
+                ImmutableMap.Builder<Object, Object> map = ImmutableMap.builder();
+                for (int i = 0; i < tMap.size; i++) {
+                    Object entryKey = read(keyType, protocol);
+                    Object entryValue = read(valueType, protocol);
+                    map.put(entryKey, entryValue);
+                }
+                protocol.readMapEnd();
+                return map.build();
+            }
+            case SET: {
+                ThriftType elementType = type.getValueType();
+
+                TSet tSet = protocol.readSetBegin();
+                ImmutableSet.Builder<Object> set = ImmutableSet.builder();
+                for (int i = 0; i < tSet.size; i++) {
+                    Object element = read(elementType, protocol);
+                    set.add(element);
+                }
+                protocol.readSetEnd();
+                return set.build();
+            }
+            case LIST: {
+                ThriftType elementType = type.getValueType();
+
+                TList tList = protocol.readListBegin();
+                ImmutableList.Builder<Object> list = ImmutableList.builder();
+                for (int i = 0; i < tList.size; i++) {
+                    Object element = read(elementType, protocol);
+                    list.add(element);
+                }
+                protocol.readListEnd();
+                return list.build();
+            }
+            case ENUM: {
+                // todo implement enums
+                throw new UnsupportedOperationException("enums are not implemented");
+            }
+            default: {
+                throw new IllegalStateException("Read does not support fields of type " + type);
+            }
+        }
+    }
+
     public <T> T read(ThriftStructMetadata<T> metadata, TProtocol protocol)
             throws Exception
     {
@@ -60,7 +157,7 @@ public class ReflectionCodec
             if (type.getProtocolType().ordinal() != field.type) {
                 TProtocolUtil.skip(protocol, field.type);
             }
-            Object value = readValue(type, protocol);
+            Object value = read(type, protocol);
             data.put(fieldMetadata.getId(), value);
 
             protocol.readFieldEnd();
@@ -155,104 +252,15 @@ public class ReflectionCodec
         return (T) instance;
     }
 
-    private Object readValue(ThriftType type, TProtocol protocol)
+    @Override
+    public <T> void write(Class<T> type, T value, TProtocol protocol)
             throws Exception
     {
-        switch (type.getProtocolType()) {
-            case BOOL: {
-                return protocol.readBool();
-            }
-            case BYTE: {
-                return protocol.readByte();
-            }
-            case DOUBLE: {
-                return protocol.readDouble();
-            }
-            case I16: {
-                return protocol.readI16();
-            }
-            case I32: {
-                return protocol.readI32();
-            }
-            case I64: {
-                return protocol.readI64();
-            }
-            case STRING: {
-                return protocol.readString();
-            }
-            case STRUCT: {
-                return read(type.getStructMetadata(), protocol);
-            }
-            case MAP: {
-                ThriftType keyType = type.getKeyType();
-                ThriftType valueType = type.getValueType();
-
-                TMap tMap = protocol.readMapBegin();
-
-                ImmutableMap.Builder<Object, Object> map = ImmutableMap.builder();
-                for (int i = 0; i < tMap.size; i++) {
-                    Object entryKey = readValue(keyType, protocol);
-                    Object entryValue = readValue(valueType, protocol);
-                    map.put(entryKey, entryValue);
-                }
-                protocol.readMapEnd();
-                return map.build();
-            }
-            case SET: {
-                ThriftType elementType = type.getValueType();
-
-                TSet tSet = protocol.readSetBegin();
-                ImmutableSet.Builder<Object> set = ImmutableSet.builder();
-                for (int i = 0; i < tSet.size; i++) {
-                    Object element = readValue(elementType, protocol);
-                    set.add(element);
-                }
-                protocol.readSetEnd();
-                return set.build();
-            }
-            case LIST: {
-                ThriftType elementType = type.getValueType();
-
-                TList tList = protocol.readListBegin();
-                ImmutableList.Builder<Object> list = ImmutableList.builder();
-                for (int i = 0; i < tList.size; i++) {
-                    Object element = readValue(elementType, protocol);
-                    list.add(element);
-                }
-                protocol.readListEnd();
-                return list.build();
-            }
-            case ENUM: {
-                // todo implement enums
-                throw new UnsupportedOperationException("enums are not implemented");
-            }
-            default: {
-                throw new IllegalStateException("Read does not support fields of type " + type);
-            }
-        }
+        ThriftType thriftType = catalog.getThriftType(type);
+        write(thriftType, value, protocol);
     }
 
-    public <T> void writeStruct(ThriftStructMetadata<T> metadata, T instance, TProtocol protocol)
-            throws Exception
-    {
-        protocol.writeStructBegin(new TStruct(metadata.getStructName()));
-        for (ThriftFieldMetadata field : metadata.getFields()) {
-            Object value = getFieldValue(instance, field);
-            if (value == null) {
-                continue;
-            }
-
-            ThriftType type = field.getType();
-            protocol.writeFieldBegin(new TField(field.getName(), type.getProtocolType().getType(), field.getId()));
-            writeValue(type, value, protocol);
-            protocol.writeFieldEnd();
-
-        }
-        protocol.writeFieldStop();
-        protocol.writeStructEnd();
-    }
-
-    private void writeValue(ThriftType type, Object value, TProtocol protocol)
+    public void write(ThriftType type, Object value, TProtocol protocol)
             throws Exception
     {
         switch (type.getProtocolType()) {
@@ -298,12 +306,12 @@ public class ReflectionCodec
                 protocol.writeMapBegin(new TMap(keyType.getProtocolType().getType(), valueType.getProtocolType().getType(), map.size()));
                 for (Map.Entry<?, ?> entry : map.entrySet()) {
                     Object entryKey = entry.getKey();
-                    Preconditions.checkState(entryKey != null, "Thrift does not support null map keys");
-                    writeValue(keyType, entryKey, protocol);
+                    checkState(entryKey != null, "Thrift does not support null map keys");
+                    write(keyType, entryKey, protocol);
 
                     Object entryValue = entry.getValue();
-                    Preconditions.checkState(entryValue != null, "Thrift does not support null map values");
-                    writeValue(valueType, entryValue, protocol);
+                    checkState(entryValue != null, "Thrift does not support null map values");
+                    write(valueType, entryValue, protocol);
                 }
                 protocol.writeMapEnd();
                 break;
@@ -314,8 +322,8 @@ public class ReflectionCodec
                 Iterable<?> list = (Iterable<?>) value;
                 protocol.writeSetBegin(new TSet(elementType.getProtocolType().getType(), Iterables.size(list)));
                 for (Object element : list) {
-                    Preconditions.checkState(element != null, "Thrift does not support null set elements");
-                    writeValue(elementType, element, protocol);
+                    checkState(element != null, "Thrift does not support null set elements");
+                    write(elementType, element, protocol);
                 }
                 protocol.writeSetEnd();
                 break;
@@ -326,8 +334,8 @@ public class ReflectionCodec
                 Iterable<?> list = (Iterable<?>) value;
                 protocol.writeListBegin(new TList(elementType.getProtocolType().getType(), Iterables.size(list)));
                 for (Object element : list) {
-                    Preconditions.checkState(element != null, "Thrift does not support null list elements");
-                    writeValue(elementType, element, protocol);
+                    checkState(element != null, "Thrift does not support null list elements");
+                    write(elementType, element, protocol);
                 }
                 protocol.writeListEnd();
                 break;
@@ -340,6 +348,26 @@ public class ReflectionCodec
                 throw new IllegalStateException("Write does not support fields of type " + type);
             }
         }
+    }
+
+    public <T> void writeStruct(ThriftStructMetadata<T> metadata, T instance, TProtocol protocol)
+            throws Exception
+    {
+        protocol.writeStructBegin(new TStruct(metadata.getStructName()));
+        for (ThriftFieldMetadata field : metadata.getFields()) {
+            Object value = getFieldValue(instance, field);
+            if (value == null) {
+                continue;
+            }
+
+            ThriftType type = field.getType();
+            protocol.writeFieldBegin(new TField(field.getName(), type.getProtocolType().getType(), field.getId()));
+            write(type, value, protocol);
+            protocol.writeFieldEnd();
+
+        }
+        protocol.writeFieldStop();
+        protocol.writeStructEnd();
     }
 
     private Object getFieldValue(Object instance, ThriftFieldMetadata field)

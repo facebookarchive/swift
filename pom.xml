@@ -50,6 +50,12 @@
         </dependency>
 
         <dependency>
+            <groupId>me.qmx.jitescript</groupId>
+            <artifactId>jitescript</artifactId>
+            <version>0.3.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>6.2.1</version>

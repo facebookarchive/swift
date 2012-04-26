@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
-public class TestReflectionCodec
+public class TestReflectionThriftCodec
 {
     @Test
     public void testFields()
@@ -81,12 +81,12 @@ public class TestReflectionCodec
         assertNotNull(metadata);
 
 
-        ReflectionCodec codec = new ReflectionCodec();
+        ReflectionThriftCodec codec = new ReflectionThriftCodec(catalog);
         TMemoryBuffer transport = new TMemoryBuffer(10 * 1024);
         TCompactProtocol protocol = new TCompactProtocol(transport);
-        codec.writeStruct(metadata, structInstance, protocol);
+        codec.write(structClass, structInstance, protocol);
 
-        T copy = codec.read(metadata, protocol);
+        T copy = codec.read(structClass, protocol);
         assertNotNull(copy);
         assertEquals(copy, structInstance);
     }
