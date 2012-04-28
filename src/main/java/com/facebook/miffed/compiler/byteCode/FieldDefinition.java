@@ -1,7 +1,7 @@
 /*
  * Copyright 2004-present Facebook. All Rights Reserved.
  */
-package com.facebook.miffed.compiler;
+package com.facebook.miffed.compiler.byteCode;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -9,7 +9,7 @@ import org.objectweb.asm.tree.FieldNode;
 
 import java.util.EnumSet;
 
-import static com.facebook.miffed.compiler.Access.toAccessModifier;
+import static com.facebook.miffed.compiler.byteCode.Access.toAccessModifier;
 
 public class FieldDefinition
 {

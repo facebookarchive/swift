@@ -1,7 +1,7 @@
 /*
  * Copyright 2004-present Facebook. All Rights Reserved.
  */
-package com.facebook.miffed.compiler;
+package com.facebook.miffed.compiler.byteCode;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -28,13 +28,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static com.facebook.miffed.compiler.Access.STATIC;
-import static com.facebook.miffed.compiler.Access.toAccessModifier;
-import static com.facebook.miffed.compiler.NamedParameterDefinition.getNamedParameterType;
-import static com.facebook.miffed.compiler.ParameterizedType.getParameterType;
-import static com.facebook.miffed.compiler.ParameterizedType.isGenericType;
-import static com.facebook.miffed.compiler.ParameterizedType.toParameterizedType;
-import static com.facebook.miffed.compiler.ParameterizedType.type;
+import static com.facebook.miffed.compiler.byteCode.Access.STATIC;
+import static com.facebook.miffed.compiler.byteCode.Access.toAccessModifier;
+import static com.facebook.miffed.compiler.byteCode.NamedParameterDefinition.getNamedParameterType;
+import static com.facebook.miffed.compiler.byteCode.ParameterizedType.getParameterType;
+import static com.facebook.miffed.compiler.byteCode.ParameterizedType.isGenericType;
+import static com.facebook.miffed.compiler.byteCode.ParameterizedType.toParameterizedType;
+import static com.facebook.miffed.compiler.byteCode.ParameterizedType.type;
 import static com.google.common.collect.Iterables.any;
 import static com.google.common.collect.Iterables.transform;
 import static org.objectweb.asm.Opcodes.*;
@@ -66,12 +66,12 @@ public class MethodDefinition
             this.returnType = returnType;
         }
         else {
-            this.returnType = type(void.class);
+            this.returnType = ParameterizedType.type(void.class);
         }
-        this.parameters = Lists.transform(parameters, getNamedParameterType());
+        this.parameters = Lists.transform(parameters, NamedParameterDefinition.getNamedParameterType());
 
         if (!access.contains(STATIC)) {
-            localVariables.put("this", new LocalVariableDefinition("this", 0, type(Object.class)));
+            localVariables.put("this", new LocalVariableDefinition("this", 0, ParameterizedType.type(Object.class)));
             nextSlot++;
         }
         int argId = 0;
@@ -89,7 +89,7 @@ public class MethodDefinition
 
     public MethodDefinition addException(Class<? extends Throwable> exceptionClass)
     {
-        exceptions.add(type(exceptionClass));
+        exceptions.add(ParameterizedType.type(exceptionClass));
         return this;
     }
 
@@ -100,7 +100,7 @@ public class MethodDefinition
 
     public LocalVariableDefinition addLocalVariable(String name, Class<?> type)
     {
-        return addLocalVariable(name, type(type));
+        return addLocalVariable(name, ParameterizedType.type(type));
     }
 
     public LocalVariableDefinition addLocalVariable(String name, ParameterizedType type)
@@ -121,7 +121,7 @@ public class MethodDefinition
 
     public LocalVariableDefinition addStringLocalVariable(String name, String value)
     {
-        LocalVariableDefinition variable = addLocalVariable(name, type(String.class));
+        LocalVariableDefinition variable = addLocalVariable(name, ParameterizedType.type(String.class));
         if (value == null) {
             loadNull();
         }
@@ -134,7 +134,7 @@ public class MethodDefinition
 
     public LocalVariableDefinition addIntLocalVariable(String name, int value)
     {
-        LocalVariableDefinition variable = addLocalVariable(name, type(int.class));
+        LocalVariableDefinition variable = addLocalVariable(name, ParameterizedType.type(int.class));
         loadConstant(value);
         storeVariable(variable);
         return variable;
@@ -197,7 +197,7 @@ public class MethodDefinition
         methodNode.desc = methodDescription(returnType, parameters);
 
         // add generic signature if return type or any parameter is generic
-        if (returnType.isGeneric() || any(parameters, isGenericType())) {
+        if (returnType.isGeneric() || any(parameters, ParameterizedType.isGenericType())) {
             methodNode.signature = genericMethodSignature(returnType, parameters);
         }
 
@@ -216,7 +216,7 @@ public class MethodDefinition
 
     public static String methodDescription(Class<?> returnType, List<Class<?>> parameterTypes)
     {
-        return methodDescription(type(returnType), Lists.transform(parameterTypes, toParameterizedType()));
+        return methodDescription(ParameterizedType.type(returnType), Lists.transform(parameterTypes, ParameterizedType.toParameterizedType()));
     }
 
     public static String methodDescription(ParameterizedType returnType, ParameterizedType... parameterTypes)
@@ -228,7 +228,7 @@ public class MethodDefinition
     {
         StringBuilder sb = new StringBuilder();
         sb.append("(");
-        Joiner.on("").appendTo(sb, transform(parameterTypes, getParameterType()));
+        Joiner.on("").appendTo(sb, transform(parameterTypes, ParameterizedType.getParameterType()));
         sb.append(")");
         sb.append(returnType.getType());
         return sb.toString();
@@ -276,7 +276,7 @@ public class MethodDefinition
 
     public MethodDefinition invokeConstructor(Class<?> type, Class<?>... parameterTypes)
     {
-        invokeConstructor(type(type), Lists.transform(ImmutableList.copyOf(parameterTypes), toParameterizedType()));
+        invokeConstructor(ParameterizedType.type(type), Lists.transform(ImmutableList.copyOf(parameterTypes), ParameterizedType.toParameterizedType()));
         return this;
     }
 
@@ -288,7 +288,7 @@ public class MethodDefinition
 
     public MethodDefinition invokeConstructor(ParameterizedType type, List<ParameterizedType> parameterTypes)
     {
-        invokeSpecial(type, "<init>", type(void.class), parameterTypes);
+        invokeSpecial(type, "<init>", ParameterizedType.type(void.class), parameterTypes);
         return this;
     }
 
@@ -300,7 +300,7 @@ public class MethodDefinition
 
     public MethodDefinition invokeVirtual(Class<?> type, String name, Class<?> returnType, Class<?>... parameterTypes)
     {
-        this.instructionList.add(new MethodInsnNode(INVOKEVIRTUAL, type(type).getClassName(), name, methodDescription(returnType, parameterTypes)));
+        this.instructionList.add(new MethodInsnNode(INVOKEVIRTUAL, ParameterizedType.type(type).getClassName(), name, methodDescription(returnType, parameterTypes)));
         return this;
     }
 
@@ -324,7 +324,7 @@ public class MethodDefinition
 
     public MethodDefinition newObject(Class<?> type)
     {
-        this.instructionList.add(new TypeInsnNode(NEW, type(type).getClassName()));
+        this.instructionList.add(new TypeInsnNode(NEW, ParameterizedType.type(type).getClassName()));
         return this;
     }
 
@@ -342,7 +342,7 @@ public class MethodDefinition
 
     public MethodDefinition getField(Class<?> target, FieldDefinition field)
     {
-        getField(type(target), field.getName(), field.getType());
+        getField(ParameterizedType.type(target), field.getName(), field.getType());
         return this;
     }
 
@@ -354,7 +354,7 @@ public class MethodDefinition
 
     public MethodDefinition getField(Class<?> target, String fieldName, Class<?> fieldType)
     {
-        getField(type(target), fieldName, type(fieldType));
+        getField(ParameterizedType.type(target), fieldName, ParameterizedType.type(fieldType));
         return this;
     }
 
@@ -380,13 +380,13 @@ public class MethodDefinition
 
     public MethodDefinition putField(Class<?> target, FieldDefinition field)
     {
-        this.putField(type(target), field);
+        this.putField(ParameterizedType.type(target), field);
         return this;
     }
 
     public MethodDefinition putField(Class<?> target, String fieldName, Class<?> fieldType)
     {
-        this.putField(type(target), fieldName, type(fieldType));
+        this.putField(ParameterizedType.type(target), fieldName, ParameterizedType.type(fieldType));
         return this;
     }
 

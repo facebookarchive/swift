@@ -3,6 +3,11 @@
  */
 package com.facebook.miffed.compiler;
 
+import com.facebook.miffed.compiler.byteCode.CaseStatement;
+import com.facebook.miffed.compiler.byteCode.ClassDefinition;
+import com.facebook.miffed.compiler.byteCode.FieldDefinition;
+import com.facebook.miffed.compiler.byteCode.MethodDefinition;
+import com.facebook.miffed.compiler.byteCode.ParameterizedType;
 import com.facebook.miffed.metadata.ThriftCatalog;
 import com.facebook.miffed.metadata.ThriftFieldMetadata;
 import com.facebook.miffed.metadata.ThriftStructMetadata;
@@ -16,16 +21,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.facebook.miffed.compiler.Access.BRIDGE;
-import static com.facebook.miffed.compiler.Access.FINAL;
-import static com.facebook.miffed.compiler.Access.PUBLIC;
-import static com.facebook.miffed.compiler.Access.STATIC;
-import static com.facebook.miffed.compiler.Access.SUPER;
-import static com.facebook.miffed.compiler.Access.SYNTHETIC;
-import static com.facebook.miffed.compiler.Access.a;
-import static com.facebook.miffed.compiler.CaseStatement.caseStatement;
-import static com.facebook.miffed.compiler.NamedParameterDefinition.arg;
-import static com.facebook.miffed.compiler.ParameterizedType.type;
+import static com.facebook.miffed.compiler.byteCode.Access.BRIDGE;
+import static com.facebook.miffed.compiler.byteCode.Access.FINAL;
+import static com.facebook.miffed.compiler.byteCode.Access.PUBLIC;
+import static com.facebook.miffed.compiler.byteCode.Access.STATIC;
+import static com.facebook.miffed.compiler.byteCode.Access.SUPER;
+import static com.facebook.miffed.compiler.byteCode.Access.SYNTHETIC;
+import static com.facebook.miffed.compiler.byteCode.Access.a;
+import static com.facebook.miffed.compiler.byteCode.CaseStatement.caseStatement;
+import static com.facebook.miffed.compiler.byteCode.NamedParameterDefinition.arg;
+import static com.facebook.miffed.compiler.byteCode.ParameterizedType.type;
 
 public class ThriftCodecCompiler
 {

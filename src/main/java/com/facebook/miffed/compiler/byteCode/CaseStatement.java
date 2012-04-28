@@ -1,7 +1,7 @@
 /*
  * Copyright 2004-present Facebook. All Rights Reserved.
  */
-package com.facebook.miffed.compiler;
+package com.facebook.miffed.compiler.byteCode;
 
 public class CaseStatement
 {

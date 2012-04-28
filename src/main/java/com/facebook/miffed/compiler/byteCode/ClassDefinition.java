@@ -1,7 +1,7 @@
 /*
  * Copyright 2004-present Facebook. All Rights Reserved.
  */
-package com.facebook.miffed.compiler;
+package com.facebook.miffed.compiler.byteCode;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -11,8 +11,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
-import static com.facebook.miffed.compiler.Access.toAccessModifier;
-import static com.facebook.miffed.compiler.ParameterizedType.isGenericType;
+import static com.facebook.miffed.compiler.byteCode.Access.toAccessModifier;
 import static com.google.common.collect.Iterables.any;
 import static com.google.common.collect.Iterables.concat;
 import static org.objectweb.asm.Opcodes.V1_6;
@@ -49,7 +48,7 @@ public class ClassDefinition
         }
 
         // add generic signature if super class or any interface is generic
-        if (superClass.isGeneric() || any(interfaces, isGenericType())) {
+        if (superClass.isGeneric() || any(interfaces, ParameterizedType.isGenericType())) {
             classNode.signature = genericClassSignature(superClass, interfaces);
         }
 

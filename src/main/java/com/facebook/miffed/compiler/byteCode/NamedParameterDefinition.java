@@ -1,24 +1,24 @@
 /*
  * Copyright 2004-present Facebook. All Rights Reserved.
  */
-package com.facebook.miffed.compiler;
+package com.facebook.miffed.compiler.byteCode;
 
 import com.google.common.base.Function;
 
 import javax.annotation.Nullable;
 
-import static com.facebook.miffed.compiler.ParameterizedType.type;
+import static com.facebook.miffed.compiler.byteCode.ParameterizedType.type;
 
 public class NamedParameterDefinition
 {
     public static NamedParameterDefinition arg(Class<?> type)
     {
-        return new NamedParameterDefinition(null, type(type));
+        return new NamedParameterDefinition(null, ParameterizedType.type(type));
     }
 
     public static NamedParameterDefinition arg(String name, Class<?> type)
     {
-        return new NamedParameterDefinition(name, type(type));
+        return new NamedParameterDefinition(name, ParameterizedType.type(type));
     }
 
     public static NamedParameterDefinition arg(ParameterizedType type)
