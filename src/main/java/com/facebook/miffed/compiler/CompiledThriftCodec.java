@@ -33,7 +33,7 @@ public class CompiledThriftCodec implements ThriftCodec
 
     public CompiledThriftCodec(ThriftCatalog catalog, ThriftTypeCodec<?>... codecs)
     {
-        this(catalog, new DynamicClassLoader());
+        this(catalog, new DynamicClassLoader(), codecs);
     }
 
     public CompiledThriftCodec(ThriftCatalog catalog, DynamicClassLoader classLoader, ThriftTypeCodec<?>... codecs)
