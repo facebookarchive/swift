@@ -7,9 +7,7 @@ import com.google.common.base.Throwables;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.util.CheckClassAdapter;
 
 import java.io.PrintWriter;
@@ -42,7 +40,7 @@ public class BonkFieldThriftTypeCodecDSL implements Opcodes
     public <T> ThriftTypeCodec<T> genClass(Class<T> structClass)
     {
         String className = PACKAGE + "/" + p(structClass) + "$" + counter.incrementAndGet();
-        byte[] byteCode = dump(structClass, className);
+        byte[] byteCode = dump(type(structClass), type(className));
 
         if (debug) {
             ClassReader reader = new ClassReader(byteCode);
@@ -58,24 +56,24 @@ public class BonkFieldThriftTypeCodecDSL implements Opcodes
     }
 
 
-    public static byte[] dump(Class<?> structClass, String className)
+    public static byte[] dump(ParameterizedType structType, ParameterizedType codecType)
     {
         ClassDefinition classDefinition = new ClassDefinition(
                 a(PUBLIC, SUPER),
-                className,
+                codecType.getClassName(),
                 type(Object.class),
-                type(ThriftTypeCodec.class, structClass));
+                type(ThriftTypeCodec.class, structType));
 
         // public static final BonkFieldThriftTypeCodec INSTANCE = new BonkFieldThriftTypeCodec();
         {
-            FieldDefinition instanceField = new FieldDefinition(a(PUBLIC, STATIC, FINAL), "INSTANCE", type(className));
+            FieldDefinition instanceField = new FieldDefinition(a(PUBLIC, STATIC, FINAL), "INSTANCE", codecType);
             classDefinition.addField(instanceField);
 
             classDefinition.addMethod(new MethodDefinition(a(STATIC), "<clinit>", type(void.class))
-                    .newObject(type(className))
+                    .newObject(codecType)
                     .dup()
-                    .invokeConstructor(type(className))
-                    .putStaticField(type(className), instanceField)
+                    .invokeConstructor(codecType)
+                    .putStaticField(codecType, instanceField)
                     .ret()
             );
         }
@@ -90,19 +88,19 @@ public class BonkFieldThriftTypeCodecDSL implements Opcodes
 
         // public Class<BonkField> getType()
         {
-            classDefinition.addMethod(new MethodDefinition(a(PUBLIC), "getType", type(Class.class, structClass))
-                    .loadConstant(structClass)
+            classDefinition.addMethod(new MethodDefinition(a(PUBLIC), "getType", type(Class.class, structType))
+                    .loadConstant(structType)
                     .retObject());
         }
 
         // public BonkField read(TProtocolReader protocol) throws Exception
         {
-            MethodDefinition read = new MethodDefinition(a(PUBLIC), "read", type(structClass), arg("protocol", TProtocolReader.class))
+            MethodDefinition read = new MethodDefinition(a(PUBLIC), "read", structType, arg("protocol", TProtocolReader.class))
                     .addException(Exception.class);
 
             // declare and init local variables here
-            read.addStringLocalVariable("message", "bar");
-            read.addIntLocalVariable("type", 22);
+            read.addStringLocalVariable("message", null);
+            read.addIntLocalVariable("type", 0);
 
             // protocol.readStructBegin();
             read.loadVariable("protocol").invokeVirtual(TProtocolReader.class, "readStructBegin", void.class);
@@ -140,19 +138,19 @@ public class BonkFieldThriftTypeCodecDSL implements Opcodes
             read.loadVariable("protocol").invokeVirtual(TProtocolReader.class, "readStructEnd", void.class);
 
             // BonkField bonkField = new BonkField();
-            read.addLocalVariable("bonkField", structClass);
-            read.newObject(structClass)
+            read.addLocalVariable("bonkField", structType);
+            read.newObject(structType)
                     .dup()
-                    .invokeConstructor(structClass)
+                    .invokeConstructor(structType)
                     .storeVariable("bonkField");
 
             read.loadVariable("bonkField")
                     .loadVariable("message")
-                    .putField(structClass, "message", String.class);
+                    .putField(structType, "message", type(String.class));
 
             read.loadVariable("bonkField")
                     .loadVariable("type")
-                    .putField(structClass, "type", int.class);
+                    .putField(structType, "type", type(int.class));
 
             read.loadVariable("bonkField")
                     .retObject();
@@ -162,7 +160,7 @@ public class BonkFieldThriftTypeCodecDSL implements Opcodes
 
         // public void write(BonkField struct, TProtocolWriter protocol) throws Exception
         {
-            MethodDefinition write = new MethodDefinition(a(PUBLIC), "write", null, arg("struct", structClass), arg("protocol", TProtocolWriter.class));
+            MethodDefinition write = new MethodDefinition(a(PUBLIC), "write", null, arg("struct", structType), arg("protocol", TProtocolWriter.class));
             classDefinition.addMethod(write);
 
             write.loadVariable("protocol")
@@ -173,14 +171,14 @@ public class BonkFieldThriftTypeCodecDSL implements Opcodes
                     .loadConstant("message")
                     .loadConstant(1)
                     .loadVariable("struct")
-                    .getField(structClass, "message", String.class)
+                    .getField(structType, "message", type(String.class))
                     .invokeVirtual(TProtocolWriter.class, "writeString", void.class, String.class, short.class, String.class);
 
             write.loadVariable("protocol")
                     .loadConstant("type")
                     .loadConstant(2)
                     .loadVariable("struct")
-                    .getField(structClass, "type", int.class)
+                    .getField(structType, "type", type(int.class))
                     .invokeVirtual(TProtocolWriter.class, "writeI32", void.class, String.class, short.class, int.class);
 
             write.loadVariable("protocol")
@@ -195,7 +193,7 @@ public class BonkFieldThriftTypeCodecDSL implements Opcodes
                     .addException(Exception.class)
                     .loadThis()
                     .loadVariable("protocol")
-                    .invokeVirtual(type(className), "read", type(structClass), type(TProtocolReader.class))
+                    .invokeVirtual(codecType, "read", structType, type(TProtocolReader.class))
                     .retObject()
             );
         }
@@ -205,9 +203,9 @@ public class BonkFieldThriftTypeCodecDSL implements Opcodes
             classDefinition.addMethod(new MethodDefinition(a(PUBLIC, BRIDGE, SYNTHETIC), "write", null, arg("struct", Object.class), arg("protocol", TProtocolWriter.class))
                     .addException(Exception.class)
                     .loadThis()
-                    .loadVariable("struct", type(structClass))
+                    .loadVariable("struct", structType)
                     .loadVariable("protocol")
-                    .invokeVirtual(type(className), "write", type(void.class), type(structClass), type(TProtocolWriter.class))
+                    .invokeVirtual(codecType, "write", type(void.class), structType, type(TProtocolWriter.class))
                     .ret()
             );
         }
