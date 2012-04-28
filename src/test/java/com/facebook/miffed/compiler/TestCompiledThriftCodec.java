@@ -52,6 +52,20 @@ public class TestCompiledThriftCodec
         testMetadataBuild(codec, bonkField);
     }
 
+    @Test
+    public void testFieldsAutoGen()
+            throws Exception
+    {
+        CompiledThriftCodec compiledThriftCodec = new CompiledThriftCodec(new ThriftCatalog());
+        ThriftTypeCodec<BonkField> codec = compiledThriftCodec.getTypeCodec(BonkField.class);
+
+        BonkField bonkField = new BonkField();
+        bonkField.message = "message";
+        bonkField.type = 42;
+
+        testMetadataBuild(codec, bonkField);
+    }
+
     private <T> void testMetadataBuild(ThriftTypeCodec<T> codec, T structInstance)
             throws Exception
     {

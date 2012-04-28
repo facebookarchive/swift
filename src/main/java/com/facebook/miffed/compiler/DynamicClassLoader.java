@@ -7,6 +7,7 @@ public class DynamicClassLoader extends ClassLoader
 {
     public DynamicClassLoader()
     {
+        this(getDefaultClassLoader());
     }
 
     public DynamicClassLoader(ClassLoader parent)
@@ -18,5 +19,18 @@ public class DynamicClassLoader extends ClassLoader
             throws ClassFormatError
     {
         return defineClass(name, byteCode, 0, byteCode.length);
+    }
+
+    private static ClassLoader getDefaultClassLoader()
+    {
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        if (classLoader != null) {
+            return classLoader;
+        }
+        classLoader = ThriftTypeCodec.class.getClassLoader();
+        if (classLoader != null) {
+            return classLoader;
+        }
+        return getSystemClassLoader();
     }
 }

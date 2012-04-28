@@ -27,13 +27,20 @@ import static com.google.common.base.Preconditions.checkState;
 public class CompiledThriftCodec implements ThriftCodec
 {
     private final ThriftCatalog catalog;
+    private final DynamicClassLoader classLoader;
     private final LoadingCache<Class<?>, ThriftTypeCodec<?>> typeCodecs;
     private final ThriftCodecCompiler compiler;
 
-    public CompiledThriftCodec(final ThriftCatalog catalog, ThriftTypeCodec<?>... codecs)
+    public CompiledThriftCodec(ThriftCatalog catalog, ThriftTypeCodec<?>... codecs)
+    {
+        this(catalog, new DynamicClassLoader());
+    }
+
+    public CompiledThriftCodec(ThriftCatalog catalog, DynamicClassLoader classLoader, ThriftTypeCodec<?>... codecs)
     {
         this.catalog = catalog;
-        this.compiler = new ThriftCodecCompiler(catalog);
+        this.classLoader = classLoader;
+        this.compiler = new ThriftCodecCompiler(catalog, classLoader);
 
         typeCodecs = CacheBuilder.newBuilder().build(
                 new CacheLoader<Class<?>, ThriftTypeCodec<?>>()
@@ -237,7 +244,7 @@ public class CompiledThriftCodec implements ThriftCodec
         }
     }
 
-    private <T> ThriftTypeCodec<T> getTypeCodec(Class<T> type)
+    public <T> ThriftTypeCodec<T> getTypeCodec(Class<T> type)
             throws ExecutionException
     {
         return (ThriftTypeCodec<T>) typeCodecs.get(type);

@@ -170,13 +170,19 @@ public class MethodDefinition
 
     public MethodDefinition switchStatement(String defaultCase, CaseStatement... cases)
     {
+        switchStatement(defaultCase, ImmutableList.copyOf(cases));
+        return this;
+    }
+
+    public MethodDefinition switchStatement(String defaultCase, List<CaseStatement> cases)
+    {
         LabelNode defaultLabel = getLabel(defaultCase);
 
-        int[] keys = new int[cases.length];
-        LabelNode[] labels = new LabelNode[cases.length];
-        for (int i = 0; i < cases.length; i++) {
-            keys[i] = cases[i].getKey();
-            labels[i] = getLabel(cases[i].getLabel());
+        int[] keys = new int[cases.size()];
+        LabelNode[] labels = new LabelNode[cases.size()];
+        for (int i = 0; i < cases.size(); i++) {
+            keys[i] = cases.get(i).getKey();
+            labels[i] = getLabel(cases.get(i).getLabel());
         }
 
         instructionList.add(new LookupSwitchInsnNode(defaultLabel, keys, labels));
