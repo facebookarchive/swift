@@ -58,11 +58,10 @@ public class BonkFieldThriftTypeCodecDump implements Opcodes
         MethodVisitor mv;
 
         // public class BonkFieldThriftTypeCodec implements ThriftTypeCodec<BonkField>
-        String signature = ci(Object.class) + "L" + p(ThriftTypeCodec.class) + "<" + ci(structClass) + ">;";
         cw.visit(V1_7,
                 ACC_PUBLIC + ACC_SUPER,
                 className,
-                signature,
+                ci(Object.class) + "L" + p(ThriftTypeCodec.class) + "<" + ci(structClass) + ">;",
                 p(Object.class),
                 new String[]{p(ThriftTypeCodec.class)});
 
@@ -92,7 +91,12 @@ public class BonkFieldThriftTypeCodecDump implements Opcodes
 
         // default constructor
         {
-            mv = cw.visitMethod(ACC_PUBLIC, "<init>", sig(void.class), null, null);
+            mv = cw.visitMethod(ACC_PUBLIC,
+                    "<init>",
+                    sig(void.class),
+                    null,
+                    null);
+
             mv.visitCode();
             mv.visitVarInsn(ALOAD, 0);
             mv.visitMethodInsn(INVOKESPECIAL, p(Object.class), "<init>", sig(void.class));
@@ -103,7 +107,11 @@ public class BonkFieldThriftTypeCodecDump implements Opcodes
 
         // public Class<BonkField> getType()
         {
-            mv = cw.visitMethod(ACC_PUBLIC, "getType", sig(Class.class), "()L" + p(Class.class) + "<" + ci(structClass) + ">;", null);
+            mv = cw.visitMethod(ACC_PUBLIC,
+                    "getType",
+                    sig(Class.class),
+                    "()L" + p(Class.class) + "<" + ci(structClass) + ">;",
+                    null);
             mv.visitCode();
             mv.visitLdcInsn(Type.getType(ci(structClass)));
             mv.visitInsn(ARETURN);

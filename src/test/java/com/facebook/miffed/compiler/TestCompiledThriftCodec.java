@@ -39,6 +39,19 @@ public class TestCompiledThriftCodec
         testMetadataBuild(codec, bonkField);
     }
 
+    @Test
+    public void testFieldsManualDSL()
+            throws Exception
+    {
+        ThriftTypeCodec<BonkField> codec = new BonkFieldThriftTypeCodecDSL(new DynamicClassLoader()).genClass(BonkField.class);
+
+        BonkField bonkField = new BonkField();
+        bonkField.message = "message";
+        bonkField.type = 42;
+
+        testMetadataBuild(codec, bonkField);
+    }
+
     private <T> void testMetadataBuild(ThriftTypeCodec<T> codec, T structInstance)
             throws Exception
     {
