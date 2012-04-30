@@ -3,9 +3,8 @@
  */
 package com.facebook.swift.metadata;
 
-public interface ThriftExtraction
-{
-    short getId();
+public interface ThriftExtraction {
+  short getId();
 
-    String getName();
+  String getName();
 }

@@ -13,63 +13,56 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
-public class TestCompiledThriftCodec
-{
-    @Test
-    public void testFieldsManual()
-            throws Exception
-    {
-        BonkField bonkField = new BonkField();
-        bonkField.message = "message";
-        bonkField.type = 42;
+public class TestCompiledThriftCodec {
+  @Test
+  public void testFieldsManual()
+    throws Exception {
+    BonkField bonkField = new BonkField();
+    bonkField.message = "message";
+    bonkField.type = 42;
 
-        testMetadataBuild(BonkFieldThriftTypeCodec.INSTANCE, bonkField);
-    }
+    testMetadataBuild(BonkFieldThriftTypeCodec.INSTANCE, bonkField);
+  }
 
-    @Test
-    public void testFieldsManualDSL()
-            throws Exception
-    {
-        ThriftTypeCodec<BonkField> codec = new BonkFieldThriftTypeCodecDSL(new DynamicClassLoader()).genClass(BonkField.class);
+  @Test
+  public void testFieldsManualDSL() throws Exception {
+    ThriftTypeCodec<BonkField> codec = new BonkFieldThriftTypeCodecDSL(new DynamicClassLoader())
+      .genClass( BonkField.class);
 
-        BonkField bonkField = new BonkField();
-        bonkField.message = "message";
-        bonkField.type = 42;
+    BonkField bonkField = new BonkField();
+    bonkField.message = "message";
+    bonkField.type = 42;
 
-        testMetadataBuild(codec, bonkField);
-    }
+    testMetadataBuild(codec, bonkField);
+  }
 
-    @Test
-    public void testFieldsAutoGen()
-            throws Exception
-    {
-        CompiledThriftCodec compiledThriftCodec = new CompiledThriftCodec(new ThriftCatalog());
-        ThriftTypeCodec<BonkField> codec = compiledThriftCodec.getTypeCodec(BonkField.class);
+  @Test
+  public void testFieldsAutoGen() throws Exception {
+    CompiledThriftCodec compiledThriftCodec = new CompiledThriftCodec(new ThriftCatalog());
+    ThriftTypeCodec<BonkField> codec = compiledThriftCodec.getTypeCodec(BonkField.class);
 
-        BonkField bonkField = new BonkField();
-        bonkField.message = "message";
-        bonkField.type = 42;
+    BonkField bonkField = new BonkField();
+    bonkField.message = "message";
+    bonkField.type = 42;
 
-        testMetadataBuild(codec, bonkField);
-    }
+    testMetadataBuild(codec, bonkField);
+  }
 
-    private <T> void testMetadataBuild(ThriftTypeCodec<T> codec, T structInstance)
-            throws Exception
-    {
-        Class<T> structClass = (Class<T>) structInstance.getClass();
+  private <T> void testMetadataBuild(ThriftTypeCodec<T> codec, T structInstance) throws Exception {
+    Class<T> structClass = (Class<T>) structInstance.getClass();
 
-        ThriftCatalog catalog = new ThriftCatalog();
+    ThriftCatalog catalog = new ThriftCatalog();
 
-        ThriftStructMetadata<T> metadata = catalog.getThriftStructMetadata(structClass);
-        assertNotNull(metadata);
+    ThriftStructMetadata<T> metadata = catalog.getThriftStructMetadata(structClass);
+    assertNotNull(metadata);
 
 
-        TMemoryBuffer transport = new TMemoryBuffer(10 * 1024);
-        TCompactProtocol protocol = new TCompactProtocol(transport);
-        codec.write(structInstance, new TProtocolWriter(protocol));
+    TMemoryBuffer transport = new TMemoryBuffer(10 * 1024);
+    TCompactProtocol protocol = new TCompactProtocol(transport);
+    codec.write(structInstance, new TProtocolWriter(protocol));
 
-        T copy = codec.read(new TProtocolReader(protocol));
-        assertNotNull(copy);
-        assertEquals(copy, structInstance);
-    }
+    T copy = codec.read(new TProtocolReader(protocol));
+    assertNotNull(copy);
+    assertEquals(copy, structInstance);
+  }
 }

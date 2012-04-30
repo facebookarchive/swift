@@ -3,40 +3,34 @@
  */
 package com.facebook.swift.compiler.byteCode;
 
-public class CaseStatement
-{
-    public static CaseStatement caseStatement(int key, String label)
-    {
-        return new CaseStatement(label, key);
-    }
+public class CaseStatement {
+  public static CaseStatement caseStatement(int key, String label) {
+    return new CaseStatement(label, key);
+  }
 
-    private final int key;
-    private final String label;
+  private final int key;
+  private final String label;
 
-    CaseStatement(String label, int key)
-    {
-        this.label = label;
-        this.key = key;
-    }
+  CaseStatement(String label, int key) {
+    this.label = label;
+    this.key = key;
+  }
 
-    public String getLabel()
-    {
-        return label;
-    }
+  public String getLabel() {
+    return label;
+  }
 
-    public int getKey()
-    {
-        return key;
-    }
+  public int getKey() {
+    return key;
+  }
 
-    @Override
-    public String toString()
-    {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("CaseStatement");
-        sb.append("{label='").append(label).append('\'');
-        sb.append(", value=").append(key);
-        sb.append('}');
-        return sb.toString();
-    }
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder();
+    sb.append("CaseStatement");
+    sb.append("{label='").append(label).append('\'');
+    sb.append(", value=").append(key);
+    sb.append('}');
+    return sb.toString();
+  }
 }

@@ -8,71 +8,72 @@ import com.google.common.collect.ImmutableList;
 
 import java.util.List;
 
-public class ThriftFieldMetadata
-{
-    private final short id;
-    private final ThriftType type;
-    private final String name;
-    private final List<ThriftInjection> injections;
-    private final ThriftExtraction extraction;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-    public ThriftFieldMetadata(short id, ThriftType type, String name, List<ThriftInjection> injections, ThriftExtraction extraction)
-    {
-        Preconditions.checkArgument(id >= 0, "id is negative");
-        Preconditions.checkNotNull(id, "id is null");
-        Preconditions.checkNotNull(name, "name is null");
-        Preconditions.checkNotNull(injections, "injections is null");
-        Preconditions.checkArgument(!injections.isEmpty() || extraction != null, "A thrift field must have an injection or extraction point");
+public class ThriftFieldMetadata {
+  private final short id;
+  private final ThriftType type;
+  private final String name;
+  private final List<ThriftInjection> injections;
+  private final ThriftExtraction extraction;
 
-        this.id = id;
-        this.type = type;
-        this.name = name;
-        this.injections = ImmutableList.copyOf(injections);
-        this.extraction = extraction;
-    }
+  public ThriftFieldMetadata(
+    short id,
+    ThriftType type,
+    String name,
+    List<ThriftInjection> injections,
+    ThriftExtraction extraction
+  ) {
+    checkArgument(id >= 0, "id is negative");
+    checkNotNull(type, "type is null");
+    checkNotNull(name, "name is null");
+    checkNotNull(injections, "injections is null");
+    checkArgument(
+      !injections.isEmpty() || extraction != null,
+      "A thrift field must have an injection or extraction point"
+    );
 
-    public short getId()
-    {
-        return id;
-    }
+    this.id = id;
+    this.type = type;
+    this.name = name;
+    this.injections = ImmutableList.copyOf(injections);
+    this.extraction = extraction;
+  }
 
-    public ThriftType getType()
-    {
-        return type;
-    }
+  public short getId() {
+    return id;
+  }
 
-    public String getName()
-    {
-        return name;
-    }
+  public ThriftType getType() {
+    return type;
+  }
 
-    public boolean isReadable()
-    {
-        return extraction != null;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public boolean isWritable()
-    {
-        return !injections.isEmpty();
-    }
+  public boolean isReadable() {
+    return extraction != null;
+  }
 
-    public boolean isReadOnly()
-    {
-        return injections.isEmpty();
-    }
+  public boolean isWritable() {
+    return !injections.isEmpty();
+  }
 
-    public boolean isWriteOnly()
-    {
-        return extraction == null;
-    }
+  public boolean isReadOnly() {
+    return injections.isEmpty();
+  }
 
-    public List<ThriftInjection> getInjections()
-    {
-        return injections;
-    }
+  public boolean isWriteOnly() {
+    return extraction == null;
+  }
 
-    public ThriftExtraction getExtraction()
-    {
-        return extraction;
-    }
+  public List<ThriftInjection> getInjections() {
+    return injections;
+  }
+
+  public ThriftExtraction getExtraction() {
+    return extraction;
+  }
 }

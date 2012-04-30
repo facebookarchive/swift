@@ -3,8 +3,8 @@
  */
 package com.facebook.swift.metadata;
 
-public interface ThriftInjection
-{
-    short getId();
-    String getName();
+public interface ThriftInjection {
+  short getId();
+
+  String getName();
 }

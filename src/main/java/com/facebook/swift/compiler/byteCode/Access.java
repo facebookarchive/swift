@@ -26,51 +26,46 @@ import static org.objectweb.asm.Opcodes.ACC_TRANSIENT;
 import static org.objectweb.asm.Opcodes.ACC_VARARGS;
 import static org.objectweb.asm.Opcodes.ACC_VOLATILE;
 
-public enum Access
-{
-    PUBLIC(ACC_PUBLIC),
-    PRIVATE(ACC_PRIVATE),
-    PROTECTED(ACC_PROTECTED),
-    STATIC(ACC_STATIC),
-    FINAL(ACC_FINAL),
-    SUPER(ACC_SUPER),
-    SYNCHRONIZED(ACC_SYNCHRONIZED),
-    VOLATILE(ACC_VOLATILE),
-    BRIDGE(ACC_BRIDGE),
-    VARARGS(ACC_VARARGS),
-    TRANSIENT(ACC_TRANSIENT),
-    NATIVE(ACC_NATIVE),
-    INTERFACE(ACC_INTERFACE),
-    ABSTRACT(ACC_ABSTRACT),
-    STRICT(ACC_STRICT),
-    SYNTHETIC(ACC_SYNTHETIC),
-    ANNOTATION(ACC_ANNOTATION),
-    ENUM(ACC_ENUM);
+public enum Access {
+  PUBLIC(ACC_PUBLIC),
+  PRIVATE(ACC_PRIVATE),
+  PROTECTED(ACC_PROTECTED),
+  STATIC(ACC_STATIC),
+  FINAL(ACC_FINAL),
+  SUPER(ACC_SUPER),
+  SYNCHRONIZED(ACC_SYNCHRONIZED),
+  VOLATILE(ACC_VOLATILE),
+  BRIDGE(ACC_BRIDGE),
+  VARARGS(ACC_VARARGS),
+  TRANSIENT(ACC_TRANSIENT),
+  NATIVE(ACC_NATIVE),
+  INTERFACE(ACC_INTERFACE),
+  ABSTRACT(ACC_ABSTRACT),
+  STRICT(ACC_STRICT),
+  SYNTHETIC(ACC_SYNTHETIC),
+  ANNOTATION(ACC_ANNOTATION),
+  ENUM(ACC_ENUM);
 
-    private int modifier;
+  private int modifier;
 
-    Access(int modifier)
-    {
-        this.modifier = modifier;
+  Access(int modifier) {
+    this.modifier = modifier;
+  }
+
+  public int getModifier() {
+    return modifier;
+  }
+
+  public static EnumSet<Access> a(Access... access) {
+    return EnumSet.copyOf(ImmutableList.copyOf(access));
+  }
+
+  public static int toAccessModifier(Iterable<Access> accesses) {
+    int modifier = 0;
+    for (Access access : accesses) {
+      modifier += access.getModifier();
     }
-
-    public int getModifier()
-    {
-        return modifier;
-    }
-
-    public static EnumSet<Access> a(Access... access)
-    {
-        return EnumSet.copyOf(ImmutableList.copyOf(access));
-    }
-
-    public static int toAccessModifier(Iterable<Access> accesses)
-    {
-        int modifier = 0;
-        for (Access access : accesses) {
-            modifier += access.getModifier();
-        }
-        return modifier;
-    }
+    return modifier;
+  }
 }
 

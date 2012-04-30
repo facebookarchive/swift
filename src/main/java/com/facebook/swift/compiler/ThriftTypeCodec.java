@@ -3,13 +3,12 @@
  */
 package com.facebook.swift.compiler;
 
-public interface ThriftTypeCodec<T>
-{
-    public Class<T> getType();
+public interface ThriftTypeCodec<T> {
+  public Class<T> getType();
 
-    public T read(TProtocolReader protocol)
-            throws Exception;
+  public T read(TProtocolReader protocol)
+    throws Exception;
 
-    public void write(T value, TProtocolWriter protocol)
-            throws Exception;
+  public void write(T value, TProtocolWriter protocol)
+    throws Exception;
 }

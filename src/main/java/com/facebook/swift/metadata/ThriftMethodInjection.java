@@ -9,38 +9,35 @@ import com.google.common.base.Preconditions;
 import java.lang.reflect.Method;
 import java.util.List;
 
-public class ThriftMethodInjection
-{
-    private final Method method;
-    private final List<ThriftParameterInjection> parameters;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-    public ThriftMethodInjection(Method method, List<ThriftParameterInjection> parameters)
-    {
-        Preconditions.checkNotNull(method, "method is null");
-        Preconditions.checkNotNull(parameters, "parameters is null");
+public class ThriftMethodInjection {
+  private final Method method;
+  private final List<ThriftParameterInjection> parameters;
 
-        this.method = method;
-        this.parameters = parameters;
-    }
+  public ThriftMethodInjection(Method method, List<ThriftParameterInjection> parameters) {
+    checkNotNull(method, "method is null");
+    checkNotNull(parameters, "parameters is null");
 
-    public Method getMethod()
-    {
-        return method;
-    }
+    this.method = method;
+    this.parameters = parameters;
+  }
 
-    public List<ThriftParameterInjection> getParameters()
-    {
-        return parameters;
-    }
+  public Method getMethod() {
+    return method;
+  }
 
-    @Override
-    public String toString()
-    {
-        final StringBuilder sb = new StringBuilder();
-        sb.append(method.getName());
-        sb.append('(');
-        Joiner.on(", ").appendTo(sb, parameters);
-        sb.append(')');
-        return sb.toString();
-    }
+  public List<ThriftParameterInjection> getParameters() {
+    return parameters;
+  }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder();
+    sb.append(method.getName());
+    sb.append('(');
+    Joiner.on(", ").appendTo(sb, parameters);
+    sb.append(')');
+    return sb.toString();
+  }
 }

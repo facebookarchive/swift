@@ -5,49 +5,46 @@ package com.facebook.swift.metadata;
 
 import com.google.common.base.Preconditions;
 
-public class ThriftParameterInjection implements ThriftInjection
-{
-    private final short id;
-    private final String name;
-    private final int parameterIndex;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-    public ThriftParameterInjection(short id, String name, int parameterIndex)
-    {
-        Preconditions.checkArgument(id >= 0, "fieldId is negative");
-        Preconditions.checkNotNull(name, "name is null");
-        Preconditions.checkArgument(parameterIndex >= 0, "parameterIndex is negative");
+public class ThriftParameterInjection implements ThriftInjection {
+  private final short id;
+  private final String name;
+  private final int parameterIndex;
 
-        this.id = id;
-        this.name = name;
-        this.parameterIndex = parameterIndex;
-    }
+  public ThriftParameterInjection(short id, String name, int parameterIndex) {
+    checkArgument(id >= 0, "fieldId is negative");
+    checkNotNull(name, "name is null");
+    checkArgument(parameterIndex >= 0, "parameterIndex is negative");
 
-    @Override
-    public short getId()
-    {
-        return id;
-    }
+    this.id = id;
+    this.name = name;
+    this.parameterIndex = parameterIndex;
+  }
 
-    @Override
-    public String getName()
-    {
-        return name;
-    }
+  @Override
+  public short getId() {
+    return id;
+  }
 
-    public int getParameterIndex()
-    {
-        return parameterIndex;
-    }
+  @Override
+  public String getName() {
+    return name;
+  }
 
-    @Override
-    public String toString()
-    {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("ThriftParameterInjection");
-        sb.append("{fieldId=").append(id);
-        sb.append(", name=").append(name);
-        sb.append(", index=").append(parameterIndex);
-        sb.append('}');
-        return sb.toString();
-    }
+  public int getParameterIndex() {
+    return parameterIndex;
+  }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder();
+    sb.append("ThriftParameterInjection");
+    sb.append("{fieldId=").append(id);
+    sb.append(", name=").append(name);
+    sb.append(", index=").append(parameterIndex);
+    sb.append('}');
+    return sb.toString();
+  }
 }

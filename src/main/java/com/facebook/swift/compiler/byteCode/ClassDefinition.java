@@ -16,89 +16,93 @@ import static com.google.common.collect.Iterables.any;
 import static com.google.common.collect.Iterables.concat;
 import static org.objectweb.asm.Opcodes.V1_6;
 
-public class ClassDefinition
-{
-    private final int access;
-    private final String name;
-    private final ParameterizedType superClass;
-    private final List<ParameterizedType> interfaces = new ArrayList<>();
-    private final List<FieldDefinition> fields = new ArrayList<>();
-    private final List<MethodDefinition> methods = new ArrayList<>();
+public class ClassDefinition {
+  private final int access;
+  private final String name;
+  private final ParameterizedType superClass;
+  private final List<ParameterizedType> interfaces = new ArrayList<>();
+  private final List<FieldDefinition> fields = new ArrayList<>();
+  private final List<MethodDefinition> methods = new ArrayList<>();
 
-    public ClassDefinition(EnumSet<Access> access, String name, ParameterizedType superClass, ParameterizedType... interfaces)
-    {
-        this.access = toAccessModifier(access);
-        this.name = name;
-        this.superClass = superClass;
-        this.interfaces.addAll(ImmutableList.copyOf(interfaces));
+  public ClassDefinition(
+    EnumSet<Access> access,
+    String name,
+    ParameterizedType superClass,
+    ParameterizedType... interfaces
+  ) {
+    this.access = toAccessModifier(access);
+    this.name = name;
+    this.superClass = superClass;
+    this.interfaces.addAll(ImmutableList.copyOf(interfaces));
+  }
+
+  public ClassNode getClassNode() {
+    ClassNode classNode = new ClassNode();
+    classNode.version = V1_6;
+
+    classNode.access = access;
+
+    classNode.name = name;
+
+    classNode.superName = superClass.getClassName();
+    for (ParameterizedType interfaceType : interfaces) {
+      classNode.interfaces.add(interfaceType.getClassName());
     }
 
-    public ClassNode getClassNode()
-    {
-        ClassNode classNode = new ClassNode();
-        classNode.version = V1_6;
-
-        classNode.access = access;
-
-        classNode.name = name;
-
-        classNode.superName = superClass.getClassName();
-        for (ParameterizedType interfaceType : interfaces) {
-            classNode.interfaces.add(interfaceType.getClassName());
-        }
-
-        // add generic signature if super class or any interface is generic
-        if (superClass.isGeneric() || any(interfaces, ParameterizedType.isGenericType())) {
-            classNode.signature = genericClassSignature(superClass, interfaces);
-        }
-
-        for (FieldDefinition field : fields) {
-            classNode.fields.add(field.getFieldNode());
-        }
-
-        for (MethodDefinition method : methods) {
-            classNode.methods.add(method.getMethodNode());
-        }
-
-        return classNode;
+    // add generic signature if super class or any interface is generic
+    if (superClass.isGeneric() || any(interfaces, ParameterizedType.isGenericType())) {
+      classNode.signature = genericClassSignature(superClass, interfaces);
     }
 
-    public ClassDefinition addField(EnumSet<Access> access, String name, ParameterizedType type)
-    {
-        fields.add(new FieldDefinition(access, name, type));
-        return this;
+    for (FieldDefinition field : fields) {
+      classNode.fields.add(field.getFieldNode());
     }
 
-    public ClassDefinition addField(FieldDefinition field)
-    {
-        fields.add(field);
-        return this;
+    for (MethodDefinition method : methods) {
+      classNode.methods.add(method.getMethodNode());
     }
 
-    public ClassDefinition addMethod(MethodDefinition method)
-    {
-        methods.add(method);
-        return this;
-    }
+    return classNode;
+  }
 
-    public static String genericClassSignature(ParameterizedType classType, ParameterizedType... interfaceTypes)
-    {
-        return Joiner.on("").join(concat(ImmutableList.of(classType), ImmutableList.copyOf(interfaceTypes)));
-    }
+  public ClassDefinition addField(EnumSet<Access> access, String name, ParameterizedType type) {
+    fields.add(new FieldDefinition(access, name, type));
+    return this;
+  }
 
-    public static String genericClassSignature(ParameterizedType classType, List<ParameterizedType> interfaceTypes)
-    {
-        return Joiner.on("").join(concat(ImmutableList.of(classType), interfaceTypes));
-    }
+  public ClassDefinition addField(FieldDefinition field) {
+    fields.add(field);
+    return this;
+  }
 
-    @Override
-    public String toString()
-    {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("ClassDefinition");
-        sb.append("{access=").append(access);
-        sb.append(", name='").append(name).append('\'');
-        sb.append('}');
-        return sb.toString();
-    }
+  public ClassDefinition addMethod(MethodDefinition method) {
+    methods.add(method);
+    return this;
+  }
+
+  public static String genericClassSignature(
+    ParameterizedType classType,
+    ParameterizedType... interfaceTypes
+  ) {
+    return Joiner.on("").join(
+      concat(ImmutableList.of(classType), ImmutableList.copyOf(interfaceTypes))
+    );
+  }
+
+  public static String genericClassSignature(
+    ParameterizedType classType,
+    List<ParameterizedType> interfaceTypes
+  ) {
+    return Joiner.on("").join(concat(ImmutableList.of(classType), interfaceTypes));
+  }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder();
+    sb.append("ClassDefinition");
+    sb.append("{access=").append(access);
+    sb.append(", name='").append(name).append('\'');
+    sb.append('}');
+    return sb.toString();
+  }
 }
