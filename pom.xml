@@ -5,12 +5,12 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.facebook.miffed</groupId>
-    <artifactId>miffed</artifactId>
+    <groupId>org.facebook.swift</groupId>
+    <artifactId>swift</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>miffed</name>
+    <name>swift</name>
 
     <description>Annotation based Thrift implementation</description>
 
@@ -38,11 +38,13 @@
             <artifactId>guice</artifactId>
             <version>3.0</version>
         </dependency>
+
         <dependency>
             <groupId>org.apache.thrift</groupId>
             <artifactId>libthrift</artifactId>
             <version>0.8.0</version>
         </dependency>
+
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
