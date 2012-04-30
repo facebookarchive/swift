@@ -27,19 +27,6 @@ public class TestCompiledThriftCodec
     }
 
     @Test
-    public void testFieldsManualGenerator()
-            throws Exception
-    {
-        ThriftTypeCodec<BonkField> codec = new BonkFieldThriftTypeCodecDump(new DynamicClassLoader()).genClass(BonkField.class);
-
-        BonkField bonkField = new BonkField();
-        bonkField.message = "message";
-        bonkField.type = 42;
-
-        testMetadataBuild(codec, bonkField);
-    }
-
-    @Test
     public void testFieldsManualDSL()
             throws Exception
     {

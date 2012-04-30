@@ -27,7 +27,6 @@ import static com.facebook.swift.compiler.byteCode.Access.a;
 import static com.facebook.swift.compiler.byteCode.CaseStatement.caseStatement;
 import static com.facebook.swift.compiler.byteCode.NamedParameterDefinition.arg;
 import static com.facebook.swift.compiler.byteCode.ParameterizedType.type;
-import static me.qmx.jitescript.util.CodegenUtils.p;
 
 public class BonkFieldThriftTypeCodecDSL implements Opcodes
 {
@@ -43,7 +42,7 @@ public class BonkFieldThriftTypeCodecDSL implements Opcodes
 
     public <T> ThriftTypeCodec<T> genClass(Class<T> structClass)
     {
-        String className = PACKAGE + "/" + p(structClass) + "$" + counter.incrementAndGet();
+        String className = PACKAGE + "/" + structClass.getName().replace('.', '/') + "$" + counter.incrementAndGet();
         byte[] byteCode = dump(type(structClass), type(className));
 
         if (debug) {

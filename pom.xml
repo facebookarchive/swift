@@ -52,9 +52,9 @@
         </dependency>
 
         <dependency>
-            <groupId>me.qmx.jitescript</groupId>
-            <artifactId>jitescript</artifactId>
-            <version>0.3.0-SNAPSHOT</version>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm-all</artifactId>
+            <version>4.0</version>
         </dependency>
 
         <dependency>
