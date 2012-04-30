@@ -1,0 +1,4 @@
+{
+    "project_id" : "swift",
+    "conduit_uri" : "https://phabricator.fb.com/api/"
+}
