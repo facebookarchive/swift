@@ -1,7 +1,6 @@
 /*
  * Copyright 2004-present Facebook. All Rights Reserved.
  */
-
 package com.facebook.miffed;
 
 import com.google.common.collect.ImmutableList;
@@ -35,24 +34,24 @@ public enum ThriftProtocolFieldType
     ENUM;
 
 
-    private final boolean validType;
+    private final boolean validFieldType;
     private final List<Class<?>> basicTypes;
 
     private ThriftProtocolFieldType(Class<?>... types)
     {
-        this.validType = true;
+        this.validFieldType = true;
         basicTypes = ImmutableList.copyOf(types);
     }
 
-    private ThriftProtocolFieldType(boolean validType)
+    private ThriftProtocolFieldType(boolean validFieldType)
     {
-        this.validType = validType;
+        this.validFieldType = validFieldType;
         basicTypes = ImmutableList.of();
     }
 
-    public boolean isValidType()
+    public boolean isValidFieldType()
     {
-        return validType;
+        return validFieldType;
     }
 
     public byte getType()

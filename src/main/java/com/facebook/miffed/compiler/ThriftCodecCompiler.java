@@ -84,7 +84,6 @@ public class ThriftCodecCompiler
             );
         }
 
-
         // default constructor
         {
             classDefinition.addMethod(new MethodDefinition(a(PUBLIC), "<init>", type(void.class))

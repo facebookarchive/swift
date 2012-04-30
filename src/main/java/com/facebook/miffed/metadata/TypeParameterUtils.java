@@ -1,19 +1,5 @@
-/**
- *
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+/*
+ * Copyright 2004-present Facebook. All Rights Reserved.
  */
 package com.facebook.miffed.metadata;
 
@@ -26,6 +12,23 @@ import java.lang.reflect.WildcardType;
 
 public class TypeParameterUtils
 {
+    /**
+     * Licensed to the Apache Software Foundation (ASF) under one or more
+     * contributor license agreements.  See the NOTICE file distributed with
+     * this work for additional information regarding copyright ownership.
+     * The ASF licenses this file to You under the Apache License, Version 2.0
+     * (the "License"); you may not use this file except in compliance with
+     * the License.  You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     *  Unless required by applicable law or agreed to in writing, software
+     *  distributed under the License is distributed on an "AS IS" BASIS,
+     *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     *  See the License for the specific language governing permissions and
+     *  limitations under the License.
+     */
+    // http://geronimo.apache.org/maven/xbean/3.6/xbean-reflect/apidocs/src-html/org/apache/xbean/recipe/RecipeHelper.html
     public static Type[] getTypeParameters(Class<?> desiredType, Type type)
     {
         if (type instanceof Class) {
@@ -72,6 +75,7 @@ public class TypeParameterUtils
         return null;
     }
 
+    // todo remove when Guava 12 is released
     /*
      * Copyright (C) 2011 The Guava Authors
      *
@@ -87,6 +91,7 @@ public class TypeParameterUtils
      * See the License for the specific language governing permissions and
      * limitations under the License.
      */
+    // http://code.google.com/p/guava-libraries/source/browse/guava/src/com/google/common/reflect/TypeToken.java?spec=svn1e44378ca0f6bb53d2c6898c76df455b266dbc99&r=1e44378ca0f6bb53d2c6898c76df455b266dbc99#781
     public static Class<?> getRawType(Type type)
     {
         if (type instanceof Class) {

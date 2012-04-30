@@ -1,3 +1,5 @@
+Add support for other field types to CompiledThriftCodec
+
 Verify java types are compatible for fields with the same id
 Implement required fields
 

@@ -7,8 +7,6 @@ import com.google.common.base.Function;
 
 import javax.annotation.Nullable;
 
-import static com.facebook.miffed.compiler.byteCode.ParameterizedType.type;
-
 public class NamedParameterDefinition
 {
     public static NamedParameterDefinition arg(Class<?> type)

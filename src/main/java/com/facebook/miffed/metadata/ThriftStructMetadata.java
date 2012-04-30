@@ -3,7 +3,6 @@
  */
 package com.facebook.miffed.metadata;
 
-import com.facebook.miffed.metadata.ThriftStructMetadataBuilder.MethodInjection;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
