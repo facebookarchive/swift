@@ -115,8 +115,8 @@ public class BonkFieldThriftTypeCodecDSL implements Opcodes {
         .addException(Exception.class);
 
       // declare and init local variables here
-      read.addStringLocalVariable("message", null);
-      read.addIntLocalVariable("type", 0);
+      read.addInitializedLocalVariable(type(String.class), "message");
+      read.addInitializedLocalVariable(type(int.class), "type");
 
       // protocol.readStructBegin();
       read.loadVariable("protocol").invokeVirtual(
@@ -171,7 +171,7 @@ public class BonkFieldThriftTypeCodecDSL implements Opcodes {
       );
 
       // BonkField bonkField = new BonkField();
-      read.addLocalVariable("bonkField", structType);
+      read.addLocalVariable(structType, "bonkField");
       read.newObject(structType)
         .dup()
         .invokeConstructor(structType)

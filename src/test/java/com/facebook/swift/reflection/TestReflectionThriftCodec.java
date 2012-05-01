@@ -11,6 +11,7 @@ import com.facebook.swift.BonkBuilder;
 import com.facebook.swift.BonkConstructor;
 import com.facebook.swift.BonkField;
 import com.facebook.swift.BonkMethod;
+import com.facebook.swift.OneOfEverything;
 import com.facebook.swift.metadata.ThriftCatalog;
 import com.facebook.swift.metadata.ThriftStructMetadata;
 import org.apache.thrift.protocol.TCompactProtocol;
@@ -57,6 +58,30 @@ public class TestReflectionThriftCodec {
   public void testBuilder() throws Exception {
     BonkBuilder bonkBuilder = new BonkBuilder("message", 42);
     testMetadataBuild(bonkBuilder);
+  }
+
+  @Test
+  public void testOneOfEverythingField() throws Exception {
+    OneOfEverything one = new OneOfEverything();
+    one.aBoolean = true;
+    one.aByte = 11;
+    one.aShort = 22;
+    one.aInt = 33;
+    one.aLong = 44;
+    one.aDouble = 55;
+    one.aString = "message";
+    one.aStruct = new BonkField();
+    one.aStruct.message = "struct";
+    one.aStruct.type = 66;
+
+    testMetadataBuild(one);
+  }
+
+  @Test
+  public void testOneOfEverythingFieldEmpty() throws Exception {
+    OneOfEverything one = new OneOfEverything();
+
+    testMetadataBuild(one);
   }
 
   private <T> void testMetadataBuild(T structInstance) throws Exception {

@@ -135,6 +135,13 @@ public class TProtocolReader {
     return protocol.readString();
   }
 
+  public <T> T readStruct(ThriftTypeCodec<T> codec) throws Exception {
+    if (!checkReadState(TType.STRUCT)) {
+      return null;
+    }
+    currentField = null;
+    return codec.read(this);
+  }
   public TSet readSetBegin() throws TException {
     return protocol.readSetBegin();
   }

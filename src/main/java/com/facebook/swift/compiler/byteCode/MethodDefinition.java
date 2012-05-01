@@ -40,16 +40,11 @@ import static com.google.common.collect.Iterables.transform;
 import static org.objectweb.asm.Opcodes.ACONST_NULL;
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ARETURN;
-import static org.objectweb.asm.Opcodes.ASTORE;
 import static org.objectweb.asm.Opcodes.CHECKCAST;
-import static org.objectweb.asm.Opcodes.DLOAD;
-import static org.objectweb.asm.Opcodes.DSTORE;
 import static org.objectweb.asm.Opcodes.DUP;
-import static org.objectweb.asm.Opcodes.FLOAD;
-import static org.objectweb.asm.Opcodes.FSTORE;
 import static org.objectweb.asm.Opcodes.GETFIELD;
 import static org.objectweb.asm.Opcodes.GOTO;
-import static org.objectweb.asm.Opcodes.ICONST_0;
+import static org.objectweb.asm.Opcodes.*;
 import static org.objectweb.asm.Opcodes.ICONST_1;
 import static org.objectweb.asm.Opcodes.ICONST_2;
 import static org.objectweb.asm.Opcodes.ICONST_3;
@@ -61,8 +56,6 @@ import static org.objectweb.asm.Opcodes.ILOAD;
 import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.ISTORE;
-import static org.objectweb.asm.Opcodes.LLOAD;
-import static org.objectweb.asm.Opcodes.LSTORE;
 import static org.objectweb.asm.Opcodes.NEW;
 import static org.objectweb.asm.Opcodes.PUTFIELD;
 import static org.objectweb.asm.Opcodes.PUTSTATIC;
@@ -123,7 +116,7 @@ public class MethodDefinition {
         new LocalVariableDefinition(parameterName, localVariables.size(), parameter.getType())
       );
       argId++;
-      nextSlot++;
+      nextSlot += Type.getType(parameter.getType().getType()).getSize();
     }
   }
 
@@ -132,15 +125,10 @@ public class MethodDefinition {
     return this;
   }
 
-  public LocalVariableDefinition getLocalVariable(String name) {
-    return localVariables.get(name);
-  }
-
-  public LocalVariableDefinition addLocalVariable(String name, Class<?> type) {
-    return addLocalVariable(name, type(type));
-  }
-
-  public LocalVariableDefinition addLocalVariable(String name, ParameterizedType type) {
+  public LocalVariableDefinition addLocalVariable(
+      ParameterizedType type,
+      String name
+  ) {
     Preconditions.checkNotNull(name, "name is null");
     checkArgument(
       !localVariables.containsKey(name),
@@ -148,32 +136,16 @@ public class MethodDefinition {
       name
     );
 
-    LocalVariableDefinition variable = new LocalVariableDefinition(name, nextSlot++, type);
-
-    // longs and doubles take up two slots
-    if (variable.getType().getType().equals("D") || variable.getType().getType().equals("L")) {
-      nextSlot++;
-    }
+    LocalVariableDefinition variable = new LocalVariableDefinition(name, nextSlot, type);
+    nextSlot += Type.getType(type.getType()).getSize();
 
     localVariables.put(name, variable);
     return variable;
   }
 
-  public LocalVariableDefinition addStringLocalVariable(String name, String value) {
-    LocalVariableDefinition variable = addLocalVariable(name, type(String.class));
-    if (value == null) {
-      loadNull();
-    } else {
-      loadConstant(value);
-    }
-    storeVariable(variable);
-    return variable;
-  }
-
-  public LocalVariableDefinition addIntLocalVariable(String name, int value) {
-    LocalVariableDefinition variable = addLocalVariable(name, type(int.class));
-    loadConstant(value);
-    storeVariable(variable);
+  public LocalVariableDefinition addInitializedLocalVariable(ParameterizedType type, String name) {
+    LocalVariableDefinition variable = addLocalVariable(type, name);
+    initializeLocalVariable(variable);
     return variable;
   }
 
@@ -409,6 +381,11 @@ public class MethodDefinition {
     return this;
   }
 
+  public MethodDefinition swap() {
+    instructionList.add(new InsnNode(SWAP));
+    return this;
+  }
+
   public MethodDefinition getField(Class<?> target, FieldDefinition field) {
     getField(type(target), field.getName(), field.getType());
     return this;
@@ -440,17 +417,31 @@ public class MethodDefinition {
     return this;
   }
 
-  public MethodDefinition putStaticField(ParameterizedType target, FieldDefinition field) {
+  public MethodDefinition getStaticField(ParameterizedType target, FieldDefinition field) {
     checkArgument(field.getAccess().contains(STATIC), "Field is not static: %s", field);
+    getStaticField(target, field.getName(), field.getType());
+    return this;
+  }
 
+  public MethodDefinition getStaticField(
+    ParameterizedType target,
+    String fieldName,
+    ParameterizedType fieldType
+  ) {
     instructionList.add(
       new FieldInsnNode(
-        PUTSTATIC,
+        GETSTATIC,
         target.getClassName(),
-        field.getName(),
-        field.getType().getType()
+        fieldName,
+        fieldType.getType()
       )
     );
+    return this;
+  }
+
+  public MethodDefinition putStaticField(ParameterizedType target, FieldDefinition field) {
+    checkArgument(field.getAccess().contains(STATIC), "Field is not static: %s", field);
+    putStaticField(target, field.getName(), field.getType());
     return this;
   }
 
@@ -578,8 +569,7 @@ public class MethodDefinition {
     return this;
   }
 
-
-  public MethodDefinition loadVariable(LocalVariableDefinition variable) {
+  public MethodDefinition initializeLocalVariable(LocalVariableDefinition variable) {
     ParameterizedType type = variable.getType();
     if (type.getType().length() == 1) {
       switch (type.getType().charAt(0)) {
@@ -588,23 +578,30 @@ public class MethodDefinition {
         case 'S':
         case 'C':
         case 'I':
-          instructionList.add(new VarInsnNode(ILOAD, variable.getSlot()));
+          instructionList.add(new InsnNode(ICONST_0));
           break;
         case 'F':
-          instructionList.add(new VarInsnNode(FLOAD, variable.getSlot()));
+          instructionList.add(new InsnNode(FCONST_0));
           break;
         case 'D':
-          instructionList.add(new VarInsnNode(DLOAD, variable.getSlot()));
+          instructionList.add(new InsnNode(DCONST_0));
           break;
         case 'J':
-          instructionList.add(new VarInsnNode(LLOAD, variable.getSlot()));
+          instructionList.add(new InsnNode(LCONST_0));
           break;
         default:
           checkArgument(false, "Unknown type '%s'", variable.getType());
       }
     } else {
-      instructionList.add(new VarInsnNode(ALOAD, variable.getSlot()));
+      instructionList.add(new InsnNode(ACONST_NULL));
     }
+    instructionList.add(new VarInsnNode(Type.getType(type.getType()).getOpcode(ISTORE), variable.getSlot()));
+    return this;
+  }
+
+  public MethodDefinition loadVariable(LocalVariableDefinition variable) {
+    ParameterizedType type = variable.getType();
+    instructionList.add(new VarInsnNode(Type.getType(type.getType()).getOpcode(ILOAD), variable.getSlot()));
     return this;
   }
 
@@ -617,30 +614,7 @@ public class MethodDefinition {
 
   public MethodDefinition storeVariable(LocalVariableDefinition variable) {
     ParameterizedType type = variable.getType();
-    if (type.getType().length() == 1) {
-      switch (type.getType().charAt(0)) {
-        case 'B':
-        case 'Z':
-        case 'S':
-        case 'C':
-        case 'I':
-          instructionList.add(new VarInsnNode(ISTORE, variable.getSlot()));
-          break;
-        case 'F':
-          instructionList.add(new VarInsnNode(FSTORE, variable.getSlot()));
-          break;
-        case 'D':
-          instructionList.add(new VarInsnNode(DSTORE, variable.getSlot()));
-          break;
-        case 'J':
-          instructionList.add(new VarInsnNode(LSTORE, variable.getSlot()));
-          break;
-        default:
-          checkArgument(false, "Unknown type '%s'", variable.getType());
-      }
-    } else {
-      instructionList.add(new VarInsnNode(ASTORE, variable.getSlot()));
-    }
+    instructionList.add(new VarInsnNode(Type.getType(type.getType()).getOpcode(ISTORE), variable.getSlot()));
     return this;
   }
 }

@@ -7,6 +7,7 @@ import com.facebook.swift.ThriftCodec;
 import com.facebook.swift.metadata.ThriftCatalog;
 import com.facebook.swift.metadata.ThriftStructMetadata;
 import com.facebook.swift.metadata.ThriftType;
+import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -41,7 +42,7 @@ public class CompiledThriftCodec implements ThriftCodec {
   ) {
     this.catalog = catalog;
     this.classLoader = classLoader;
-    this.compiler = new ThriftCodecCompiler(catalog, classLoader);
+    this.compiler = new ThriftCodecCompiler(this, classLoader);
 
     typeCodecs = CacheBuilder.newBuilder().build(
       new CacheLoader<Class<?>, ThriftTypeCodec<?>>() {
@@ -256,9 +257,11 @@ public class CompiledThriftCodec implements ThriftCodec {
     }
   }
 
-  public <T> ThriftTypeCodec<T> getTypeCodec(Class<T> type)
-    throws ExecutionException {
-    return (ThriftTypeCodec<T>) typeCodecs.get(type);
+  public <T> ThriftTypeCodec<T> getTypeCodec(Class<T> type) {
+    try {
+      return (ThriftTypeCodec<T>) typeCodecs.get(type);
+    } catch (ExecutionException e) {
+      throw Throwables.propagate(e);
+    }
   }
-
 }

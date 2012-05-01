@@ -3,7 +3,9 @@
  */
 package com.facebook.swift.compiler;
 
+import com.facebook.swift.BonkConstructor;
 import com.facebook.swift.BonkField;
+import com.facebook.swift.OneOfEverything;
 import com.facebook.swift.metadata.ThriftCatalog;
 import com.facebook.swift.metadata.ThriftStructMetadata;
 import org.apache.thrift.protocol.TCompactProtocol;
@@ -46,6 +48,54 @@ public class TestCompiledThriftCodec {
     bonkField.type = 42;
 
     testMetadataBuild(codec, bonkField);
+  }
+
+  @Test
+  public void testOneOfEverythingField() throws Exception {
+    CompiledThriftCodec compiledThriftCodec = new CompiledThriftCodec(new ThriftCatalog());
+    ThriftTypeCodec<OneOfEverything> codec = compiledThriftCodec.getTypeCodec(OneOfEverything.class);
+
+    OneOfEverything one = new OneOfEverything();
+    one.aBoolean = true;
+    one.aByte = 11;
+    one.aShort = 22;
+    one.aInt = 33;
+    one.aLong = 44;
+    one.aDouble = 55;
+    one.aString = "message";
+    one.aStruct = new BonkField();
+    one.aStruct.message = "struct";
+    one.aStruct.type = 66;
+
+    testMetadataBuild(codec, one);
+  }
+
+  @Test
+  public void testOneOfEverythingFieldManual() throws Exception {
+    OneOfEverythingThriftTypeCodec codec = OneOfEverythingThriftTypeCodec.INSTANCE;
+
+    OneOfEverything one = new OneOfEverything();
+    one.aBoolean = true;
+    one.aByte = 11;
+    one.aShort = 22;
+    one.aInt = 33;
+    one.aLong = 44;
+    one.aDouble = 55;
+    one.aString = "message";
+    one.aStruct = new BonkField();
+    one.aStruct.message = "struct";
+    one.aStruct.type = 66;
+
+    testMetadataBuild(codec, one);
+  }
+
+  @Test
+  public void testOneOfEverythingFieldEmpty() throws Exception {
+    CompiledThriftCodec compiledThriftCodec = new CompiledThriftCodec(new ThriftCatalog());
+    ThriftTypeCodec<OneOfEverything> codec = compiledThriftCodec.getTypeCodec(OneOfEverything.class);
+
+    OneOfEverything one = new OneOfEverything();
+    testMetadataBuild(codec, one);
   }
 
   private <T> void testMetadataBuild(ThriftTypeCodec<T> codec, T structInstance) throws Exception {

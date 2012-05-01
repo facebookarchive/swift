@@ -73,9 +73,19 @@ public class TProtocolWriter {
   }
 
   public void writeString(String name, short id, String string) throws TException {
-    protocol.writeFieldBegin(new TField(name, TType.STRING, id));
-    protocol.writeString(string);
-    protocol.writeFieldEnd();
+    if (string != null) {
+      protocol.writeFieldBegin(new TField(name, TType.STRING, id));
+      protocol.writeString(string);
+      protocol.writeFieldEnd();
+    }
+  }
+
+  public <T> void writeStruct(String name, short id, ThriftTypeCodec<T> codec, T struct) throws Exception {
+    if (struct != null) {
+      protocol.writeFieldBegin(new TField(name, TType.STRUCT, id));
+      codec.write(struct, this);
+      protocol.writeFieldEnd();
+    }
   }
 
   public void writeListBegin(TList list) throws TException {
