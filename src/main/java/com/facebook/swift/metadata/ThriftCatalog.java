@@ -124,6 +124,8 @@ public class ThriftCatalog {
   }
 
   public <T> ThriftStructMetadata<T> getThriftStructMetadata(Class<T> configClass) {
+    Preconditions.checkNotNull(configClass, "configClass is null");
+
     Deque<Class<?>> stack = this.stack.get();
     if (stack.contains(configClass)) {
       String path = Joiner.on("->").join(

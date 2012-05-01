@@ -267,7 +267,7 @@ public class ThriftStructMetadataBuilder<T> {
         for (FieldMetadata fieldMetadata : input) {
           id = fieldMetadata.getId();
           name = fieldMetadata.getName();
-          type = catalog.getThriftType(null, fieldMetadata.getProtocolType());
+          type = catalog.getThriftType(fieldMetadata.getJavaType(), fieldMetadata.getProtocolType());
           if (fieldMetadata instanceof FieldInjection) {
             FieldInjection fieldInjection = (FieldInjection) fieldMetadata;
             injections.add(
