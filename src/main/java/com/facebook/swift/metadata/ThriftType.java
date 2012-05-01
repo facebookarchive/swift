@@ -80,7 +80,7 @@ public class ThriftType {
   }
 
   public ThriftType getValueType() {
-    checkState(keyType != null, "%s does not have a value", protocolType);
+    checkState(valueType != null, "%s does not have a value", protocolType);
     return valueType;
   }
 
