@@ -381,6 +381,11 @@ public class MethodDefinition {
     return this;
   }
 
+  public MethodDefinition pop() {
+    instructionList.add(new InsnNode(POP));
+    return this;
+  }
+
   public MethodDefinition swap() {
     instructionList.add(new InsnNode(SWAP));
     return this;

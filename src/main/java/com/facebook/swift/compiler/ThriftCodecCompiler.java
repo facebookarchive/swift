@@ -3,6 +3,7 @@
  */
 package com.facebook.swift.compiler;
 
+import com.facebook.swift.ThriftProtocolFieldType;
 import com.facebook.swift.compiler.byteCode.CaseStatement;
 import com.facebook.swift.compiler.byteCode.ClassDefinition;
 import com.facebook.swift.compiler.byteCode.FieldDefinition;
@@ -218,6 +219,10 @@ public class ThriftCodecCompiler {
             // invoke:  CodecClass.INSTANCE.read(protocol);
             read.invokeVirtual(fieldCodecType, "read", fieldType, type(TProtocolReader.class));
             break;
+          case SET:
+            //ignore SETS
+            read.loadNull();
+            break;
           default:
             throw new IllegalArgumentException(
                 "Unsupported field type " + field.getType()
@@ -381,6 +386,12 @@ public class ThriftCodecCompiler {
                 ThriftTypeCodec.class,
                 Object.class
             );
+            break;
+          case SET:
+            //ignore SETS
+            write.pop();  // name
+            write.pop();  // id
+            write.pop();  // value
             break;
           default:
             throw new IllegalArgumentException(

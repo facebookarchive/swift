@@ -14,6 +14,7 @@ import com.facebook.swift.BonkMethod;
 import com.facebook.swift.OneOfEverything;
 import com.facebook.swift.metadata.ThriftCatalog;
 import com.facebook.swift.metadata.ThriftStructMetadata;
+import com.google.common.collect.ImmutableSet;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.TMemoryBuffer;
 import org.testng.annotations.Test;
@@ -69,6 +70,14 @@ public class TestReflectionThriftCodec {
     one.aDouble = 55;
     one.aString = "message";
     one.aStruct = new BonkField("struct", 66);
+    one.aBooleanSet = ImmutableSet.of(true, false);
+    one.aByteSet = ImmutableSet.of((byte)-1, (byte)0, (byte)1);
+    one.aShortSet = ImmutableSet.of((short)-1, (short)0, (short)1);
+    one.aIntegerSet = ImmutableSet.of(-1, 0, 1);
+    one.aLongSet = ImmutableSet.of(-1L, 0L, 1L);
+    one.aDoubleSet = ImmutableSet.of(-42.1d, 0.0d, 42.1d);
+    one.aStringSet = ImmutableSet.of("a", "string", "set");
+    one.aStructSet = ImmutableSet.of(new BonkField("message", 42), new BonkField("other", 11));
 
     testMetadataBuild(one);
   }

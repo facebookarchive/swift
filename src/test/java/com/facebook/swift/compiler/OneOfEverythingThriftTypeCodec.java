@@ -7,7 +7,7 @@ import com.facebook.swift.BonkField;
 import com.facebook.swift.OneOfEverything;
 
 public class OneOfEverythingThriftTypeCodec implements ThriftTypeCodec<OneOfEverything> {
-  public static final OneOfEverythingThriftTypeCodec INSTANCE = 
+  public static final OneOfEverythingThriftTypeCodec INSTANCE =
       new OneOfEverythingThriftTypeCodec();
 
   public Class<OneOfEverything> getType() {

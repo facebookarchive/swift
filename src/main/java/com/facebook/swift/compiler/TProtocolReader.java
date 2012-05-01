@@ -4,6 +4,7 @@
 package com.facebook.swift.compiler;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TField;
 import org.apache.thrift.protocol.TList;
@@ -14,7 +15,9 @@ import org.apache.thrift.protocol.TSet;
 import org.apache.thrift.protocol.TType;
 
 import java.nio.ByteBuffer;
+import java.util.LinkedHashSet;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -149,6 +152,22 @@ public class TProtocolReader {
   public void readSetEnd() throws TException {
     currentField = null;
     protocol.readSetEnd();
+  }
+
+  public <T> Set<T> readSet(ThriftTypeCodec<T> valueType) throws Exception {
+    if (!checkReadState(TType.SET)) {
+      return null;
+    }
+    currentField = null;
+
+    TSet tSet = readSetBegin();
+    ImmutableSet.Builder<T> set = ImmutableSet.builder();
+    for (int i = 0; i < tSet.size; i++) {
+      T element = valueType.read(this);
+      set.add(element);
+    }
+    protocol.readSetEnd();
+    return set.build();
   }
 
   public TList readListBegin() throws TException {
