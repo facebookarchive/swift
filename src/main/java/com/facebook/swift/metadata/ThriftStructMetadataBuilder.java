@@ -8,6 +8,7 @@ import com.facebook.swift.ThriftField;
 import com.facebook.swift.ThriftProtocolFieldType;
 import com.facebook.swift.ThriftStruct;
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
@@ -156,7 +157,7 @@ public class ThriftStructMetadataBuilder<T> {
         continue;
       }
 
-      short id = Iterables.find(transform(fields, getThriftFieldId()), notNull(), Short.MIN_VALUE);
+      short id = Iterables.getFirst(Optional.presentInstances(transform(fields, getThriftFieldId())), Short.MIN_VALUE);
       if (id != Short.MIN_VALUE) {
         for (FieldMetadata field : fields) {
           field.setId(id);
@@ -165,9 +166,9 @@ public class ThriftStructMetadataBuilder<T> {
     }
 
     // group fields by id
-    Multimap<Short, FieldMetadata> fieldsById = Multimaps.index(fields, getThriftFieldId());
-    for (Entry<Short, Collection<FieldMetadata>> entry : fieldsById.asMap().entrySet()) {
-      Short id = entry.getKey();
+    Multimap<Optional<Short>, FieldMetadata> fieldsById = Multimaps.index(fields, getThriftFieldId());
+    for (Entry<Optional<Short>, Collection<FieldMetadata>> entry : fieldsById.asMap().entrySet()) {
+      Short id = entry.getKey().orNull();
       Collection<FieldMetadata> fields = entry.getValue();
 
       // fields must have an id
@@ -252,7 +253,7 @@ public class ThriftStructMetadataBuilder<T> {
     }
     ConstructorInjection constructor = constructorInjections.get(0);
 
-    Multimap<Short, FieldMetadata> fieldsById = Multimaps.index(fields, getThriftFieldId());
+    Multimap<Optional<Short>, FieldMetadata> fieldsById = Multimaps.index(fields, getThriftFieldId());
     Iterable<ThriftFieldMetadata> fieldsMetadata = Iterables.transform(
       fieldsById.asMap().values(), new Function<Collection<FieldMetadata>, ThriftFieldMetadata>() {
       @Override
@@ -722,14 +723,15 @@ public class ThriftStructMetadataBuilder<T> {
       this.protocolType = protocolType;
     }
 
-    static <T extends FieldMetadata> Function<T, Short> getThriftFieldId() {
-      return new Function<T, Short>() {
+    static <T extends FieldMetadata> Function<T, Optional<Short>> getThriftFieldId() {
+      return new Function<T, Optional<Short>>() {
         @Override
-        public Short apply(@Nullable T input) {
+        public Optional<Short> apply(@Nullable T input) {
           if (input == null) {
-            return null;
+            return Optional.absent();
           }
-          return input.getId();
+          Short value = input.getId();
+          return Optional.fromNullable(value);
         }
       };
     }
