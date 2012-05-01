@@ -3,7 +3,6 @@
  */
 package com.facebook.swift.compiler;
 
-import com.facebook.swift.BonkConstructor;
 import com.facebook.swift.BonkField;
 import com.facebook.swift.OneOfEverything;
 import com.facebook.swift.metadata.ThriftCatalog;
@@ -19,9 +18,7 @@ public class TestCompiledThriftCodec {
   @Test
   public void testFieldsManual()
     throws Exception {
-    BonkField bonkField = new BonkField();
-    bonkField.message = "message";
-    bonkField.type = 42;
+    BonkField bonkField = new BonkField("message", 42);
 
     testMetadataBuild(BonkFieldThriftTypeCodec.INSTANCE, bonkField);
   }
@@ -31,9 +28,7 @@ public class TestCompiledThriftCodec {
     ThriftTypeCodec<BonkField> codec = new BonkFieldThriftTypeCodecDSL(new DynamicClassLoader())
       .genClass( BonkField.class);
 
-    BonkField bonkField = new BonkField();
-    bonkField.message = "message";
-    bonkField.type = 42;
+    BonkField bonkField = new BonkField("message", 42);
 
     testMetadataBuild(codec, bonkField);
   }
@@ -43,9 +38,7 @@ public class TestCompiledThriftCodec {
     CompiledThriftCodec compiledThriftCodec = new CompiledThriftCodec(new ThriftCatalog());
     ThriftTypeCodec<BonkField> codec = compiledThriftCodec.getTypeCodec(BonkField.class);
 
-    BonkField bonkField = new BonkField();
-    bonkField.message = "message";
-    bonkField.type = 42;
+    BonkField bonkField = new BonkField("message", 42);
 
     testMetadataBuild(codec, bonkField);
   }
@@ -63,9 +56,7 @@ public class TestCompiledThriftCodec {
     one.aLong = 44;
     one.aDouble = 55;
     one.aString = "message";
-    one.aStruct = new BonkField();
-    one.aStruct.message = "struct";
-    one.aStruct.type = 66;
+    one.aStruct = new BonkField("struct", 66);
 
     testMetadataBuild(codec, one);
   }
@@ -82,9 +73,7 @@ public class TestCompiledThriftCodec {
     one.aLong = 44;
     one.aDouble = 55;
     one.aString = "message";
-    one.aStruct = new BonkField();
-    one.aStruct.message = "struct";
-    one.aStruct.type = 66;
+    one.aStruct = new BonkField("struct", 66);
 
     testMetadataBuild(codec, one);
   }

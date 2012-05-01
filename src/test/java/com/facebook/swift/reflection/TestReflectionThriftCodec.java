@@ -24,9 +24,7 @@ import static org.testng.Assert.assertNotNull;
 public class TestReflectionThriftCodec {
   @Test
   public void testFields() throws Exception {
-    BonkField bonkField = new BonkField();
-    bonkField.message = "message";
-    bonkField.type = 42;
+    BonkField bonkField = new BonkField("message", 42);
 
     testMetadataBuild(bonkField);
   }
@@ -70,9 +68,7 @@ public class TestReflectionThriftCodec {
     one.aLong = 44;
     one.aDouble = 55;
     one.aString = "message";
-    one.aStruct = new BonkField();
-    one.aStruct.message = "struct";
-    one.aStruct.type = 66;
+    one.aStruct = new BonkField("struct", 66);
 
     testMetadataBuild(one);
   }

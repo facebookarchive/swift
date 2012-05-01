@@ -11,6 +11,14 @@ public class BonkField {
   @ThriftField(id = 2)
   public int type;
 
+  public BonkField() {
+  }
+
+  public BonkField(String message, int type) {
+    this.message = message;
+    this.type = type;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
