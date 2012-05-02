@@ -14,12 +14,17 @@ import com.facebook.swift.BonkMethod;
 import com.facebook.swift.OneOfEverything;
 import com.facebook.swift.metadata.ThriftCatalog;
 import com.facebook.swift.metadata.ThriftStructMetadata;
+import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.TMemoryBuffer;
 import org.testng.annotations.Test;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -91,16 +96,61 @@ public class TestReflectionThriftCodec {
     one.aStringList = ImmutableList.of("a", "string", "list");
     one.aStructList = ImmutableList.of(new BonkField("message", 42), new BonkField("other", 11));
 
-    one.aBooleanMap = ImmutableMap.of("TRUE", true, "FALSE", false);
-    one.aByteMap = ImmutableMap.of("-1", (byte)-1, "0", (byte)0, "1", (byte)1);
-    one.aShortMap = ImmutableMap.of("-1", (short)-1, "0", (short)0, "1", (short)1);
-    one.aIntegerMap = ImmutableMap.of("-1", -1, "0", 0, "1", 1);
-    one.aLongMap = ImmutableMap.of("-1", -1L, "0", 0L, "1", 1L);
-    one.aDoubleMap = ImmutableMap.of("neg", -42.1d, "0", 0.0d, "pos", 42.1d);
-    one.aStringMap = ImmutableMap.of("1", "a", "2", "string", "3", "map");
-    one.aStructMap = ImmutableMap.of(
+    one.aBooleanValueMap = ImmutableMap.of("TRUE", true, "FALSE", false);
+    one.aByteValueMap = ImmutableMap.of("-1", (byte)-1, "0", (byte)0, "1", (byte)1);
+    one.aShortValueMap = ImmutableMap.of("-1", (short)-1, "0", (short)0, "1", (short)1);
+    one.aIntegerValueMap = ImmutableMap.of("-1", -1, "0", 0, "1", 1);
+    one.aLongValueMap = ImmutableMap.of("-1", -1L, "0", 0L, "1", 1L);
+    one.aDoubleValueMap = ImmutableMap.of("neg", -42.1d, "0", 0.0d, "pos", 42.1d);
+    one.aStringValueMap = ImmutableMap.of("1", "a", "2", "string", "3", "map");
+    one.aStructValueMap = ImmutableMap.of(
         "main", new BonkField("message", 42),
         "other", new BonkField("other", 11) );
+
+    one.aBooleanKeyMap = ImmutableMap.copyOf(HashBiMap.create(one.aBooleanValueMap).inverse());
+    one.aByteKeyMap = ImmutableMap.copyOf(HashBiMap.create(one.aByteValueMap).inverse());
+    one.aShortKeyMap = ImmutableMap.copyOf(HashBiMap.create(one.aShortValueMap).inverse());
+    one.aIntegerKeyMap = ImmutableMap.copyOf(HashBiMap.create(one.aIntegerValueMap).inverse());
+    one.aLongKeyMap = ImmutableMap.copyOf(HashBiMap.create(one.aLongValueMap).inverse());
+    one.aDoubleKeyMap = ImmutableMap.copyOf(HashBiMap.create(one.aDoubleValueMap).inverse());
+    one.aStringKeyMap = ImmutableMap.copyOf(HashBiMap.create(one.aStringValueMap).inverse());
+    one.aStructKeyMap = ImmutableMap.copyOf(HashBiMap.create(one.aStructValueMap).inverse());
+
+    one.aSetOfListsOfMaps = ImmutableSet.<List<Map<String, BonkField>>>of(
+        ImmutableList.<Map<String, BonkField>>of(
+            ImmutableMap.of(
+                "1: main", new BonkField("message", 42),
+                "1: other", new BonkField("other", 11)
+            ),
+            ImmutableMap.of(
+                "1: main", new BonkField("message", 42),
+                "1: other", new BonkField("other", 11)
+            )
+        ),
+        ImmutableList.<Map<String, BonkField>>of(
+            ImmutableMap.of(
+                "2: main", new BonkField("message", 42),
+                "2: other", new BonkField("other", 11)
+            ),
+            ImmutableMap.of(
+                "2: main", new BonkField("message", 42),
+                "2: other", new BonkField("other", 11)
+            )
+        )
+    );
+
+    one.aMapOfListToSet = ImmutableMap.<List<String>, Set<BonkField>>of(
+        ImmutableList.of("a", "b"),
+        ImmutableSet.of(
+            new BonkField("1: message", 42),
+            new BonkField("1: other", 11)
+        ),
+        ImmutableList.of("c", "d"),
+        ImmutableSet.of(
+            new BonkField("2: message", 42),
+            new BonkField("2: other", 11)
+        )
+    );
 
     testMetadataBuild(one);
   }
