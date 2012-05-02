@@ -3,8 +3,10 @@
  */
 package com.facebook.swift.compiler;
 
+import com.facebook.swift.metadata.ThriftType;
+
 public interface ThriftTypeCodec<T> {
-  public Class<T> getType();
+  public ThriftType getType();
 
   public T read(TProtocolReader protocol)
     throws Exception;

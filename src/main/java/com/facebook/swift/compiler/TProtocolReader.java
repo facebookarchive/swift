@@ -3,8 +3,6 @@
  */
 package com.facebook.swift.compiler;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TField;
 import org.apache.thrift.protocol.TList;
@@ -15,7 +13,11 @@ import org.apache.thrift.protocol.TSet;
 import org.apache.thrift.protocol.TType;
 
 import java.nio.ByteBuffer;
-import java.util.LinkedHashSet;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
@@ -72,7 +74,7 @@ public class TProtocolReader {
     currentField = null;
   }
 
-  public ByteBuffer readBinary() throws TException {
+  public ByteBuffer readBinaryField() throws TException {
     if (!checkReadState(TType.STRING)) {
       return null;
     }
@@ -82,7 +84,7 @@ public class TProtocolReader {
     return value;
   }
 
-  public boolean readBool() throws TException {
+  public boolean readBoolField() throws TException {
     if (!checkReadState(TType.BOOL)) {
       return false;
     }
@@ -90,7 +92,7 @@ public class TProtocolReader {
     return protocol.readBool();
   }
 
-  public byte readByte() throws TException {
+  public byte readByteField() throws TException {
     if (!checkReadState(TType.BYTE)) {
       return 0;
     }
@@ -98,7 +100,7 @@ public class TProtocolReader {
     return protocol.readByte();
   }
 
-  public double readDouble() throws TException {
+  public double readDoubleField() throws TException {
     if (!checkReadState(TType.DOUBLE)) {
       return 0;
     }
@@ -106,7 +108,7 @@ public class TProtocolReader {
     return protocol.readDouble();
   }
 
-  public short readI16() throws TException {
+  public short readI16Field() throws TException {
     if (!checkReadState(TType.I16)) {
       return 0;
     }
@@ -114,7 +116,7 @@ public class TProtocolReader {
     return protocol.readI16();
   }
 
-  public int readI32() throws TException {
+  public int readI32Field() throws TException {
     if (!checkReadState(TType.I32)) {
       return 0;
     }
@@ -122,7 +124,7 @@ public class TProtocolReader {
     return protocol.readI32();
   }
 
-  public long readI64() throws TException {
+  public long readI64Field() throws TException {
     if (!checkReadState(TType.I64)) {
       return 0;
     }
@@ -130,7 +132,7 @@ public class TProtocolReader {
     return protocol.readI64();
   }
 
-  public String readString() throws TException {
+  public String readStringField() throws TException {
     if (!checkReadState(TType.STRING)) {
       return null;
     }
@@ -138,54 +140,105 @@ public class TProtocolReader {
     return protocol.readString();
   }
 
-  public <T> T readStruct(ThriftTypeCodec<T> codec) throws Exception {
+  public <T> T readStructField(ThriftTypeCodec<T> codec) throws Exception {
     if (!checkReadState(TType.STRUCT)) {
       return null;
     }
     currentField = null;
     return codec.read(this);
   }
-  public TSet readSetBegin() throws TException {
-    return protocol.readSetBegin();
-  }
 
-  public void readSetEnd() throws TException {
-    currentField = null;
-    protocol.readSetEnd();
-  }
-
-  public <T> Set<T> readSet(ThriftTypeCodec<T> valueType) throws Exception {
+  public <E> Set<E> readSetField(ThriftTypeCodec<Set<E>> setCodec) throws Exception {
     if (!checkReadState(TType.SET)) {
       return null;
     }
     currentField = null;
+    return setCodec.read(this);
+  }
 
-    TSet tSet = readSetBegin();
-    ImmutableSet.Builder<T> set = ImmutableSet.builder();
+  public <E> List<E> readListField(ThriftTypeCodec<List<E>> listCodec) throws Exception {
+    if (!checkReadState(TType.LIST)) {
+      return null;
+    }
+    currentField = null;
+    return listCodec.read(this);
+  }
+
+  public <K, V> Map<K, V> readMapField(ThriftTypeCodec<Map<K, V>> mapCodec) throws Exception {
+    if (!checkReadState(TType.MAP)) {
+      return null;
+    }
+    currentField = null;
+    return mapCodec.read(this);
+  }
+
+  public ByteBuffer readBinary() throws TException {
+    return protocol.readBinary();
+  }
+
+  public boolean readBool() throws TException {
+    return protocol.readBool();
+  }
+
+  public byte readByte() throws TException {
+    return protocol.readByte();
+  }
+
+  public short readI16() throws TException {
+    return protocol.readI16();
+  }
+
+  public int readI32() throws TException {
+    return protocol.readI32();
+  }
+
+  public long readI64() throws TException {
+    return protocol.readI64();
+  }
+
+  public double readDouble() throws TException {
+    return protocol.readDouble();
+  }
+
+  public String readString() throws TException {
+    return protocol.readString();
+  }
+
+  public <E> Set<E> readSet(ThriftTypeCodec<E> elementCodec) throws Exception {
+    TSet tSet = protocol.readSetBegin();
+    Set<E> set = new HashSet<>();
     for (int i = 0; i < tSet.size; i++) {
-      T element = valueType.read(this);
+      E element = elementCodec.read(this);
       set.add(element);
     }
     protocol.readSetEnd();
-    return set.build();
+    return set;
   }
 
-  public TList readListBegin() throws TException {
-    return protocol.readListBegin();
-  }
-
-  public void readListEnd() throws TException {
-    currentField = null;
+  public <E> List<E> readList(ThriftTypeCodec<E> elementCodec) throws Exception {
+    TList tList = protocol.readListBegin();
+    List<E> list = new ArrayList<>();
+    for (int i = 0; i < tList.size; i++) {
+      E element = elementCodec.read(this);
+      list.add(element);
+    }
     protocol.readListEnd();
+    return list;
   }
 
-  public TMap readMapBegin() throws TException {
-    return protocol.readMapBegin();
-  }
 
-  public void readMapEnd() throws TException {
-    currentField = null;
+  public <K, V> Map<K, V> readMap(ThriftTypeCodec<K> keyCodec, ThriftTypeCodec<V> valueCodec)
+      throws Exception {
+
+    TMap tMap = protocol.readMapBegin();
+    Map<K,V> map = new HashMap<>();
+    for (int i = 0; i < tMap.size; i++) {
+      K key = keyCodec.read(this);
+      V value = valueCodec.read(this);
+      map.put(key, value);
+    }
     protocol.readMapEnd();
+    return map;
   }
 
   private boolean checkReadState(byte expectedType) throws TException {

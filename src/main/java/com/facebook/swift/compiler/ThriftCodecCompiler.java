@@ -8,6 +8,7 @@ import com.facebook.swift.compiler.byteCode.CaseStatement;
 import com.facebook.swift.compiler.byteCode.ClassDefinition;
 import com.facebook.swift.compiler.byteCode.FieldDefinition;
 import com.facebook.swift.compiler.byteCode.MethodDefinition;
+import com.facebook.swift.compiler.byteCode.NamedParameterDefinition;
 import com.facebook.swift.compiler.byteCode.ParameterizedType;
 import com.facebook.swift.metadata.ThriftFieldMetadata;
 import com.facebook.swift.metadata.ThriftStructMetadata;
@@ -18,15 +19,18 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.util.CheckClassAdapter;
 
 import java.io.PrintWriter;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
+import static com.facebook.swift.ThriftProtocolFieldType.*;
 import static com.facebook.swift.compiler.byteCode.Access.BRIDGE;
 import static com.facebook.swift.compiler.byteCode.Access.FINAL;
+import static com.facebook.swift.compiler.byteCode.Access.PRIVATE;
 import static com.facebook.swift.compiler.byteCode.Access.PUBLIC;
-import static com.facebook.swift.compiler.byteCode.Access.STATIC;
 import static com.facebook.swift.compiler.byteCode.Access.SUPER;
 import static com.facebook.swift.compiler.byteCode.Access.SYNTHETIC;
 import static com.facebook.swift.compiler.byteCode.Access.a;
@@ -40,18 +44,48 @@ public class ThriftCodecCompiler {
   private final CompiledThriftCodec compiledThriftCodec;
   private final DynamicClassLoader classLoader;
 
-  public ThriftCodecCompiler(CompiledThriftCodec compiledThriftCodec, DynamicClassLoader classLoader) {
+  public ThriftCodecCompiler(
+      CompiledThriftCodec compiledThriftCodec,
+      DynamicClassLoader classLoader
+  ) {
     this.compiledThriftCodec = compiledThriftCodec;
     this.classLoader = classLoader;
   }
 
   public <T> ThriftTypeCodec<T> generateThriftTypeCodec(Class<T> type) {
-    ThriftStructMetadata<?> structMetadata =
+    ThriftStructMetadata<?> metadata =
         compiledThriftCodec.getCatalog().getThriftStructMetadata(type);
 
-    Class<?> codecClass = generateClass(structMetadata);
+    List<Class<?>> parameterTypes = new ArrayList<>();
+    List<Object> parameters = new ArrayList<>();
+
+    ThriftType thriftType = ThriftType.struct(metadata);
+    parameterTypes.add(ThriftType.class);
+    parameters.add(thriftType);
+
+    // get codecs for al fields
+    Map<Short, ThriftTypeCodec<?>> fieldCodecs = new TreeMap<>();
+    for (ThriftFieldMetadata field : metadata.getFields()) {
+      if (needsCodec(field)) {
+        fieldCodecs.put(field.getId(), compiledThriftCodec.getCodec(field.getType()));
+      }
+    }
+    for (ThriftTypeCodec<?> codec : fieldCodecs.values()) {
+      parameterTypes.add(ThriftTypeCodec.class);
+      parameters.add(codec);
+    }
+
+    // generate the class
+    Class<?> codecClass = generateClass(metadata);
+
     try {
-      return (ThriftTypeCodec<T>) codecClass.getField("INSTANCE").get(null);
+      Constructor<?> constructor = codecClass.getConstructor(
+          parameterTypes.toArray(new Class[parameterTypes.size()])
+      );
+
+      return (ThriftTypeCodec<T>) constructor.newInstance(
+          parameters.toArray(new Object[parameters.size()])
+      );
     } catch (Exception e) {
       throw new IllegalStateException("Generated class is invalid", e);
     }
@@ -68,40 +102,68 @@ public class ThriftCodecCompiler {
         type(ThriftTypeCodec.class, structType)
     );
 
-    // public static final StructCodec INSTANCE = new StructCodec();
+    // private ThriftType type;
+    FieldDefinition typeField;
     {
-      FieldDefinition instanceField = new FieldDefinition(
-          a(PUBLIC, STATIC, FINAL),
-          "INSTANCE",
-          codecType
-      );
-      classDefinition.addField(instanceField);
+      typeField = new FieldDefinition(a(PRIVATE, FINAL), "type", type(ThriftType.class));
+      classDefinition.addField(typeField);
+    }
 
-      classDefinition.addMethod(
-          new MethodDefinition(a(STATIC), "<clinit>", type(void.class))
-              .newObject(codecType)
-              .dup()
-              .invokeConstructor(codecType)
-              .putStaticField(codecType, instanceField)
-              .ret()
-      );
+    Map<Short, FieldDefinition> codecFields = new TreeMap<>();
+    List<NamedParameterDefinition> constructorParams = new ArrayList<>();
+    for (ThriftFieldMetadata fieldMetadata : metadata.getFields()) {
+      if (needsCodec(fieldMetadata)) {
+        ParameterizedType fieldType = type(
+            ThriftTypeCodec.class,
+            toParameterizedType(fieldMetadata.getType())
+        );
+        String fieldName = fieldMetadata.getName() + "Codec";
+
+        FieldDefinition codecField = new FieldDefinition(a(PRIVATE, FINAL), fieldName, fieldType);
+        classDefinition.addField(codecField);
+        codecFields.put(fieldMetadata.getId(), codecField);
+
+        constructorParams.add(arg(fieldName, fieldType));
+      }
     }
 
     // default constructor
     {
-      classDefinition.addMethod(
-          new MethodDefinition(a(PUBLIC), "<init>", type(void.class))
-              .loadThis()
-              .invokeConstructor(type(Object.class))
-              .ret()
+      constructorParams.add(0, arg("type", ThriftType.class));
+      MethodDefinition constructor = new MethodDefinition(
+          a(PUBLIC),
+          "<init>",
+          type(void.class),
+          constructorParams
       );
+
+      // invoke super
+      constructor.loadThis().invokeConstructor(type(Object.class));
+
+      // this.type = type;
+      constructor.loadThis()
+          .loadVariable("type")
+          .putField(codecType, typeField);
+
+      // this.fooCodec = fooCodec;
+      for (FieldDefinition fieldDefinition : codecFields.values()) {
+        constructor.loadThis()
+            .loadVariable(fieldDefinition.getName())
+            .putField(codecType, fieldDefinition);
+      }
+
+      // return; (implicit)
+      constructor.ret();
+
+      classDefinition.addMethod(constructor);
     }
 
-    // public Class<Struct> getType()
+    // public ThriftType getType()
     {
       classDefinition.addMethod(
-          new MethodDefinition(a(PUBLIC), "getType", type(Class.class, structType))
-              .loadConstant(structType)
+          new MethodDefinition(a(PUBLIC), "getType", type(ThriftType.class))
+              .loadThis()
+              .getField(codecType, typeField)
               .retObject()
       );
     }
@@ -156,73 +218,105 @@ public class ThriftCodecCompiler {
           case BOOL:
             read.loadVariable("protocol").invokeVirtual(
                 TProtocolReader.class,
-                "readBool",
+                "readBoolField",
                 boolean.class
             );
             break;
           case BYTE:
             read.loadVariable("protocol").invokeVirtual(
                 TProtocolReader.class,
-                "readByte",
+                "readByteField",
                 byte.class
             );
             break;
           case DOUBLE:
             read.loadVariable("protocol").invokeVirtual(
                 TProtocolReader.class,
-                "readDouble",
+                "readDoubleField",
                 double.class
             );
             break;
           case I16:
             read.loadVariable("protocol").invokeVirtual(
                 TProtocolReader.class,
-                "readI16",
+                "readI16Field",
                 short.class
             );
             break;
           case I32:
             read.loadVariable("protocol").invokeVirtual(
                 TProtocolReader.class,
-                "readI32",
+                "readI32Field",
                 int.class
             );
             break;
           case I64:
             read.loadVariable("protocol").invokeVirtual(
                 TProtocolReader.class,
-                "readI64",
+                "readI64Field",
                 long.class
             );
             break;
           case STRING:
             read.loadVariable("protocol").invokeVirtual(
                 TProtocolReader.class,
-                "readString",
+                "readStringField",
                 String.class
             );
             break;
-          case STRUCT:
-            // push struct codec INSTANCE on stack
-            ThriftTypeCodec<?> typeCodec = compiledThriftCodec.getTypeCodec(
-                field.getType()
-                    .getStructMetadata()
-                    .getStructClass()
-            );
-            ParameterizedType fieldType = type(typeCodec.getType());
-            ParameterizedType fieldCodecType = type(typeCodec.getClass());
-            read.getStaticField(fieldCodecType, "INSTANCE", fieldCodecType);
+          case STRUCT: {
+            FieldDefinition fieldDefinition = codecFields.get(field.getId());
 
-            // push protocol on stack
-            read.loadVariable("protocol");
+            read.loadVariable("protocol")
+                .loadThis().getField(codecType, fieldDefinition)
+                .invokeVirtual(
+                    type(TProtocolReader.class),
+                    "readStructField",
+                    type(Object.class),
+                    type(ThriftTypeCodec.class)
+                )
+                .checkCast(toParameterizedType(field.getType()));
+            break;
+          }
+          case SET: {
+            FieldDefinition fieldDefinition = codecFields.get(field.getId());
 
-            // invoke:  CodecClass.INSTANCE.read(protocol);
-            read.invokeVirtual(fieldCodecType, "read", fieldType, type(TProtocolReader.class));
+            read.loadVariable("protocol")
+                .loadThis().getField(codecType, fieldDefinition)
+                .invokeVirtual(
+                    type(TProtocolReader.class),
+                    "readSetField",
+                    type(Set.class),
+                    type(ThriftTypeCodec.class)
+                );
             break;
-          case SET:
-            //ignore SETS
-            read.loadNull();
+          }
+          case LIST: {
+            FieldDefinition fieldDefinition = codecFields.get(field.getId());
+
+            read.loadVariable("protocol")
+                .loadThis().getField(codecType, fieldDefinition)
+                .invokeVirtual(
+                    type(TProtocolReader.class),
+                    "readListField",
+                    type(List.class),
+                    type(ThriftTypeCodec.class)
+                );
             break;
+          }
+          case MAP: {
+            FieldDefinition fieldDefinition = codecFields.get(field.getId());
+
+            read.loadVariable("protocol")
+                .loadThis().getField(codecType, fieldDefinition)
+                .invokeVirtual(
+                    type(TProtocolReader.class),
+                    "readMapField",
+                    type(Map.class),
+                    type(ThriftTypeCodec.class)
+                );
+            break;
+          }
           default:
             throw new IllegalArgumentException(
                 "Unsupported field type " + field.getType()
@@ -239,22 +333,16 @@ public class ThriftCodecCompiler {
 
       // default:
       read.visitLabel("default")
-          .loadVariable("protocol").invokeVirtual(
-          TProtocolReader.class,
-          "skipFieldData",
-          void.class
-      )
+          .loadVariable("protocol")
+          .invokeVirtual(TProtocolReader.class, "skipFieldData", void.class)
           .gotoLabel("while-begin");
 
       // end of while loop
       read.visitLabel("while-end");
 
       // protocol.readStructEnd();
-      read.loadVariable("protocol").invokeVirtual(
-          TProtocolReader.class,
-          "readStructEnd",
-          void.class
-      );
+      read.loadVariable("protocol")
+          .invokeVirtual(TProtocolReader.class, "readStructEnd", void.class);
 
       // Struct instance = new Struct();
       read.addLocalVariable(structType, "instance");
@@ -302,7 +390,7 @@ public class ThriftCodecCompiler {
           case BOOL:
             write.invokeVirtual(
                 TProtocolWriter.class,
-                "writeBool",
+                "writeBoolField",
                 void.class,
                 String.class,
                 short.class,
@@ -312,7 +400,7 @@ public class ThriftCodecCompiler {
           case BYTE:
             write.invokeVirtual(
                 TProtocolWriter.class,
-                "writeByte",
+                "writeByteField",
                 void.class,
                 String.class,
                 short.class,
@@ -322,7 +410,7 @@ public class ThriftCodecCompiler {
           case DOUBLE:
             write.invokeVirtual(
                 TProtocolWriter.class,
-                "writeDouble",
+                "writeDoubleField",
                 void.class,
                 String.class,
                 short.class,
@@ -332,7 +420,7 @@ public class ThriftCodecCompiler {
           case I16:
             write.invokeVirtual(
                 TProtocolWriter.class,
-                "writeI16",
+                "writeI16Field",
                 void.class,
                 String.class,
                 short.class,
@@ -342,7 +430,7 @@ public class ThriftCodecCompiler {
           case I32:
             write.invokeVirtual(
                 TProtocolWriter.class,
-                "writeI32",
+                "writeI32Field",
                 void.class,
                 String.class,
                 short.class,
@@ -352,7 +440,7 @@ public class ThriftCodecCompiler {
           case I64:
             write.invokeVirtual(
                 TProtocolWriter.class,
-                "writeI64",
+                "writeI64Field",
                 void.class,
                 String.class,
                 short.class,
@@ -362,37 +450,97 @@ public class ThriftCodecCompiler {
           case STRING:
             write.invokeVirtual(
                 TProtocolWriter.class,
-                "writeString",
+                "writeStringField",
                 void.class,
                 String.class,
                 short.class,
                 String.class
             );
             break;
-          case STRUCT:
-            // push struct codec INSTANCE on stack
-            ParameterizedType fieldCodec = toCodecType(field.getType().getStructMetadata());
-            write.getStaticField(fieldCodec, "INSTANCE", fieldCodec);
+          case STRUCT: {
+            FieldDefinition codecField = codecFields.get(field.getId());
 
-            // swap the codec and value
+            // push ThriftTypeCodec for this field
+            write.loadThis().getField(codecType, codecField);
+
+            // swap the codec and value on the stack
             write.swap();
 
+            // protocol.writeStructField("aStruct", 42, this.aStructCodec, aStruct);
             write.invokeVirtual(
-                TProtocolWriter.class,
-                "writeStruct",
-                void.class,
-                String.class,
-                short.class,
-                ThriftTypeCodec.class,
-                Object.class
+                type(TProtocolWriter.class),
+                "writeStructField",
+                type(void.class),
+                type(String.class),
+                type(short.class),
+                type(ThriftTypeCodec.class),
+                type(Object.class)
             );
             break;
-          case SET:
-            //ignore SETS
-            write.pop();  // name
-            write.pop();  // id
-            write.pop();  // value
+          }
+          case SET: {
+            FieldDefinition codecField = codecFields.get(field.getId());
+
+            // push ThriftTypeCodec for this field
+            write.loadThis().getField(codecType, codecField);
+
+            // swap the codec and value on the stack
+            write.swap();
+
+            // protocol.writeStructField("aStruct", 42, this.aStructCodec, aStruct);
+            write.invokeVirtual(
+                type(TProtocolWriter.class),
+                "writeSetField",
+                type(void.class),
+                type(String.class),
+                type(short.class),
+                type(ThriftTypeCodec.class),
+                type(Set.class)
+            );
             break;
+          }
+          case LIST: {
+            FieldDefinition codecField = codecFields.get(field.getId());
+
+            // push ThriftTypeCodec for this field
+            write.loadThis().getField(codecType, codecField);
+
+            // swap the codec and value on the stack
+            write.swap();
+
+            // protocol.writeStructField("aStruct", 42, this.aStructCodec, aStruct);
+            write.invokeVirtual(
+                type(TProtocolWriter.class),
+                "writeListField",
+                type(void.class),
+                type(String.class),
+                type(short.class),
+                type(ThriftTypeCodec.class),
+                type(List.class)
+            );
+            break;
+          }
+          case MAP: {
+            FieldDefinition codecField = codecFields.get(field.getId());
+
+            // push ThriftTypeCodec for this field
+            write.loadThis().getField(codecType, codecField);
+
+            // swap the codec and value on the stack
+            write.swap();
+
+            // protocol.writeStructField("aStruct", 42, this.aStructCodec, aStruct);
+            write.invokeVirtual(
+                type(TProtocolWriter.class),
+                "writeMapField",
+                type(void.class),
+                type(String.class),
+                type(short.class),
+                type(ThriftTypeCodec.class),
+                type(Map.class)
+            );
+            break;
+          }
           default:
             throw new IllegalArgumentException(
                 "Unsupported field type " + field.getType()
@@ -465,6 +613,14 @@ public class ThriftCodecCompiler {
     );
 
     return codecClass;
+  }
+
+  private boolean needsCodec(ThriftFieldMetadata fieldMetadata) {
+    ThriftProtocolFieldType protocolType = fieldMetadata.getType().getProtocolType();
+    return protocolType == STRUCT ||
+        protocolType == SET ||
+        protocolType == LIST ||
+        protocolType == MAP;
   }
 
   private ParameterizedType toCodecType(ThriftStructMetadata<?> metadata) {

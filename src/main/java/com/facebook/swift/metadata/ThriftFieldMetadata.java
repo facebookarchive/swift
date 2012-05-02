@@ -3,7 +3,6 @@
  */
 package com.facebook.swift.metadata;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
@@ -75,5 +74,18 @@ public class ThriftFieldMetadata {
 
   public ThriftExtraction getExtraction() {
     return extraction;
+  }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder();
+    sb.append("ThriftFieldMetadata");
+    sb.append("{id=").append(id);
+    sb.append(", type=").append(type);
+    sb.append(", name='").append(name).append('\'');
+    sb.append(", injections=").append(injections);
+    sb.append(", extraction=").append(extraction);
+    sb.append('}');
+    return sb.toString();
   }
 }

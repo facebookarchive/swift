@@ -46,6 +46,8 @@ public class ThriftType {
   private final ThriftStructMetadata<?> structMetadata;
 
   private ThriftType(ThriftProtocolFieldType protocolType) {
+    Preconditions.checkNotNull(protocolType, "protocolType is null");
+
     this.protocolType = protocolType;
     keyType = null;
     valueType = null;
@@ -57,13 +59,18 @@ public class ThriftType {
     ThriftType keyType,
     ThriftType valueType
   ) {
+    Preconditions.checkNotNull(protocolType, "protocolType is null");
+    Preconditions.checkNotNull(valueType, "valueType is null");
+
     this.protocolType = protocolType;
     this.keyType = keyType;
     this.valueType = valueType;
-    structMetadata = null;
+    this.structMetadata = null;
   }
 
   private ThriftType(ThriftStructMetadata<?> structMetadata) {
+    Preconditions.checkNotNull(structMetadata, "structMetadata is null");
+
     this.protocolType = ThriftProtocolFieldType.STRUCT;
     keyType = null;
     valueType = null;
@@ -87,5 +94,59 @@ public class ThriftType {
   public ThriftStructMetadata<?> getStructMetadata() {
     checkState(structMetadata != null, "%s does not have struct metadata", protocolType);
     return structMetadata;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    final ThriftType that = (ThriftType) o;
+
+    if (keyType != null ? !keyType.equals(that.keyType) : that.keyType != null) {
+      return false;
+    }
+    if (protocolType != that.protocolType) {
+      return false;
+    }
+    if (structMetadata != null ? !structMetadata.equals(that.structMetadata) : that.structMetadata != null) {
+      return false;
+    }
+    if (valueType != null ? !valueType.equals(that.valueType) : that.valueType != null) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = protocolType.hashCode();
+    result = 31 * result + (keyType != null ? keyType.hashCode() : 0);
+    result = 31 * result + (valueType != null ? valueType.hashCode() : 0);
+    result = 31 * result + (structMetadata != null ? structMetadata.hashCode() : 0);
+    return result;
+  }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder();
+    sb.append("ThriftType");
+    sb.append("{");
+    sb.append(protocolType);
+    if (structMetadata != null) {
+      sb.append(" ").append(structMetadata.getStructClass().getName());
+    } else if (keyType != null) {
+      sb.append(" keyType=").append(keyType);
+      sb.append(", valueType=").append(valueType);
+    } else if (valueType != null) {
+      sb.append(" valueType=").append(valueType);
+    }
+    sb.append('}');
+    return sb.toString();
   }
 }
