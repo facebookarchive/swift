@@ -3,10 +3,10 @@
  */
 package com.facebook.swift;
 
-import com.facebook.swift.compiler.BooleanThriftCodec;
-import com.facebook.swift.compiler.SetThriftCodec;
-import com.facebook.swift.compiler.TProtocolReader;
-import com.facebook.swift.compiler.TProtocolWriter;
+import com.facebook.swift.codec.BooleanThriftCodec;
+import com.facebook.swift.codec.SetThriftCodec;
+import com.facebook.swift.internal.TProtocolReader;
+import com.facebook.swift.internal.TProtocolWriter;
 import com.facebook.swift.metadata.ThriftCatalog;
 import com.facebook.swift.metadata.ThriftStructMetadata;
 import com.facebook.swift.metadata.ThriftType;

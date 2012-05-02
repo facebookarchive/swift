@@ -3,8 +3,8 @@
  */
 package com.facebook.swift;
 
-import com.facebook.swift.compiler.TProtocolReader;
-import com.facebook.swift.compiler.TProtocolWriter;
+import com.facebook.swift.internal.TProtocolReader;
+import com.facebook.swift.internal.TProtocolWriter;
 import com.facebook.swift.metadata.ThriftType;
 
 public interface ThriftCodec<T> {

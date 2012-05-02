@@ -6,8 +6,8 @@ package com.facebook.swift;
 import com.facebook.swift.BonkField;
 import com.facebook.swift.OneOfEverything;
 import com.facebook.swift.ThriftCodec;
-import com.facebook.swift.compiler.TProtocolReader;
-import com.facebook.swift.compiler.TProtocolWriter;
+import com.facebook.swift.internal.TProtocolReader;
+import com.facebook.swift.internal.TProtocolWriter;
 import com.facebook.swift.metadata.ThriftType;
 
 import java.util.Set;

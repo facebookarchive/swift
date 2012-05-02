@@ -5,8 +5,8 @@ package com.facebook.swift;
 
 import com.facebook.swift.BonkField;
 import com.facebook.swift.ThriftCodec;
-import com.facebook.swift.compiler.TProtocolReader;
-import com.facebook.swift.compiler.TProtocolWriter;
+import com.facebook.swift.internal.TProtocolReader;
+import com.facebook.swift.internal.TProtocolWriter;
 import com.facebook.swift.metadata.ThriftType;
 
 public class BonkFieldThriftCodec implements ThriftCodec<BonkField> {

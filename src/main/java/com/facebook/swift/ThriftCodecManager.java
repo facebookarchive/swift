@@ -3,20 +3,20 @@
  */
 package com.facebook.swift;
 
-import com.facebook.swift.compiler.BooleanThriftCodec;
-import com.facebook.swift.compiler.ByteBufferThriftCodec;
-import com.facebook.swift.compiler.ByteThriftCodec;
-import com.facebook.swift.compiler.CompilerThriftCodecFactory;
-import com.facebook.swift.compiler.DoubleThriftCodec;
-import com.facebook.swift.compiler.IntegerThriftCodec;
-import com.facebook.swift.compiler.ListThriftCodec;
-import com.facebook.swift.compiler.LongThriftCodec;
-import com.facebook.swift.compiler.MapThriftCodec;
-import com.facebook.swift.compiler.SetThriftCodec;
-import com.facebook.swift.compiler.ShortThriftCodec;
-import com.facebook.swift.compiler.StringThriftCodec;
-import com.facebook.swift.compiler.TProtocolReader;
-import com.facebook.swift.compiler.TProtocolWriter;
+import com.facebook.swift.codec.BooleanThriftCodec;
+import com.facebook.swift.codec.ByteBufferThriftCodec;
+import com.facebook.swift.codec.ByteThriftCodec;
+import com.facebook.swift.internal.compiler.CompilerThriftCodecFactory;
+import com.facebook.swift.codec.DoubleThriftCodec;
+import com.facebook.swift.codec.IntegerThriftCodec;
+import com.facebook.swift.codec.ListThriftCodec;
+import com.facebook.swift.codec.LongThriftCodec;
+import com.facebook.swift.codec.MapThriftCodec;
+import com.facebook.swift.codec.SetThriftCodec;
+import com.facebook.swift.codec.ShortThriftCodec;
+import com.facebook.swift.codec.StringThriftCodec;
+import com.facebook.swift.internal.TProtocolReader;
+import com.facebook.swift.internal.TProtocolWriter;
 import com.facebook.swift.internal.ThriftCodecFactory;
 import com.facebook.swift.metadata.ThriftCatalog;
 import com.facebook.swift.metadata.ThriftType;
