@@ -1,16 +1,19 @@
 /*
  * Copyright 2004-present Facebook. All Rights Reserved.
  */
-package com.facebook.swift.compiler;
+package com.facebook.swift;
 
 import com.facebook.swift.BonkField;
+import com.facebook.swift.ThriftCodec;
+import com.facebook.swift.compiler.TProtocolReader;
+import com.facebook.swift.compiler.TProtocolWriter;
 import com.facebook.swift.metadata.ThriftType;
 
-public class BonkFieldThriftTypeCodec implements ThriftTypeCodec<BonkField> {
+public class BonkFieldThriftCodec implements ThriftCodec<BonkField> {
 
   private final ThriftType type;
 
-  public BonkFieldThriftTypeCodec(ThriftType type) {
+  public BonkFieldThriftCodec(ThriftType type) {
     this.type = type;
   }
 

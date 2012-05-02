@@ -1,24 +1,27 @@
 /*
  * Copyright 2004-present Facebook. All Rights Reserved.
  */
-package com.facebook.swift.compiler;
+package com.facebook.swift;
 
 import com.facebook.swift.BonkField;
 import com.facebook.swift.OneOfEverything;
+import com.facebook.swift.ThriftCodec;
+import com.facebook.swift.compiler.TProtocolReader;
+import com.facebook.swift.compiler.TProtocolWriter;
 import com.facebook.swift.metadata.ThriftType;
 
 import java.util.Set;
 
-public class OneOfEverythingThriftTypeCodec implements ThriftTypeCodec<OneOfEverything> {
+public class OneOfEverythingThriftCodec implements ThriftCodec<OneOfEverything> {
 
   private final ThriftType type;
-  private final ThriftTypeCodec<BonkField> aStructCodec;
-  private final ThriftTypeCodec<Set<Boolean>> aBooleanSetCodec;
+  private final ThriftCodec<BonkField> aStructCodec;
+  private final ThriftCodec<Set<Boolean>> aBooleanSetCodec;
 
-  public OneOfEverythingThriftTypeCodec(
+  public OneOfEverythingThriftCodec(
       ThriftType type,
-      ThriftTypeCodec<BonkField> aStructCodec,
-      ThriftTypeCodec<Set<Boolean>> aBooleanSetCodec
+      ThriftCodec<BonkField> aStructCodec,
+      ThriftCodec<Set<Boolean>> aBooleanSetCodec
   ) {
     this.type = type;
     this.aStructCodec = aStructCodec;

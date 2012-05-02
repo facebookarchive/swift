@@ -3,10 +3,10 @@
  */
 package com.facebook.swift.compiler;
 
-import com.facebook.swift.ThriftProtocolFieldType;
+import com.facebook.swift.ThriftCodec;
 import com.facebook.swift.metadata.ThriftType;
 
-public class DoubleThriftTypeCodec implements ThriftTypeCodec<Double> {
+public class DoubleThriftCodec implements ThriftCodec<Double> {
   @Override
   public ThriftType getType() {
     return ThriftType.DOUBLE;

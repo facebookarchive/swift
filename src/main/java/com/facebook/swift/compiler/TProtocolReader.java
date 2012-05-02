@@ -3,6 +3,7 @@
  */
 package com.facebook.swift.compiler;
 
+import com.facebook.swift.ThriftCodec;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TField;
 import org.apache.thrift.protocol.TList;
@@ -74,6 +75,14 @@ public class TProtocolReader {
     currentField = null;
   }
 
+  public Object readField(ThriftCodec<?> codec) throws Exception {
+    if (!checkReadState(codec.getType().getProtocolType().getType())) {
+      return null;
+    }
+    currentField = null;
+    return codec.read(this);
+  }
+
   public ByteBuffer readBinaryField() throws TException {
     if (!checkReadState(TType.STRING)) {
       return null;
@@ -140,7 +149,7 @@ public class TProtocolReader {
     return protocol.readString();
   }
 
-  public <T> T readStructField(ThriftTypeCodec<T> codec) throws Exception {
+  public <T> T readStructField(ThriftCodec<T> codec) throws Exception {
     if (!checkReadState(TType.STRUCT)) {
       return null;
     }
@@ -148,7 +157,7 @@ public class TProtocolReader {
     return codec.read(this);
   }
 
-  public <E> Set<E> readSetField(ThriftTypeCodec<Set<E>> setCodec) throws Exception {
+  public <E> Set<E> readSetField(ThriftCodec<Set<E>> setCodec) throws Exception {
     if (!checkReadState(TType.SET)) {
       return null;
     }
@@ -156,7 +165,7 @@ public class TProtocolReader {
     return setCodec.read(this);
   }
 
-  public <E> List<E> readListField(ThriftTypeCodec<List<E>> listCodec) throws Exception {
+  public <E> List<E> readListField(ThriftCodec<List<E>> listCodec) throws Exception {
     if (!checkReadState(TType.LIST)) {
       return null;
     }
@@ -164,7 +173,7 @@ public class TProtocolReader {
     return listCodec.read(this);
   }
 
-  public <K, V> Map<K, V> readMapField(ThriftTypeCodec<Map<K, V>> mapCodec) throws Exception {
+  public <K, V> Map<K, V> readMapField(ThriftCodec<Map<K, V>> mapCodec) throws Exception {
     if (!checkReadState(TType.MAP)) {
       return null;
     }
@@ -204,7 +213,7 @@ public class TProtocolReader {
     return protocol.readString();
   }
 
-  public <E> Set<E> readSet(ThriftTypeCodec<E> elementCodec) throws Exception {
+  public <E> Set<E> readSet(ThriftCodec<E> elementCodec) throws Exception {
     TSet tSet = protocol.readSetBegin();
     Set<E> set = new HashSet<>();
     for (int i = 0; i < tSet.size; i++) {
@@ -215,7 +224,7 @@ public class TProtocolReader {
     return set;
   }
 
-  public <E> List<E> readList(ThriftTypeCodec<E> elementCodec) throws Exception {
+  public <E> List<E> readList(ThriftCodec<E> elementCodec) throws Exception {
     TList tList = protocol.readListBegin();
     List<E> list = new ArrayList<>();
     for (int i = 0; i < tList.size; i++) {
@@ -227,7 +236,7 @@ public class TProtocolReader {
   }
 
 
-  public <K, V> Map<K, V> readMap(ThriftTypeCodec<K> keyCodec, ThriftTypeCodec<V> valueCodec)
+  public <K, V> Map<K, V> readMap(ThriftCodec<K> keyCodec, ThriftCodec<V> valueCodec)
       throws Exception {
 
     TMap tMap = protocol.readMapBegin();

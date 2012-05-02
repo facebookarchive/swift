@@ -3,6 +3,8 @@
  */
 package com.facebook.swift.compiler;
 
+import com.facebook.swift.ThriftCodec;
+import com.facebook.swift.ThriftCodecManager;
 import com.facebook.swift.ThriftProtocolFieldType;
 import com.facebook.swift.compiler.byteCode.CaseStatement;
 import com.facebook.swift.compiler.byteCode.ClassDefinition;
@@ -10,6 +12,7 @@ import com.facebook.swift.compiler.byteCode.FieldDefinition;
 import com.facebook.swift.compiler.byteCode.MethodDefinition;
 import com.facebook.swift.compiler.byteCode.NamedParameterDefinition;
 import com.facebook.swift.compiler.byteCode.ParameterizedType;
+import com.facebook.swift.internal.ThriftCodecFactory;
 import com.facebook.swift.metadata.ThriftConstructorInjection;
 import com.facebook.swift.metadata.ThriftExtraction;
 import com.facebook.swift.metadata.ThriftFieldExtractor;
@@ -46,24 +49,27 @@ import static com.facebook.swift.compiler.byteCode.CaseStatement.caseStatement;
 import static com.facebook.swift.compiler.byteCode.NamedParameterDefinition.arg;
 import static com.facebook.swift.compiler.byteCode.ParameterizedType.type;
 
-public class ThriftCodecCompiler {
+public class CompilerThriftCodecFactory implements ThriftCodecFactory {
   private static final String PACKAGE = "$thrift";
-  private static final boolean debug = true;
-  private final CompiledThriftCodec compiledThriftCodec;
-  private final DynamicClassLoader classLoader;
 
-  public ThriftCodecCompiler(
-      CompiledThriftCodec compiledThriftCodec,
-      DynamicClassLoader classLoader
-  ) {
-    this.compiledThriftCodec = compiledThriftCodec;
-    this.classLoader = classLoader;
+  private final DynamicClassLoader classLoader;
+  private final boolean debug;
+
+  public CompilerThriftCodecFactory() {
+    classLoader = new DynamicClassLoader();
+    debug = false;
   }
 
-  public <T> ThriftTypeCodec<T> generateThriftTypeCodec(Class<T> type) {
-    ThriftStructMetadata<?> metadata =
-        compiledThriftCodec.getCatalog().getThriftStructMetadata(type);
+  public CompilerThriftCodecFactory(DynamicClassLoader classLoader, boolean debug) {
+    this.classLoader = classLoader;
+    this.debug = debug;
+  }
 
+  @Override
+  public <T> ThriftCodec<T> generateThriftTypeCodec(
+      ThriftCodecManager codecManager,
+      ThriftStructMetadata<T> metadata
+  ) {
     List<Class<?>> parameterTypes = new ArrayList<>();
     List<Object> parameters = new ArrayList<>();
 
@@ -72,14 +78,14 @@ public class ThriftCodecCompiler {
     parameters.add(thriftType);
 
     // get codecs for al fields
-    Map<Short, ThriftTypeCodec<?>> fieldCodecs = new TreeMap<>();
+    Map<Short, ThriftCodec<?>> fieldCodecs = new TreeMap<>();
     for (ThriftFieldMetadata field : metadata.getFields()) {
       if (needsCodec(field)) {
-        fieldCodecs.put(field.getId(), compiledThriftCodec.getCodec(field.getType()));
+        fieldCodecs.put(field.getId(), codecManager.getCodec(field.getType()));
       }
     }
-    for (ThriftTypeCodec<?> codec : fieldCodecs.values()) {
-      parameterTypes.add(ThriftTypeCodec.class);
+    for (ThriftCodec<?> codec : fieldCodecs.values()) {
+      parameterTypes.add(ThriftCodec.class);
       parameters.add(codec);
     }
 
@@ -91,7 +97,7 @@ public class ThriftCodecCompiler {
           parameterTypes.toArray(new Class[parameterTypes.size()])
       );
 
-      return (ThriftTypeCodec<T>) constructor.newInstance(
+      return (ThriftCodec<T>) constructor.newInstance(
           parameters.toArray(new Object[parameters.size()])
       );
     } catch (Exception e) {
@@ -107,7 +113,7 @@ public class ThriftCodecCompiler {
         a(PUBLIC, SUPER),
         codecType.getClassName(),
         type(Object.class),
-        type(ThriftTypeCodec.class, structType)
+        type(ThriftCodec.class, structType)
     );
 
     // private ThriftType type;
@@ -122,7 +128,7 @@ public class ThriftCodecCompiler {
     for (ThriftFieldMetadata fieldMetadata : metadata.getFields()) {
       if (needsCodec(fieldMetadata)) {
         ParameterizedType fieldType = type(
-            ThriftTypeCodec.class,
+            ThriftCodec.class,
             toParameterizedType(fieldMetadata.getType())
         );
         String fieldName = fieldMetadata.getName() + "Codec";
@@ -281,7 +287,7 @@ public class ThriftCodecCompiler {
                     type(TProtocolReader.class),
                     "readStructField",
                     type(Object.class),
-                    type(ThriftTypeCodec.class)
+                    type(ThriftCodec.class)
                 )
                 .checkCast(toParameterizedType(field.getType()));
             break;
@@ -295,7 +301,7 @@ public class ThriftCodecCompiler {
                     type(TProtocolReader.class),
                     "readSetField",
                     type(Set.class),
-                    type(ThriftTypeCodec.class)
+                    type(ThriftCodec.class)
                 );
             break;
           }
@@ -308,7 +314,7 @@ public class ThriftCodecCompiler {
                     type(TProtocolReader.class),
                     "readListField",
                     type(List.class),
-                    type(ThriftTypeCodec.class)
+                    type(ThriftCodec.class)
                 );
             break;
           }
@@ -321,7 +327,7 @@ public class ThriftCodecCompiler {
                     type(TProtocolReader.class),
                     "readMapField",
                     type(Map.class),
-                    type(ThriftTypeCodec.class)
+                    type(ThriftCodec.class)
                 );
             break;
           }
@@ -536,7 +542,7 @@ public class ThriftCodecCompiler {
                 type(void.class),
                 type(String.class),
                 type(short.class),
-                type(ThriftTypeCodec.class),
+                type(ThriftCodec.class),
                 type(Object.class)
             );
             break;
@@ -557,7 +563,7 @@ public class ThriftCodecCompiler {
                 type(void.class),
                 type(String.class),
                 type(short.class),
-                type(ThriftTypeCodec.class),
+                type(ThriftCodec.class),
                 type(Set.class)
             );
             break;
@@ -578,7 +584,7 @@ public class ThriftCodecCompiler {
                 type(void.class),
                 type(String.class),
                 type(short.class),
-                type(ThriftTypeCodec.class),
+                type(ThriftCodec.class),
                 type(List.class)
             );
             break;
@@ -599,7 +605,7 @@ public class ThriftCodecCompiler {
                 type(void.class),
                 type(String.class),
                 type(short.class),
-                type(ThriftTypeCodec.class),
+                type(ThriftCodec.class),
                 type(Map.class)
             );
             break;

@@ -3,6 +3,8 @@
  */
 package com.facebook.swift.compiler;
 
+import com.facebook.swift.ThriftCodec;
+
 public class DynamicClassLoader extends ClassLoader {
   public DynamicClassLoader() {
     this(getDefaultClassLoader());
@@ -22,7 +24,7 @@ public class DynamicClassLoader extends ClassLoader {
     if (classLoader != null) {
       return classLoader;
     }
-    classLoader = ThriftTypeCodec.class.getClassLoader();
+    classLoader = ThriftCodec.class.getClassLoader();
     if (classLoader != null) {
       return classLoader;
     }

@@ -3,16 +3,16 @@
  */
 package com.facebook.swift.compiler;
 
+import com.facebook.swift.ThriftCodec;
 import com.facebook.swift.metadata.ThriftType;
 
 import java.util.List;
-import java.util.Set;
 
-public class ListThriftTypeCodec<T> implements ThriftTypeCodec<List<T>> {
-  private final ThriftTypeCodec<T> elementCodec;
+public class ListThriftCodec<T> implements ThriftCodec<List<T>> {
+  private final ThriftCodec<T> elementCodec;
   private final ThriftType type;
 
-  public ListThriftTypeCodec(ThriftTypeCodec<T> elementCodec) {
+  public ListThriftCodec(ThriftCodec<T> elementCodec) {
     this.elementCodec = elementCodec;
     type = ThriftType.list(elementCodec.getType());
   }

@@ -3,6 +3,7 @@
  */
 package com.facebook.swift.compiler;
 
+import com.facebook.swift.ThriftCodec;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TField;
 import org.apache.thrift.protocol.TList;
@@ -31,6 +32,17 @@ public class TProtocolWriter {
   public void writeStructEnd() throws TException {
     protocol.writeFieldStop();
     protocol.writeStructEnd();
+  }
+
+  public void writeField(String name, short id, ThriftCodec<Object> codec, Object value)
+      throws Exception {
+    if (value == null) {
+      return;
+    }
+
+    protocol.writeFieldBegin(new TField(name, codec.getType().getProtocolType().getType(), id));
+    codec.write(value, this);
+    protocol.writeFieldEnd();
   }
 
   public void writeBinaryField(String name, short id, ByteBuffer buf) throws TException {
@@ -85,7 +97,7 @@ public class TProtocolWriter {
     protocol.writeFieldEnd();
   }
 
-  public <T> void writeStructField(String name, short id, ThriftTypeCodec<T> codec, T struct)
+  public <T> void writeStructField(String name, short id, ThriftCodec<T> codec, T struct)
       throws Exception {
     if (struct == null) {
       return;
@@ -96,7 +108,7 @@ public class TProtocolWriter {
     protocol.writeFieldEnd();
   }
 
-  public <E> void writeSetField(String name, short id, ThriftTypeCodec<Set<E>> codec, Set<E> set)
+  public <E> void writeSetField(String name, short id, ThriftCodec<Set<E>> codec, Set<E> set)
       throws Exception {
     if (set == null) {
       return;
@@ -107,7 +119,7 @@ public class TProtocolWriter {
     protocol.writeFieldEnd();
   }
 
-  public <E> void writeListField(String name, short id, ThriftTypeCodec<List<E>> codec, List<E> list)
+  public <E> void writeListField(String name, short id, ThriftCodec<List<E>> codec, List<E> list)
       throws Exception {
     if (list == null) {
       return;
@@ -118,7 +130,7 @@ public class TProtocolWriter {
     protocol.writeFieldEnd();
   }
 
-  public <K,V> void writeMapField(String name, short id, ThriftTypeCodec<Map<K,V>> codec, Map<K,V> map)
+  public <K,V> void writeMapField(String name, short id, ThriftCodec<Map<K,V>> codec, Map<K,V> map)
       throws Exception {
     if (map == null) {
       return;
@@ -161,7 +173,7 @@ public class TProtocolWriter {
     protocol.writeString(str);
   }
 
-  public <T> void writeSet(ThriftTypeCodec<T> elementCodec, Set<T> set) throws Exception {
+  public <T> void writeSet(ThriftCodec<T> elementCodec, Set<T> set) throws Exception {
     if (set == null) {
       return;
     }
@@ -180,7 +192,7 @@ public class TProtocolWriter {
     protocol.writeSetEnd();
   }
 
-  public <T> void writeList(ThriftTypeCodec<T> elementCodec, List<T> list) throws Exception {
+  public <T> void writeList(ThriftCodec<T> elementCodec, List<T> list) throws Exception {
     if (list == null) {
       return;
     }
@@ -200,8 +212,8 @@ public class TProtocolWriter {
   }
 
   public <K, V> void writeMap(
-      ThriftTypeCodec<K> keyCodec,
-      ThriftTypeCodec<V> valueCodec,
+      ThriftCodec<K> keyCodec,
+      ThriftCodec<V> valueCodec,
       Map<K, V> map
   ) throws Exception {
 

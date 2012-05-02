@@ -3,15 +3,16 @@
  */
 package com.facebook.swift.compiler;
 
+import com.facebook.swift.ThriftCodec;
 import com.facebook.swift.metadata.ThriftType;
 
 import java.util.Set;
 
-public class SetThriftTypeCodec<T> implements ThriftTypeCodec<Set<T>> {
-  private final ThriftTypeCodec<T> elementCodec;
+public class SetThriftCodec<T> implements ThriftCodec<Set<T>> {
+  private final ThriftCodec<T> elementCodec;
   private final ThriftType type;
 
-  public SetThriftTypeCodec(ThriftTypeCodec<T> elementCodec) {
+  public SetThriftCodec(ThriftCodec<T> elementCodec) {
     this.elementCodec = elementCodec;
     type = ThriftType.set(elementCodec.getType());
   }

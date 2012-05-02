@@ -3,9 +3,10 @@
  */
 package com.facebook.swift.compiler;
 
+import com.facebook.swift.ThriftCodec;
 import com.facebook.swift.metadata.ThriftType;
 
-public class StringThriftTypeCodec implements ThriftTypeCodec<String> {
+public class StringThriftCodec implements ThriftCodec<String> {
   @Override
   public ThriftType getType() {
     return ThriftType.STRING;

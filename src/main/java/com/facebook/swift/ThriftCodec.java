@@ -3,19 +3,16 @@
  */
 package com.facebook.swift;
 
+import com.facebook.swift.compiler.TProtocolReader;
+import com.facebook.swift.compiler.TProtocolWriter;
 import com.facebook.swift.metadata.ThriftType;
-import org.apache.thrift.protocol.TProtocol;
 
-public interface ThriftCodec {
-  <T> T read(Class<T> type, TProtocol protocol)
+public interface ThriftCodec<T> {
+  public ThriftType getType();
+
+  public T read(TProtocolReader protocol)
     throws Exception;
 
-  <T> void write(Class<T> type, T value, TProtocol protocol)
-    throws Exception;
-
-  Object read(ThriftType type, TProtocol protocol)
-    throws Exception;
-
-  void write(ThriftType type, Object value, TProtocol protocol)
+  public void write(T value, TProtocolWriter protocol)
     throws Exception;
 }
