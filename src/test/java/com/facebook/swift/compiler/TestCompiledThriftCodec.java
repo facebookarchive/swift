@@ -3,7 +3,11 @@
  */
 package com.facebook.swift.compiler;
 
+import com.facebook.swift.BonkBean;
+import com.facebook.swift.BonkBuilder;
+import com.facebook.swift.BonkConstructor;
 import com.facebook.swift.BonkField;
+import com.facebook.swift.BonkMethod;
 import com.facebook.swift.OneOfEverything;
 import com.facebook.swift.metadata.ThriftCatalog;
 import com.facebook.swift.metadata.ThriftStructMetadata;
@@ -31,18 +35,37 @@ public class TestCompiledThriftCodec {
     BonkFieldThriftTypeCodec bonkFieldCodec = new BonkFieldThriftTypeCodec(bonkFieldType);
 
     BonkField bonkField = new BonkField("message", 42);
-
     testMetadataBuild(bonkFieldCodec, bonkField);
   }
 
   @Test
-  public void testFieldsAutoGen() throws Exception {
-    CompiledThriftCodec compiledThriftCodec = new CompiledThriftCodec(new ThriftCatalog());
-    ThriftTypeCodec<BonkField> codec = compiledThriftCodec.getCodec(BonkField.class);
-
+  public void testFields() throws Exception {
     BonkField bonkField = new BonkField("message", 42);
+    testMetadataBuild(bonkField);
+  }
 
-    testMetadataBuild(codec, bonkField);
+  @Test
+  public void testBean() throws Exception {
+    BonkBean bonkBean = new BonkBean("message", 42);
+    testMetadataBuild(bonkBean);
+  }
+
+  @Test
+  public void testMethod() throws Exception {
+    BonkMethod bonkMethod = new BonkMethod("message", 42);
+    testMetadataBuild(bonkMethod);
+  }
+
+  @Test
+  public void testConstructor() throws Exception {
+    BonkConstructor bonkConstructor = new BonkConstructor("message", 42);
+    testMetadataBuild(bonkConstructor);
+  }
+
+  @Test
+  public void testBuilder() throws Exception {
+    BonkBuilder bonkBuilder = new BonkBuilder("message", 42);
+    testMetadataBuild(bonkBuilder);
   }
 
   @Test
@@ -172,6 +195,13 @@ public class TestCompiledThriftCodec {
 
     OneOfEverything one = new OneOfEverything();
     testMetadataBuild(codec, one);
+  }
+
+  private <T> void testMetadataBuild(T value) throws Exception {
+    CompiledThriftCodec compiledThriftCodec = new CompiledThriftCodec(new ThriftCatalog());
+    ThriftTypeCodec<T> codec = (ThriftTypeCodec<T>) compiledThriftCodec.getCodec(value.getClass());
+
+    testMetadataBuild(codec, value);
   }
 
   private <T> void testMetadataBuild(ThriftTypeCodec<T> codec, T structInstance) throws Exception {

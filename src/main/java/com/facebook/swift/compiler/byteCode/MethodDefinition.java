@@ -22,6 +22,9 @@ import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -281,10 +284,14 @@ public class MethodDefinition {
     return this;
   }
 
+  public MethodDefinition invokeConstructor(Constructor<?> constructor) {
+    return invokeConstructor(constructor.getDeclaringClass(), constructor.getParameterTypes());
+  }
+
   public MethodDefinition invokeConstructor(Class<?> type, Class<?>... parameterTypes) {
     invokeConstructor(
-      type(type),
-      Lists.transform(ImmutableList.copyOf(parameterTypes), toParameterizedType())
+        type(type),
+        Lists.transform(ImmutableList.copyOf(parameterTypes), toParameterizedType())
     );
     return this;
   }
@@ -312,12 +319,24 @@ public class MethodDefinition {
     List<ParameterizedType> parameterTypes
   ) {
     instructionList.add(
-      new MethodInsnNode(
-        INVOKESPECIAL,
-        type.getClassName(),
-        name,
-        methodDescription(returnType, parameterTypes)
-      )
+        new MethodInsnNode(
+            INVOKESPECIAL,
+            type.getClassName(),
+            name,
+            methodDescription(returnType, parameterTypes)
+        )
+    );
+    return this;
+  }
+
+  public MethodDefinition invokeVirtual(Method method) {
+    instructionList.add(
+        new MethodInsnNode(
+            INVOKEVIRTUAL,
+            Type.getInternalName(method.getDeclaringClass()),
+            method.getName(),
+            Type.getMethodDescriptor(method)
+        )
     );
     return this;
   }
@@ -329,12 +348,12 @@ public class MethodDefinition {
     Class<?>... parameterTypes
   ) {
     instructionList.add(
-      new MethodInsnNode(
-        INVOKEVIRTUAL,
-        type(type).getClassName(),
-        name,
-        methodDescription(returnType, parameterTypes)
-      )
+        new MethodInsnNode(
+            INVOKEVIRTUAL,
+            type(type).getClassName(),
+            name,
+            methodDescription(returnType, parameterTypes)
+        )
     );
     return this;
   }
@@ -346,12 +365,12 @@ public class MethodDefinition {
     ParameterizedType... parameterTypes
   ) {
     instructionList.add(
-      new MethodInsnNode(
-        INVOKEVIRTUAL,
-        type.getClassName(),
-        name,
-        methodDescription(returnType, parameterTypes)
-      )
+        new MethodInsnNode(
+            INVOKEVIRTUAL,
+            type.getClassName(),
+            name,
+            methodDescription(returnType, parameterTypes)
+        )
     );
     return this;
   }
@@ -391,6 +410,10 @@ public class MethodDefinition {
     return this;
   }
 
+  public MethodDefinition getField(Field field) {
+    return getField(field.getDeclaringClass(), field.getName(), field.getType());
+  }
+
   public MethodDefinition getField(Class<?> target, FieldDefinition field) {
     getField(type(target), field.getName(), field.getType());
     return this;
@@ -412,12 +435,12 @@ public class MethodDefinition {
     ParameterizedType fieldType
   ) {
     instructionList.add(
-      new FieldInsnNode(
-        GETFIELD,
-        target.getClassName(),
-        fieldName,
-        fieldType.getType()
-      )
+        new FieldInsnNode(
+            GETFIELD,
+            target.getClassName(),
+            fieldName,
+            fieldType.getType()
+        )
     );
     return this;
   }
@@ -434,12 +457,12 @@ public class MethodDefinition {
     ParameterizedType fieldType
   ) {
     instructionList.add(
-      new FieldInsnNode(
-        GETSTATIC,
-        target.getClassName(),
-        fieldName,
-        fieldType.getType()
-      )
+        new FieldInsnNode(
+            GETSTATIC,
+            target.getClassName(),
+            fieldName,
+            fieldType.getType()
+        )
     );
     return this;
   }
@@ -456,19 +479,22 @@ public class MethodDefinition {
     ParameterizedType fieldType
   ) {
     instructionList.add(
-      new FieldInsnNode(
-        PUTSTATIC,
-        target.getClassName(),
-        fieldName,
-        fieldType.getType()
-      )
+        new FieldInsnNode(
+            PUTSTATIC,
+            target.getClassName(),
+            fieldName,
+            fieldType.getType()
+        )
     );
     return this;
   }
 
+  public MethodDefinition putField(Field field) {
+    return putField(field.getDeclaringClass(), field.getName(), field.getType());
+  }
+
   public MethodDefinition putField(Class<?> target, FieldDefinition field) {
-    this.putField(type(target), field);
-    return this;
+    return putField(type(target), field);
   }
 
   public MethodDefinition putField(Class<?> target, String fieldName, Class<?> fieldType) {

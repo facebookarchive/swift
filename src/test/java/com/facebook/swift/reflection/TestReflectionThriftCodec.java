@@ -33,24 +33,18 @@ public class TestReflectionThriftCodec {
   @Test
   public void testFields() throws Exception {
     BonkField bonkField = new BonkField("message", 42);
-
     testMetadataBuild(bonkField);
   }
 
   @Test
   public void testBean() throws Exception {
-    BonkBean bonkBean = new BonkBean();
-    bonkBean.setMessage("message");
-    bonkBean.setType(42);
-
+    BonkBean bonkBean = new BonkBean("message", 42);
     testMetadataBuild(bonkBean);
   }
 
   @Test
   public void testMethod() throws Exception {
-    BonkMethod bonkMethod = new BonkMethod();
-    bonkMethod.setData("message", 42);
-
+    BonkMethod bonkMethod = new BonkMethod("message", 42);
     testMetadataBuild(bonkMethod);
   }
 

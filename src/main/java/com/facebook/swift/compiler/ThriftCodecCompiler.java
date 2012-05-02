@@ -10,7 +10,15 @@ import com.facebook.swift.compiler.byteCode.FieldDefinition;
 import com.facebook.swift.compiler.byteCode.MethodDefinition;
 import com.facebook.swift.compiler.byteCode.NamedParameterDefinition;
 import com.facebook.swift.compiler.byteCode.ParameterizedType;
+import com.facebook.swift.metadata.ThriftConstructorInjection;
+import com.facebook.swift.metadata.ThriftExtraction;
+import com.facebook.swift.metadata.ThriftFieldExtractor;
+import com.facebook.swift.metadata.ThriftFieldInjection;
 import com.facebook.swift.metadata.ThriftFieldMetadata;
+import com.facebook.swift.metadata.ThriftInjection;
+import com.facebook.swift.metadata.ThriftMethodExtractor;
+import com.facebook.swift.metadata.ThriftMethodInjection;
+import com.facebook.swift.metadata.ThriftParameterInjection;
 import com.facebook.swift.metadata.ThriftStructMetadata;
 import com.facebook.swift.metadata.ThriftType;
 import org.objectweb.asm.ClassReader;
@@ -344,18 +352,65 @@ public class ThriftCodecCompiler {
       read.loadVariable("protocol")
           .invokeVirtual(TProtocolReader.class, "readStructEnd", void.class);
 
-      // Struct instance = new Struct();
+      // == BUILD ==
+
       read.addLocalVariable(structType, "instance");
-      read.newObject(structType)
-          .dup()
-          .invokeConstructor(structType)
+
+      // create the new instance (or builder)
+      if (metadata.getBuilderClass() == null) {
+        read.newObject(structType).dup();
+      } else {
+        read.newObject(metadata.getBuilderClass()).dup();
+      }
+
+      // invoke constructor
+      ThriftConstructorInjection constructor = metadata.getConstructor();
+      // push parameters on stack
+      for (ThriftParameterInjection parameterInjection : constructor.getParameters()) {
+        read.loadVariable("f_" + parameterInjection.getName());
+      }
+      // invoke constructor
+      read.invokeConstructor(constructor.getConstructor())
           .storeVariable("instance");
 
       // inject fields
       for (ThriftFieldMetadata field : metadata.getFields()) {
-        read.loadVariable("instance")
-            .loadVariable("f_" + field.getName())
-            .putField(structType, field.getName(), toParameterizedType(field.getType()));
+        for (ThriftInjection injection : field.getInjections()) {
+          if (injection instanceof ThriftFieldInjection) {
+            ThriftFieldInjection fieldInjection = (ThriftFieldInjection) injection;
+            read.loadVariable("instance")
+                .loadVariable("f_" + field.getName())
+                .putField(fieldInjection.getField());
+          }
+        }
+      }
+
+      // inject methods
+      for (ThriftMethodInjection methodInjection : metadata.getMethodInjections()) {
+        read.loadVariable("instance");
+
+        // push parameters on stack
+        for (ThriftParameterInjection parameterInjection : methodInjection.getParameters()) {
+          read.loadVariable("f_" + parameterInjection.getName());
+        }
+
+        // invoke the method
+        read.invokeVirtual(methodInjection.getMethod());
+      }
+
+      // invoke factory method if present
+      ThriftMethodInjection builderMethod = metadata.getBuilderMethod();
+      if (builderMethod != null) {
+        read.loadVariable("instance");
+
+        // push parameters on stack
+        for (ThriftParameterInjection parameterInjection : builderMethod.getParameters()) {
+          read.loadVariable("f_" + parameterInjection.getName());
+        }
+
+        // invoke the method
+        read.invokeVirtual(builderMethod.getMethod())
+            .storeVariable("instance");
       }
 
       read.loadVariable("instance")
@@ -385,7 +440,15 @@ public class ThriftCodecCompiler {
             .loadConstant(field.getId())
             .loadVariable("struct");
 
-        write.getField(structType, field.getName(), toParameterizedType(field.getType()));
+        ThriftExtraction extraction = field.getExtraction();
+        if (extraction instanceof ThriftFieldExtractor) {
+          ThriftFieldExtractor fieldExtractor = (ThriftFieldExtractor) extraction;
+          write.getField( fieldExtractor.getField());
+        } else if (extraction instanceof ThriftMethodExtractor) {
+          ThriftMethodExtractor methodExtractor = (ThriftMethodExtractor) extraction;
+          write.invokeVirtual(methodExtractor.getMethod());
+        }
+
         switch (field.getType().getProtocolType()) {
           case BOOL:
             write.invokeVirtual(

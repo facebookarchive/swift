@@ -8,6 +8,14 @@ public class BonkMethod {
   private String message;
   private int type;
 
+  public BonkMethod() {
+  }
+
+  public BonkMethod(String message, int type) {
+    this.message = message;
+    this.type = type;
+  }
+
   @ThriftField(id = 1)
   public String getMessage() {
     return message;

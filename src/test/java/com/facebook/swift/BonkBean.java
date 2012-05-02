@@ -8,6 +8,14 @@ public class BonkBean {
   private String message;
   private int type;
 
+  public BonkBean() {
+  }
+
+  public BonkBean(String message, int type) {
+    this.message = message;
+    this.type = type;
+  }
+
   @ThriftField(id = 1)
   public String getMessage() {
     return message;

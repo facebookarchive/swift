@@ -5,12 +5,14 @@ package com.facebook.swift.metadata;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Maps;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -21,7 +23,7 @@ public class ThriftStructMetadata<T> {
   private final Class<?> builderClass;
   private final ThriftMethodInjection builderMethod;
 
-  private final Map<Short, ThriftFieldMetadata> fields;
+  private final SortedMap<Short, ThriftFieldMetadata> fields;
 
   private final ThriftConstructorInjection constructor;
   private final List<ThriftMethodInjection> methodInjections;
@@ -40,14 +42,14 @@ public class ThriftStructMetadata<T> {
     this.structName = checkNotNull(structName, "structName is null");
     this.structClass = checkNotNull(structClass, "structClass is null");
     this.constructor = checkNotNull(constructor, "constructor is null");
-    this.fields = Maps.uniqueIndex(
+    this.fields = ImmutableSortedMap.copyOf(Maps.uniqueIndex(
       checkNotNull(fields, "fields is null"), new Function<ThriftFieldMetadata, Short>() {
       @Override
       public Short apply(@Nullable ThriftFieldMetadata input) {
         return input.getId();
       }
     }
-    );
+    ));
     this.methodInjections = ImmutableList.copyOf(
       checkNotNull(
         methodInjections,
