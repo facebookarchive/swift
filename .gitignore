@@ -19,3 +19,4 @@ test-output/
 .classpath
 .settings
 eclipse-classes
+.arc
