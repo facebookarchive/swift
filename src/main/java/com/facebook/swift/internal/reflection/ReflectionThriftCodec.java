@@ -106,7 +106,11 @@ public class ReflectionThriftCodec<T> implements ThriftCodec<T> {
       ThriftConstructorInjection constructor = metadata.getConstructor();
       Object[] parametersValues = new Object[constructor.getParameters().size()];
       for (ThriftParameterInjection parameter : constructor.getParameters()) {
-        parametersValues[parameter.getParameterIndex()] = data.get(parameter.getId());
+        Object value = data.get(parameter.getId());
+        if (parameter.getCoercion() != null) {
+          value = parameter.getCoercion().getMethod().invoke(null, value);
+        }
+        parametersValues[parameter.getParameterIndex()] = value;
       }
 
       try {
@@ -125,6 +129,9 @@ public class ReflectionThriftCodec<T> implements ThriftCodec<T> {
         if (injection instanceof ThriftFieldInjection) {
           ThriftFieldInjection fieldInjection = (ThriftFieldInjection) injection;
           Object value = data.get(fieldInjection.getId());
+          if (fieldInjection.getCoercion() != null) {
+            value = fieldInjection.getCoercion().getMethod().invoke(null, value);
+          }
           if (value != null) {
             fieldInjection.getField().set(instance, value);
           }
@@ -136,7 +143,11 @@ public class ReflectionThriftCodec<T> implements ThriftCodec<T> {
     for (ThriftMethodInjection methodInjection : metadata.getMethodInjections()) {
       Object[] parametersValues = new Object[methodInjection.getParameters().size()];
       for (ThriftParameterInjection parameter : methodInjection.getParameters()) {
-        parametersValues[parameter.getParameterIndex()] = data.get(parameter.getId());
+        Object value = data.get(parameter.getId());
+        if (parameter.getCoercion() != null) {
+          value = parameter.getCoercion().getMethod().invoke(null, value);
+        }
+        parametersValues[parameter.getParameterIndex()] = value;
       }
 
       try {
@@ -154,7 +165,11 @@ public class ReflectionThriftCodec<T> implements ThriftCodec<T> {
       ThriftMethodInjection builderMethod = metadata.getBuilderMethod();
       Object[] parametersValues = new Object[builderMethod.getParameters().size()];
       for (ThriftParameterInjection parameter : builderMethod.getParameters()) {
-        parametersValues[parameter.getParameterIndex()] = data.get(parameter.getId());
+        Object value = data.get(parameter.getId());
+        if (parameter.getCoercion() != null) {
+          value = parameter.getCoercion().getMethod().invoke(null, value);
+        }
+        parametersValues[parameter.getParameterIndex()] = value;
       }
 
       try {
@@ -187,18 +202,23 @@ public class ReflectionThriftCodec<T> implements ThriftCodec<T> {
       throws Exception {
     try {
       ThriftExtraction extraction = field.getExtraction();
+      Object value;
       if (extraction instanceof ThriftFieldExtractor) {
         ThriftFieldExtractor thriftFieldExtractor = (ThriftFieldExtractor) extraction;
-        return thriftFieldExtractor.getField().get(instance);
+        value = thriftFieldExtractor.getField().get(instance);
       } else if (extraction instanceof ThriftMethodExtractor) {
         ThriftMethodExtractor thriftMethodExtractor = (ThriftMethodExtractor) extraction;
-        return thriftMethodExtractor.getMethod().invoke(instance);
+        value = thriftMethodExtractor.getMethod().invoke(instance);
       } else {
         throw new IllegalAccessException(
             "Unsupported field extractor type " + extraction.getClass()
                 .getName()
         );
       }
+      if (extraction.getCoercion() != null) {
+        value = extraction.getCoercion().getMethod().invoke(null, value);
+      }
+      return value;
     } catch (InvocationTargetException e) {
       if (e.getTargetException() != null) {
         Throwables.propagateIfInstanceOf(e.getTargetException(), Exception.class);

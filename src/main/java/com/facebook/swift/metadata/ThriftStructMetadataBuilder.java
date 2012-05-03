@@ -30,15 +30,17 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import static com.facebook.swift.ThriftProtocolFieldType.STOP;
+import static com.facebook.swift.ThriftProtocolFieldType.isSupportedJavaType;
 import static com.facebook.swift.metadata.ReflectionHelper.findAnnotatedMethods;
 import static com.facebook.swift.metadata.ReflectionHelper.getAllDeclaredFields;
 import static com.facebook.swift.metadata.ReflectionHelper.getAllDeclaredMethods;
 import static com.facebook.swift.metadata.ThriftStructMetadataBuilder.FieldMetadata.extractThriftFieldName;
 import static com.facebook.swift.metadata.ThriftStructMetadataBuilder.FieldMetadata.getOrExtractThriftFieldName;
+import static com.facebook.swift.metadata.ThriftStructMetadataBuilder.FieldMetadata.inferThriftFieldProtocolType;
 import static com.facebook.swift.metadata.ThriftStructMetadataBuilder.FieldMetadata.getThriftFieldId;
 import static com.facebook.swift.metadata.ThriftStructMetadataBuilder.FieldMetadata.getThriftFieldName;
 import static com.facebook.swift.metadata.ThriftStructMetadataBuilder.FieldMetadata.getThriftFieldProtocolType;
-import static com.facebook.swift.metadata.ThriftStructMetadataBuilder.FieldMetadata.getThriftFieldType;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.notNull;
@@ -177,13 +179,13 @@ public class ThriftStructMetadataBuilder<T> {
           problems.addError(
             "ThriftStruct %s field %s, does not have an id",
             structName,
-            field.getName()
+            field.extractName()
           ); // todo bad message
         }
         continue;
       }
 
-      // assure all fields with the same id hav the same name
+      // assure all fields with the same id have the same name
       Set<String> names = ImmutableSet.copyOf(
         filter(
           transform(fields, getThriftFieldName()),
@@ -205,17 +207,21 @@ public class ThriftStructMetadataBuilder<T> {
       }
 
       // assure all fields have the same protocol type
+      // get explicitly set protocol types
       Set<ThriftProtocolFieldType> protocolTypes = ImmutableSet.copyOf(
-        filter(
-          transform(
-            fields,
-            getThriftFieldProtocolType()
-          ), notNull()
-        )
+          filter(transform(fields, getThriftFieldProtocolType()), notNull())
       );
+      // if none, infer protocol type from java type
+      if (protocolTypes.isEmpty()) {
+        protocolTypes = ImmutableSet.copyOf(
+            filter(transform(fields, inferThriftFieldProtocolType(catalog)), notNull())
+        );
+      }
       if (protocolTypes.size() > 1) {
-        // todo allow primitive widening and narrowing conversions
         problems.addError("Field %s has multiple conflicting protocol types %s", id, protocolTypes);
+        continue;
+      } else if (protocolTypes.isEmpty()) {
+        problems.addError("Could not infer Thrift type for field %s", id);
         continue;
       }
       ThriftProtocolFieldType type = protocolTypes.iterator().next();
@@ -223,13 +229,49 @@ public class ThriftStructMetadataBuilder<T> {
         field.setProtocolType(type);
       }
 
-      // assure all fields have the same compatible thrift types
-      Set<ThriftType> types = ImmutableSet.copyOf(
-        filter(transform(fields, getThriftFieldType(catalog)), notNull())
-      );
-      if (!types.isEmpty()) {
-        if (protocolTypes.size() > 1) {
-          problems.addError("Field %s has multiple conflicting thrift types %s", id, protocolTypes);
+      // add type coercions if necessary
+      for (FieldMetadata field : fields) {
+        Type javaType = field.getJavaType();
+        if (isSupportedJavaType(javaType)) {
+          continue;
+        }
+
+        if (field instanceof Extractor) {
+          Extractor extractor = (Extractor) field;
+          if (extractor.getCoercion() != null) {
+            continue;
+          }
+
+          JavaToThriftCoercion coercion = catalog.getJavaToThriftCoercion(
+              javaType,
+              field.getProtocolType()
+          );
+          if (coercion == null) {
+            problems.addError(
+                "Type %s is not a supported thrift type and does not have type coercion",
+                javaType
+            );
+            continue;
+          }
+          extractor.setCoercion(coercion);
+        } else {
+          Injection injection = (Injection) field;
+          if (injection.getCoercion() != null) {
+            continue;
+          }
+
+          ThriftToJavaCoercion coercion = catalog.getThriftToJavaCoercion(
+              javaType,
+              field.getProtocolType()
+          );
+          if (coercion == null) {
+            problems.addError(
+                "Type %s is not a supported thrift type and does not have type coercion",
+                javaType
+            );
+            continue;
+          }
+          injection.setCoercion(coercion);
         }
       }
     }
@@ -253,79 +295,92 @@ public class ThriftStructMetadataBuilder<T> {
     }
     ConstructorInjection constructor = constructorInjections.get(0);
 
-    Multimap<Optional<Short>, FieldMetadata> fieldsById = Multimaps.index(fields, getThriftFieldId());
+    Multimap<Optional<Short>, FieldMetadata> fieldsById = Multimaps.index(
+        fields,
+        getThriftFieldId()
+    );
     Iterable<ThriftFieldMetadata> fieldsMetadata = Iterables.transform(
-      fieldsById.asMap().values(), new Function<Collection<FieldMetadata>, ThriftFieldMetadata>() {
-      @Override
-      public ThriftFieldMetadata apply(Collection<FieldMetadata> input) {
-        checkArgument(!input.isEmpty(), "input is empty");
+        fieldsById.asMap().values(),
+        new Function<Collection<FieldMetadata>, ThriftFieldMetadata>() {
+          @Override
+          public ThriftFieldMetadata apply(Collection<FieldMetadata> input) {
+            checkArgument(!input.isEmpty(), "input is empty");
 
-        short id = -1;
-        String name = null;
-        ThriftType type = null;
-        ImmutableList.Builder<ThriftInjection> injections = ImmutableList.builder();
-        ThriftExtraction extraction = null;
-        for (FieldMetadata fieldMetadata : input) {
-          id = fieldMetadata.getId();
-          name = fieldMetadata.getName();
-          type = catalog.getThriftType(fieldMetadata.getJavaType(), fieldMetadata.getProtocolType());
-          if (fieldMetadata instanceof FieldInjection) {
-            FieldInjection fieldInjection = (FieldInjection) fieldMetadata;
-            injections.add(
-              new ThriftFieldInjection(
-                fieldInjection.getId(),
-                fieldInjection.getName(),
-                fieldInjection.getField()
-              )
+            short id = -1;
+            String name = null;
+            ThriftType type = null;
+
+            ImmutableList.Builder<ThriftInjection> injections = ImmutableList.builder();
+            ThriftExtraction extraction = null;
+
+            for (FieldMetadata fieldMetadata : input) {
+              id = fieldMetadata.getId();
+              name = fieldMetadata.getName();
+              type = catalog.getThriftType(
+                  fieldMetadata.getJavaType(),
+                  fieldMetadata.getProtocolType()
+              );
+              if (fieldMetadata instanceof FieldInjection) {
+                FieldInjection fieldInjection = (FieldInjection) fieldMetadata;
+                injections.add(
+                    new ThriftFieldInjection(
+                        fieldInjection.getId(),
+                        fieldInjection.getName(),
+                        fieldInjection.getCoercion(),
+                        fieldInjection.getField()
+                    )
+                );
+              } else if (fieldMetadata instanceof ParameterInjection) {
+                ParameterInjection parameterInjection = (ParameterInjection) fieldMetadata;
+                injections.add(
+                    new ThriftParameterInjection(
+                        parameterInjection.getId(),
+                        parameterInjection.getName(),
+                        parameterInjection.getCoercion(),
+                        parameterInjection.getParameterIndex()
+                    )
+                );
+              } else if (fieldMetadata instanceof FieldExtractor) {
+                FieldExtractor fieldExtractor = (FieldExtractor) fieldMetadata;
+                extraction = new ThriftFieldExtractor(
+                    fieldExtractor.getId(),
+                    fieldExtractor.getName(),
+                    fieldExtractor.getCoercion(),
+                    fieldExtractor.getField()
+                );
+              } else if (fieldMetadata instanceof MethodExtractor) {
+                MethodExtractor methodExtractor = (MethodExtractor) fieldMetadata;
+                extraction = new ThriftMethodExtractor(
+                    methodExtractor.getId(),
+                    methodExtractor.getName(),
+                    methodExtractor.getCoercion(),
+                    methodExtractor.getMethod()
+                );
+              }
+            }
+            ThriftFieldMetadata thriftFieldMetadata = new ThriftFieldMetadata(
+                id,
+                type,
+                name,
+                injections.build(),
+                extraction
             );
-          } else if (fieldMetadata instanceof ParameterInjection) {
-            ParameterInjection parameterInjection = (ParameterInjection) fieldMetadata;
-            injections.add(
-              new ThriftParameterInjection(
-                parameterInjection.getId(),
-                parameterInjection.getName(),
-                parameterInjection.getParameterIndex()
-              )
-            );
-          } else if (fieldMetadata instanceof FieldExtractor) {
-            FieldExtractor fieldExtractor = (FieldExtractor) fieldMetadata;
-            extraction = new ThriftFieldExtractor(
-              fieldExtractor.getId(),
-              fieldExtractor.getName(),
-              fieldExtractor.getField()
-            );
-          } else if (fieldMetadata instanceof MethodExtractor) {
-            MethodExtractor methodExtractor = (MethodExtractor) fieldMetadata;
-            extraction = new ThriftMethodExtractor(
-              methodExtractor.getId(),
-              methodExtractor.getName(),
-              methodExtractor.getMethod()
-            );
+            return thriftFieldMetadata;
           }
         }
-        ThriftFieldMetadata thriftFieldMetadata = new ThriftFieldMetadata(
-          id,
-          type,
-          name,
-          injections.build(),
-          extraction
-        );
-        return thriftFieldMetadata;
-      }
-    }
     );
 
     return new ThriftStructMetadata<>(
-      structName,
-      structClass,
-      builderClass,
-      builderMethodInjection,
-      ImmutableList.copyOf(fieldsMetadata),
-      new ThriftConstructorInjection(
-        constructor.getConstructor(),
-        toThriftParameterInjections(constructor.getParameters())
-      ),
-      toThriftMethodInjections(methodInjections)
+        structName,
+        structClass,
+        builderClass,
+        builderMethodInjection,
+        ImmutableList.copyOf(fieldsMetadata),
+        new ThriftConstructorInjection(
+            constructor.getConstructor(),
+            toThriftParameterInjections(constructor.getParameters())
+        ),
+        toThriftMethodInjections(methodInjections)
     );
   }
 
@@ -349,9 +404,10 @@ public class ThriftStructMetadataBuilder<T> {
       @Override
       public ThriftParameterInjection apply(@Nullable ParameterInjection input) {
         return new ThriftParameterInjection(
-          input.getId(),
-          input.getName(),
-          input.getParameterIndex()
+            input.getId(),
+            input.getName(),
+            input.getCoercion(),
+            input.getParameterIndex()
         );
       }
     }
@@ -555,7 +611,7 @@ public class ThriftStructMetadataBuilder<T> {
               method.getName()
             );
           }
-          if (annotation.protocolType() != ThriftProtocolFieldType.STOP) {
+          if (annotation.protocolType() != STOP) {
             problems.addError(
               "A method with annotated parameters can not have a field type specified: %s.%s ",
               clazz.getName(),
@@ -690,7 +746,7 @@ public class ThriftStructMetadataBuilder<T> {
       if (!annotation.name().isEmpty()) {
         name = annotation.name();
       }
-      if (annotation.protocolType() != ThriftProtocolFieldType.STOP) {
+      if (annotation.protocolType() != STOP) {
         protocolType = annotation.protocolType();
       }
     }
@@ -755,33 +811,56 @@ public class ThriftStructMetadataBuilder<T> {
           if (input == null) {
             return null;
           }
-          ThriftProtocolFieldType protocolType = input.getProtocolType();
-          if (protocolType == null) {
-            Type javaType = input.getJavaType();
-            protocolType = ThriftProtocolFieldType.inferProtocolType(javaType);
-          }
-          return protocolType;
+          return input.getProtocolType();
         }
       };
     }
 
-    static <T extends FieldMetadata> Function<T, ThriftType> getThriftFieldType(final ThriftCatalog catalog) {
-      return new Function<T, ThriftType>() {
+    // lame coding style limits force this code to be ugly
+    static <T extends FieldMetadata> Function<T, ThriftProtocolFieldType>
+                        inferThriftFieldProtocolType(final ThriftCatalog catalog) {
+
+      return new Function<T, ThriftProtocolFieldType>() {
         @Override
-        public ThriftType apply(@Nullable T input) {
+        public ThriftProtocolFieldType apply(@Nullable T input) {
           if (input == null) {
             return null;
           }
+
+          // check for explicit type
           ThriftProtocolFieldType protocolType = input.getProtocolType();
-          Preconditions.checkNotNull(
-            protocolType,
-            "protocolType is null for field %s",
-            input.getName()
-          );
+          if (protocolType != null) {
+            return protocolType;
+          }
+
+          // infer from java type
           Type javaType = input.getJavaType();
-          Preconditions.checkNotNull(javaType, "javaType is null for field %s", input.getName());
-          ThriftType thriftType = catalog.getThriftType(javaType, protocolType);
-          return thriftType;
+          protocolType = ThriftProtocolFieldType.inferProtocolType(javaType);
+          if (protocolType != null) {
+            return protocolType;
+          }
+
+          // infer from general coercions
+          if (input instanceof Extractor) {
+            JavaToThriftCoercion coercion = catalog.getJavaToThriftCoercion(
+                input.getJavaType(),
+                null);
+            if (coercion != null) {
+              ((Extractor) input).setCoercion(coercion);
+              return coercion.getThriftType().getProtocolType();
+            }
+          } else {
+            ThriftToJavaCoercion coercion = catalog.getThriftToJavaCoercion(
+                input.getJavaType(),
+                null
+            );
+            if (coercion != null) {
+              ((Injection) input).setCoercion(coercion);
+              return coercion.getThriftType().getProtocolType();
+            }
+          }
+
+          return null;
         }
       };
     }
@@ -819,8 +898,29 @@ public class ThriftStructMetadataBuilder<T> {
   }
 
   private static abstract class Extractor extends FieldMetadata {
+    private JavaToThriftCoercion coercion;
+
     protected Extractor(ThriftField annotation) {
       super(annotation);
+    }
+
+    public JavaToThriftCoercion getCoercion() {
+      return coercion;
+    }
+
+    public void setCoercion(JavaToThriftCoercion coercion) {
+      Preconditions.checkNotNull(coercion, "coercion is null");
+      if (getProtocolType() == null) {
+        setProtocolType(coercion.getThriftType().getProtocolType());
+      } else {
+        Preconditions.checkArgument(
+            coercion.getThriftType().getProtocolType() == getProtocolType(),
+            "Coercion protocol type %s does not match declared field protocol type %s",
+            coercion.getThriftType().getProtocolType(),
+            getProtocolType()
+        );
+      }
+      this.coercion = coercion;
     }
   }
 
@@ -838,6 +938,9 @@ public class ThriftStructMetadataBuilder<T> {
 
     @Override
     public String extractName() {
+      if (getName() != null) {
+        return getName();
+      }
       return field.getName();
     }
 
@@ -861,6 +964,9 @@ public class ThriftStructMetadataBuilder<T> {
 
     @Override
     public String extractName() {
+      if (getName() != null) {
+        return getName();
+      }
       return extractFieldName(method);
     }
 
@@ -870,7 +976,34 @@ public class ThriftStructMetadataBuilder<T> {
     }
   }
 
-  private static class FieldInjection extends FieldMetadata {
+  private static abstract class Injection extends FieldMetadata {
+    private ThriftToJavaCoercion coercion;
+
+    protected Injection(ThriftField annotation) {
+      super(annotation);
+    }
+
+    public ThriftToJavaCoercion getCoercion() {
+      return coercion;
+    }
+
+    public void setCoercion(ThriftToJavaCoercion coercion) {
+      Preconditions.checkNotNull(coercion, "coercion is null");
+      if (getProtocolType() == null) {
+        setProtocolType(coercion.getThriftType().getProtocolType());
+      } else {
+        Preconditions.checkArgument(
+            coercion.getThriftType().getProtocolType() == getProtocolType(),
+            "Coercion protocol type %s does not match declared field protocol type %s",
+            coercion.getThriftType().getProtocolType(),
+            getProtocolType()
+        );
+      }
+      this.coercion = coercion;
+    }
+  }
+
+  private static class FieldInjection extends Injection {
     private final Field field;
 
     private FieldInjection(Field field, ThriftField annotation) {
@@ -884,6 +1017,9 @@ public class ThriftStructMetadataBuilder<T> {
 
     @Override
     public String extractName() {
+      if (getName() != null) {
+        return getName();
+      }
       return field.getName();
     }
 
@@ -934,7 +1070,7 @@ public class ThriftStructMetadataBuilder<T> {
     }
   }
 
-  private static class ParameterInjection extends FieldMetadata {
+  private static class ParameterInjection extends Injection {
     private final int parameterIndex;
     private final String extractedName;
     private final Type parameterJavaType;
@@ -967,6 +1103,9 @@ public class ThriftStructMetadataBuilder<T> {
 
     @Override
     public String extractName() {
+      if (getName() != null) {
+        return getName();
+      }
       return extractedName;
     }
 

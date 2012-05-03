@@ -54,15 +54,18 @@ import static com.facebook.swift.internal.compiler.byteCode.ParameterizedType.ty
 public class CompilerThriftCodecFactory implements ThriftCodecFactory {
   private static final String PACKAGE = "$thrift";
 
-  private final DynamicClassLoader classLoader;
   private final boolean debug;
+  private final DynamicClassLoader classLoader;
 
   public CompilerThriftCodecFactory() {
-    classLoader = new DynamicClassLoader();
-    debug = false;
+    this(false);
   }
 
-  public CompilerThriftCodecFactory(DynamicClassLoader classLoader, boolean debug) {
+  public CompilerThriftCodecFactory(boolean debug) {
+    this(debug, new DynamicClassLoader());
+  }
+
+  public CompilerThriftCodecFactory(boolean debug, DynamicClassLoader classLoader) {
     this.classLoader = classLoader;
     this.debug = debug;
   }
@@ -376,6 +379,9 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
       // push parameters on stack
       for (ThriftParameterInjection parameterInjection : constructor.getParameters()) {
         read.loadVariable("f_" + parameterInjection.getName());
+        if (parameterInjection.getCoercion() != null) {
+          read.invokeStatic(parameterInjection.getCoercion().getMethod());
+        }
       }
       // invoke constructor
       read.invokeConstructor(constructor.getConstructor())
@@ -387,8 +393,11 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
           if (injection instanceof ThriftFieldInjection) {
             ThriftFieldInjection fieldInjection = (ThriftFieldInjection) injection;
             read.loadVariable("instance")
-                .loadVariable("f_" + field.getName())
-                .putField(fieldInjection.getField());
+                .loadVariable("f_" + field.getName());
+            if (fieldInjection.getCoercion() != null) {
+              read.invokeStatic(fieldInjection.getCoercion().getMethod());
+            }
+            read.putField(fieldInjection.getField());
           }
         }
       }
@@ -400,6 +409,9 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
         // push parameters on stack
         for (ThriftParameterInjection parameterInjection : methodInjection.getParameters()) {
           read.loadVariable("f_" + parameterInjection.getName());
+          if (parameterInjection.getCoercion() != null) {
+            read.invokeStatic(parameterInjection.getCoercion().getMethod());
+          }
         }
 
         // invoke the method
@@ -414,6 +426,9 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
         // push parameters on stack
         for (ThriftParameterInjection parameterInjection : builderMethod.getParameters()) {
           read.loadVariable("f_" + parameterInjection.getName());
+          if (parameterInjection.getCoercion() != null) {
+            read.invokeStatic(parameterInjection.getCoercion().getMethod());
+          }
         }
 
         // invoke the method
@@ -452,9 +467,15 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
         if (extraction instanceof ThriftFieldExtractor) {
           ThriftFieldExtractor fieldExtractor = (ThriftFieldExtractor) extraction;
           write.getField( fieldExtractor.getField());
+          if (extraction.getCoercion() != null) {
+            write.invokeStatic(extraction.getCoercion().getMethod());
+          }
         } else if (extraction instanceof ThriftMethodExtractor) {
           ThriftMethodExtractor methodExtractor = (ThriftMethodExtractor) extraction;
           write.invokeVirtual(methodExtractor.getMethod());
+          if (extraction.getCoercion() != null) {
+            write.invokeStatic(extraction.getCoercion().getMethod());
+          }
         }
 
         switch (field.getType().getProtocolType()) {

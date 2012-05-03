@@ -6,6 +6,7 @@ package com.facebook.swift;
 import com.facebook.swift.codec.BooleanThriftCodec;
 import com.facebook.swift.codec.ByteBufferThriftCodec;
 import com.facebook.swift.codec.ByteThriftCodec;
+import com.facebook.swift.coercion.CoercionThriftCodec;
 import com.facebook.swift.internal.compiler.CompilerThriftCodecFactory;
 import com.facebook.swift.codec.DoubleThriftCodec;
 import com.facebook.swift.codec.IntegerThriftCodec;
@@ -18,7 +19,9 @@ import com.facebook.swift.codec.StringThriftCodec;
 import com.facebook.swift.internal.TProtocolReader;
 import com.facebook.swift.internal.TProtocolWriter;
 import com.facebook.swift.internal.ThriftCodecFactory;
+import com.facebook.swift.metadata.JavaToThriftCoercion;
 import com.facebook.swift.metadata.ThriftCatalog;
+import com.facebook.swift.metadata.ThriftToJavaCoercion;
 import com.facebook.swift.metadata.ThriftType;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
@@ -97,8 +100,42 @@ public class ThriftCodecManager {
     addCodecIfPresent(new ByteBufferThriftCodec());
   }
 
-  public <T> ThriftCodec<T> getCodec(Class<T> type) {
-    return (ThriftCodec<T>) getCodec(catalog.getThriftType(type));
+  public <T> ThriftCodec<T> getCodec(Class<T> javaType) {
+    ThriftType thriftType = catalog.getThriftType(javaType);
+    if (thriftType != null) {
+      return (ThriftCodec<T>) getCodec(thriftType);
+    }
+
+    // get to thrift coercion
+    JavaToThriftCoercion toThriftCoercion = catalog.getJavaToThriftCoercion(javaType, null);
+    if (toThriftCoercion == null) {
+      throw new IllegalArgumentException("Unsupported javaType " + javaType.getName());
+    }
+
+    // get from thrift coercion based on to thrift coercion
+    thriftType = toThriftCoercion.getThriftType();
+    ThriftToJavaCoercion fromThriftCoercion = catalog.getThriftToJavaCoercion(
+        javaType,
+        thriftType.getProtocolType()
+    );
+    if (fromThriftCoercion == null) {
+      throw new IllegalArgumentException("Unsupported javaType " + javaType.getName());
+    }
+
+    // get codec for raw javaType
+    ThriftCodec<?> rawCodec = getCodec(thriftType);
+
+    return new CoercionThriftCodec<>(rawCodec, toThriftCoercion, fromThriftCoercion);
+
+  }
+
+  public ThriftCodec<?> getCodec(ThriftType type) {
+    try {
+      ThriftCodec<?> thriftCodec = typeCodecs.get(type);
+      return thriftCodec;
+    } catch (ExecutionException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   public void addCodec(ThriftCodec<?> codec) {
@@ -107,14 +144,6 @@ public class ThriftCodecManager {
 
   public ThriftCatalog getCatalog() {
     return catalog;
-  }
-
-  public ThriftCodec<?> getCodec(ThriftType type) {
-    try {
-      return typeCodecs.get(type);
-    } catch (ExecutionException e) {
-      throw Throwables.propagate(e);
-    }
   }
 
   public <T> T read(Class<T> type, TProtocol protocol) throws Exception {

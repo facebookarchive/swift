@@ -11,14 +11,16 @@ public class ThriftFieldInjection implements ThriftInjection {
   private final short id;
   private final String name;
   private final Field field;
+  private final ThriftToJavaCoercion coercion;
 
-  public ThriftFieldInjection(short id, String name, Field field) {
+  public ThriftFieldInjection(short id, String name, ThriftToJavaCoercion coercion, Field field) {
     Preconditions.checkArgument(id >= 0, "fieldId is negative");
     Preconditions.checkNotNull(name, "name is null");
     Preconditions.checkNotNull(field, "field is null");
 
     this.id = id;
     this.name = name;
+    this.coercion = coercion;
     this.field = field;
   }
 
@@ -32,6 +34,11 @@ public class ThriftFieldInjection implements ThriftInjection {
     return name;
   }
 
+  @Override
+  public ThriftToJavaCoercion getCoercion() {
+    return coercion;
+  }
+
   public Field getField() {
     return field;
   }
@@ -42,6 +49,7 @@ public class ThriftFieldInjection implements ThriftInjection {
     sb.append("ThriftFieldInjection");
     sb.append("{fieldId=").append(id);
     sb.append(", name=").append(name);
+    sb.append(", coercion=").append(coercion);
     sb.append(", field=").append(field.getDeclaringClass().getSimpleName()).append(".").append(
       field.getName()
     );

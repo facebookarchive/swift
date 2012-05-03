@@ -16,15 +16,15 @@ import static com.facebook.swift.metadata.TypeParameterUtils.getRawType;
 public enum ThriftProtocolFieldType {
   STOP(false),
   VOID(false),
-  BOOL(boolean.class, Boolean.class),
-  BYTE(byte.class, Byte.class),
-  DOUBLE(double.class, Double.class),
+  BOOL(boolean.class),
+  BYTE(byte.class),
+  DOUBLE(double.class),
   $_5_IS_SKIPPED(false),
-  I16(short.class, Short.class),
+  I16(short.class),
   $_7_IS_SKIPPED(false),
-  I32(int.class, Integer.class),
+  I32(int.class),
   $_9_IS_SKIPPED(false),
-  I64(long.class, Long.class),
+  I64(long.class),
   STRING(String.class),
   STRUCT,
   MAP,
@@ -66,6 +66,14 @@ public enum ThriftProtocolFieldType {
     typesByClass = builder.build();
   }
 
+  public static boolean isSupportedJavaType(Type genericType) {
+    Class<?> rawType = getRawType(genericType);
+    return Map.class.isAssignableFrom(rawType) ||
+        Iterable.class.isAssignableFrom(rawType) ||
+        rawType.isAnnotationPresent(ThriftStruct.class) ||
+        typesByClass.containsKey(rawType);
+  }
+
   public static ThriftProtocolFieldType inferProtocolType(Type genericType) {
     Class<?> rawType = getRawType(genericType);
 
@@ -86,17 +94,6 @@ public enum ThriftProtocolFieldType {
       return STRUCT;
     }
 
-    throw new IllegalArgumentException(
-      String.format(
-        "Unsupported type %s: type must be " +
-          "a primitive, " +
-          "boxed wrapper, " +
-          "String, " +
-          "Iterable, " +
-          "Map or " +
-          "must be annotated with @ThriftStruct",
-        genericType
-      )
-    );
+    return null;
   }
 }

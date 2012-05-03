@@ -5,6 +5,7 @@ package com.facebook.swift;
 
 import com.facebook.swift.codec.BooleanThriftCodec;
 import com.facebook.swift.codec.SetThriftCodec;
+import com.facebook.swift.coercion.GeneralJavaCoercions;
 import com.facebook.swift.internal.TProtocolReader;
 import com.facebook.swift.internal.TProtocolWriter;
 import com.facebook.swift.metadata.ThriftCatalog;
@@ -16,6 +17,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.TMemoryBuffer;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -26,7 +28,15 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
 public abstract class AbstractThriftCodecManagerTest {
+  private ThriftCodecManager codecManager;
+
   public abstract ThriftCodecManager createCodecManager();
+
+  @BeforeMethod
+  protected void setUp() throws Exception {
+    codecManager = createCodecManager();
+    codecManager.getCatalog().addGeneralCoercions(GeneralJavaCoercions.class);
+  }
 
   @Test
   public void testFieldsManual() throws Exception {
@@ -76,7 +86,7 @@ public abstract class AbstractThriftCodecManagerTest {
 
   @Test
   public void testOneOfEverythingFieldManual() throws Exception {
-    ThriftCatalog catalog = new ThriftCatalog();
+    ThriftCatalog catalog = codecManager.getCatalog();
     ThriftType bonkFieldType = catalog.getThriftType(BonkField.class);
     BonkFieldThriftCodec bonkFieldCodec = new BonkFieldThriftCodec(bonkFieldType);
 
@@ -109,8 +119,23 @@ public abstract class AbstractThriftCodecManagerTest {
     testRoundTripSerialize(one);
   }
 
+  @Test
+  public void testGeneralCoercion() throws Exception {
+    CoercionBean coercion = new CoercionBean(
+        true,
+        (byte)1,
+        (short)2,
+        3,
+        4L,
+        5.5f,
+        6.6d,
+        7.7f
+    );
+
+    testRoundTripSerialize(coercion);
+  }
+
   private <T> void testRoundTripSerialize(T value) throws Exception {
-    ThriftCodecManager codecManager = createCodecManager();
     ThriftCodec<T> codec = (ThriftCodec<T>) codecManager.getCodec(value.getClass());
 
     testRoundTripSerialize(codec, value);
@@ -119,8 +144,7 @@ public abstract class AbstractThriftCodecManagerTest {
   private <T> void testRoundTripSerialize(ThriftCodec<T> codec, T structInstance) throws Exception {
     Class<T> structClass = (Class<T>) structInstance.getClass();
 
-    ThriftCatalog catalog = new ThriftCatalog();
-
+    ThriftCatalog catalog = codecManager.getCatalog();
     ThriftStructMetadata<T> metadata = catalog.getThriftStructMetadata(structClass);
     assertNotNull(metadata);
 

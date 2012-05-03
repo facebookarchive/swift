@@ -9,6 +9,6 @@ import com.facebook.swift.ThriftCodecManager;
 public class TestCompilerThriftCodecFactory extends AbstractThriftCodecManagerTest {
   @Override
   public ThriftCodecManager createCodecManager() {
-    return new ThriftCodecManager(new CompilerThriftCodecFactory());
+    return new ThriftCodecManager(new CompilerThriftCodecFactory(true));
   }
 }

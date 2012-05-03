@@ -329,6 +329,18 @@ public class MethodDefinition {
     return this;
   }
 
+  public MethodDefinition invokeStatic(Method method) {
+    instructionList.add(
+        new MethodInsnNode(
+            INVOKESTATIC,
+            Type.getInternalName(method.getDeclaringClass()),
+            method.getName(),
+            Type.getMethodDescriptor(method)
+        )
+    );
+    return this;
+  }
+
   public MethodDefinition invokeVirtual(Method method) {
     instructionList.add(
         new MethodInsnNode(

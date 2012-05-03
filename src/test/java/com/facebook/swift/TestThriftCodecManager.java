@@ -3,6 +3,7 @@
  */
 package com.facebook.swift;
 
+import com.facebook.swift.coercion.GeneralJavaCoercions;
 import com.facebook.swift.internal.ThriftCodecFactory;
 import com.facebook.swift.metadata.ThriftStructMetadata;
 import com.facebook.swift.metadata.ThriftType;
@@ -35,6 +36,7 @@ public class TestThriftCodecManager {
           }
         }
     );
+    codecManager.getCatalog().addGeneralCoercions(GeneralJavaCoercions.class);
   }
 
   @Test

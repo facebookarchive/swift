@@ -1,0 +1,188 @@
+/*
+ * Copyright 2004-present Facebook. All Rights Reserved.
+ */
+package com.facebook.swift;
+
+@ThriftStruct
+public class CoercionBean {
+  private Boolean booleanValue;
+  private Byte byteValue;
+  private Short shortValue;
+  private Integer integerValue;
+  private Long longValue;
+  private Float floatValue;
+  private Double doubleValue;
+
+  private float primitiveFloat;
+
+  public CoercionBean() {
+  }
+
+  public CoercionBean(
+      Boolean booleanValue,
+      Byte byteValue,
+      Short shortValue,
+      Integer integerValue,
+      Long longValue,
+      Float floatValue,
+      Double doubleValue,
+      float primitiveFloat
+  ) {
+    this.booleanValue = booleanValue;
+    this.byteValue = byteValue;
+    this.shortValue = shortValue;
+    this.integerValue = integerValue;
+    this.longValue = longValue;
+    this.floatValue = floatValue;
+    this.doubleValue = doubleValue;
+    this.primitiveFloat = primitiveFloat;
+  }
+
+  @ThriftField(id = 1)
+  public Boolean getBooleanValue() {
+    return booleanValue;
+  }
+
+  @ThriftField
+  public void setBooleanValue(Boolean booleanValue) {
+    this.booleanValue = booleanValue;
+  }
+
+  @ThriftField(id = 2)
+  public Byte getByteValue() {
+    return byteValue;
+  }
+
+  @ThriftField
+  public void setByteValue(Byte byteValue) {
+    this.byteValue = byteValue;
+  }
+
+  @ThriftField(id = 3)
+  public Short getShortValue() {
+    return shortValue;
+  }
+
+  @ThriftField
+  public void setShortValue(Short shortValue) {
+    this.shortValue = shortValue;
+  }
+
+  @ThriftField(id = 4)
+  public Integer getIntegerValue() {
+    return integerValue;
+  }
+
+  @ThriftField
+  public void setIntegerValue(Integer integerValue) {
+    this.integerValue = integerValue;
+  }
+
+  @ThriftField(id = 5)
+  public Long getLongValue() {
+    return longValue;
+  }
+
+  @ThriftField
+  public void setLongValue(Long longValue) {
+    this.longValue = longValue;
+  }
+
+  @ThriftField(id = 6)
+  public Float getFloatValue() {
+    return floatValue;
+  }
+
+  @ThriftField
+  public void setFloatValue(Float floatValue) {
+    this.floatValue = floatValue;
+  }
+
+  @ThriftField(id = 7)
+  public Double getDoubleValue() {
+    return doubleValue;
+  }
+
+  @ThriftField
+  public void setDoubleValue(Double doubleValue) {
+    this.doubleValue = doubleValue;
+  }
+
+  @ThriftField(id = 8)
+  public float getPrimitiveFloat() {
+    return primitiveFloat;
+  }
+
+  @ThriftField
+  public void setPrimitiveFloat(float primitiveFloat) {
+    this.primitiveFloat = primitiveFloat;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    final CoercionBean that = (CoercionBean) o;
+
+    if (Float.compare(that.primitiveFloat, primitiveFloat) != 0) {
+      return false;
+    }
+    if (booleanValue != null ? !booleanValue.equals(that.booleanValue) : that.booleanValue != null) {
+      return false;
+    }
+    if (byteValue != null ? !byteValue.equals(that.byteValue) : that.byteValue != null) {
+      return false;
+    }
+    if (doubleValue != null ? !doubleValue.equals(that.doubleValue) : that.doubleValue != null) {
+      return false;
+    }
+    if (floatValue != null ? !floatValue.equals(that.floatValue) : that.floatValue != null) {
+      return false;
+    }
+    if (integerValue != null ? !integerValue.equals(that.integerValue) : that.integerValue != null) {
+      return false;
+    }
+    if (longValue != null ? !longValue.equals(that.longValue) : that.longValue != null) {
+      return false;
+    }
+    if (shortValue != null ? !shortValue.equals(that.shortValue) : that.shortValue != null) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = booleanValue != null ? booleanValue.hashCode() : 0;
+    result = 31 * result + (byteValue != null ? byteValue.hashCode() : 0);
+    result = 31 * result + (shortValue != null ? shortValue.hashCode() : 0);
+    result = 31 * result + (integerValue != null ? integerValue.hashCode() : 0);
+    result = 31 * result + (longValue != null ? longValue.hashCode() : 0);
+    result = 31 * result + (floatValue != null ? floatValue.hashCode() : 0);
+    result = 31 * result + (doubleValue != null ? doubleValue.hashCode() : 0);
+    result = 31 * result + (primitiveFloat != +0.0f ? Float.floatToIntBits(primitiveFloat) : 0);
+    return result;
+  }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder();
+    sb.append("CoercionBean");
+    sb.append("{booleanValue=").append(booleanValue);
+    sb.append(", byteValue=").append(byteValue);
+    sb.append(", shortValue=").append(shortValue);
+    sb.append(", integerValue=").append(integerValue);
+    sb.append(", longValue=").append(longValue);
+    sb.append(", floatValue=").append(floatValue);
+    sb.append(", doubleValue=").append(doubleValue);
+    sb.append(", primitiveFloat=").append(primitiveFloat);
+    sb.append('}');
+    return sb.toString();
+  }
+}

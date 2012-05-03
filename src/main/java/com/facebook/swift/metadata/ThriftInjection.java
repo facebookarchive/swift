@@ -7,4 +7,6 @@ public interface ThriftInjection {
   short getId();
 
   String getName();
+
+  ThriftToJavaCoercion getCoercion();
 }

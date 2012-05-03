@@ -11,8 +11,9 @@ public class ThriftFieldExtractor implements ThriftExtraction {
   private final short id;
   private final String name;
   private final Field field;
+  private final JavaToThriftCoercion coercion;
 
-  public ThriftFieldExtractor(short id, String name, Field field) {
+  public ThriftFieldExtractor(short id, String name, JavaToThriftCoercion coercion, Field field) {
     Preconditions.checkArgument(id >= 0, "fieldId is negative");
     Preconditions.checkNotNull(name, "name is null");
     Preconditions.checkNotNull(field, "field is null");
@@ -20,6 +21,7 @@ public class ThriftFieldExtractor implements ThriftExtraction {
     this.id = id;
     this.name = name;
     this.field = field;
+    this.coercion = coercion;
   }
 
   @Override
@@ -32,6 +34,11 @@ public class ThriftFieldExtractor implements ThriftExtraction {
     return name;
   }
 
+  @Override
+  public JavaToThriftCoercion getCoercion() {
+    return coercion;
+  }
+
   public Field getField() {
     return field;
   }
@@ -42,6 +49,7 @@ public class ThriftFieldExtractor implements ThriftExtraction {
     sb.append("ThriftFieldExtractor");
     sb.append("{id=").append(id);
     sb.append(", name=").append(name);
+    sb.append(", coercion=").append(coercion);
     sb.append(", field=").append(field.getDeclaringClass().getSimpleName()).append(".").append(
       field.getName()
     );
