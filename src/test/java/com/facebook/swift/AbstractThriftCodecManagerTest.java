@@ -94,7 +94,7 @@ public abstract class AbstractThriftCodecManagerTest {
     OneOfEverythingThriftCodec codec = new OneOfEverythingThriftCodec(
         oneOfEverythingType,
         bonkFieldCodec,
-        new SetThriftCodec<>(new BooleanThriftCodec())
+        new SetThriftCodec<>(ThriftType.BOOL, new BooleanThriftCodec())
     );
 
     // manual codec only support some fields
@@ -129,7 +129,8 @@ public abstract class AbstractThriftCodecManagerTest {
         4L,
         5.5f,
         6.6d,
-        7.7f
+        7.7f,
+        ImmutableList.of(1.1f, 2.2f, 3.3f)
     );
 
     testRoundTripSerialize(coercion);

@@ -3,6 +3,8 @@
  */
 package com.facebook.swift;
 
+import java.util.List;
+
 @ThriftStruct
 public class CoercionBean {
   private Boolean booleanValue;
@@ -14,6 +16,7 @@ public class CoercionBean {
   private Double doubleValue;
 
   private float primitiveFloat;
+  private List<Float> floatList;
 
   public CoercionBean() {
   }
@@ -26,7 +29,8 @@ public class CoercionBean {
       Long longValue,
       Float floatValue,
       Double doubleValue,
-      float primitiveFloat
+      float primitiveFloat,
+      List<Float> floatList
   ) {
     this.booleanValue = booleanValue;
     this.byteValue = byteValue;
@@ -36,6 +40,7 @@ public class CoercionBean {
     this.floatValue = floatValue;
     this.doubleValue = doubleValue;
     this.primitiveFloat = primitiveFloat;
+    this.floatList = floatList;
   }
 
   @ThriftField(id = 1)
@@ -118,6 +123,16 @@ public class CoercionBean {
     this.primitiveFloat = primitiveFloat;
   }
 
+  @ThriftField(id = 9)
+  public List<Float> getFloatList() {
+    return floatList;
+  }
+
+  @ThriftField
+  public void setFloatList(List<Float> floatList) {
+    this.floatList = floatList;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -139,6 +154,9 @@ public class CoercionBean {
       return false;
     }
     if (doubleValue != null ? !doubleValue.equals(that.doubleValue) : that.doubleValue != null) {
+      return false;
+    }
+    if (floatList != null ? !floatList.equals(that.floatList) : that.floatList != null) {
       return false;
     }
     if (floatValue != null ? !floatValue.equals(that.floatValue) : that.floatValue != null) {
@@ -167,6 +185,7 @@ public class CoercionBean {
     result = 31 * result + (floatValue != null ? floatValue.hashCode() : 0);
     result = 31 * result + (doubleValue != null ? doubleValue.hashCode() : 0);
     result = 31 * result + (primitiveFloat != +0.0f ? Float.floatToIntBits(primitiveFloat) : 0);
+    result = 31 * result + (floatList != null ? floatList.hashCode() : 0);
     return result;
   }
 
@@ -182,6 +201,7 @@ public class CoercionBean {
     sb.append(", floatValue=").append(floatValue);
     sb.append(", doubleValue=").append(doubleValue);
     sb.append(", primitiveFloat=").append(primitiveFloat);
+    sb.append(", floatList=").append(floatList);
     sb.append('}');
     return sb.toString();
   }

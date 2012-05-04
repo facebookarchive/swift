@@ -23,6 +23,7 @@ import com.facebook.swift.metadata.JavaToThriftCoercion;
 import com.facebook.swift.metadata.ThriftCatalog;
 import com.facebook.swift.metadata.ThriftToJavaCoercion;
 import com.facebook.swift.metadata.ThriftType;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -46,7 +47,7 @@ public class ThriftCodecManager {
 
   public ThriftCodecManager(
       ThriftCodecFactory factory,
-      ThriftCatalog catalog,
+      final ThriftCatalog catalog,
       ThriftCodec<?>... codecs
   ) {
     this.catalog = catalog;
@@ -65,21 +66,33 @@ public class ThriftCodecManager {
               case MAP: {
                 ThriftCodec<?> keyCodec = typeCodecs.get(type.getKeyType());
                 ThriftCodec<?> valueCodec = typeCodecs.get(type.getValueType());
-                return new MapThriftCodec<>(keyCodec, valueCodec);
+                return new MapThriftCodec<>(type, keyCodec, valueCodec);
               }
               case SET: {
                 ThriftCodec<?> elementCodec = typeCodecs.get(type.getValueType());
-                return new SetThriftCodec<>(elementCodec);
+                return new SetThriftCodec<>(type, elementCodec);
               }
               case LIST: {
                 ThriftCodec<?> elementCodec = typeCodecs.get(type.getValueType());
-                return new ListThriftCodec<>(elementCodec);
+                return new ListThriftCodec<>(type, elementCodec);
               }
               case ENUM: {
                 // todo implement enums
                 throw new UnsupportedOperationException("enums are not implemented");
               }
               default:
+                if (type.isCoerced()) {
+                  ThriftCodec<?> codec = getCodec(type.getUncoercedType());
+                  ThriftToJavaCoercion fromThrift = catalog.getThriftToJavaCoercion(
+                      type.getJavaType(),
+                      type.getProtocolType()
+                  );
+                  JavaToThriftCoercion toThrift = catalog.getJavaToThriftCoercion(
+                      type.getJavaType(),
+                      type.getProtocolType()
+                  );
+                  return new CoercionThriftCodec<>(codec, toThrift, fromThrift);
+                }
                 throw new IllegalArgumentException("Unsupported Thrift type " + type);
             }
           }
@@ -102,31 +115,8 @@ public class ThriftCodecManager {
 
   public <T> ThriftCodec<T> getCodec(Class<T> javaType) {
     ThriftType thriftType = catalog.getThriftType(javaType);
-    if (thriftType != null) {
-      return (ThriftCodec<T>) getCodec(thriftType);
-    }
-
-    // get to thrift coercion
-    JavaToThriftCoercion toThriftCoercion = catalog.getJavaToThriftCoercion(javaType, null);
-    if (toThriftCoercion == null) {
-      throw new IllegalArgumentException("Unsupported javaType " + javaType.getName());
-    }
-
-    // get from thrift coercion based on to thrift coercion
-    thriftType = toThriftCoercion.getThriftType();
-    ThriftToJavaCoercion fromThriftCoercion = catalog.getThriftToJavaCoercion(
-        javaType,
-        thriftType.getProtocolType()
-    );
-    if (fromThriftCoercion == null) {
-      throw new IllegalArgumentException("Unsupported javaType " + javaType.getName());
-    }
-
-    // get codec for raw javaType
-    ThriftCodec<?> rawCodec = getCodec(thriftType);
-
-    return new CoercionThriftCodec<>(rawCodec, toThriftCoercion, fromThriftCoercion);
-
+    Preconditions.checkArgument(thriftType != null, "Unsupported java type %s", javaType.getName());
+    return (ThriftCodec<T>) getCodec(thriftType);
   }
 
   public ThriftCodec<?> getCodec(ThriftType type) {

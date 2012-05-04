@@ -5,76 +5,139 @@ package com.facebook.swift.metadata;
 
 import com.facebook.swift.ThriftProtocolFieldType;
 import com.google.common.base.Preconditions;
+import com.google.common.reflect.TypeParameter;
+import com.google.common.reflect.TypeToken;
 
+import java.lang.reflect.Type;
+import java.util.Map;
+import java.util.Set;
+
+import static com.facebook.swift.ThriftProtocolFieldType.STRUCT;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 public class ThriftType {
-  public static final ThriftType BOOL = new ThriftType(ThriftProtocolFieldType.BOOL);
-  public static final ThriftType BYTE = new ThriftType(ThriftProtocolFieldType.BYTE);
-  public static final ThriftType DOUBLE = new ThriftType(ThriftProtocolFieldType.DOUBLE);
-  public static final ThriftType I16 = new ThriftType(ThriftProtocolFieldType.I16);
-  public static final ThriftType I32 = new ThriftType(ThriftProtocolFieldType.I32);
-  public static final ThriftType I64 = new ThriftType(ThriftProtocolFieldType.I64);
-  public static final ThriftType STRING = new ThriftType(ThriftProtocolFieldType.STRING);
+  public static final ThriftType BOOL = new ThriftType(ThriftProtocolFieldType.BOOL, boolean.class);
+  public static final ThriftType BYTE = new ThriftType(ThriftProtocolFieldType.BYTE, byte.class);
+  public static final ThriftType DOUBLE =
+      new ThriftType(ThriftProtocolFieldType.DOUBLE, double.class);
+  public static final ThriftType I16 = new ThriftType(ThriftProtocolFieldType.I16, short.class);
+  public static final ThriftType I32 = new ThriftType(ThriftProtocolFieldType.I32, int.class);
+  public static final ThriftType I64 = new ThriftType(ThriftProtocolFieldType.I64, long.class);
+  public static final ThriftType STRING =
+      new ThriftType(ThriftProtocolFieldType.STRING, String.class);
 
   public static ThriftType struct(ThriftStructMetadata<?> structMetadata) {
     return new ThriftType(structMetadata);
   }
 
-  public static ThriftType map(ThriftType keyType, ThriftType valueType) {
+  public static <K, V> ThriftType map(ThriftType keyType, ThriftType valueType) {
     checkNotNull(keyType, "keyType is null");
     checkNotNull(valueType, "valueType is null");
-    return new ThriftType(ThriftProtocolFieldType.MAP, keyType, valueType);
+
+    Type javaType = new TypeToken<Map<K, V>>() {
+    }
+        .where(
+            new TypeParameter<K>() {
+            }, (TypeToken<K>) TypeToken.of(keyType.getJavaType())
+        )
+        .where(
+            new TypeParameter<V>() {
+            }, (TypeToken<V>) TypeToken.of(valueType.getJavaType())
+        )
+        .getType();
+    return new ThriftType(ThriftProtocolFieldType.MAP, javaType, keyType, valueType);
   }
 
-  public static ThriftType set(ThriftType valueType) {
-    checkNotNull(valueType, "valueType is null");
-    return new ThriftType(ThriftProtocolFieldType.SET, null, valueType);
+  public static <E> ThriftType set(ThriftType valueType) {
+    Preconditions.checkNotNull(valueType, "valueType is null");
+
+    Type javaType = new TypeToken<Set<E>>() {
+    }
+        .where(
+            new TypeParameter<E>() {
+            }, (TypeToken<E>) TypeToken.of(valueType.getJavaType())
+        )
+        .getType();
+    return new ThriftType(ThriftProtocolFieldType.SET, javaType, null, valueType);
   }
 
-  public static ThriftType list(ThriftType valueType) {
+  public static <E> ThriftType list(ThriftType valueType) {
     checkNotNull(valueType, "valueType is null");
-    return new ThriftType(ThriftProtocolFieldType.LIST, null, valueType);
+
+    Type javaType = new TypeToken<Set<E>>() {
+    }
+        .where(
+            new TypeParameter<E>() {
+            }, (TypeToken<E>) TypeToken.of(valueType.getJavaType())
+        )
+        .getType();
+    return new ThriftType(ThriftProtocolFieldType.LIST, javaType, null, valueType);
   }
 
   // public static final ThriftType ENUM = new ThriftFieldType(ThriftProtocolFieldType.ENUM);
 
   private final ThriftProtocolFieldType protocolType;
+  private final Type javaType;
   private final ThriftType keyType;
   private final ThriftType valueType;
   private final ThriftStructMetadata<?> structMetadata;
+  private final ThriftType uncoercedType;
 
-  private ThriftType(ThriftProtocolFieldType protocolType) {
+  private ThriftType(ThriftProtocolFieldType protocolType, Type javaType) {
     Preconditions.checkNotNull(protocolType, "protocolType is null");
+    Preconditions.checkNotNull(javaType, "javaType is null");
 
     this.protocolType = protocolType;
+    this.javaType = javaType;
     keyType = null;
     valueType = null;
     structMetadata = null;
+    uncoercedType = null;
   }
 
   private ThriftType(
-    ThriftProtocolFieldType protocolType,
-    ThriftType keyType,
-    ThriftType valueType
+      ThriftProtocolFieldType protocolType,
+      Type javaType,
+      ThriftType keyType,
+      ThriftType valueType
   ) {
     Preconditions.checkNotNull(protocolType, "protocolType is null");
+    Preconditions.checkNotNull(javaType, "javaType is null");
     Preconditions.checkNotNull(valueType, "valueType is null");
 
     this.protocolType = protocolType;
+    this.javaType = javaType;
     this.keyType = keyType;
     this.valueType = valueType;
     this.structMetadata = null;
+    this.uncoercedType = null;
   }
 
   private ThriftType(ThriftStructMetadata<?> structMetadata) {
     Preconditions.checkNotNull(structMetadata, "structMetadata is null");
 
-    this.protocolType = ThriftProtocolFieldType.STRUCT;
+    this.protocolType = STRUCT;
+    this.javaType = structMetadata.getStructClass();
     keyType = null;
     valueType = null;
     this.structMetadata = structMetadata;
+    this.uncoercedType = null;
+  }
+
+  public ThriftType(ThriftType uncoercedType, Type javaType) {
+
+    this.javaType = javaType;
+    this.uncoercedType = uncoercedType;
+
+    this.protocolType = uncoercedType.getProtocolType();
+    keyType = null;
+    valueType = null;
+    structMetadata = null;
+  }
+
+  public Type getJavaType() {
+    return javaType;
   }
 
   public ThriftProtocolFieldType getProtocolType() {
@@ -96,6 +159,24 @@ public class ThriftType {
     return structMetadata;
   }
 
+  public boolean isCoerced() {
+    return uncoercedType != null;
+  }
+
+  public ThriftType coerceTo(Type javaType) {
+    Preconditions.checkState(
+        protocolType != ThriftProtocolFieldType.STRUCT &&
+            protocolType != ThriftProtocolFieldType.SET &&
+            protocolType != ThriftProtocolFieldType.LIST &&
+            protocolType != ThriftProtocolFieldType.MAP,
+        "Coercion is not supported for %s", protocolType );
+    return new ThriftType(this, javaType);
+  }
+
+  public ThriftType getUncoercedType() {
+    return uncoercedType;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -107,16 +188,10 @@ public class ThriftType {
 
     final ThriftType that = (ThriftType) o;
 
-    if (keyType != null ? !keyType.equals(that.keyType) : that.keyType != null) {
+    if (javaType != null ? !javaType.equals(that.javaType) : that.javaType != null) {
       return false;
     }
     if (protocolType != that.protocolType) {
-      return false;
-    }
-    if (structMetadata != null ? !structMetadata.equals(that.structMetadata) : that.structMetadata != null) {
-      return false;
-    }
-    if (valueType != null ? !valueType.equals(that.valueType) : that.valueType != null) {
       return false;
     }
 
@@ -125,10 +200,8 @@ public class ThriftType {
 
   @Override
   public int hashCode() {
-    int result = protocolType.hashCode();
-    result = 31 * result + (keyType != null ? keyType.hashCode() : 0);
-    result = 31 * result + (valueType != null ? valueType.hashCode() : 0);
-    result = 31 * result + (structMetadata != null ? structMetadata.hashCode() : 0);
+    int result = protocolType != null ? protocolType.hashCode() : 0;
+    result = 31 * result + (javaType != null ? javaType.hashCode() : 0);
     return result;
   }
 
@@ -137,7 +210,7 @@ public class ThriftType {
     final StringBuilder sb = new StringBuilder();
     sb.append("ThriftType");
     sb.append("{");
-    sb.append(protocolType);
+    sb.append(protocolType).append(" ").append(javaType);
     if (structMetadata != null) {
       sb.append(" ").append(structMetadata.getStructClass().getName());
     } else if (keyType != null) {

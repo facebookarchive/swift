@@ -7,16 +7,21 @@ import com.facebook.swift.ThriftCodec;
 import com.facebook.swift.internal.TProtocolReader;
 import com.facebook.swift.internal.TProtocolWriter;
 import com.facebook.swift.metadata.ThriftType;
+import com.google.common.base.Preconditions;
 
+import java.lang.reflect.Type;
 import java.util.Set;
 
 public class SetThriftCodec<T> implements ThriftCodec<Set<T>> {
   private final ThriftCodec<T> elementCodec;
   private final ThriftType type;
 
-  public SetThriftCodec(ThriftCodec<T> elementCodec) {
+  public SetThriftCodec(ThriftType type, ThriftCodec<T> elementCodec) {
+    Preconditions.checkNotNull(type, "type is null");
+    Preconditions.checkNotNull(elementCodec, "elementCodec is null");
+
+    this.type = type;
     this.elementCodec = elementCodec;
-    type = ThriftType.set(elementCodec.getType());
   }
 
   @Override

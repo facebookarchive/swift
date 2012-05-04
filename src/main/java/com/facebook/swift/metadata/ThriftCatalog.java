@@ -151,6 +151,7 @@ public class ThriftCatalog {
       return getThriftType(javaType, protocolType);
     }
 
+    // coerce the type if possible
     JavaToThriftCoercion toThrift = javaToThriftCoercions.get(new CoercionKey(javaType, null));
     if (toThrift != null) {
       return toThrift.getThriftType();

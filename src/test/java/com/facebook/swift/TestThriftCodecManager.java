@@ -10,10 +10,14 @@ import com.facebook.swift.metadata.ThriftType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.reflect.TypeParameter;
+import com.google.common.reflect.TypeToken;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.TMemoryBuffer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import java.util.Map;
 
 import static com.facebook.swift.metadata.ThriftType.*;
 import static org.testng.Assert.assertEquals;
@@ -67,7 +71,23 @@ public class TestThriftCodecManager {
   public void testCollectionThriftTypes() throws Exception {
     testRoundTripSerialize(set(STRING), ImmutableSet.of("some string", "another string"));
     testRoundTripSerialize(list(STRING), ImmutableList.of("some string", "another string"));
-    testRoundTripSerialize(map(I32, STRING), ImmutableMap.of(1, "one", 2, "two"));
+    testRoundTripSerialize(map(STRING, STRING), ImmutableMap.of("1", "one", "2", "two"));
+  }
+
+  @Test
+  public void testCoercedCollection() throws Exception {
+    testRoundTripSerialize(
+        set(I32.coerceTo(Integer.class)),
+        ImmutableSet.of(1, 2, 3)
+    );
+    testRoundTripSerialize(
+        list(I32.coerceTo(Integer.class)),
+        ImmutableList.of(4, 5, 6)
+    );
+    testRoundTripSerialize(
+        map(I32.coerceTo(Integer.class), I32.coerceTo(Integer.class)),
+        ImmutableMap.of(1, 2, 2, 4, 3, 9)
+    );
   }
 
   @Test
