@@ -8,5 +8,5 @@ public interface ThriftInjection {
 
   String getName();
 
-  ThriftToJavaCoercion getCoercion();
+  TypeCoercion getCoercion();
 }

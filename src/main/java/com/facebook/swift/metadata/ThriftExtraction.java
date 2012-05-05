@@ -8,5 +8,5 @@ public interface ThriftExtraction {
 
   String getName();
 
-  JavaToThriftCoercion getCoercion();
+  TypeCoercion getCoercion();
 }

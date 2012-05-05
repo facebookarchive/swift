@@ -12,9 +12,9 @@ public class ThriftMethodExtractor implements ThriftExtraction {
   private final short id;
   private final String name;
   private final Method method;
-  private final JavaToThriftCoercion coercion;
+  private final TypeCoercion coercion;
 
-  public ThriftMethodExtractor(short id, String name, JavaToThriftCoercion coercion, Method method) {
+  public ThriftMethodExtractor(short id, String name, TypeCoercion coercion, Method method) {
     checkArgument(id >= 0, "fieldId is negative");
     checkNotNull(name, "name is null");
     checkNotNull(method, "method is null");
@@ -36,7 +36,7 @@ public class ThriftMethodExtractor implements ThriftExtraction {
   }
 
   @Override
-  public JavaToThriftCoercion getCoercion() {
+  public TypeCoercion getCoercion() {
     return coercion;
   }
 

@@ -3,21 +3,17 @@
  */
 package com.facebook.swift;
 
-import com.facebook.swift.coercion.GeneralJavaCoercions;
+import com.facebook.swift.coercion.DefaultJavaCoercions;
 import com.facebook.swift.internal.ThriftCodecFactory;
 import com.facebook.swift.metadata.ThriftStructMetadata;
 import com.facebook.swift.metadata.ThriftType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.reflect.TypeParameter;
-import com.google.common.reflect.TypeToken;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.TMemoryBuffer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.Map;
 
 import static com.facebook.swift.metadata.ThriftType.*;
 import static org.testng.Assert.assertEquals;
@@ -40,7 +36,7 @@ public class TestThriftCodecManager {
           }
         }
     );
-    codecManager.getCatalog().addGeneralCoercions(GeneralJavaCoercions.class);
+    codecManager.getCatalog().addDefaultCoercions(DefaultJavaCoercions.class);
   }
 
   @Test

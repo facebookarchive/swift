@@ -108,7 +108,7 @@ public class ReflectionThriftCodec<T> implements ThriftCodec<T> {
       for (ThriftParameterInjection parameter : constructor.getParameters()) {
         Object value = data.get(parameter.getId());
         if (parameter.getCoercion() != null) {
-          value = parameter.getCoercion().getMethod().invoke(null, value);
+          value = parameter.getCoercion().getFromThrift().invoke(null, value);
         }
         parametersValues[parameter.getParameterIndex()] = value;
       }
@@ -130,7 +130,7 @@ public class ReflectionThriftCodec<T> implements ThriftCodec<T> {
           ThriftFieldInjection fieldInjection = (ThriftFieldInjection) injection;
           Object value = data.get(fieldInjection.getId());
           if (fieldInjection.getCoercion() != null) {
-            value = fieldInjection.getCoercion().getMethod().invoke(null, value);
+            value = fieldInjection.getCoercion().getFromThrift().invoke(null, value);
           }
           if (value != null) {
             fieldInjection.getField().set(instance, value);
@@ -145,7 +145,7 @@ public class ReflectionThriftCodec<T> implements ThriftCodec<T> {
       for (ThriftParameterInjection parameter : methodInjection.getParameters()) {
         Object value = data.get(parameter.getId());
         if (parameter.getCoercion() != null) {
-          value = parameter.getCoercion().getMethod().invoke(null, value);
+          value = parameter.getCoercion().getFromThrift().invoke(null, value);
         }
         parametersValues[parameter.getParameterIndex()] = value;
       }
@@ -167,7 +167,7 @@ public class ReflectionThriftCodec<T> implements ThriftCodec<T> {
       for (ThriftParameterInjection parameter : builderMethod.getParameters()) {
         Object value = data.get(parameter.getId());
         if (parameter.getCoercion() != null) {
-          value = parameter.getCoercion().getMethod().invoke(null, value);
+          value = parameter.getCoercion().getFromThrift().invoke(null, value);
         }
         parametersValues[parameter.getParameterIndex()] = value;
       }
@@ -216,7 +216,7 @@ public class ReflectionThriftCodec<T> implements ThriftCodec<T> {
         );
       }
       if (extraction.getCoercion() != null) {
-        value = extraction.getCoercion().getMethod().invoke(null, value);
+        value = extraction.getCoercion().getToThrift().invoke(null, value);
       }
       return value;
     } catch (InvocationTargetException e) {

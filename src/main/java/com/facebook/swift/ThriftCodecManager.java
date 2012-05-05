@@ -19,10 +19,9 @@ import com.facebook.swift.codec.StringThriftCodec;
 import com.facebook.swift.internal.TProtocolReader;
 import com.facebook.swift.internal.TProtocolWriter;
 import com.facebook.swift.internal.ThriftCodecFactory;
-import com.facebook.swift.metadata.JavaToThriftCoercion;
 import com.facebook.swift.metadata.ThriftCatalog;
-import com.facebook.swift.metadata.ThriftToJavaCoercion;
 import com.facebook.swift.metadata.ThriftType;
+import com.facebook.swift.metadata.TypeCoercion;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
@@ -83,15 +82,8 @@ public class ThriftCodecManager {
               default:
                 if (type.isCoerced()) {
                   ThriftCodec<?> codec = getCodec(type.getUncoercedType());
-                  ThriftToJavaCoercion fromThrift = catalog.getThriftToJavaCoercion(
-                      type.getJavaType(),
-                      type.getProtocolType()
-                  );
-                  JavaToThriftCoercion toThrift = catalog.getJavaToThriftCoercion(
-                      type.getJavaType(),
-                      type.getProtocolType()
-                  );
-                  return new CoercionThriftCodec<>(codec, toThrift, fromThrift);
+                  TypeCoercion coercion = catalog.getDefaultCoercion(type.getJavaType());
+                  return new CoercionThriftCodec<>(codec, coercion);
                 }
                 throw new IllegalArgumentException("Unsupported Thrift type " + type);
             }

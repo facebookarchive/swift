@@ -3,8 +3,8 @@
  */
 package com.facebook.swift.coercion;
 
-public final class GeneralJavaCoercions {
-  private GeneralJavaCoercions() {
+public final class DefaultJavaCoercions {
+  private DefaultJavaCoercions() {
   }
 
   @FromThrift

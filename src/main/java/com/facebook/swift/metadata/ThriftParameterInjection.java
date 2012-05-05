@@ -10,12 +10,12 @@ public class ThriftParameterInjection implements ThriftInjection {
   private final short id;
   private final String name;
   private final int parameterIndex;
-  private final ThriftToJavaCoercion coercion;
+  private final TypeCoercion coercion;
 
   public ThriftParameterInjection(
       short id,
       String name,
-      ThriftToJavaCoercion coercion,
+      TypeCoercion coercion,
       int parameterIndex
   ) {
     checkArgument(id >= 0, "fieldId is negative");
@@ -39,7 +39,7 @@ public class ThriftParameterInjection implements ThriftInjection {
   }
 
   @Override
-  public ThriftToJavaCoercion getCoercion() {
+  public TypeCoercion getCoercion() {
     return coercion;
   }
 

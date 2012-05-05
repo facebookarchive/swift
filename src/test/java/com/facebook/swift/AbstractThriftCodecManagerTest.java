@@ -5,7 +5,7 @@ package com.facebook.swift;
 
 import com.facebook.swift.codec.BooleanThriftCodec;
 import com.facebook.swift.codec.SetThriftCodec;
-import com.facebook.swift.coercion.GeneralJavaCoercions;
+import com.facebook.swift.coercion.DefaultJavaCoercions;
 import com.facebook.swift.internal.TProtocolReader;
 import com.facebook.swift.internal.TProtocolWriter;
 import com.facebook.swift.metadata.ThriftCatalog;
@@ -35,7 +35,7 @@ public abstract class AbstractThriftCodecManagerTest {
   @BeforeMethod
   protected void setUp() throws Exception {
     codecManager = createCodecManager();
-    codecManager.getCatalog().addGeneralCoercions(GeneralJavaCoercions.class);
+    codecManager.getCatalog().addDefaultCoercions(DefaultJavaCoercions.class);
   }
 
   @Test
@@ -120,7 +120,7 @@ public abstract class AbstractThriftCodecManagerTest {
   }
 
   @Test
-  public void testGeneralCoercion() throws Exception {
+  public void testDefaultCoercion() throws Exception {
     CoercionBean coercion = new CoercionBean(
         true,
         (byte)1,

@@ -236,43 +236,19 @@ public class ThriftStructMetadataBuilder<T> {
           continue;
         }
 
-        if (field instanceof Extractor) {
-          Extractor extractor = (Extractor) field;
-          if (extractor.getCoercion() != null) {
-            continue;
-          }
-
-          JavaToThriftCoercion coercion = catalog.getJavaToThriftCoercion(
-              javaType,
-              field.getProtocolType()
-          );
-          if (coercion == null) {
-            problems.addError(
-                "Type %s is not a supported thrift type and does not have type coercion",
-                javaType
-            );
-            continue;
-          }
-          extractor.setCoercion(coercion);
-        } else {
-          Injection injection = (Injection) field;
-          if (injection.getCoercion() != null) {
-            continue;
-          }
-
-          ThriftToJavaCoercion coercion = catalog.getThriftToJavaCoercion(
-              javaType,
-              field.getProtocolType()
-          );
-          if (coercion == null) {
-            problems.addError(
-                "Type %s is not a supported thrift type and does not have type coercion",
-                javaType
-            );
-            continue;
-          }
-          injection.setCoercion(coercion);
+        if (field.getCoercion() != null) {
+          continue;
         }
+
+        TypeCoercion coercion = catalog.getDefaultCoercion(javaType);
+        if (coercion == null) {
+          problems.addError(
+              "Type %s is not a supported thrift type and does not have type coercion",
+              javaType
+          );
+          continue;
+        }
+        field.setCoercion(coercion);
       }
     }
   }
@@ -737,6 +713,7 @@ public class ThriftStructMetadataBuilder<T> {
     private Short id;
     private String name;
     private ThriftProtocolFieldType protocolType;
+    private TypeCoercion coercion;
 
     private FieldMetadata(ThriftField annotation) {
       checkNotNull(annotation, "annotation is null");
@@ -777,6 +754,25 @@ public class ThriftStructMetadataBuilder<T> {
 
     public void setProtocolType(ThriftProtocolFieldType protocolType) {
       this.protocolType = protocolType;
+    }
+
+    public TypeCoercion getCoercion() {
+      return coercion;
+    }
+
+    public void setCoercion(TypeCoercion coercion) {
+      Preconditions.checkNotNull(coercion, "coercion is null");
+      if (getProtocolType() == null) {
+        setProtocolType(coercion.getThriftType().getProtocolType());
+      } else {
+        Preconditions.checkArgument(
+            coercion.getThriftType().getProtocolType() == getProtocolType(),
+            "Coercion protocol type %s does not match declared field protocol type %s",
+            coercion.getThriftType().getProtocolType(),
+            getProtocolType()
+        );
+      }
+      this.coercion = coercion;
     }
 
     static <T extends FieldMetadata> Function<T, Optional<Short>> getThriftFieldId() {
@@ -840,24 +836,11 @@ public class ThriftStructMetadataBuilder<T> {
             return protocolType;
           }
 
-          // infer from general coercions
-          if (input instanceof Extractor) {
-            JavaToThriftCoercion coercion = catalog.getJavaToThriftCoercion(
-                input.getJavaType(),
-                null);
-            if (coercion != null) {
-              ((Extractor) input).setCoercion(coercion);
-              return coercion.getThriftType().getProtocolType();
-            }
-          } else {
-            ThriftToJavaCoercion coercion = catalog.getThriftToJavaCoercion(
-                input.getJavaType(),
-                null
-            );
-            if (coercion != null) {
-              ((Injection) input).setCoercion(coercion);
-              return coercion.getThriftType().getProtocolType();
-            }
+          // infer from default coercion
+          TypeCoercion coercion = catalog.getDefaultCoercion(input.getJavaType());
+          if (coercion != null) {
+            input.setCoercion(coercion);
+            return coercion.getThriftType().getProtocolType();
           }
 
           return null;
@@ -898,29 +881,8 @@ public class ThriftStructMetadataBuilder<T> {
   }
 
   private static abstract class Extractor extends FieldMetadata {
-    private JavaToThriftCoercion coercion;
-
     protected Extractor(ThriftField annotation) {
       super(annotation);
-    }
-
-    public JavaToThriftCoercion getCoercion() {
-      return coercion;
-    }
-
-    public void setCoercion(JavaToThriftCoercion coercion) {
-      Preconditions.checkNotNull(coercion, "coercion is null");
-      if (getProtocolType() == null) {
-        setProtocolType(coercion.getThriftType().getProtocolType());
-      } else {
-        Preconditions.checkArgument(
-            coercion.getThriftType().getProtocolType() == getProtocolType(),
-            "Coercion protocol type %s does not match declared field protocol type %s",
-            coercion.getThriftType().getProtocolType(),
-            getProtocolType()
-        );
-      }
-      this.coercion = coercion;
     }
   }
 
@@ -977,29 +939,8 @@ public class ThriftStructMetadataBuilder<T> {
   }
 
   private static abstract class Injection extends FieldMetadata {
-    private ThriftToJavaCoercion coercion;
-
     protected Injection(ThriftField annotation) {
       super(annotation);
-    }
-
-    public ThriftToJavaCoercion getCoercion() {
-      return coercion;
-    }
-
-    public void setCoercion(ThriftToJavaCoercion coercion) {
-      Preconditions.checkNotNull(coercion, "coercion is null");
-      if (getProtocolType() == null) {
-        setProtocolType(coercion.getThriftType().getProtocolType());
-      } else {
-        Preconditions.checkArgument(
-            coercion.getThriftType().getProtocolType() == getProtocolType(),
-            "Coercion protocol type %s does not match declared field protocol type %s",
-            coercion.getThriftType().getProtocolType(),
-            getProtocolType()
-        );
-      }
-      this.coercion = coercion;
     }
   }
 

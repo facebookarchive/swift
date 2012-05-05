@@ -44,8 +44,7 @@ import static com.google.common.collect.Iterables.transform;
 public class ThriftCatalog {
   private final Problems.Monitor monitor;
   private final Map<Class<?>, ThriftStructMetadata<?>> structs = new HashMap<>();
-  private final Map<CoercionKey, JavaToThriftCoercion> javaToThriftCoercions = new HashMap<>();
-  private final Map<CoercionKey, ThriftToJavaCoercion> thriftToJavaCoercions = new HashMap<>();
+  private final Map<Type, TypeCoercion> coercions = new HashMap<>();
 
   private final ThreadLocal<Deque<Class<?>>> stack = new ThreadLocal<Deque<Class<?>>>() {
     @Override
@@ -67,82 +66,50 @@ public class ThriftCatalog {
     return monitor;
   }
 
-  public void addGeneralCoercions(Class<?> coercionsClass) {
-    Map<CoercionKey, JavaToThriftCoercion> toThriftCoercions = new HashMap<>();
-    Map<CoercionKey, ThriftToJavaCoercion> fromThriftCoercions = new HashMap<>();
+  public void addDefaultCoercions(Class<?> coercionsClass) {
+    Map<ThriftType, Method> toThriftCoercions = new HashMap<>();
+    Map<ThriftType, Method> fromThriftCoercions = new HashMap<>();
     for (Method method : coercionsClass.getDeclaredMethods()) {
       if (method.isAnnotationPresent(ToThrift.class)) {
-        Preconditions.checkArgument(Modifier.isStatic(method.getModifiers()),
+        Preconditions.checkArgument(
+            Modifier.isStatic(method.getModifiers()),
             "Method %s is not static", method.toGenericString()
         );
-        Type javaType = method.getGenericParameterTypes()[0];
         ThriftType thriftType = getThriftType(method.getGenericReturnType());
-        Preconditions.checkArgument(thriftType != null,
+        Preconditions.checkArgument(
+            thriftType != null,
             "Method %s does not return a known thrift type", method.toGenericString()
         );
-        JavaToThriftCoercion coercion = new JavaToThriftCoercion(
-            javaType,
-            thriftType,
-            method
-        );
-        toThriftCoercions.put(new CoercionKey(javaType, null), coercion);
-        toThriftCoercions.put(new CoercionKey(javaType, thriftType.getProtocolType()), coercion);
+        toThriftCoercions.put(thriftType.coerceTo(method.getGenericParameterTypes()[0]), method);
       } else if (method.isAnnotationPresent(FromThrift.class)) {
-        Preconditions.checkArgument(Modifier.isStatic(method.getModifiers()),
+        Preconditions.checkArgument(
+            Modifier.isStatic(method.getModifiers()),
             "Method %s is not static", method.toGenericString()
         );
-        Type javaType = method.getGenericReturnType();
-        ThriftType thriftType = getThriftType( method.getGenericParameterTypes()[0]);
-        Preconditions.checkArgument(thriftType != null,
+        ThriftType thriftType = getThriftType(method.getGenericParameterTypes()[0]);
+        Preconditions.checkArgument(
+            thriftType != null,
             "Method %s does not return a known thrift type", method.toGenericString()
         );
-        ThriftToJavaCoercion coercion = new ThriftToJavaCoercion(
-            thriftType,
-            javaType,
-            method
-        );
-        fromThriftCoercions.put(new CoercionKey(javaType, null), coercion);
-        fromThriftCoercions.put(new CoercionKey(javaType, thriftType.getProtocolType()), coercion);
+        fromThriftCoercions.put(thriftType.coerceTo(method.getGenericReturnType()), method);
       }
     }
-    javaToThriftCoercions.putAll(toThriftCoercions);
-    thriftToJavaCoercions.putAll(fromThriftCoercions);
+    Map<Type, TypeCoercion> coercions = new HashMap<>();
+    for (Map.Entry<ThriftType, Method> entry : toThriftCoercions.entrySet()) {
+      ThriftType type = entry.getKey();
+      Method toThriftMethod = entry.getValue();
+      Method fromThriftMethod = fromThriftCoercions.get(type);
+      TypeCoercion coercion = new TypeCoercion(type, toThriftMethod, fromThriftMethod);
+      coercions.put(type.getJavaType(), coercion);
+//
+//  TODO verify
+//
+    }
+    this.coercions.putAll(coercions);
   }
 
-  public void addGeneralCoercion(JavaToThriftCoercion coercion) {
-    javaToThriftCoercions.put(new CoercionKey(coercion.getJavaType(), null), coercion);
-    addSpecificCoercion(coercion);
-  }
-
-  public void addGeneralCoercion(ThriftToJavaCoercion coercion) {
-    thriftToJavaCoercions.put(new CoercionKey(coercion.getJavaType(), null), coercion);
-    addSpecificCoercion(coercion);
-  }
-
-  public void addSpecificCoercion(JavaToThriftCoercion coercion) {
-    javaToThriftCoercions.put(
-        new CoercionKey(coercion.getJavaType(), coercion.getThriftType().getProtocolType()),
-        coercion
-    );
-  }
-
-  public void addSpecificCoercion(ThriftToJavaCoercion coercion) {
-    thriftToJavaCoercions.put(
-        new CoercionKey(coercion.getJavaType(), coercion.getThriftType().getProtocolType()),
-        coercion
-    );
-  }
-
-  public JavaToThriftCoercion getJavaToThriftCoercion(
-      Type javaType,
-      ThriftProtocolFieldType thriftType) {
-    return javaToThriftCoercions.get(new CoercionKey(javaType, thriftType));
-  }
-
-  public ThriftToJavaCoercion getThriftToJavaCoercion(
-      Type javaType,
-      ThriftProtocolFieldType thriftType) {
-    return thriftToJavaCoercions.get(new CoercionKey(javaType, thriftType));
+  public TypeCoercion getDefaultCoercion(Type type) {
+    return coercions.get(type);
   }
 
   public ThriftType getThriftType(Type javaType) {
@@ -152,13 +119,9 @@ public class ThriftCatalog {
     }
 
     // coerce the type if possible
-    JavaToThriftCoercion toThrift = javaToThriftCoercions.get(new CoercionKey(javaType, null));
-    if (toThrift != null) {
-      return toThrift.getThriftType();
-    }
-    ThriftToJavaCoercion fromThrift = thriftToJavaCoercions.get(new CoercionKey(javaType, null));
-    if (fromThrift != null) {
-      return fromThrift.getThriftType();
+    TypeCoercion coercion = coercions.get(javaType);
+    if (coercion != null) {
+      return coercion.getThriftType();
     }
     throw new RuntimeException("Unsupported java type: " + javaType);
   }
@@ -259,55 +222,6 @@ public class ThriftCatalog {
         configClass,
         top
       );
-    }
-  }
-
-  private static class CoercionKey {
-    private final Type javaType;
-    private final ThriftProtocolFieldType thriftType;
-
-    private CoercionKey(Type javaType, ThriftProtocolFieldType thriftType) {
-      Preconditions.checkNotNull(javaType, "javaType is null");
-      this.javaType = javaType;
-      this.thriftType = thriftType;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      final CoercionKey that = (CoercionKey) o;
-
-      if (!javaType.equals(that.javaType)) {
-        return false;
-      }
-      if (thriftType != that.thriftType) {
-        return false;
-      }
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = javaType.hashCode();
-      result = 31 * result + (thriftType != null ? thriftType.hashCode() : 0);
-      return result;
-    }
-
-    @Override
-    public String toString() {
-      final StringBuilder sb = new StringBuilder();
-      sb.append("CoercionKey");
-      sb.append("{javaType=").append(javaType);
-      sb.append(", thriftType=").append(thriftType);
-      sb.append('}');
-      return sb.toString();
     }
   }
 }

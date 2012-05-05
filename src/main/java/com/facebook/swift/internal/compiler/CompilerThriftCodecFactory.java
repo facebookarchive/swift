@@ -380,7 +380,7 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
       for (ThriftParameterInjection parameterInjection : constructor.getParameters()) {
         read.loadVariable("f_" + parameterInjection.getName());
         if (parameterInjection.getCoercion() != null) {
-          read.invokeStatic(parameterInjection.getCoercion().getMethod());
+          read.invokeStatic(parameterInjection.getCoercion().getFromThrift());
         }
       }
       // invoke constructor
@@ -395,7 +395,7 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
             read.loadVariable("instance")
                 .loadVariable("f_" + field.getName());
             if (fieldInjection.getCoercion() != null) {
-              read.invokeStatic(fieldInjection.getCoercion().getMethod());
+              read.invokeStatic(fieldInjection.getCoercion().getFromThrift());
             }
             read.putField(fieldInjection.getField());
           }
@@ -410,7 +410,7 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
         for (ThriftParameterInjection parameterInjection : methodInjection.getParameters()) {
           read.loadVariable("f_" + parameterInjection.getName());
           if (parameterInjection.getCoercion() != null) {
-            read.invokeStatic(parameterInjection.getCoercion().getMethod());
+            read.invokeStatic(parameterInjection.getCoercion().getFromThrift());
           }
         }
 
@@ -427,7 +427,7 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
         for (ThriftParameterInjection parameterInjection : builderMethod.getParameters()) {
           read.loadVariable("f_" + parameterInjection.getName());
           if (parameterInjection.getCoercion() != null) {
-            read.invokeStatic(parameterInjection.getCoercion().getMethod());
+            read.invokeStatic(parameterInjection.getCoercion().getFromThrift());
           }
         }
 
@@ -468,13 +468,13 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
           ThriftFieldExtractor fieldExtractor = (ThriftFieldExtractor) extraction;
           write.getField( fieldExtractor.getField());
           if (extraction.getCoercion() != null) {
-            write.invokeStatic(extraction.getCoercion().getMethod());
+            write.invokeStatic(extraction.getCoercion().getToThrift());
           }
         } else if (extraction instanceof ThriftMethodExtractor) {
           ThriftMethodExtractor methodExtractor = (ThriftMethodExtractor) extraction;
           write.invokeVirtual(methodExtractor.getMethod());
           if (extraction.getCoercion() != null) {
-            write.invokeStatic(extraction.getCoercion().getMethod());
+            write.invokeStatic(extraction.getCoercion().getToThrift());
           }
         }
 
