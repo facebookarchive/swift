@@ -7,6 +7,4 @@ public interface ThriftExtraction {
   short getId();
 
   String getName();
-
-  TypeCoercion getCoercion();
 }

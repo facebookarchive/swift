@@ -16,21 +16,23 @@ public class ThriftFieldMetadata {
   private final String name;
   private final List<ThriftInjection> injections;
   private final ThriftExtraction extraction;
+  private final TypeCoercion coercion;
 
   public ThriftFieldMetadata(
-    short id,
-    ThriftType type,
-    String name,
-    List<ThriftInjection> injections,
-    ThriftExtraction extraction
+      short id,
+      ThriftType type,
+      String name,
+      List<ThriftInjection> injections,
+      ThriftExtraction extraction,
+      TypeCoercion coercion
   ) {
     checkArgument(id >= 0, "id is negative");
     checkNotNull(type, "type is null");
     checkNotNull(name, "name is null");
     checkNotNull(injections, "injections is null");
     checkArgument(
-      !injections.isEmpty() || extraction != null,
-      "A thrift field must have an injection or extraction point"
+        !injections.isEmpty() || extraction != null,
+        "A thrift field must have an injection or extraction point"
     );
 
     this.id = id;
@@ -38,6 +40,7 @@ public class ThriftFieldMetadata {
     this.name = name;
     this.injections = ImmutableList.copyOf(injections);
     this.extraction = extraction;
+    this.coercion = coercion;
   }
 
   public short getId() {
@@ -76,6 +79,10 @@ public class ThriftFieldMetadata {
     return extraction;
   }
 
+  public TypeCoercion getCoercion() {
+    return coercion;
+  }
+
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder();
@@ -85,6 +92,7 @@ public class ThriftFieldMetadata {
     sb.append(", name='").append(name).append('\'');
     sb.append(", injections=").append(injections);
     sb.append(", extraction=").append(extraction);
+    sb.append(", coercion=").append(coercion);
     sb.append('}');
     return sb.toString();
   }

@@ -35,16 +35,9 @@ public class ThriftType {
     checkNotNull(keyType, "keyType is null");
     checkNotNull(valueType, "valueType is null");
 
-    Type javaType = new TypeToken<Map<K, V>>() {
-    }
-        .where(
-            new TypeParameter<K>() {
-            }, (TypeToken<K>) TypeToken.of(keyType.getJavaType())
-        )
-        .where(
-            new TypeParameter<V>() {
-            }, (TypeToken<V>) TypeToken.of(valueType.getJavaType())
-        )
+    Type javaType = new TypeToken<Map<K, V>>() {}
+        .where(new TypeParameter<K>() {}, (TypeToken<K>) TypeToken.of(keyType.getJavaType()))
+        .where(new TypeParameter<V>() {}, (TypeToken<V>) TypeToken.of(valueType.getJavaType()))
         .getType();
     return new ThriftType(ThriftProtocolFieldType.MAP, javaType, keyType, valueType);
   }
@@ -52,12 +45,8 @@ public class ThriftType {
   public static <E> ThriftType set(ThriftType valueType) {
     Preconditions.checkNotNull(valueType, "valueType is null");
 
-    Type javaType = new TypeToken<Set<E>>() {
-    }
-        .where(
-            new TypeParameter<E>() {
-            }, (TypeToken<E>) TypeToken.of(valueType.getJavaType())
-        )
+    Type javaType = new TypeToken<Set<E>>() {}
+        .where(new TypeParameter<E>() {}, (TypeToken<E>) TypeToken.of(valueType.getJavaType()))
         .getType();
     return new ThriftType(ThriftProtocolFieldType.SET, javaType, null, valueType);
   }
@@ -65,12 +54,8 @@ public class ThriftType {
   public static <E> ThriftType list(ThriftType valueType) {
     checkNotNull(valueType, "valueType is null");
 
-    Type javaType = new TypeToken<Set<E>>() {
-    }
-        .where(
-            new TypeParameter<E>() {
-            }, (TypeToken<E>) TypeToken.of(valueType.getJavaType())
-        )
+    Type javaType = new TypeToken<Set<E>>() {}
+        .where(new TypeParameter<E>() {}, (TypeToken<E>) TypeToken.of(valueType.getJavaType()))
         .getType();
     return new ThriftType(ThriftProtocolFieldType.LIST, javaType, null, valueType);
   }
@@ -164,6 +149,10 @@ public class ThriftType {
   }
 
   public ThriftType coerceTo(Type javaType) {
+    if (javaType == this.javaType) {
+      return this;
+    }
+
     Preconditions.checkState(
         protocolType != ThriftProtocolFieldType.STRUCT &&
             protocolType != ThriftProtocolFieldType.SET &&

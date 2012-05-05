@@ -10,12 +10,10 @@ public class ThriftParameterInjection implements ThriftInjection {
   private final short id;
   private final String name;
   private final int parameterIndex;
-  private final TypeCoercion coercion;
 
   public ThriftParameterInjection(
       short id,
       String name,
-      TypeCoercion coercion,
       int parameterIndex
   ) {
     checkArgument(id >= 0, "fieldId is negative");
@@ -24,7 +22,6 @@ public class ThriftParameterInjection implements ThriftInjection {
 
     this.id = id;
     this.name = name;
-    this.coercion = coercion;
     this.parameterIndex = parameterIndex;
   }
 
@@ -38,11 +35,6 @@ public class ThriftParameterInjection implements ThriftInjection {
     return name;
   }
 
-  @Override
-  public TypeCoercion getCoercion() {
-    return coercion;
-  }
-
   public int getParameterIndex() {
     return parameterIndex;
   }
@@ -53,7 +45,6 @@ public class ThriftParameterInjection implements ThriftInjection {
     sb.append("ThriftParameterInjection");
     sb.append("{fieldId=").append(id);
     sb.append(", name=").append(name);
-    sb.append(", coercion=").append(coercion);
     sb.append(", index=").append(parameterIndex);
     sb.append('}');
     return sb.toString();

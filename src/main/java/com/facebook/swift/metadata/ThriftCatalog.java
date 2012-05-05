@@ -129,19 +129,19 @@ public class ThriftCatalog {
   public ThriftType getThriftType(Type javaType, ThriftProtocolFieldType protocolType) {
     switch (protocolType) {
       case BOOL:
-        return BOOL;
+        return BOOL.coerceTo(javaType);
       case BYTE:
-        return BYTE;
+        return BYTE.coerceTo(javaType);
       case DOUBLE:
-        return DOUBLE;
+        return DOUBLE.coerceTo(javaType);
       case I16:
-        return I16;
+        return I16.coerceTo(javaType);
       case I32:
-        return I32;
+        return I32.coerceTo(javaType);
       case I64:
-        return I64;
+        return I64.coerceTo(javaType);
       case STRING:
-        return STRING;
+        return STRING.coerceTo(javaType);
       case STRUCT: {
         Class<?> structClass = (Class<?>) javaType;
         ThriftStructMetadata<?> structMetadata = getThriftStructMetadata(structClass);

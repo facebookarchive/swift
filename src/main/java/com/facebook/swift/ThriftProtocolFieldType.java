@@ -3,11 +3,9 @@
  */
 package com.facebook.swift;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import java.lang.reflect.Type;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,24 +24,28 @@ public enum ThriftProtocolFieldType {
   $_9_IS_SKIPPED(false),
   I64(long.class),
   STRING(String.class),
-  STRUCT,
-  MAP,
-  SET,
-  LIST,
-  ENUM;
+  STRUCT(null),
+  MAP(null),
+  SET(null),
+  LIST(null),
+  ENUM(null);
 
 
   private final boolean validFieldType;
-  private final List<Class<?>> basicTypes;
+  private final Class<?> defaultJavaType;
 
-  private ThriftProtocolFieldType(Class<?>... types) {
+  private ThriftProtocolFieldType(Class<?> types) {
     this.validFieldType = true;
-    basicTypes = ImmutableList.copyOf(types);
+    defaultJavaType = types;
   }
 
   private ThriftProtocolFieldType(boolean validFieldType) {
     this.validFieldType = validFieldType;
-    basicTypes = ImmutableList.of();
+    defaultJavaType = null;
+  }
+
+  public Class<?> getDefaultJavaType() {
+    return defaultJavaType;
   }
 
   public boolean isValidFieldType() {
@@ -59,8 +61,8 @@ public enum ThriftProtocolFieldType {
   static {
     ImmutableMap.Builder<Class<?>, ThriftProtocolFieldType> builder = ImmutableMap.builder();
     for (ThriftProtocolFieldType protocolType : ThriftProtocolFieldType.values()) {
-      for (Class<?> basicType : protocolType.basicTypes) {
-        builder.put(basicType, protocolType);
+      if (protocolType.defaultJavaType != null) {
+        builder.put(protocolType.defaultJavaType, protocolType);
       }
     }
     typesByClass = builder.build();

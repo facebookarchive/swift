@@ -82,7 +82,7 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
     parameterTypes.add(ThriftType.class);
     parameters.add(thriftType);
 
-    // get codecs for al fields
+    // get codecs for all fields
     Map<Short, ThriftCodec<?>> fieldCodecs = new TreeMap<>();
     for (ThriftFieldMetadata field : metadata.getFields()) {
       if (needsCodec(field)) {
@@ -128,6 +128,7 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
       classDefinition.addField(typeField);
     }
 
+    // declare a field for each codec
     Map<Short, FieldDefinition> codecFields = new TreeMap<>();
     List<NamedParameterDefinition> constructorParams = new ArrayList<>();
     for (ThriftFieldMetadata fieldMetadata : metadata.getFields()) {
@@ -343,6 +344,11 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
             );
         }
 
+        // coerce the type
+        if (field.getCoercion() != null) {
+          read.invokeStatic(field.getCoercion().getFromThrift());
+        }
+
         // store protocol value
         read.storeVariable("f_" + field.getName());
 
@@ -379,9 +385,6 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
       // push parameters on stack
       for (ThriftParameterInjection parameterInjection : constructor.getParameters()) {
         read.loadVariable("f_" + parameterInjection.getName());
-        if (parameterInjection.getCoercion() != null) {
-          read.invokeStatic(parameterInjection.getCoercion().getFromThrift());
-        }
       }
       // invoke constructor
       read.invokeConstructor(constructor.getConstructor())
@@ -394,9 +397,6 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
             ThriftFieldInjection fieldInjection = (ThriftFieldInjection) injection;
             read.loadVariable("instance")
                 .loadVariable("f_" + field.getName());
-            if (fieldInjection.getCoercion() != null) {
-              read.invokeStatic(fieldInjection.getCoercion().getFromThrift());
-            }
             read.putField(fieldInjection.getField());
           }
         }
@@ -409,9 +409,6 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
         // push parameters on stack
         for (ThriftParameterInjection parameterInjection : methodInjection.getParameters()) {
           read.loadVariable("f_" + parameterInjection.getName());
-          if (parameterInjection.getCoercion() != null) {
-            read.invokeStatic(parameterInjection.getCoercion().getFromThrift());
-          }
         }
 
         // invoke the method
@@ -426,9 +423,6 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
         // push parameters on stack
         for (ThriftParameterInjection parameterInjection : builderMethod.getParameters()) {
           read.loadVariable("f_" + parameterInjection.getName());
-          if (parameterInjection.getCoercion() != null) {
-            read.invokeStatic(parameterInjection.getCoercion().getFromThrift());
-          }
         }
 
         // invoke the method
@@ -463,21 +457,22 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
             .loadConstant(field.getId())
             .loadVariable("struct");
 
+        // extract value
         ThriftExtraction extraction = field.getExtraction();
         if (extraction instanceof ThriftFieldExtractor) {
           ThriftFieldExtractor fieldExtractor = (ThriftFieldExtractor) extraction;
           write.getField( fieldExtractor.getField());
-          if (extraction.getCoercion() != null) {
-            write.invokeStatic(extraction.getCoercion().getToThrift());
-          }
         } else if (extraction instanceof ThriftMethodExtractor) {
           ThriftMethodExtractor methodExtractor = (ThriftMethodExtractor) extraction;
           write.invokeVirtual(methodExtractor.getMethod());
-          if (extraction.getCoercion() != null) {
-            write.invokeStatic(extraction.getCoercion().getToThrift());
-          }
         }
 
+        // coerce value
+        if (field.getCoercion() != null) {
+          write.invokeStatic(field.getCoercion().getToThrift());
+        }
+
+        // write value
         switch (field.getType().getProtocolType()) {
           case BOOL:
             write.invokeVirtual(
@@ -639,7 +634,6 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
                     .getProtocolType()
             );
         }
-
       }
 
       write.loadVariable("protocol")
@@ -722,21 +716,14 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
   public static ParameterizedType toParameterizedType(ThriftType type) {
     switch (type.getProtocolType()) {
       case BOOL:
-        return type(boolean.class);
       case BYTE:
-        return type(byte.class);
       case DOUBLE:
-        return type(double.class);
       case I16:
-        return type(short.class);
       case I32:
-        return type(int.class);
       case I64:
-        return type(long.class);
       case STRING:
-        return type(String.class);
       case STRUCT:
-        return type(type.getStructMetadata().getStructClass());
+        return type((Class<?>)type.getJavaType());
       case MAP:
         return type(
             Map.class,
