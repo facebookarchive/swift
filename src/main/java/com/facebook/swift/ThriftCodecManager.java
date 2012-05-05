@@ -15,7 +15,6 @@ import com.facebook.swift.codec.LongThriftCodec;
 import com.facebook.swift.codec.MapThriftCodec;
 import com.facebook.swift.codec.SetThriftCodec;
 import com.facebook.swift.codec.ShortThriftCodec;
-import com.facebook.swift.codec.StringThriftCodec;
 import com.facebook.swift.internal.TProtocolReader;
 import com.facebook.swift.internal.TProtocolWriter;
 import com.facebook.swift.internal.ThriftCodecFactory;
@@ -101,7 +100,6 @@ public class ThriftCodecManager {
     addCodecIfPresent(new IntegerThriftCodec());
     addCodecIfPresent(new LongThriftCodec());
     addCodecIfPresent(new DoubleThriftCodec());
-    addCodecIfPresent(new StringThriftCodec());
     addCodecIfPresent(new ByteBufferThriftCodec());
   }
 

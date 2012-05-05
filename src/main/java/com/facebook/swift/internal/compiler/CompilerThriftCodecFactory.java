@@ -33,6 +33,7 @@ import org.objectweb.asm.util.CheckClassAdapter;
 
 import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -280,8 +281,8 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
           case STRING:
             read.loadVariable("protocol").invokeVirtual(
                 TProtocolReader.class,
-                "readStringField",
-                String.class
+                "readBinaryField",
+                ByteBuffer.class
             );
             break;
           case STRUCT: {
@@ -537,11 +538,11 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
           case STRING:
             write.invokeVirtual(
                 TProtocolWriter.class,
-                "writeStringField",
+                "writeBinaryField",
                 void.class,
                 String.class,
                 short.class,
-                String.class
+                ByteBuffer.class
             );
             break;
           case STRUCT: {

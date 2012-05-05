@@ -6,6 +6,7 @@ package com.facebook.swift;
 import com.google.common.collect.ImmutableMap;
 
 import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Set;
 
@@ -23,7 +24,7 @@ public enum ThriftProtocolFieldType {
   I32(int.class),
   $_9_IS_SKIPPED(false),
   I64(long.class),
-  STRING(String.class),
+  STRING(ByteBuffer.class),
   STRUCT(null),
   MAP(null),
   SET(null),

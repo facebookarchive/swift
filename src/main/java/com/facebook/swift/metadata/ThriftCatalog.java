@@ -4,6 +4,7 @@
 package com.facebook.swift.metadata;
 
 import com.facebook.swift.ThriftProtocolFieldType;
+import com.facebook.swift.coercion.DefaultJavaCoercions;
 import com.facebook.swift.coercion.FromThrift;
 import com.facebook.swift.coercion.ToThrift;
 import com.facebook.swift.metadata.Problems.Monitor;
@@ -60,6 +61,7 @@ public class ThriftCatalog {
   @VisibleForTesting
   public ThriftCatalog(Monitor monitor) {
     this.monitor = monitor;
+    addDefaultCoercions(DefaultJavaCoercions.class);
   }
 
   Monitor getMonitor() {

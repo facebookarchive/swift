@@ -15,7 +15,10 @@ import org.apache.thrift.transport.TMemoryBuffer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.nio.ByteBuffer;
+
 import static com.facebook.swift.metadata.ThriftType.*;
+import static com.google.common.base.Charsets.UTF_8;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.fail;
@@ -60,14 +63,23 @@ public class TestThriftCodecManager {
     testRoundTripSerialize(I32, 10000);
     testRoundTripSerialize(I64, (long) 10000000);
     testRoundTripSerialize(DOUBLE, 42.42d);
-    testRoundTripSerialize(STRING, "some string");
+    testRoundTripSerialize(STRING, toByteBuffer("some string"));
   }
 
   @Test
   public void testCollectionThriftTypes() throws Exception {
-    testRoundTripSerialize(set(STRING), ImmutableSet.of("some string", "another string"));
-    testRoundTripSerialize(list(STRING), ImmutableList.of("some string", "another string"));
-    testRoundTripSerialize(map(STRING, STRING), ImmutableMap.of("1", "one", "2", "two"));
+    testRoundTripSerialize(set(STRING), ImmutableSet.of(
+        toByteBuffer("some string"),
+        toByteBuffer("another string")
+    ) );
+    testRoundTripSerialize(list(STRING), ImmutableList.of(
+        toByteBuffer("some string"),
+        toByteBuffer("another string")
+    ));
+    testRoundTripSerialize(map(STRING, STRING), ImmutableMap.of(
+        toByteBuffer("1"), toByteBuffer("one"),
+        toByteBuffer("2"), toByteBuffer("two")
+    ));
   }
 
   @Test
@@ -132,4 +144,8 @@ public class TestThriftCodecManager {
     // verify they are the same
     assertEquals(copy, value);
   }
+  
+  private ByteBuffer toByteBuffer(String string) {
+    return ByteBuffer.wrap(string.getBytes(UTF_8));
+  }  
 }

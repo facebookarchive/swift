@@ -9,6 +9,7 @@ import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Set;
 
@@ -25,7 +26,7 @@ public class ThriftType {
   public static final ThriftType I32 = new ThriftType(ThriftProtocolFieldType.I32, int.class);
   public static final ThriftType I64 = new ThriftType(ThriftProtocolFieldType.I64, long.class);
   public static final ThriftType STRING =
-      new ThriftType(ThriftProtocolFieldType.STRING, String.class);
+      new ThriftType(ThriftProtocolFieldType.STRING, ByteBuffer.class);
 
   public static ThriftType struct(ThriftStructMetadata<?> structMetadata) {
     return new ThriftType(structMetadata);

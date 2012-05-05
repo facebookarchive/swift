@@ -3,6 +3,12 @@
  */
 package com.facebook.swift.coercion;
 
+import com.google.common.base.Charsets;
+
+import java.nio.ByteBuffer;
+
+import static com.google.common.base.Charsets.UTF_8;
+
 public final class DefaultJavaCoercions {
   private DefaultJavaCoercions() {
   }
@@ -85,5 +91,21 @@ public final class DefaultJavaCoercions {
   @ToThrift
   public static double boxedDoubleToDouble(Double value) {
     return value;
+  }
+
+  @FromThrift
+  public static String byteBufferToString(ByteBuffer value) {
+    if (value == null) {
+      return null;
+    }
+    return new String(value.array(), value.arrayOffset(), value.remaining(), UTF_8);
+  }
+
+  @ToThrift
+  public static ByteBuffer stringToByteBuffer(String value) {
+    if (value == null) {
+      return null;
+    }
+    return ByteBuffer.wrap(value.getBytes(UTF_8));
   }
 }

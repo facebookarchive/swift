@@ -46,6 +46,9 @@ public class TProtocolWriter {
   }
 
   public void writeBinaryField(String name, short id, ByteBuffer buf) throws TException {
+    if (buf == null) {
+      return;
+    }
     protocol.writeFieldBegin(new TField(name, TType.STRING, id));
     protocol.writeBinary(buf);
     protocol.writeFieldEnd();
@@ -142,6 +145,9 @@ public class TProtocolWriter {
   }
 
   public void writeBinary(ByteBuffer buf) throws TException {
+    if (buf == null) {
+      return;
+    }
     protocol.writeBinary(buf);
   }
 
@@ -169,8 +175,11 @@ public class TProtocolWriter {
     protocol.writeDouble(dub);
   }
 
-  public void writeString(String str) throws TException {
-    protocol.writeString(str);
+  public void writeString(String string) throws TException {
+    if (string == null) {
+      return;
+    }
+    protocol.writeString(string);
   }
 
   public <T> void writeSet(ThriftCodec<T> elementCodec, Set<T> set) throws Exception {
