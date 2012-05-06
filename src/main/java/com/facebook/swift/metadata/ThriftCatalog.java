@@ -13,6 +13,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Method;
@@ -96,16 +97,26 @@ public class ThriftCatalog {
         fromThriftCoercions.put(thriftType.coerceTo(method.getGenericReturnType()), method);
       }
     }
+
+    // assure coercions are symmetric
+    Set<ThriftType> difference = Sets.symmetricDifference(
+        toThriftCoercions.keySet(),
+        fromThriftCoercions.keySet()
+    );
+    Preconditions.checkArgument(difference.isEmpty(),
+        "Coercion class %s does not have matched @ToThrift and @FromThrift methods for types %s",
+        coercionsClass.getName(),
+        difference);
+
+    // add the coercions
     Map<Type, TypeCoercion> coercions = new HashMap<>();
     for (Map.Entry<ThriftType, Method> entry : toThriftCoercions.entrySet()) {
       ThriftType type = entry.getKey();
       Method toThriftMethod = entry.getValue();
       Method fromThriftMethod = fromThriftCoercions.get(type);
+      Preconditions.checkState(fromThriftCoercions != null);
       TypeCoercion coercion = new TypeCoercion(type, toThriftMethod, fromThriftMethod);
       coercions.put(type.getJavaType(), coercion);
-//
-//  TODO verify
-//
     }
     this.coercions.putAll(coercions);
   }
