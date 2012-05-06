@@ -7,6 +7,8 @@ import com.facebook.swift.internal.TProtocolReader;
 import com.facebook.swift.internal.TProtocolWriter;
 import com.facebook.swift.metadata.ThriftType;
 
+import static com.facebook.swift.coercion.DefaultJavaCoercions.byteBufferToString;
+
 public class BonkFieldThriftCodec implements ThriftCodec<BonkField> {
 
   private final ThriftType type;
@@ -29,7 +31,7 @@ public class BonkFieldThriftCodec implements ThriftCodec<BonkField> {
     while (protocol.nextField()) {
       switch (protocol.getFieldId()) {
         case 1:
-          message = protocol.readStringField();
+          message = byteBufferToString(protocol.readBinaryField());
           break;
         case 2:
           type = protocol.readI32Field();
@@ -41,7 +43,9 @@ public class BonkFieldThriftCodec implements ThriftCodec<BonkField> {
     protocol.readStructEnd();
 
     BonkField bonkField = new BonkField();
-    bonkField.message = message;
+    if (message != null) {
+      bonkField.message = message;
+    }
     bonkField.type = type;
 
     return bonkField;
@@ -49,7 +53,12 @@ public class BonkFieldThriftCodec implements ThriftCodec<BonkField> {
 
   public void write(BonkField value, TProtocolWriter protocol) throws Exception {
     protocol.writeStructBegin("bonk");
-    protocol.writeStringField("message", (short) 1, value.message);
+
+    String message = value.message;
+    if (message != null) {
+      protocol.writeStringField("message", (short) 1, message);
+    }
+
     protocol.writeI32Field("type", (short) 2, value.type);
     protocol.writeStructEnd();
   }

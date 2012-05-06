@@ -3,6 +3,8 @@
  */
 package com.facebook.swift.metadata;
 
+import java.lang.reflect.Type;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -10,12 +12,15 @@ public class ThriftParameterInjection implements ThriftInjection {
   private final short id;
   private final String name;
   private final int parameterIndex;
+  private final Type javaType;
 
   public ThriftParameterInjection(
       short id,
       String name,
-      int parameterIndex
+      int parameterIndex,
+      Type javaType
   ) {
+    this.javaType = javaType;
     checkArgument(id >= 0, "fieldId is negative");
     checkNotNull(name, "name is null");
     checkArgument(parameterIndex >= 0, "parameterIndex is negative");
@@ -39,6 +44,10 @@ public class ThriftParameterInjection implements ThriftInjection {
     return parameterIndex;
   }
 
+  public Type getJavaType() {
+    return javaType;
+  }
+
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder();
@@ -46,6 +55,7 @@ public class ThriftParameterInjection implements ThriftInjection {
     sb.append("{fieldId=").append(id);
     sb.append(", name=").append(name);
     sb.append(", index=").append(parameterIndex);
+    sb.append(", javaType=").append(javaType);
     sb.append('}');
     return sb.toString();
   }

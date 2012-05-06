@@ -96,8 +96,10 @@ public class ReflectionThriftCodec<T> implements ThriftCodec<T> {
       Object fieldValue = getFieldValue(instance, fieldMetadata);
 
       // write the field
-      ThriftCodec<Object> codec = (ThriftCodec<Object>) fields.get(fieldMetadata.getId());
-      protocol.writeField(fieldMetadata.getName(), fieldMetadata.getId(), codec, fieldValue);
+      if (fieldValue != null) {
+        ThriftCodec<Object> codec = (ThriftCodec<Object>) fields.get(fieldMetadata.getId());
+        protocol.writeField(fieldMetadata.getName(), fieldMetadata.getId(), codec, fieldValue);
+      }
     }
     protocol.writeStructEnd();
   }
@@ -140,19 +142,25 @@ public class ReflectionThriftCodec<T> implements ThriftCodec<T> {
 
     // inject methods
     for (ThriftMethodInjection methodInjection : metadata.getMethodInjections()) {
+      boolean shouldInvoke = false;
       Object[] parametersValues = new Object[methodInjection.getParameters().size()];
       for (ThriftParameterInjection parameter : methodInjection.getParameters()) {
         Object value = data.get(parameter.getId());
-        parametersValues[parameter.getParameterIndex()] = value;
+        if (value != null) {
+          parametersValues[parameter.getParameterIndex()] = value;
+          shouldInvoke = true;
+        }
       }
 
-      try {
-        methodInjection.getMethod().invoke(instance, parametersValues);
-      } catch (InvocationTargetException e) {
-        if (e.getTargetException() != null) {
-          Throwables.propagateIfInstanceOf(e.getTargetException(), Exception.class);
+      if (shouldInvoke) {
+        try {
+          methodInjection.getMethod().invoke(instance, parametersValues);
+        } catch (InvocationTargetException e) {
+          if (e.getTargetException() != null) {
+            Throwables.propagateIfInstanceOf(e.getTargetException(), Exception.class);
+          }
+          throw e;
         }
-        throw e;
       }
     }
 

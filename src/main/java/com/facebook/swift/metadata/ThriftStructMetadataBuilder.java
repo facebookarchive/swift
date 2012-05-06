@@ -318,7 +318,8 @@ public class ThriftStructMetadataBuilder<T> {
                     new ThriftParameterInjection(
                         parameterInjection.getId(),
                         parameterInjection.getName(),
-                        parameterInjection.getParameterIndex()
+                        parameterInjection.getParameterIndex(),
+                        fieldMetadata.getJavaType()
                     )
                 );
               } else if (fieldMetadata instanceof FieldExtractor) {
@@ -390,7 +391,8 @@ public class ThriftStructMetadataBuilder<T> {
         return new ThriftParameterInjection(
             input.getId(),
             input.getName(),
-            input.getParameterIndex()
+            input.getParameterIndex(),
+            input.getJavaType()
         );
       }
     }

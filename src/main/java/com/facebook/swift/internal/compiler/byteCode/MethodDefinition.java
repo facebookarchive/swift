@@ -162,8 +162,18 @@ public class MethodDefinition {
     return this;
   }
 
-  public MethodDefinition ifNotGoto(String name) {
+  public MethodDefinition ifZeroGoto(String name) {
     instructionList.add(new JumpInsnNode(IFEQ, getLabel(name)));
+    return this;
+  }
+
+  public MethodDefinition ifNullGoto(String name) {
+    instructionList.add(new JumpInsnNode(IFNULL, getLabel(name)));
+    return this;
+  }
+
+  public MethodDefinition ifNotNullGoto(String name) {
+    instructionList.add(new JumpInsnNode(IFNONNULL, getLabel(name)));
     return this;
   }
 

@@ -11,6 +11,7 @@ import com.facebook.swift.internal.TProtocolWriter;
 import com.facebook.swift.metadata.ThriftCatalog;
 import com.facebook.swift.metadata.ThriftStructMetadata;
 import com.facebook.swift.metadata.ThriftType;
+import com.google.common.base.Charsets;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -20,12 +21,17 @@ import org.apache.thrift.transport.TMemoryBuffer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.google.common.base.Charsets.UTF_8;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 public abstract class AbstractThriftCodecManagerTest {
   private ThriftCodecManager codecManager;
@@ -136,13 +142,43 @@ public abstract class AbstractThriftCodecManagerTest {
     testRoundTripSerialize(coercion);
   }
 
-  private <T> void testRoundTripSerialize(T value) throws Exception {
-    ThriftCodec<T> codec = (ThriftCodec<T>) codecManager.getCodec(value.getClass());
+  @Test
+  public void testIsSetBean() throws Exception {
+    IsSetBean full = IsSetBean.createFull();
+    assertAllFieldsSet(full, false);
+    // manually set full bean
+    full.field = ByteBuffer.wrap("full".getBytes(UTF_8));
+    full = testRoundTripSerialize(full);
+    assertAllFieldsSet(full, true);
 
-    testRoundTripSerialize(codec, value);
+    IsSetBean empty = IsSetBean.createEmpty();
+    assertAllFieldsSet(empty, false);
+    empty = testRoundTripSerialize(empty);
+    assertAllFieldsSet(empty, false);
   }
 
-  private <T> void testRoundTripSerialize(ThriftCodec<T> codec, T structInstance) throws Exception {
+  private void assertAllFieldsSet(IsSetBean isSetBean, boolean expected) {
+    assertEquals(isSetBean.isBooleanSet(), expected);
+    assertEquals(isSetBean.isByteSet(), expected);
+    assertEquals(isSetBean.isShortSet(), expected);
+    assertEquals(isSetBean.isIntegerSet(), expected);
+    assertEquals(isSetBean.isLongSet(), expected);
+    assertEquals(isSetBean.isDoubleSet(), expected);
+    assertEquals(isSetBean.isStringSet(), expected);
+    assertEquals(isSetBean.isStructSet(), expected);
+    assertEquals(isSetBean.isSetSet(), expected);
+    assertEquals(isSetBean.isListSet(), expected);
+    assertEquals(isSetBean.isMapSet(), expected);
+    assertEquals(!ByteBuffer.wrap("empty".getBytes(UTF_8)).equals(isSetBean.field), expected);
+  }
+
+  private <T> T testRoundTripSerialize(T value) throws Exception {
+    ThriftCodec<T> codec = (ThriftCodec<T>) codecManager.getCodec(value.getClass());
+
+    return testRoundTripSerialize(codec, value);
+  }
+
+  private <T> T testRoundTripSerialize(ThriftCodec<T> codec, T structInstance) throws Exception {
     Class<T> structClass = (Class<T>) structInstance.getClass();
 
     ThriftCatalog catalog = codecManager.getCatalog();
@@ -157,6 +193,8 @@ public abstract class AbstractThriftCodecManagerTest {
     T copy = codec.read(new TProtocolReader(protocol));
     assertNotNull(copy);
     assertEquals(copy, structInstance);
+
+    return copy;
   }
 
   private OneOfEverything createOneOfEverything() {

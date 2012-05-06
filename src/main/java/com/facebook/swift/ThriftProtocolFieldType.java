@@ -49,6 +49,10 @@ public enum ThriftProtocolFieldType {
     return defaultJavaType;
   }
 
+  public boolean isJavaPrimitive() {
+    return defaultJavaType != null && defaultJavaType.isPrimitive();
+  }
+
   public boolean isValidFieldType() {
     return validFieldType;
   }

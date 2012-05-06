@@ -125,7 +125,8 @@ public class ThriftCatalog {
     if (coercion != null) {
       return coercion.getThriftType();
     }
-    throw new RuntimeException("Unsupported java type: " + javaType);
+    throw new RuntimeException("Type is not annotated with @ThriftStruct or an automatically " +
+        "supported type: " + javaType);
   }
 
   public ThriftType getThriftType(Type javaType, ThriftProtocolFieldType protocolType) {
