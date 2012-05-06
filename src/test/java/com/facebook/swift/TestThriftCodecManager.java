@@ -5,6 +5,7 @@ package com.facebook.swift;
 
 import com.facebook.swift.coercion.DefaultJavaCoercions;
 import com.facebook.swift.internal.ThriftCodecFactory;
+import com.facebook.swift.metadata.ThriftEnumMetadata;
 import com.facebook.swift.metadata.ThriftStructMetadata;
 import com.facebook.swift.metadata.ThriftType;
 import com.google.common.collect.ImmutableList;
@@ -64,6 +65,21 @@ public class TestThriftCodecManager {
     testRoundTripSerialize(I64, (long) 10000000);
     testRoundTripSerialize(DOUBLE, 42.42d);
     testRoundTripSerialize(STRING, toByteBuffer("some string"));
+  }
+
+  @Test
+  public void testEnum() throws Exception {
+    ThriftEnumMetadata<Fruit> fruitEnumMetadata = new ThriftEnumMetadata<>(Fruit.class);
+    ThriftEnumMetadata<Letter> letterEnumMetadata = new ThriftEnumMetadata<>(Letter.class);
+    testRoundTripSerialize(Fruit.CHERRY);
+    testRoundTripSerialize(Letter.C);
+    testRoundTripSerialize(enumType(fruitEnumMetadata), Fruit.CHERRY);
+    testRoundTripSerialize(enumType(letterEnumMetadata), Letter.C);
+    testRoundTripSerialize(list(enumType(fruitEnumMetadata)), ImmutableList.copyOf(Fruit.values()));
+    testRoundTripSerialize(
+        list(enumType(letterEnumMetadata)),
+        ImmutableList.copyOf(Letter.values())
+    );
   }
 
   @Test

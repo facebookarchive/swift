@@ -339,6 +339,20 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
                 );
             break;
           }
+          case ENUM: {
+            FieldDefinition fieldDefinition = codecFields.get(field.getId());
+
+            read.loadVariable("protocol")
+                .loadThis().getField(codecType, fieldDefinition)
+                .invokeVirtual(
+                    type(TProtocolReader.class),
+                    "readEnumField",
+                    type(Enum.class),
+                    type(ThriftCodec.class)
+                )
+                .checkCast(toParameterizedType(field.getType()));
+            break;
+          }
           default:
             throw new IllegalArgumentException(
                 "Unsupported field type " + field.getType()
@@ -677,6 +691,27 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
             );
             break;
           }
+          case ENUM: {
+            FieldDefinition codecField = codecFields.get(field.getId());
+
+            // push ThriftTypeCodec for this field
+            write.loadThis().getField(codecType, codecField);
+
+            // swap the codec and value on the stack
+            write.swap();
+
+            // protocol.writeEnumField("aEnum", 42, this.aEnumCodec, aEnum);
+            write.invokeVirtual(
+                type(TProtocolWriter.class),
+                "writeEnumField",
+                type(void.class),
+                type(String.class),
+                type(short.class),
+                type(ThriftCodec.class),
+                type(Enum.class)
+            );
+            break;
+          }
           default:
             throw new IllegalArgumentException(
                 "Unsupported field type " + field.getType()
@@ -774,7 +809,8 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
 
   private boolean needsCodec(ThriftFieldMetadata fieldMetadata) {
     ThriftProtocolFieldType protocolType = fieldMetadata.getType().getProtocolType();
-    return protocolType == STRUCT ||
+    return protocolType == ENUM ||
+        protocolType == STRUCT ||
         protocolType == SET ||
         protocolType == LIST ||
         protocolType == MAP;
@@ -794,6 +830,7 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
       case I64:
       case STRING:
       case STRUCT:
+      case ENUM:
         return type((Class<?>)type.getJavaType());
       case MAP:
         return type(
@@ -805,8 +842,6 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
         return type(Set.class, toParameterizedType(type.getValueType()));
       case LIST:
         return type(List.class, toParameterizedType(type.getValueType()));
-      case ENUM:
-        throw new UnsupportedOperationException("Enums are currently not supported");
       default:
         throw new IllegalArgumentException("Unsupported thrift field type " + type);
     }

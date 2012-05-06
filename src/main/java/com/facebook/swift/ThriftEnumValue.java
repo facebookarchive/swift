@@ -14,13 +14,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Documented
 @Retention(RUNTIME)
-@Target({METHOD, FIELD, PARAMETER})
-public @interface ThriftField {
-  short id() default Short.MIN_VALUE;
-
-  String name() default "";
-
-  boolean required() default false;
-
-  ThriftProtocolFieldType protocolType() default ThriftProtocolFieldType.UNKNOWN;
+@Target({METHOD})
+public @interface ThriftEnumValue {
 }

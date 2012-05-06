@@ -144,6 +144,21 @@ public class TProtocolWriter {
     protocol.writeFieldEnd();
   }
 
+  public <T extends Enum<T>> void writeEnumField(String name,
+      short id,
+      ThriftCodec<T> codec,
+      T enumValue)
+      throws Exception {
+
+    if (enumValue == null) {
+      return;
+    }
+
+    protocol.writeFieldBegin(new TField(name, TType.I32, id));
+    codec.write(enumValue, this);
+    protocol.writeFieldEnd();
+  }
+
   public void writeBinary(ByteBuffer buf) throws TException {
     if (buf == null) {
       return;
@@ -207,10 +222,7 @@ public class TProtocolWriter {
     }
 
     protocol.writeListBegin(
-        new TList(
-            elementCodec.getType().getProtocolType().getType(),
-            list.size()
-        )
+        new TList(elementCodec.getType().getProtocolType().getType(), list.size())
     );
 
     for (T element : list) {

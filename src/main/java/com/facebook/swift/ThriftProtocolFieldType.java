@@ -13,35 +13,30 @@ import java.util.Set;
 import static com.facebook.swift.metadata.TypeParameterUtils.getRawType;
 
 public enum ThriftProtocolFieldType {
-  STOP(false),
-  VOID(false),
-  BOOL(boolean.class),
-  BYTE(byte.class),
-  DOUBLE(double.class),
-  $_5_IS_SKIPPED(false),
-  I16(short.class),
-  $_7_IS_SKIPPED(false),
-  I32(int.class),
-  $_9_IS_SKIPPED(false),
-  I64(long.class),
-  STRING(ByteBuffer.class),
-  STRUCT(null),
-  MAP(null),
-  SET(null),
-  LIST(null),
-  ENUM(null);
+  UNKNOWN((byte) 0),
+  BOOL((byte) 2, boolean.class),
+  BYTE((byte) 3, byte.class),
+  DOUBLE((byte) 4, double.class),
+  I16((byte) 6, short.class),
+  I32((byte) 8, int.class),
+  I64((byte) 10, long.class),
+  STRING((byte) 11, ByteBuffer.class),
+  STRUCT((byte) 12, null),
+  MAP((byte) 13, null),
+  SET((byte) 14, null),
+  LIST((byte) 15, null),
+  ENUM((byte) 8, null); // same as I32 type
 
-
-  private final boolean validFieldType;
+  private final byte type;
   private final Class<?> defaultJavaType;
 
-  private ThriftProtocolFieldType(Class<?> types) {
-    this.validFieldType = true;
-    defaultJavaType = types;
+  private ThriftProtocolFieldType(byte type, Class<?> defaultJavaType) {
+    this.type = type;
+    this.defaultJavaType = defaultJavaType;
   }
 
-  private ThriftProtocolFieldType(boolean validFieldType) {
-    this.validFieldType = validFieldType;
+  private ThriftProtocolFieldType(byte type) {
+    this.type = type;
     defaultJavaType = null;
   }
 
@@ -53,12 +48,8 @@ public enum ThriftProtocolFieldType {
     return defaultJavaType != null && defaultJavaType.isPrimitive();
   }
 
-  public boolean isValidFieldType() {
-    return validFieldType;
-  }
-
   public byte getType() {
-    return (byte) ordinal();
+    return type;
   }
 
   private static Map<Class<?>, ThriftProtocolFieldType> typesByClass;
@@ -75,7 +66,8 @@ public enum ThriftProtocolFieldType {
 
   public static boolean isSupportedJavaType(Type genericType) {
     Class<?> rawType = getRawType(genericType);
-    return Map.class.isAssignableFrom(rawType) ||
+    return Enum.class.isAssignableFrom(rawType) ||
+        Map.class.isAssignableFrom(rawType) ||
         Iterable.class.isAssignableFrom(rawType) ||
         rawType.isAnnotationPresent(ThriftStruct.class) ||
         typesByClass.containsKey(rawType);
@@ -87,6 +79,9 @@ public enum ThriftProtocolFieldType {
     ThriftProtocolFieldType protocolType = typesByClass.get(rawType);
     if (protocolType != null) {
       return protocolType;
+    }
+    if (Enum.class.isAssignableFrom(rawType)) {
+      return ENUM;
     }
     if (Map.class.isAssignableFrom(rawType)) {
       return MAP;

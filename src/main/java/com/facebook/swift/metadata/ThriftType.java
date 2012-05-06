@@ -13,6 +13,7 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Set;
 
+import static com.facebook.swift.ThriftProtocolFieldType.ENUM;
 import static com.facebook.swift.ThriftProtocolFieldType.STRUCT;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -61,13 +62,17 @@ public class ThriftType {
     return new ThriftType(ThriftProtocolFieldType.LIST, javaType, null, valueType);
   }
 
-  // public static final ThriftType ENUM = new ThriftFieldType(ThriftProtocolFieldType.ENUM);
+  public static ThriftType enumType(ThriftEnumMetadata<?> enumMetadata) {
+    checkNotNull(enumMetadata, "enumMetadata is null");
+    return new ThriftType(enumMetadata);
+  }
 
   private final ThriftProtocolFieldType protocolType;
   private final Type javaType;
   private final ThriftType keyType;
   private final ThriftType valueType;
   private final ThriftStructMetadata<?> structMetadata;
+  private final ThriftEnumMetadata<?> enumMetadata;
   private final ThriftType uncoercedType;
 
   private ThriftType(ThriftProtocolFieldType protocolType, Type javaType) {
@@ -79,6 +84,7 @@ public class ThriftType {
     keyType = null;
     valueType = null;
     structMetadata = null;
+    enumMetadata = null;
     uncoercedType = null;
   }
 
@@ -97,6 +103,7 @@ public class ThriftType {
     this.keyType = keyType;
     this.valueType = valueType;
     this.structMetadata = null;
+    this.enumMetadata = null;
     this.uncoercedType = null;
   }
 
@@ -108,6 +115,19 @@ public class ThriftType {
     keyType = null;
     valueType = null;
     this.structMetadata = structMetadata;
+    this.enumMetadata = null;
+    this.uncoercedType = null;
+  }
+
+  private ThriftType(ThriftEnumMetadata<?> enumMetadata) {
+    Preconditions.checkNotNull(enumMetadata, "enumMetadata is null");
+
+    this.protocolType = ENUM;
+    this.javaType = enumMetadata.getEnumClass();
+    keyType = null;
+    valueType = null;
+    this.structMetadata = null;
+    this.enumMetadata = enumMetadata;
     this.uncoercedType = null;
   }
 
@@ -120,6 +140,7 @@ public class ThriftType {
     keyType = null;
     valueType = null;
     structMetadata = null;
+    enumMetadata = null;
   }
 
   public Type getJavaType() {
@@ -143,6 +164,11 @@ public class ThriftType {
   public ThriftStructMetadata<?> getStructMetadata() {
     checkState(structMetadata != null, "%s does not have struct metadata", protocolType);
     return structMetadata;
+  }
+
+  public ThriftEnumMetadata<?> getEnumMetadata() {
+    checkState(enumMetadata != null, "%s does not have enum metadata", protocolType);
+    return enumMetadata;
   }
 
   public boolean isCoerced() {

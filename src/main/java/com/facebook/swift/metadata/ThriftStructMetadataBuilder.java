@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import static com.facebook.swift.ThriftProtocolFieldType.STOP;
+import static com.facebook.swift.ThriftProtocolFieldType.UNKNOWN;
 import static com.facebook.swift.ThriftProtocolFieldType.isSupportedJavaType;
 import static com.facebook.swift.metadata.ReflectionHelper.findAnnotatedMethods;
 import static com.facebook.swift.metadata.ReflectionHelper.getAllDeclaredFields;
@@ -596,7 +596,7 @@ public class ThriftStructMetadataBuilder<T> {
                 method.getName()
             );
           }
-          if (annotation.protocolType() != STOP) {
+          if (annotation.protocolType() != UNKNOWN) {
             problems.addError(
                 "A method with annotated parameters can not have a field type specified: %s.%s ",
                 clazz.getName(),
@@ -732,7 +732,7 @@ public class ThriftStructMetadataBuilder<T> {
       if (!annotation.name().isEmpty()) {
         name = annotation.name();
       }
-      if (annotation.protocolType() != STOP) {
+      if (annotation.protocolType() != UNKNOWN) {
         protocolType = annotation.protocolType();
       }
     }

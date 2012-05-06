@@ -25,6 +25,10 @@ public class OneOfEverything {
   public String aString;
   @ThriftField(id = 8)
   public BonkField aStruct;
+  @ThriftField(id = 9)
+  public Fruit aEnum;
+  @ThriftField(id = 10)
+  public Letter aCustomEnum;
 
   @ThriftField(id = 11)
   public Set<Boolean> aBooleanSet;
@@ -42,6 +46,10 @@ public class OneOfEverything {
   public Set<String> aStringSet;
   @ThriftField(id = 18)
   public Set<BonkField> aStructSet;
+  @ThriftField(id = 19)
+  public Set<Fruit> aEnumSet;
+  @ThriftField(id = 20)
+  public Set<Letter> aCustomEnumSet;
 
   @ThriftField(id = 21)
   public List<Boolean> aBooleanList;
@@ -59,6 +67,10 @@ public class OneOfEverything {
   public List<String> aStringList;
   @ThriftField(id = 28)
   public List<BonkField> aStructList;
+  @ThriftField(id = 29)
+  public List<Fruit> aEnumList;
+  @ThriftField(id = 30)
+  public List<Letter> aCustomEnumList;
 
   @ThriftField(id = 31)
   public Map<String, Boolean> aBooleanValueMap;
@@ -76,6 +88,10 @@ public class OneOfEverything {
   public Map<String, String> aStringValueMap;
   @ThriftField(id = 38)
   public Map<String, BonkField> aStructValueMap;
+  @ThriftField(id = 39)
+  public Map<String, Fruit> aEnumValueMap;
+  @ThriftField(id = 40)
+  public Map<String, Letter> aCustomEnumValueMap;
 
   @ThriftField(id = 41)
   public Map<Boolean, String> aBooleanKeyMap;
@@ -93,6 +109,10 @@ public class OneOfEverything {
   public Map<String, String> aStringKeyMap;
   @ThriftField(id = 48)
   public Map<BonkField, String> aStructKeyMap;
+  @ThriftField(id = 49)
+  public Map<Fruit, String> aEnumKeyMap;
+  @ThriftField(id = 50)
+  public Map<Letter, String> aCustomEnumKeyMap;
 
   @ThriftField(id = 100)
   public Set<List<Map<String, BonkField>>> aSetOfListsOfMaps;
@@ -152,6 +172,21 @@ public class OneOfEverything {
     if (aByteValueMap != null ? !aByteValueMap.equals(that.aByteValueMap) : that.aByteValueMap != null) {
       return false;
     }
+    if (aCustomEnum != that.aCustomEnum) {
+      return false;
+    }
+    if (aCustomEnumKeyMap != null ? !aCustomEnumKeyMap.equals(that.aCustomEnumKeyMap) : that.aCustomEnumKeyMap != null) {
+      return false;
+    }
+    if (aCustomEnumList != null ? !aCustomEnumList.equals(that.aCustomEnumList) : that.aCustomEnumList != null) {
+      return false;
+    }
+    if (aCustomEnumSet != null ? !aCustomEnumSet.equals(that.aCustomEnumSet) : that.aCustomEnumSet != null) {
+      return false;
+    }
+    if (aCustomEnumValueMap != null ? !aCustomEnumValueMap.equals(that.aCustomEnumValueMap) : that.aCustomEnumValueMap != null) {
+      return false;
+    }
     if (aDoubleKeyMap != null ? !aDoubleKeyMap.equals(that.aDoubleKeyMap) : that.aDoubleKeyMap != null) {
       return false;
     }
@@ -162,6 +197,21 @@ public class OneOfEverything {
       return false;
     }
     if (aDoubleValueMap != null ? !aDoubleValueMap.equals(that.aDoubleValueMap) : that.aDoubleValueMap != null) {
+      return false;
+    }
+    if (aEnum != that.aEnum) {
+      return false;
+    }
+    if (aEnumKeyMap != null ? !aEnumKeyMap.equals(that.aEnumKeyMap) : that.aEnumKeyMap != null) {
+      return false;
+    }
+    if (aEnumList != null ? !aEnumList.equals(that.aEnumList) : that.aEnumList != null) {
+      return false;
+    }
+    if (aEnumSet != null ? !aEnumSet.equals(that.aEnumSet) : that.aEnumSet != null) {
+      return false;
+    }
+    if (aEnumValueMap != null ? !aEnumValueMap.equals(that.aEnumValueMap) : that.aEnumValueMap != null) {
       return false;
     }
     if (aIntegerKeyMap != null ? !aIntegerKeyMap.equals(that.aIntegerKeyMap) : that.aIntegerKeyMap != null) {
@@ -253,6 +303,8 @@ public class OneOfEverything {
     result = 31 * result + (int) (temp ^ (temp >>> 32));
     result = 31 * result + (aString != null ? aString.hashCode() : 0);
     result = 31 * result + (aStruct != null ? aStruct.hashCode() : 0);
+    result = 31 * result + (aEnum != null ? aEnum.hashCode() : 0);
+    result = 31 * result + (aCustomEnum != null ? aCustomEnum.hashCode() : 0);
     result = 31 * result + (aBooleanSet != null ? aBooleanSet.hashCode() : 0);
     result = 31 * result + (aByteSet != null ? aByteSet.hashCode() : 0);
     result = 31 * result + (aShortSet != null ? aShortSet.hashCode() : 0);
@@ -261,6 +313,8 @@ public class OneOfEverything {
     result = 31 * result + (aDoubleSet != null ? aDoubleSet.hashCode() : 0);
     result = 31 * result + (aStringSet != null ? aStringSet.hashCode() : 0);
     result = 31 * result + (aStructSet != null ? aStructSet.hashCode() : 0);
+    result = 31 * result + (aEnumSet != null ? aEnumSet.hashCode() : 0);
+    result = 31 * result + (aCustomEnumSet != null ? aCustomEnumSet.hashCode() : 0);
     result = 31 * result + (aBooleanList != null ? aBooleanList.hashCode() : 0);
     result = 31 * result + (aByteList != null ? aByteList.hashCode() : 0);
     result = 31 * result + (aShortList != null ? aShortList.hashCode() : 0);
@@ -269,6 +323,8 @@ public class OneOfEverything {
     result = 31 * result + (aDoubleList != null ? aDoubleList.hashCode() : 0);
     result = 31 * result + (aStringList != null ? aStringList.hashCode() : 0);
     result = 31 * result + (aStructList != null ? aStructList.hashCode() : 0);
+    result = 31 * result + (aEnumList != null ? aEnumList.hashCode() : 0);
+    result = 31 * result + (aCustomEnumList != null ? aCustomEnumList.hashCode() : 0);
     result = 31 * result + (aBooleanValueMap != null ? aBooleanValueMap.hashCode() : 0);
     result = 31 * result + (aByteValueMap != null ? aByteValueMap.hashCode() : 0);
     result = 31 * result + (aShortValueMap != null ? aShortValueMap.hashCode() : 0);
@@ -277,6 +333,8 @@ public class OneOfEverything {
     result = 31 * result + (aDoubleValueMap != null ? aDoubleValueMap.hashCode() : 0);
     result = 31 * result + (aStringValueMap != null ? aStringValueMap.hashCode() : 0);
     result = 31 * result + (aStructValueMap != null ? aStructValueMap.hashCode() : 0);
+    result = 31 * result + (aEnumValueMap != null ? aEnumValueMap.hashCode() : 0);
+    result = 31 * result + (aCustomEnumValueMap != null ? aCustomEnumValueMap.hashCode() : 0);
     result = 31 * result + (aBooleanKeyMap != null ? aBooleanKeyMap.hashCode() : 0);
     result = 31 * result + (aByteKeyMap != null ? aByteKeyMap.hashCode() : 0);
     result = 31 * result + (aShortKeyMap != null ? aShortKeyMap.hashCode() : 0);
@@ -285,6 +343,8 @@ public class OneOfEverything {
     result = 31 * result + (aDoubleKeyMap != null ? aDoubleKeyMap.hashCode() : 0);
     result = 31 * result + (aStringKeyMap != null ? aStringKeyMap.hashCode() : 0);
     result = 31 * result + (aStructKeyMap != null ? aStructKeyMap.hashCode() : 0);
+    result = 31 * result + (aEnumKeyMap != null ? aEnumKeyMap.hashCode() : 0);
+    result = 31 * result + (aCustomEnumKeyMap != null ? aCustomEnumKeyMap.hashCode() : 0);
     result = 31 * result + (aSetOfListsOfMaps != null ? aSetOfListsOfMaps.hashCode() : 0);
     result = 31 * result + (aMapOfListToSet != null ? aMapOfListToSet.hashCode() : 0);
     return result;
@@ -302,6 +362,8 @@ public class OneOfEverything {
     sb.append(", aDouble=").append(aDouble);
     sb.append(", aString='").append(aString).append('\'');
     sb.append(", aStruct=").append(aStruct);
+    sb.append(", aEnum=").append(aEnum);
+    sb.append(", aCustomEnum=").append(aCustomEnum);
     sb.append(", aBooleanSet=").append(aBooleanSet);
     sb.append(", aByteSet=").append(aByteSet);
     sb.append(", aShortSet=").append(aShortSet);
@@ -310,6 +372,8 @@ public class OneOfEverything {
     sb.append(", aDoubleSet=").append(aDoubleSet);
     sb.append(", aStringSet=").append(aStringSet);
     sb.append(", aStructSet=").append(aStructSet);
+    sb.append(", aEnumSet=").append(aEnumSet);
+    sb.append(", aCustomEnumSet=").append(aCustomEnumSet);
     sb.append(", aBooleanList=").append(aBooleanList);
     sb.append(", aByteList=").append(aByteList);
     sb.append(", aShortList=").append(aShortList);
@@ -318,6 +382,8 @@ public class OneOfEverything {
     sb.append(", aDoubleList=").append(aDoubleList);
     sb.append(", aStringList=").append(aStringList);
     sb.append(", aStructList=").append(aStructList);
+    sb.append(", aEnumList=").append(aEnumList);
+    sb.append(", aCustomEnumList=").append(aCustomEnumList);
     sb.append(", aBooleanValueMap=").append(aBooleanValueMap);
     sb.append(", aByteValueMap=").append(aByteValueMap);
     sb.append(", aShortValueMap=").append(aShortValueMap);
@@ -326,6 +392,8 @@ public class OneOfEverything {
     sb.append(", aDoubleValueMap=").append(aDoubleValueMap);
     sb.append(", aStringValueMap=").append(aStringValueMap);
     sb.append(", aStructValueMap=").append(aStructValueMap);
+    sb.append(", aEnumValueMap=").append(aEnumValueMap);
+    sb.append(", aCustomEnumValueMap=").append(aCustomEnumValueMap);
     sb.append(", aBooleanKeyMap=").append(aBooleanKeyMap);
     sb.append(", aByteKeyMap=").append(aByteKeyMap);
     sb.append(", aShortKeyMap=").append(aShortKeyMap);
@@ -334,6 +402,8 @@ public class OneOfEverything {
     sb.append(", aDoubleKeyMap=").append(aDoubleKeyMap);
     sb.append(", aStringKeyMap=").append(aStringKeyMap);
     sb.append(", aStructKeyMap=").append(aStructKeyMap);
+    sb.append(", aEnumKeyMap=").append(aEnumKeyMap);
+    sb.append(", aCustomEnumKeyMap=").append(aCustomEnumKeyMap);
     sb.append(", aSetOfListsOfMaps=").append(aSetOfListsOfMaps);
     sb.append(", aMapOfListToSet=").append(aMapOfListToSet);
     sb.append('}');

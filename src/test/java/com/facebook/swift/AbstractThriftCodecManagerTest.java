@@ -11,7 +11,6 @@ import com.facebook.swift.internal.TProtocolWriter;
 import com.facebook.swift.metadata.ThriftCatalog;
 import com.facebook.swift.metadata.ThriftStructMetadata;
 import com.facebook.swift.metadata.ThriftType;
-import com.google.common.base.Charsets;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -28,10 +27,7 @@ import java.util.Set;
 
 import static com.google.common.base.Charsets.UTF_8;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotEquals;
 import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
 
 public abstract class AbstractThriftCodecManagerTest {
   private ThriftCodecManager codecManager;
@@ -207,6 +203,8 @@ public abstract class AbstractThriftCodecManagerTest {
     one.aDouble = 55;
     one.aString = "message";
     one.aStruct = new BonkField("struct", 66);
+    one.aEnum = Fruit.CHERRY;
+    one.aCustomEnum = Letter.C;
 
     one.aBooleanSet = ImmutableSet.of(true, false);
     one.aByteSet = ImmutableSet.of((byte) -1, (byte) 0, (byte) 1);
@@ -216,6 +214,8 @@ public abstract class AbstractThriftCodecManagerTest {
     one.aDoubleSet = ImmutableSet.of(-42.1d, 0.0d, 42.1d);
     one.aStringSet = ImmutableSet.of("a", "string", "set");
     one.aStructSet = ImmutableSet.of(new BonkField("message", 42), new BonkField("other", 11));
+    one.aEnumSet = ImmutableSet.copyOf(Fruit.values());
+    one.aCustomEnumSet = ImmutableSet.copyOf(Letter.values());
 
     one.aBooleanList = ImmutableList.of(true, false);
     one.aByteList = ImmutableList.of((byte) -1, (byte) 0, (byte) 1);
@@ -225,6 +225,8 @@ public abstract class AbstractThriftCodecManagerTest {
     one.aDoubleList = ImmutableList.of(-42.1d, 0.0d, 42.1d);
     one.aStringList = ImmutableList.of("a", "string", "list");
     one.aStructList = ImmutableList.of(new BonkField("message", 42), new BonkField("other", 11));
+    one.aEnumList = ImmutableList.copyOf(Fruit.values());
+    one.aCustomEnumList = ImmutableList.copyOf(Letter.values());
 
     one.aBooleanValueMap = ImmutableMap.of("TRUE", true, "FALSE", false);
     one.aByteValueMap = ImmutableMap.of("-1", (byte) -1, "0", (byte) 0, "1", (byte) 1);
@@ -237,6 +239,8 @@ public abstract class AbstractThriftCodecManagerTest {
         "main", new BonkField("message", 42),
         "other", new BonkField("other", 11)
     );
+    one.aEnumValueMap = ImmutableMap.of("apple", Fruit.APPLE, "banana", Fruit.BANANA);
+    one.aCustomEnumValueMap = ImmutableMap.of("a", Letter.A, "b", Letter.B);
 
     one.aBooleanKeyMap = ImmutableMap.copyOf(HashBiMap.create(one.aBooleanValueMap).inverse());
     one.aByteKeyMap = ImmutableMap.copyOf(HashBiMap.create(one.aByteValueMap).inverse());
@@ -246,6 +250,8 @@ public abstract class AbstractThriftCodecManagerTest {
     one.aDoubleKeyMap = ImmutableMap.copyOf(HashBiMap.create(one.aDoubleValueMap).inverse());
     one.aStringKeyMap = ImmutableMap.copyOf(HashBiMap.create(one.aStringValueMap).inverse());
     one.aStructKeyMap = ImmutableMap.copyOf(HashBiMap.create(one.aStructValueMap).inverse());
+    one.aEnumKeyMap = ImmutableMap.of( Fruit.APPLE, "apple", Fruit.BANANA, "banana");
+    one.aCustomEnumKeyMap = ImmutableMap.of(Letter.A, "a", Letter.B, "b");
 
     one.aSetOfListsOfMaps = ImmutableSet.<List<Map<String, BonkField>>>of(
         ImmutableList.<Map<String, BonkField>>of(

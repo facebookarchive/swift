@@ -33,10 +33,12 @@ import static com.facebook.swift.metadata.ThriftType.I16;
 import static com.facebook.swift.metadata.ThriftType.I32;
 import static com.facebook.swift.metadata.ThriftType.I64;
 import static com.facebook.swift.metadata.ThriftType.STRING;
+import static com.facebook.swift.metadata.ThriftType.enumType;
 import static com.facebook.swift.metadata.ThriftType.list;
 import static com.facebook.swift.metadata.ThriftType.map;
 import static com.facebook.swift.metadata.ThriftType.set;
 import static com.facebook.swift.metadata.ThriftType.struct;
+import static com.facebook.swift.metadata.TypeParameterUtils.getRawType;
 import static com.facebook.swift.metadata.TypeParameterUtils.getTypeParameters;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -46,6 +48,7 @@ import static com.google.common.collect.Iterables.transform;
 public class ThriftCatalog {
   private final Problems.Monitor monitor;
   private final Map<Class<?>, ThriftStructMetadata<?>> structs = new HashMap<>();
+  private final Map<Class<?>, ThriftEnumMetadata<?>> enums = new HashMap<>();
   private final Map<Type, TypeCoercion> coercions = new HashMap<>();
 
   private final ThreadLocal<Deque<Class<?>>> stack = new ThreadLocal<Deque<Class<?>>>() {
@@ -189,13 +192,23 @@ public class ThriftCatalog {
         return list(getThriftType(types[0]));
       }
       case ENUM: {
-        // todo implement enums
-        throw new UnsupportedOperationException("enums are not implemented");
+        Class<?> enumClass = getRawType(javaType);
+        ThriftEnumMetadata<? extends Enum<?>> thriftEnumMetadata = getThriftEnumMetadata(enumClass);
+        return enumType(thriftEnumMetadata);
       }
       default: {
         throw new IllegalStateException("Write does not support fields of type " + protocolType);
       }
     }
+  }
+
+  public <T extends Enum<T>> ThriftEnumMetadata<T> getThriftEnumMetadata(Class<?> enumClass) {
+    ThriftEnumMetadata<?> enumMetadata = enums.get(enumClass);
+    if (enumMetadata == null) {
+      enumMetadata = new ThriftEnumMetadata<>((Class<T>)enumClass);
+      enums.put(enumClass, enumMetadata);
+    }
+    return (ThriftEnumMetadata<T>) enumMetadata;
   }
 
   public <T> ThriftStructMetadata<T> getThriftStructMetadata(Class<T> configClass) {

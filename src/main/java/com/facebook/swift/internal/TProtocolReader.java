@@ -181,6 +181,14 @@ public class TProtocolReader {
     return mapCodec.read(this);
   }
 
+  public <T extends Enum<T>> T readEnumField(ThriftCodec<T> enumCodec) throws Exception {
+    if (!checkReadState(TType.I32)) {
+      return null;
+    }
+    currentField = null;
+    return enumCodec.read(this);
+  }
+
   public ByteBuffer readBinary() throws TException {
     return protocol.readBinary();
   }

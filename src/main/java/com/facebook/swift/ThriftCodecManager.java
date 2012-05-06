@@ -7,6 +7,7 @@ import com.facebook.swift.codec.BooleanThriftCodec;
 import com.facebook.swift.codec.ByteBufferThriftCodec;
 import com.facebook.swift.codec.ByteThriftCodec;
 import com.facebook.swift.coercion.CoercionThriftCodec;
+import com.facebook.swift.internal.EnumThriftCodec;
 import com.facebook.swift.internal.compiler.CompilerThriftCodecFactory;
 import com.facebook.swift.codec.DoubleThriftCodec;
 import com.facebook.swift.codec.IntegerThriftCodec;
@@ -75,8 +76,7 @@ public class ThriftCodecManager {
                 return new ListThriftCodec<>(type, elementCodec);
               }
               case ENUM: {
-                // todo implement enums
-                throw new UnsupportedOperationException("enums are not implemented");
+                return new EnumThriftCodec<>(type);
               }
               default:
                 if (type.isCoerced()) {
