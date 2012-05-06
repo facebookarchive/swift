@@ -6,6 +6,7 @@ package com.facebook.swift;
 import com.facebook.swift.codec.BooleanThriftCodec;
 import com.facebook.swift.codec.ByteBufferThriftCodec;
 import com.facebook.swift.codec.ByteThriftCodec;
+import com.facebook.swift.codec.VoidThriftCodec;
 import com.facebook.swift.coercion.CoercionThriftCodec;
 import com.facebook.swift.internal.EnumThriftCodec;
 import com.facebook.swift.internal.compiler.CompilerThriftCodecFactory;
@@ -29,6 +30,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.apache.thrift.protocol.TProtocol;
 
+import java.lang.reflect.Type;
 import java.util.concurrent.ExecutionException;
 
 public class ThriftCodecManager {
@@ -101,6 +103,13 @@ public class ThriftCodecManager {
     addCodecIfPresent(new LongThriftCodec());
     addCodecIfPresent(new DoubleThriftCodec());
     addCodecIfPresent(new ByteBufferThriftCodec());
+    addCodecIfPresent(new VoidThriftCodec());
+  }
+
+  public ThriftCodec<?> getCodec(Type javaType) {
+    ThriftType thriftType = catalog.getThriftType(javaType);
+    Preconditions.checkArgument(thriftType != null, "Unsupported java type %s", javaType);
+    return getCodec(thriftType);
   }
 
   public <T> ThriftCodec<T> getCodec(Class<T> javaType) {

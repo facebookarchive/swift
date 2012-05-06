@@ -32,6 +32,10 @@ public class TProtocolReader {
     this.protocol = protocol;
   }
 
+  public TProtocol getProtocol() {
+    return protocol;
+  }
+
   public void readStructBegin() throws TException {
     protocol.readStructBegin();
     currentField = null;

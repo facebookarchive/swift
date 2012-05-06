@@ -92,6 +92,9 @@ public enum ThriftProtocolFieldType {
     if (Iterable.class.isAssignableFrom(rawType)) {
       return LIST;
     }
+    if (void.class.isAssignableFrom(rawType)) {
+      return STRUCT;
+    }
     if (rawType.isAnnotationPresent(ThriftStruct.class)) {
       return STRUCT;
     }

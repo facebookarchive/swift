@@ -33,6 +33,7 @@ import static com.facebook.swift.metadata.ThriftType.I16;
 import static com.facebook.swift.metadata.ThriftType.I32;
 import static com.facebook.swift.metadata.ThriftType.I64;
 import static com.facebook.swift.metadata.ThriftType.STRING;
+import static com.facebook.swift.metadata.ThriftType.VOID;
 import static com.facebook.swift.metadata.ThriftType.enumType;
 import static com.facebook.swift.metadata.ThriftType.list;
 import static com.facebook.swift.metadata.ThriftType.map;
@@ -161,6 +162,9 @@ public class ThriftCatalog {
         return STRING.coerceTo(javaType);
       case STRUCT: {
         Class<?> structClass = (Class<?>) javaType;
+        if (structClass == void.class) {
+          return VOID;
+        }
         ThriftStructMetadata<?> structMetadata = getThriftStructMetadata(structClass);
         return struct(structMetadata);
       }

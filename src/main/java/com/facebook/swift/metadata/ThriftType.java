@@ -28,6 +28,8 @@ public class ThriftType {
   public static final ThriftType I64 = new ThriftType(ThriftProtocolFieldType.I64, long.class);
   public static final ThriftType STRING =
       new ThriftType(ThriftProtocolFieldType.STRING, ByteBuffer.class);
+  public static final ThriftType VOID =
+      new ThriftType(ThriftProtocolFieldType.STRUCT, void.class);
 
   public static ThriftType struct(ThriftStructMetadata<?> structMetadata) {
     return new ThriftType(structMetadata);
