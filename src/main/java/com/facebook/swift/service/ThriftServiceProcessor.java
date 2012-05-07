@@ -3,10 +3,10 @@
  */
 package com.facebook.swift.service;
 
-import com.facebook.swift.ThriftCodec;
-import com.facebook.swift.ThriftCodecManager;
-import com.facebook.swift.internal.TProtocolReader;
-import com.facebook.swift.internal.TProtocolWriter;
+import com.facebook.swift.codec.ThriftCodec;
+import com.facebook.swift.codec.ThriftCodecManager;
+import com.facebook.swift.codec.internal.TProtocolReader;
+import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.service.metadata.ThriftMethodMetadata;
 import com.facebook.swift.service.metadata.ThriftServiceMetadata;
 import com.google.common.base.Preconditions;

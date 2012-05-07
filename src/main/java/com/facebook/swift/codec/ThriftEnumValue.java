@@ -1,7 +1,7 @@
 /*
  * Copyright 2004-present Facebook. All Rights Reserved.
  */
-package com.facebook.swift.service;
+package com.facebook.swift.codec;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
@@ -11,11 +11,12 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Marks a method to be exported in a Thrift service.
+ * Marks the method of a Thrift enum that will return the value of the enum constant in Thrift.
+ * This must be a public, non-static, no-arg method that returns an int or Integer.  This method
+ * must return a constant value.
  */
 @Documented
 @Retention(RUNTIME)
 @Target(METHOD)
-public @interface ThriftMethod {
-  String value() default "";
+public @interface ThriftEnumValue {
 }

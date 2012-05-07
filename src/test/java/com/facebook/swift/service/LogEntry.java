@@ -3,9 +3,9 @@
  */
 package com.facebook.swift.service;
 
-import com.facebook.swift.ThriftConstructor;
-import com.facebook.swift.ThriftField;
-import com.facebook.swift.ThriftStruct;
+import com.facebook.swift.codec.ThriftConstructor;
+import com.facebook.swift.codec.ThriftField;
+import com.facebook.swift.codec.ThriftStruct;
 
 @ThriftStruct
 public class LogEntry {

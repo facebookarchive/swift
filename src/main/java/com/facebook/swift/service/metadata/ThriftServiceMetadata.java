@@ -3,7 +3,7 @@
  */
 package com.facebook.swift.service.metadata;
 
-import com.facebook.swift.metadata.ThriftCatalog;
+import com.facebook.swift.codec.metadata.ThriftCatalog;
 import com.facebook.swift.service.ThriftMethod;
 import com.facebook.swift.service.ThriftService;
 import com.google.common.base.Preconditions;

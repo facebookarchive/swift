@@ -3,8 +3,8 @@
  */
 package com.facebook.swift.service.metadata;
 
-import com.facebook.swift.metadata.ThriftCatalog;
-import com.facebook.swift.metadata.ThriftType;
+import com.facebook.swift.codec.metadata.ThriftCatalog;
+import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
