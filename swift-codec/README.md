@@ -1,6 +1,6 @@
-# Overview
+# Swift Codec
 
-Swift is an easy to use, annotation-based Java library for creating Thrift serializable types and services.
+Swift Codec is a simple library specifying how Java objects are convered to and from Thrift.  This library is simmilar to JaxRS (XML) and Jackson (JSON), but for Thirft.  Swift codec supports field, method, costructor, and builder injection.
 
 # Structs 
 
