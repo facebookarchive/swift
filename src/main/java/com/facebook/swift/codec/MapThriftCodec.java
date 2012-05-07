@@ -34,11 +34,14 @@ public class MapThriftCodec<K, V> implements ThriftCodec<Map<K, V>> {
 
   @Override
   public Map<K, V> read(TProtocolReader protocol) throws Exception {
+    Preconditions.checkNotNull(protocol, "protocol is null");
     return protocol.readMap(keyCodec, valueCodec);
   }
 
   @Override
   public void write(Map<K, V> value, TProtocolWriter protocol) throws Exception {
+    Preconditions.checkNotNull(value, "value is null");
+    Preconditions.checkNotNull(protocol, "protocol is null");
     protocol.writeMap(keyCodec, valueCodec, value);
   }
 }

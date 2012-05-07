@@ -43,7 +43,7 @@ public class CoercionBean {
     this.floatList = floatList;
   }
 
-  @ThriftField(id = 1)
+  @ThriftField(1)
   public Boolean getBooleanValue() {
     return booleanValue;
   }
@@ -53,7 +53,7 @@ public class CoercionBean {
     this.booleanValue = booleanValue;
   }
 
-  @ThriftField(id = 2)
+  @ThriftField(2)
   public Byte getByteValue() {
     return byteValue;
   }
@@ -63,7 +63,7 @@ public class CoercionBean {
     this.byteValue = byteValue;
   }
 
-  @ThriftField(id = 3)
+  @ThriftField(3)
   public Short getShortValue() {
     return shortValue;
   }
@@ -73,7 +73,7 @@ public class CoercionBean {
     this.shortValue = shortValue;
   }
 
-  @ThriftField(id = 4)
+  @ThriftField(4)
   public Integer getIntegerValue() {
     return integerValue;
   }
@@ -83,7 +83,7 @@ public class CoercionBean {
     this.integerValue = integerValue;
   }
 
-  @ThriftField(id = 5)
+  @ThriftField(5)
   public Long getLongValue() {
     return longValue;
   }
@@ -93,7 +93,7 @@ public class CoercionBean {
     this.longValue = longValue;
   }
 
-  @ThriftField(id = 6)
+  @ThriftField(6)
   public Float getFloatValue() {
     return floatValue;
   }
@@ -103,7 +103,7 @@ public class CoercionBean {
     this.floatValue = floatValue;
   }
 
-  @ThriftField(id = 7)
+  @ThriftField(7)
   public Double getDoubleValue() {
     return doubleValue;
   }
@@ -113,7 +113,7 @@ public class CoercionBean {
     this.doubleValue = doubleValue;
   }
 
-  @ThriftField(id = 8)
+  @ThriftField(8)
   public float getPrimitiveFloat() {
     return primitiveFloat;
   }
@@ -123,7 +123,7 @@ public class CoercionBean {
     this.primitiveFloat = primitiveFloat;
   }
 
-  @ThriftField(id = 9)
+  @ThriftField(9)
   public List<Float> getFloatList() {
     return floatList;
   }

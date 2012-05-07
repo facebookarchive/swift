@@ -11,6 +11,10 @@ import static java.lang.annotation.ElementType.CONSTRUCTOR;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+/**
+ * The constructor Thrift should use when creating the class.  This annotation is also applied to
+ * the factory method of a builder class.
+ */
 @Documented
 @Retention(RUNTIME)
 @Target({METHOD, CONSTRUCTOR})

@@ -5,6 +5,9 @@ package com.facebook.swift.internal.compiler;
 
 import com.facebook.swift.ThriftCodec;
 
+/**
+ * A ClassLoader that allows for loading of classes from an array of bytes.
+ */
 public class DynamicClassLoader extends ClassLoader {
   public DynamicClassLoader() {
     this(getDefaultClassLoader());

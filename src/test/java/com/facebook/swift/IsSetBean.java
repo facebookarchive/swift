@@ -70,10 +70,10 @@ public class IsSetBean {
   public Map<String, String> aMap;
   public boolean isMapSet;
 
-  @ThriftField(id = 20)
+  @ThriftField(20)
   public ByteBuffer field = ByteBuffer.wrap("empty".getBytes(UTF_8));
 
-  @ThriftField(id = 1)
+  @ThriftField(1)
   public Boolean getABoolean() {
     return aBoolean;
   }
@@ -84,7 +84,7 @@ public class IsSetBean {
     this.aBoolean = aBoolean;
   }
 
-  @ThriftField(id = 2)
+  @ThriftField(2)
   public Byte getAByte() {
     return aByte;
   }
@@ -95,7 +95,7 @@ public class IsSetBean {
     this.aByte = aByte;
   }
 
-  @ThriftField(id = 3)
+  @ThriftField(3)
   public Short getAShort() {
     return aShort;
   }
@@ -106,7 +106,7 @@ public class IsSetBean {
     this.aShort = aShort;
   }
 
-  @ThriftField(id = 4)
+  @ThriftField(4)
   public Integer getAInteger() {
     return aInteger;
   }
@@ -117,7 +117,7 @@ public class IsSetBean {
     this.aInteger = aInteger;
   }
 
-  @ThriftField(id = 5)
+  @ThriftField(5)
   public Long getALong() {
     return aLong;
   }
@@ -128,7 +128,7 @@ public class IsSetBean {
     this.aLong = aLong;
   }
 
-  @ThriftField(id = 6)
+  @ThriftField(6)
   public Double getADouble() {
     return aDouble;
   }
@@ -139,7 +139,7 @@ public class IsSetBean {
     this.aDouble = aDouble;
   }
 
-  @ThriftField(id = 7)
+  @ThriftField(7)
   public String getAString() {
     return aString;
   }
@@ -150,7 +150,7 @@ public class IsSetBean {
     this.aString = aString;
   }
 
-  @ThriftField(id = 8)
+  @ThriftField(8)
   public BonkField getAStruct() {
     return aStruct;
   }
@@ -161,7 +161,7 @@ public class IsSetBean {
     this.aStruct = aStruct;
   }
 
-  @ThriftField(id = 9)
+  @ThriftField(9)
   public Set<String> getASet() {
     return aSet;
   }
@@ -172,7 +172,7 @@ public class IsSetBean {
     this.aSet = aSet;
   }
 
-  @ThriftField(id = 10)
+  @ThriftField(10)
   public List<String> getAList() {
     return aList;
   }
@@ -183,7 +183,7 @@ public class IsSetBean {
     this.aList = aList;
   }
 
-  @ThriftField(id = 11)
+  @ThriftField(11)
   public Map<String, String> getAMap() {
     return aMap;
   }

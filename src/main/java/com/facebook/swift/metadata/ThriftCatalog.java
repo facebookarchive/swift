@@ -3,7 +3,7 @@
  */
 package com.facebook.swift.metadata;
 
-import com.facebook.swift.ThriftProtocolFieldType;
+import com.facebook.swift.ThriftProtocolType;
 import com.facebook.swift.coercion.DefaultJavaCoercions;
 import com.facebook.swift.coercion.FromThrift;
 import com.facebook.swift.coercion.ToThrift;
@@ -14,6 +14,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
+import com.google.common.reflect.TypeToken;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Method;
@@ -25,7 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static com.facebook.swift.ThriftProtocolFieldType.inferProtocolType;
+import static com.facebook.swift.ThriftProtocolType.inferProtocolType;
 import static com.facebook.swift.metadata.ThriftType.BOOL;
 import static com.facebook.swift.metadata.ThriftType.BYTE;
 import static com.facebook.swift.metadata.ThriftType.DOUBLE;
@@ -39,13 +40,17 @@ import static com.facebook.swift.metadata.ThriftType.list;
 import static com.facebook.swift.metadata.ThriftType.map;
 import static com.facebook.swift.metadata.ThriftType.set;
 import static com.facebook.swift.metadata.ThriftType.struct;
-import static com.facebook.swift.metadata.TypeParameterUtils.getRawType;
 import static com.facebook.swift.metadata.TypeParameterUtils.getTypeParameters;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Iterables.transform;
 
+/**
+ * ThriftCatalog contains the metadata for all known structs, enums and type coercions.  Since,
+ * metadata extraction can be very expensive, and only single instance of the catalog should be
+ * created.
+ */
 public class ThriftCatalog {
   private final Problems.Monitor monitor;
   private final Map<Class<?>, ThriftStructMetadata<?>> structs = new HashMap<>();
@@ -69,10 +74,16 @@ public class ThriftCatalog {
     addDefaultCoercions(DefaultJavaCoercions.class);
   }
 
+  @VisibleForTesting
   Monitor getMonitor() {
     return monitor;
   }
 
+  /**
+   * Add the @ToThrift and @FromThrift coercions in the specified class to this catalog.  All
+   * coercions must be symmetrical, so ever @ToThrift method must have a corresponding @FromThrift
+   * method.
+   */
   public void addDefaultCoercions(Class<?> coercionsClass) {
     Map<ThriftType, Method> toThriftCoercions = new HashMap<>();
     Map<ThriftType, Method> fromThriftCoercions = new HashMap<>();
@@ -125,12 +136,19 @@ public class ThriftCatalog {
     this.coercions.putAll(coercions);
   }
 
+  /**
+   * Gets the default ThriftCoercion for the specified type.
+   */
   public TypeCoercion getDefaultCoercion(Type type) {
     return coercions.get(type);
   }
 
+  /**
+   * Gets the ThriftType for the specified Java type.  The native Thrift type for the Java type will
+   * be inferred from the Java type, and if necessary type coercions will be applied.
+   */
   public ThriftType getThriftType(Type javaType) {
-    ThriftProtocolFieldType protocolType = inferProtocolType(javaType);
+    ThriftProtocolType protocolType = inferProtocolType(javaType);
     if (protocolType != null) {
       return getThriftType(javaType, protocolType);
     }
@@ -144,7 +162,11 @@ public class ThriftCatalog {
         "supported type: " + javaType);
   }
 
-  public ThriftType getThriftType(Type javaType, ThriftProtocolFieldType protocolType) {
+  /**
+   * Gets the ThriftType for the specified Java type encoded as the specified Thrift type.  This
+   * method can create type that require coercions that have not been registered with this catalog.
+   */
+  public ThriftType getThriftType(Type javaType, ThriftProtocolType protocolType) {
     switch (protocolType) {
       case BOOL:
         return BOOL.coerceTo(javaType);
@@ -196,7 +218,7 @@ public class ThriftCatalog {
         return list(getThriftType(types[0]));
       }
       case ENUM: {
-        Class<?> enumClass = getRawType(javaType);
+        Class<?> enumClass = TypeToken.of(javaType).getRawType();
         ThriftEnumMetadata<? extends Enum<?>> thriftEnumMetadata = getThriftEnumMetadata(enumClass);
         return enumType(thriftEnumMetadata);
       }
@@ -206,6 +228,11 @@ public class ThriftCatalog {
     }
   }
 
+  /**
+   * Gets the ThriftEnumMetadata for the specified enum class.  If the enum class contains a method
+   * annotated with @ThriftEnumValue, the value of this method will be used for the encoded thrift
+   * value; otherwise the Enum.ordinal() method will be used.
+   */
   public <T extends Enum<T>> ThriftEnumMetadata<T> getThriftEnumMetadata(Class<?> enumClass) {
     ThriftEnumMetadata<?> enumMetadata = enums.get(enumClass);
     if (enumMetadata == null) {
@@ -215,14 +242,18 @@ public class ThriftCatalog {
     return (ThriftEnumMetadata<T>) enumMetadata;
   }
 
-  public <T> ThriftStructMetadata<T> getThriftStructMetadata(Class<T> configClass) {
-    Preconditions.checkNotNull(configClass, "configClass is null");
+  /**
+   * Gets the ThriftStructMetadata for the specified struct class.  The struct class must be
+   * annotated with @ThriftStruct.
+   */
+  public <T> ThriftStructMetadata<T> getThriftStructMetadata(Class<T> structClass) {
+    Preconditions.checkNotNull(structClass, "structClass is null");
 
     Deque<Class<?>> stack = this.stack.get();
-    if (stack.contains(configClass)) {
+    if (stack.contains(structClass)) {
       String path = Joiner.on("->").join(
         transform(
-          concat(stack, ImmutableList.of(configClass)), new Function<Class<?>, Object>() {
+          concat(stack, ImmutableList.of(structClass)), new Function<Class<?>, Object>() {
           @Override
           public Object apply(@Nullable Class<?> input) {
             return input.getName();
@@ -233,24 +264,24 @@ public class ThriftCatalog {
       throw new IllegalArgumentException("Circular references are not allowed: " + path);
     }
 
-    stack.push(configClass);
+    stack.push(structClass);
     try {
-      ThriftStructMetadata<T> structMetadata = (ThriftStructMetadata<T>) structs.get(configClass);
+      ThriftStructMetadata<T> structMetadata = (ThriftStructMetadata<T>) structs.get(structClass);
       if (structMetadata == null) {
         ThriftStructMetadataBuilder<T> builder = new ThriftStructMetadataBuilder<>(
           this,
-          configClass
+          structClass
         );
         structMetadata = builder.build();
-        structs.put(configClass, structMetadata);
+        structs.put(structClass, structMetadata);
       }
       return structMetadata;
     } finally {
       Class<?> top = stack.pop();
       checkState(
-        configClass.equals(top),
+        structClass.equals(top),
         "ThriftCatalog circularity detection stack is corrupt: expected %s, but got %s",
-        configClass,
+        structClass,
         top
       );
     }

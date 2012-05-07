@@ -8,7 +8,7 @@ import com.facebook.swift.BonkBuilder.Builder;
 import javax.annotation.concurrent.Immutable;
 
 @Immutable
-@ThriftStruct(name = "Bonk", builder = Builder.class)
+@ThriftStruct(value = "Bonk", builder = Builder.class)
 public class BonkBuilder {
   private final String message;
   private final int type;
@@ -21,12 +21,12 @@ public class BonkBuilder {
     this.type = type;
   }
 
-  @ThriftField(id = 1)
+  @ThriftField(1)
   public String getMessage() {
     return message;
   }
 
-  @ThriftField(id = 2)
+  @ThriftField(2)
   public int getType() {
     return type;
   }

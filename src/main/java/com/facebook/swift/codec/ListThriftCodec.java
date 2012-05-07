@@ -31,11 +31,14 @@ public class ListThriftCodec<T> implements ThriftCodec<List<T>> {
 
   @Override
   public List<T> read(TProtocolReader protocol) throws Exception {
+    Preconditions.checkNotNull(protocol, "protocol is null");
     return protocol.readList(elementCodec);
   }
 
   @Override
   public void write(List<T> value, TProtocolWriter protocol) throws Exception {
+    Preconditions.checkNotNull(value, "value is null");
+    Preconditions.checkNotNull(protocol, "protocol is null");
     protocol.writeList(elementCodec, value);
   }
 }

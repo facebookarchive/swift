@@ -3,12 +3,12 @@
  */
 package com.facebook.swift;
 
-@ThriftStruct(name = "Bonk")
+@ThriftStruct("Bonk")
 public class BonkField {
-  @ThriftField(id = 1)
+  @ThriftField(1)
   public String message;
 
-  @ThriftField(id = 2)
+  @ThriftField(2)
   public int type;
 
   public BonkField() {

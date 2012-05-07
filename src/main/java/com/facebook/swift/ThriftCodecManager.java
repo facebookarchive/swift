@@ -33,6 +33,11 @@ import org.apache.thrift.protocol.TProtocol;
 import java.lang.reflect.Type;
 import java.util.concurrent.ExecutionException;
 
+/**
+ * ThriftCodecManager contains an index of all known ThriftCodec and can create codecs for
+ * unknown types as needed.  Since codec creation can be very expensive only one instance of this
+ * class should be created.
+ */
 public class ThriftCodecManager {
   private final ThriftCatalog catalog;
   private final LoadingCache<ThriftType, ThriftCodec<?>> typeCodecs;
@@ -127,6 +132,10 @@ public class ThriftCodecManager {
     }
   }
 
+  /**
+   * Adds or replaces the codec associated with the type contained in the codec.  This does not
+   * replace any current users of the existing codec associated with the type.
+   */
   public void addCodec(ThriftCodec<?> codec) {
     typeCodecs.put(codec.getType(), codec);
   }

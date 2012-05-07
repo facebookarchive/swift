@@ -11,9 +11,12 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+/**
+ * Marks a method to be exported in a Thrift service.
+ */
 @Documented
 @Retention(RUNTIME)
-@Target({METHOD})
+@Target(METHOD)
 public @interface ThriftMethod {
   String value() default "";
 }

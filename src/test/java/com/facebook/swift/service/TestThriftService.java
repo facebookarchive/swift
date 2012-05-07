@@ -3,19 +3,17 @@
  */
 package com.facebook.swift.service;
 
-import com.facebook.logging.Logger;
-import com.facebook.logging.LoggerImpl;
 import com.facebook.nifty.core.NiftyBootstrap;
 import com.facebook.nifty.core.ThriftServerDefBuilder;
 import com.facebook.nifty.guice.NiftyModule;
 import com.facebook.swift.ThriftCodecManager;
-import com.facebook.swift.ThriftConstructor;
-import com.facebook.swift.ThriftField;
-import com.facebook.swift.ThriftStruct;
 import com.facebook.swift.service.metadata.ThriftServiceMetadata;
 import com.facebook.swift.service.scribe.LogEntry;
 import com.facebook.swift.service.scribe.ResultCode;
 import com.facebook.swift.service.scribe.scribe;
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Stage;
 import org.apache.thrift.TException;
@@ -26,14 +24,61 @@ import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransportException;
 import org.testng.annotations.Test;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
-import java.util.Arrays;
 import java.util.List;
 
+import static org.testng.Assert.assertEquals;
+
+/**
+ * Demonstrates creating a Thrift service using Swift.
+ */
 public class TestThriftService {
-  private static final Logger log = LoggerImpl.getLogger(TestThriftService.class);
+  @Test(groups = "fast")
+  public void testSwiftService() throws Exception {
+    SwiftScribe scribeService = new SwiftScribe();
+    TProcessor processor = new ThriftServiceProcessor(scribeService, new ThriftCodecManager());
+
+    ImmutableList<LogEntry> messages = testProcessor(processor);
+    assertEquals(scribeService.getMessages(), toSwiftLogEntry(messages));
+  }
+
+  @Test(groups = "fast")
+  public void testThriftService() throws Exception {
+    ThriftScribeService scribeService = new ThriftScribeService();
+    TProcessor processor = new scribe.Processor<>(scribeService);
+
+    ImmutableList<LogEntry> messages = testProcessor(processor);
+    assertEquals(scribeService.getMessages(), messages);
+  }
+
+  private ImmutableList<LogEntry> testProcessor(TProcessor processor) throws TException {
+    ImmutableList<LogEntry> messages = ImmutableList.of(
+        new LogEntry("hello", "world"),
+        new LogEntry("bye", "world")
+    );
+
+    int port = getRandomPort();
+    NiftyBootstrap bootstrap = createNiftyBootstrap(processor, port);
+    try {
+      scribe.Client client = createClient(port);
+      ResultCode response = client.Log(messages);
+      assertEquals(response, ResultCode.OK);
+    } finally {
+      bootstrap.stop();
+    }
+
+    return messages;
+  }
+
+  private scribe.Client createClient(int port) throws TTransportException {
+    TSocket socket = new TSocket("localhost", port);
+    socket.open();
+    TBinaryProtocol tp = new TBinaryProtocol(new TFramedTransport(socket));
+    return new scribe.Client(tp);
+  }
 
   private NiftyBootstrap createNiftyBootstrap(final TProcessor processor, final int port) {
     NiftyBootstrap bootstrap = Guice.createInjector(
@@ -67,95 +112,15 @@ public class TestThriftService {
     }
   }
 
-  @Test(groups = "fast")
-  public void testSwiftService() throws Exception {
-    ThriftCodecManager codecManager = new ThriftCodecManager();
-    TProcessor processor = new ThriftServiceProcessor(
-        new ScribeService(),
-        new ThriftServiceMetadata(ScribeService.class, codecManager.getCatalog()),
-        codecManager
-    );
-
-    testProcessor(processor);
-  }
-
-  @Test(groups = "fast")
-  public void testThriftService() throws Exception {
-    TProcessor processor = new scribe.Processor<>(new TestScribeService());
-    testProcessor(processor);
-  }
-
-  private void testProcessor(TProcessor processor) throws TException {
-    int port = getRandomPort();
-    NiftyBootstrap bootstrap = createNiftyBootstrap(processor, port);
-    try {
-      scribe.Client client = makeClient(port);
-      client.Log(Arrays.asList(new LogEntry("hello", "world")));
-    } finally {
-      bootstrap.stop();
-    }
-  }
-
-  private scribe.Client makeClient(int port) throws TTransportException {
-    TSocket socket = new TSocket("localhost", port);
-    socket.open();
-    TBinaryProtocol tp = new TBinaryProtocol(new TFramedTransport(socket));
-    return new scribe.Client(tp);
-  }
-
-  @ThriftService("scribe")
-  public static class ScribeService {
-    @ThriftMethod("Log")
-    public ResultCode log(List<LogEntryStruct> messages) {
-      for (LogEntryStruct message : messages) {
-        log.info("%s: %s", message.getCategory(), message.getMessage());
+  private List<com.facebook.swift.service.LogEntry> toSwiftLogEntry(
+      ImmutableList<LogEntry> messages
+  ) {
+    return Lists.transform(messages, new Function<LogEntry, com.facebook.swift.service.LogEntry>() {
+      @Override
+      public com.facebook.swift.service.LogEntry apply(@Nullable LogEntry input) {
+        return new com.facebook.swift.service.LogEntry(input.category, input.message);
       }
-      return ResultCode.OK;
-    }
+    });
   }
 
-  private static class TestScribeService implements scribe.Iface {
-    @Override
-    public ResultCode Log(List<LogEntry> messages)
-        throws TException {
-      for (LogEntry message : messages) {
-        log.info("%s: %s", message.getCategory(), message.getMessage());
-      }
-      return ResultCode.OK;
-    }
-  }
-
-  @ThriftStruct
-  public static class LogEntryStruct {
-    private final String category;
-    private final String message;
-
-    @ThriftConstructor
-    public LogEntryStruct(
-        @ThriftField(name = "category") String category,
-        @ThriftField(name = "message") String message) {
-      this.category = category;
-      this.message = message;
-    }
-
-    @ThriftField(id = 1)
-    public String getCategory() {
-      return category;
-    }
-
-    @ThriftField(id = 2)
-    public String getMessage() {
-      return message;
-    }
-
-    @Override
-    public String toString() {
-      final StringBuilder sb = new StringBuilder();
-      sb.append("LogEntryStruct");
-      sb.append("{category='").append(category).append('\'');
-      sb.append(", message='").append(message).append('\'');
-      sb.append('}');
-      return sb.toString();
-    }
-  }
 }

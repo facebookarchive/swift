@@ -12,15 +12,18 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+/**
+ * Marks a field, method or parameter as a Thrift field.
+ */
 @Documented
 @Retention(RUNTIME)
 @Target({METHOD, FIELD, PARAMETER})
 public @interface ThriftField {
-  short id() default Short.MIN_VALUE;
+  short value() default Short.MIN_VALUE;
 
   String name() default "";
 
   boolean required() default false;
 
-  ThriftProtocolFieldType protocolType() default ThriftProtocolFieldType.UNKNOWN;
+  ThriftProtocolType protocolType() default ThriftProtocolType.UNKNOWN;
 }

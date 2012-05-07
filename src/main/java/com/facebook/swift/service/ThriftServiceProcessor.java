@@ -9,6 +9,7 @@ import com.facebook.swift.internal.TProtocolReader;
 import com.facebook.swift.internal.TProtocolWriter;
 import com.facebook.swift.service.metadata.ThriftMethodMetadata;
 import com.facebook.swift.service.metadata.ThriftServiceMetadata;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
@@ -25,6 +26,11 @@ import java.lang.reflect.Method;
 
 import static org.apache.thrift.TApplicationException.*;
 
+/**
+ * Example TProcessor that wraps a Thrift service.  This should only be considered an example, and
+ * is not production ready.  For example, this class makes assumptions about the thrift id of
+ * method parameters, and does not support Thrift exceptions properly.
+ */
 public class ThriftServiceProcessor implements TProcessor {
   private final Object service;
   private final ThriftServiceMetadata serviceMetadata;
@@ -32,9 +38,21 @@ public class ThriftServiceProcessor implements TProcessor {
 
   public ThriftServiceProcessor(
       Object service,
-      ThriftServiceMetadata serviceMetadata,
       ThriftCodecManager codecManager
   ) {
+    this(service,
+        codecManager,
+        new ThriftServiceMetadata(service.getClass(), codecManager.getCatalog()));
+  }
+
+  public ThriftServiceProcessor(
+      Object service,
+      ThriftCodecManager codecManager, ThriftServiceMetadata serviceMetadata
+  ) {
+    Preconditions.checkNotNull(service, "service is null");
+    Preconditions.checkNotNull(serviceMetadata, "serviceMetadata is null");
+    Preconditions.checkNotNull(codecManager, "codecManager is null");
+
     this.service = service;
     this.serviceMetadata = serviceMetadata;
     this.codecManager = codecManager;

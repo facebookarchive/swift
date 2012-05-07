@@ -9,7 +9,11 @@ import com.facebook.swift.internal.TProtocolWriter;
 import com.facebook.swift.metadata.ThriftType;
 import com.facebook.swift.metadata.TypeCoercion;
 
-public class CoercionThriftCodec<J> implements ThriftCodec<J> {
+/**
+ * CoercionThriftCodec encapsulates a ThriftCodec and coerces the values to another type using
+ * the supplied ThriftCoercion.
+ */
+public class CoercionThriftCodec<T> implements ThriftCodec<T> {
   private final ThriftCodec<Object> codec;
   private final TypeCoercion typeCoercion;
   private final ThriftType thriftType;
@@ -29,14 +33,14 @@ public class CoercionThriftCodec<J> implements ThriftCodec<J> {
   }
 
   @Override
-  public J read(TProtocolReader protocol) throws Exception {
+  public T read(TProtocolReader protocol) throws Exception {
     Object thriftValue = codec.read(protocol);
-    J javaValue = (J) typeCoercion.getFromThrift().invoke(null, thriftValue);
+    T javaValue = (T) typeCoercion.getFromThrift().invoke(null, thriftValue);
     return javaValue;
   }
 
   @Override
-  public void write(J javaValue, TProtocolWriter protocol) throws Exception {
+  public void write(T javaValue, TProtocolWriter protocol) throws Exception {
     Object thriftValue = typeCoercion.getToThrift().invoke(null, javaValue);
     codec.write(thriftValue, protocol);
   }

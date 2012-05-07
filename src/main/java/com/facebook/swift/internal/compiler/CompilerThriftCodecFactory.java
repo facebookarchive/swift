@@ -5,7 +5,7 @@ package com.facebook.swift.internal.compiler;
 
 import com.facebook.swift.ThriftCodec;
 import com.facebook.swift.ThriftCodecManager;
-import com.facebook.swift.ThriftProtocolFieldType;
+import com.facebook.swift.ThriftProtocolType;
 import com.facebook.swift.internal.TProtocolReader;
 import com.facebook.swift.internal.TProtocolWriter;
 import com.facebook.swift.internal.compiler.byteCode.CaseStatement;
@@ -26,6 +26,7 @@ import com.facebook.swift.metadata.ThriftMethodInjection;
 import com.facebook.swift.metadata.ThriftParameterInjection;
 import com.facebook.swift.metadata.ThriftStructMetadata;
 import com.facebook.swift.metadata.ThriftType;
+import com.google.common.reflect.TypeToken;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
@@ -40,7 +41,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import static com.facebook.swift.ThriftProtocolFieldType.*;
+import static com.facebook.swift.ThriftProtocolType.*;
 import static com.facebook.swift.internal.compiler.byteCode.Access.BRIDGE;
 import static com.facebook.swift.internal.compiler.byteCode.Access.FINAL;
 import static com.facebook.swift.internal.compiler.byteCode.Access.PRIVATE;
@@ -51,8 +52,10 @@ import static com.facebook.swift.internal.compiler.byteCode.Access.a;
 import static com.facebook.swift.internal.compiler.byteCode.CaseStatement.caseStatement;
 import static com.facebook.swift.internal.compiler.byteCode.NamedParameterDefinition.arg;
 import static com.facebook.swift.internal.compiler.byteCode.ParameterizedType.type;
-import static com.facebook.swift.metadata.TypeParameterUtils.getRawType;
 
+/**
+ * Creates Thrift codecs directly in byte code.
+ */
 public class CompilerThriftCodecFactory implements ThriftCodecFactory {
   private static final String PACKAGE = "$thrift";
 
@@ -436,7 +439,7 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
       for (ThriftMethodInjection methodInjection : metadata.getMethodInjections()) {
         // if any parameter is non-null, invoke the method
         for (ThriftParameterInjection parameter : methodInjection.getParameters()) {
-          if (!getRawType(parameter.getJavaType()).isPrimitive()) {
+          if (!TypeToken.of(parameter.getJavaType()).getRawType().isPrimitive()) {
             read.loadVariable("f_" + parameter.getName());
             read.ifNotNullGoto("invoke_" + methodInjection.getMethod().toGenericString());
           } else {
@@ -519,7 +522,7 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
         }
 
         // if field value is null, don't write the field
-        if (!getRawType(field.getType().getJavaType()).isPrimitive()) {
+        if (!TypeToken.of(field.getType().getJavaType()).getRawType().isPrimitive()) {
           write.dup();
           write.ifNullGoto("field_is_null_" + field.getName());
         }
@@ -722,7 +725,7 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
         // if raw or coerced value are object types, we may not have written due to nulls
         // so we need to clean up the stack
         if (!field.getType().getProtocolType().isJavaPrimitive() ||
-            !getRawType(field.getType().getJavaType()).isPrimitive()) {
+            !TypeToken.of(field.getType().getJavaType()).getRawType().isPrimitive()) {
 
           // value was written so skip cleanup
           write.gotoLabel("field_end_" + field.getName());
@@ -808,7 +811,7 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
   }
 
   private boolean needsCodec(ThriftFieldMetadata fieldMetadata) {
-    ThriftProtocolFieldType protocolType = fieldMetadata.getType().getProtocolType();
+    ThriftProtocolType protocolType = fieldMetadata.getType().getProtocolType();
     return protocolType == ENUM ||
         protocolType == STRUCT ||
         protocolType == SET ||

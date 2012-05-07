@@ -8,6 +8,9 @@ import com.facebook.swift.ThriftCodecManager;
 import com.facebook.swift.internal.ThriftCodecFactory;
 import com.facebook.swift.metadata.ThriftStructMetadata;
 
+/**
+ * Creates reflection based thrift codecs.
+ */
 public class ReflectionThriftCodecFactory implements ThriftCodecFactory {
   @Override
   public <T> ThriftCodec<T> generateThriftTypeCodec(

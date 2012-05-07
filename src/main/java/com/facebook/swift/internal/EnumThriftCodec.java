@@ -8,6 +8,10 @@ import com.facebook.swift.metadata.ThriftEnumMetadata;
 import com.facebook.swift.metadata.ThriftType;
 import com.google.common.base.Preconditions;
 
+/**
+ * EnumThriftCodec is a codec for Java enum types.  An enum is encoded as an I32 in Thrift, and this
+ * class handles converting this vale to a Java enum constant.
+ */
 public class EnumThriftCodec<T extends Enum<T>> implements ThriftCodec<T> {
   private final ThriftType type;
   private final ThriftEnumMetadata<T> enumMetadata;

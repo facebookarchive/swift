@@ -31,11 +31,14 @@ public class SetThriftCodec<T> implements ThriftCodec<Set<T>> {
 
   @Override
   public Set<T> read(TProtocolReader protocol) throws Exception {
+    Preconditions.checkNotNull(protocol, "protocol is null");
     return protocol.readSet(elementCodec);
   }
 
   @Override
   public void write(Set<T> value, TProtocolWriter protocol) throws Exception {
+    Preconditions.checkNotNull(value, "value is null");
+    Preconditions.checkNotNull(protocol, "protocol is null");
     protocol.writeSet(elementCodec, value);
   }
 }

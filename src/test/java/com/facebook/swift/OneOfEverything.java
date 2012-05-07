@@ -9,114 +9,114 @@ import java.util.Set;
 
 @ThriftStruct
 public class OneOfEverything {
-  @ThriftField(id = 1)
+  @ThriftField(1)
   public boolean aBoolean;
-  @ThriftField(id = 2)
+  @ThriftField(2)
   public byte aByte;
-  @ThriftField(id = 3)
+  @ThriftField(3)
   public short aShort;
-  @ThriftField(id = 4)
+  @ThriftField(4)
   public int aInt;
-  @ThriftField(id = 5)
+  @ThriftField(5)
   public long aLong;
-  @ThriftField(id = 6)
+  @ThriftField(6)
   public double aDouble;
-  @ThriftField(id = 7)
+  @ThriftField(7)
   public String aString;
-  @ThriftField(id = 8)
+  @ThriftField(8)
   public BonkField aStruct;
-  @ThriftField(id = 9)
+  @ThriftField(9)
   public Fruit aEnum;
-  @ThriftField(id = 10)
+  @ThriftField(10)
   public Letter aCustomEnum;
 
-  @ThriftField(id = 11)
+  @ThriftField(11)
   public Set<Boolean> aBooleanSet;
-  @ThriftField(id = 12)
+  @ThriftField(12)
   public Set<Byte> aByteSet;
-  @ThriftField(id = 13)
+  @ThriftField(13)
   public Set<Short> aShortSet;
-  @ThriftField(id = 14)
+  @ThriftField(14)
   public Set<Integer> aIntegerSet;
-  @ThriftField(id = 15)
+  @ThriftField(15)
   public Set<Long> aLongSet;
-  @ThriftField(id = 16)
+  @ThriftField(16)
   public Set<Double> aDoubleSet;
-  @ThriftField(id = 17)
+  @ThriftField(17)
   public Set<String> aStringSet;
-  @ThriftField(id = 18)
+  @ThriftField(18)
   public Set<BonkField> aStructSet;
-  @ThriftField(id = 19)
+  @ThriftField(19)
   public Set<Fruit> aEnumSet;
-  @ThriftField(id = 20)
+  @ThriftField(20)
   public Set<Letter> aCustomEnumSet;
 
-  @ThriftField(id = 21)
+  @ThriftField(21)
   public List<Boolean> aBooleanList;
-  @ThriftField(id = 22)
+  @ThriftField(22)
   public List<Byte> aByteList;
-  @ThriftField(id = 23)
+  @ThriftField(23)
   public List<Short> aShortList;
-  @ThriftField(id = 24)
+  @ThriftField(24)
   public List<Integer> aIntegerList;
-  @ThriftField(id = 25)
+  @ThriftField(25)
   public List<Long> aLongList;
-  @ThriftField(id = 26)
+  @ThriftField(26)
   public List<Double> aDoubleList;
-  @ThriftField(id = 27)
+  @ThriftField(27)
   public List<String> aStringList;
-  @ThriftField(id = 28)
+  @ThriftField(28)
   public List<BonkField> aStructList;
-  @ThriftField(id = 29)
+  @ThriftField(29)
   public List<Fruit> aEnumList;
-  @ThriftField(id = 30)
+  @ThriftField(30)
   public List<Letter> aCustomEnumList;
 
-  @ThriftField(id = 31)
+  @ThriftField(31)
   public Map<String, Boolean> aBooleanValueMap;
-  @ThriftField(id = 32)
+  @ThriftField(32)
   public Map<String, Byte> aByteValueMap;
-  @ThriftField(id = 33)
+  @ThriftField(33)
   public Map<String, Short> aShortValueMap;
-  @ThriftField(id = 34)
+  @ThriftField(34)
   public Map<String, Integer> aIntegerValueMap;
-  @ThriftField(id = 35)
+  @ThriftField(35)
   public Map<String, Long> aLongValueMap;
-  @ThriftField(id = 36)
+  @ThriftField(36)
   public Map<String, Double> aDoubleValueMap;
-  @ThriftField(id = 37)
+  @ThriftField(37)
   public Map<String, String> aStringValueMap;
-  @ThriftField(id = 38)
+  @ThriftField(38)
   public Map<String, BonkField> aStructValueMap;
-  @ThriftField(id = 39)
+  @ThriftField(39)
   public Map<String, Fruit> aEnumValueMap;
-  @ThriftField(id = 40)
+  @ThriftField(40)
   public Map<String, Letter> aCustomEnumValueMap;
 
-  @ThriftField(id = 41)
+  @ThriftField(41)
   public Map<Boolean, String> aBooleanKeyMap;
-  @ThriftField(id = 42)
+  @ThriftField(42)
   public Map<Byte, String> aByteKeyMap;
-  @ThriftField(id = 43)
+  @ThriftField(43)
   public Map<Short, String> aShortKeyMap;
-  @ThriftField(id = 44)
+  @ThriftField(44)
   public Map<Integer, String> aIntegerKeyMap;
-  @ThriftField(id = 45)
+  @ThriftField(45)
   public Map<Long, String> aLongKeyMap;
-  @ThriftField(id = 46)
+  @ThriftField(46)
   public Map<Double, String> aDoubleKeyMap;
-  @ThriftField(id = 47)
+  @ThriftField(47)
   public Map<String, String> aStringKeyMap;
-  @ThriftField(id = 48)
+  @ThriftField(48)
   public Map<BonkField, String> aStructKeyMap;
-  @ThriftField(id = 49)
+  @ThriftField(49)
   public Map<Fruit, String> aEnumKeyMap;
-  @ThriftField(id = 50)
+  @ThriftField(50)
   public Map<Letter, String> aCustomEnumKeyMap;
 
-  @ThriftField(id = 100)
+  @ThriftField(100)
   public Set<List<Map<String, BonkField>>> aSetOfListsOfMaps;
-  @ThriftField(id = 101)
+  @ThriftField(101)
   public Map<List<String>, Set<BonkField>> aMapOfListToSet;
 
   @Override

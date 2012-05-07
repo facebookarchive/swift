@@ -5,7 +5,7 @@ package com.facebook.swift.metadata;
 
 import com.facebook.swift.ThriftConstructor;
 import com.facebook.swift.ThriftField;
-import com.facebook.swift.ThriftProtocolFieldType;
+import com.facebook.swift.ThriftProtocolType;
 import com.facebook.swift.ThriftStruct;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
@@ -30,8 +30,8 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import static com.facebook.swift.ThriftProtocolFieldType.UNKNOWN;
-import static com.facebook.swift.ThriftProtocolFieldType.isSupportedJavaType;
+import static com.facebook.swift.ThriftProtocolType.UNKNOWN;
+import static com.facebook.swift.ThriftProtocolType.isSupportedJavaType;
 import static com.facebook.swift.metadata.ReflectionHelper.findAnnotatedMethods;
 import static com.facebook.swift.metadata.ReflectionHelper.getAllDeclaredFields;
 import static com.facebook.swift.metadata.ReflectionHelper.getAllDeclaredMethods;
@@ -85,8 +85,8 @@ public class ThriftStructMetadataBuilder<T> {
     // name
     ThriftStruct annotation = structClass.getAnnotation(ThriftStruct.class);
     if (annotation != null) {
-      if (!annotation.name().isEmpty()) {
-        structName = annotation.name();
+      if (!annotation.value().isEmpty()) {
+        structName = annotation.value();
       } else {
         structName = structClass.getSimpleName();
       }
@@ -218,7 +218,7 @@ public class ThriftStructMetadataBuilder<T> {
 
       // assure all fields have the same protocol type
       // get explicitly set protocol types
-      Set<ThriftProtocolFieldType> protocolTypes = ImmutableSet.copyOf(
+      Set<ThriftProtocolType> protocolTypes = ImmutableSet.copyOf(
           filter(transform(fields, getThriftFieldProtocolType()), notNull())
       );
       // if none, infer protocol type from java type
@@ -234,7 +234,7 @@ public class ThriftStructMetadataBuilder<T> {
         problems.addError("Could not infer Thrift type for field %s", id);
         continue;
       }
-      ThriftProtocolFieldType type = protocolTypes.iterator().next();
+      ThriftProtocolType type = protocolTypes.iterator().next();
       for (FieldMetadata field : fields) {
         field.setProtocolType(type);
       }
@@ -582,7 +582,7 @@ public class ThriftStructMetadataBuilder<T> {
               method.getParameterAnnotations(),
               method.getGenericParameterTypes()
           );
-          if (annotation.id() != Short.MIN_VALUE) {
+          if (annotation.value() != Short.MIN_VALUE) {
             problems.addError(
                 "A method with annotated parameters can not have a field id specified: %s.%s ",
                 clazz.getName(),
@@ -721,13 +721,13 @@ public class ThriftStructMetadataBuilder<T> {
   static abstract class FieldMetadata {
     private Short id;
     private String name;
-    private ThriftProtocolFieldType protocolType;
+    private ThriftProtocolType protocolType;
     private TypeCoercion coercion;
 
     private FieldMetadata(ThriftField annotation) {
       checkNotNull(annotation, "annotation is null");
-      if (annotation.id() != Short.MIN_VALUE) {
-        id = annotation.id();
+      if (annotation.value() != Short.MIN_VALUE) {
+        id = annotation.value();
       }
       if (!annotation.name().isEmpty()) {
         name = annotation.name();
@@ -757,11 +757,11 @@ public class ThriftStructMetadataBuilder<T> {
 
     public abstract String extractName();
 
-    public ThriftProtocolFieldType getProtocolType() {
+    public ThriftProtocolType getProtocolType() {
       return protocolType;
     }
 
-    public void setProtocolType(ThriftProtocolFieldType protocolType) {
+    public void setProtocolType(ThriftProtocolType protocolType) {
       this.protocolType = protocolType;
     }
 
@@ -809,10 +809,10 @@ public class ThriftStructMetadataBuilder<T> {
       };
     }
 
-    static <T extends FieldMetadata> Function<T, ThriftProtocolFieldType> getThriftFieldProtocolType() {
-      return new Function<T, ThriftProtocolFieldType>() {
+    static <T extends FieldMetadata> Function<T, ThriftProtocolType> getThriftFieldProtocolType() {
+      return new Function<T, ThriftProtocolType>() {
         @Override
-        public ThriftProtocolFieldType apply(@Nullable T input) {
+        public ThriftProtocolType apply(@Nullable T input) {
           if (input == null) {
             return null;
           }
@@ -822,25 +822,25 @@ public class ThriftStructMetadataBuilder<T> {
     }
 
     // lame coding style limits force this code to be ugly
-    static <T extends FieldMetadata> Function<T, ThriftProtocolFieldType>
+    static <T extends FieldMetadata> Function<T, ThriftProtocolType>
     inferThriftFieldProtocolType(final ThriftCatalog catalog) {
 
-      return new Function<T, ThriftProtocolFieldType>() {
+      return new Function<T, ThriftProtocolType>() {
         @Override
-        public ThriftProtocolFieldType apply(@Nullable T input) {
+        public ThriftProtocolType apply(@Nullable T input) {
           if (input == null) {
             return null;
           }
 
           // check for explicit type
-          ThriftProtocolFieldType protocolType = input.getProtocolType();
+          ThriftProtocolType protocolType = input.getProtocolType();
           if (protocolType != null) {
             return protocolType;
           }
 
           // infer from java type
           Type javaType = input.getJavaType();
-          protocolType = ThriftProtocolFieldType.inferProtocolType(javaType);
+          protocolType = ThriftProtocolType.inferProtocolType(javaType);
           if (protocolType != null) {
             return protocolType;
           }

@@ -3,7 +3,7 @@
  */
 package com.facebook.swift.metadata;
 
-import com.facebook.swift.ThriftProtocolFieldType;
+import com.facebook.swift.ThriftProtocolType;
 import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
@@ -13,23 +13,26 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Set;
 
-import static com.facebook.swift.ThriftProtocolFieldType.ENUM;
-import static com.facebook.swift.ThriftProtocolFieldType.STRUCT;
+import static com.facebook.swift.ThriftProtocolType.ENUM;
+import static com.facebook.swift.ThriftProtocolType.STRUCT;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+/**
+ * ThriftType contains all metadata necessary for converting the java type to and from Thrift.
+ */
 public class ThriftType {
-  public static final ThriftType BOOL = new ThriftType(ThriftProtocolFieldType.BOOL, boolean.class);
-  public static final ThriftType BYTE = new ThriftType(ThriftProtocolFieldType.BYTE, byte.class);
+  public static final ThriftType BOOL = new ThriftType(ThriftProtocolType.BOOL, boolean.class);
+  public static final ThriftType BYTE = new ThriftType(ThriftProtocolType.BYTE, byte.class);
   public static final ThriftType DOUBLE =
-      new ThriftType(ThriftProtocolFieldType.DOUBLE, double.class);
-  public static final ThriftType I16 = new ThriftType(ThriftProtocolFieldType.I16, short.class);
-  public static final ThriftType I32 = new ThriftType(ThriftProtocolFieldType.I32, int.class);
-  public static final ThriftType I64 = new ThriftType(ThriftProtocolFieldType.I64, long.class);
+      new ThriftType(ThriftProtocolType.DOUBLE, double.class);
+  public static final ThriftType I16 = new ThriftType(ThriftProtocolType.I16, short.class);
+  public static final ThriftType I32 = new ThriftType(ThriftProtocolType.I32, int.class);
+  public static final ThriftType I64 = new ThriftType(ThriftProtocolType.I64, long.class);
   public static final ThriftType STRING =
-      new ThriftType(ThriftProtocolFieldType.STRING, ByteBuffer.class);
+      new ThriftType(ThriftProtocolType.STRING, ByteBuffer.class);
   public static final ThriftType VOID =
-      new ThriftType(ThriftProtocolFieldType.STRUCT, void.class);
+      new ThriftType(ThriftProtocolType.STRUCT, void.class);
 
   public static ThriftType struct(ThriftStructMetadata<?> structMetadata) {
     return new ThriftType(structMetadata);
@@ -43,7 +46,7 @@ public class ThriftType {
         .where(new TypeParameter<K>() {}, (TypeToken<K>) TypeToken.of(keyType.getJavaType()))
         .where(new TypeParameter<V>() {}, (TypeToken<V>) TypeToken.of(valueType.getJavaType()))
         .getType();
-    return new ThriftType(ThriftProtocolFieldType.MAP, javaType, keyType, valueType);
+    return new ThriftType(ThriftProtocolType.MAP, javaType, keyType, valueType);
   }
 
   public static <E> ThriftType set(ThriftType valueType) {
@@ -52,7 +55,7 @@ public class ThriftType {
     Type javaType = new TypeToken<Set<E>>() {}
         .where(new TypeParameter<E>() {}, (TypeToken<E>) TypeToken.of(valueType.getJavaType()))
         .getType();
-    return new ThriftType(ThriftProtocolFieldType.SET, javaType, null, valueType);
+    return new ThriftType(ThriftProtocolType.SET, javaType, null, valueType);
   }
 
   public static <E> ThriftType list(ThriftType valueType) {
@@ -61,7 +64,7 @@ public class ThriftType {
     Type javaType = new TypeToken<Set<E>>() {}
         .where(new TypeParameter<E>() {}, (TypeToken<E>) TypeToken.of(valueType.getJavaType()))
         .getType();
-    return new ThriftType(ThriftProtocolFieldType.LIST, javaType, null, valueType);
+    return new ThriftType(ThriftProtocolType.LIST, javaType, null, valueType);
   }
 
   public static ThriftType enumType(ThriftEnumMetadata<?> enumMetadata) {
@@ -69,7 +72,7 @@ public class ThriftType {
     return new ThriftType(enumMetadata);
   }
 
-  private final ThriftProtocolFieldType protocolType;
+  private final ThriftProtocolType protocolType;
   private final Type javaType;
   private final ThriftType keyType;
   private final ThriftType valueType;
@@ -77,7 +80,7 @@ public class ThriftType {
   private final ThriftEnumMetadata<?> enumMetadata;
   private final ThriftType uncoercedType;
 
-  private ThriftType(ThriftProtocolFieldType protocolType, Type javaType) {
+  private ThriftType(ThriftProtocolType protocolType, Type javaType) {
     Preconditions.checkNotNull(protocolType, "protocolType is null");
     Preconditions.checkNotNull(javaType, "javaType is null");
 
@@ -91,7 +94,7 @@ public class ThriftType {
   }
 
   private ThriftType(
-      ThriftProtocolFieldType protocolType,
+      ThriftProtocolType protocolType,
       Type javaType,
       ThriftType keyType,
       ThriftType valueType
@@ -149,7 +152,7 @@ public class ThriftType {
     return javaType;
   }
 
-  public ThriftProtocolFieldType getProtocolType() {
+  public ThriftProtocolType getProtocolType() {
     return protocolType;
   }
 
@@ -183,10 +186,10 @@ public class ThriftType {
     }
 
     Preconditions.checkState(
-        protocolType != ThriftProtocolFieldType.STRUCT &&
-            protocolType != ThriftProtocolFieldType.SET &&
-            protocolType != ThriftProtocolFieldType.LIST &&
-            protocolType != ThriftProtocolFieldType.MAP,
+        protocolType != ThriftProtocolType.STRUCT &&
+            protocolType != ThriftProtocolType.SET &&
+            protocolType != ThriftProtocolType.LIST &&
+            protocolType != ThriftProtocolType.MAP,
         "Coercion is not supported for %s", protocolType );
     return new ThriftType(this, javaType);
   }

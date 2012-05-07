@@ -12,8 +12,13 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+/**
+ * Marks the method of a Thrift enum that will return the value of the enum constant in Thrift.
+ * This must be a public, non-static, no-arg method that returns an int or Integer.  This method
+ * must return a constant value.
+ */
 @Documented
 @Retention(RUNTIME)
-@Target({METHOD})
+@Target(METHOD)
 public @interface ThriftEnumValue {
 }
