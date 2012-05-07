@@ -1,7 +1,7 @@
 /*
  * Copyright 2004-present Facebook. All Rights Reserved.
  */
-package com.facebook.swift.codec.builtin;
+package com.facebook.swift.codec.internal.builtin;
 
 import com.facebook.swift.codec.ThriftCodec;
 import com.facebook.swift.codec.internal.TProtocolReader;
@@ -9,22 +9,24 @@ import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.base.Preconditions;
 
-public class BooleanThriftCodec implements ThriftCodec<Boolean> {
+import java.nio.ByteBuffer;
+
+public class ByteBufferThriftCodec implements ThriftCodec<ByteBuffer> {
   @Override
   public ThriftType getType() {
-    return ThriftType.BOOL;
+    return ThriftType.STRING;
   }
 
   @Override
-  public Boolean read(TProtocolReader protocol) throws Exception {
+  public ByteBuffer read(TProtocolReader protocol) throws Exception {
     Preconditions.checkNotNull(protocol, "protocol is null");
-    return protocol.readBool();
+    return protocol.readBinary();
   }
 
   @Override
-  public void write(Boolean value, TProtocolWriter protocol) throws Exception {
+  public void write(ByteBuffer value, TProtocolWriter protocol) throws Exception {
     Preconditions.checkNotNull(value, "value is null");
     Preconditions.checkNotNull(protocol, "protocol is null");
-    protocol.writeBool(value);
+    protocol.writeBinary(value);
   }
 }

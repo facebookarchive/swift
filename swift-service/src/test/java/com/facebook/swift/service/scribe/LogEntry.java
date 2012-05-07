@@ -9,11 +9,25 @@ package com.facebook.swift.service.scribe;
  *  @generated
  */
 
+import org.apache.thrift.TBase;
+import org.apache.thrift.TBaseHelper;
+import org.apache.thrift.TException;
+import org.apache.thrift.TFieldIdEnum;
+import org.apache.thrift.TFieldRequirementType;
+import org.apache.thrift.meta_data.FieldMetaData;
+import org.apache.thrift.meta_data.FieldValueMetaData;
+import org.apache.thrift.protocol.TCompactProtocol;
+import org.apache.thrift.protocol.TField;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.protocol.TProtocolUtil;
+import org.apache.thrift.protocol.TStruct;
 import org.apache.thrift.protocol.TTupleProtocol;
+import org.apache.thrift.protocol.TType;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
 import org.apache.thrift.scheme.TupleScheme;
+import org.apache.thrift.transport.TIOStreamTransport;
 
 import java.util.BitSet;
 import java.util.Collections;
@@ -23,20 +37,22 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class LogEntry
-  implements org.apache.thrift.TBase<LogEntry, LogEntry._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct(
-    "LogEntry"
+    implements TBase<LogEntry, LogEntry._Fields>,
+    java.io.Serializable,
+    Cloneable {
+  private static final TStruct STRUCT_DESC = new TStruct(
+      "LogEntry"
   );
 
-  private static final org.apache.thrift.protocol.TField CATEGORY_FIELD_DESC = new org.apache.thrift.protocol.TField(
-    "category",
-    org.apache.thrift.protocol.TType.STRING,
-    (short) 1
+  private static final TField CATEGORY_FIELD_DESC = new TField(
+      "category",
+      TType.STRING,
+      (short) 1
   );
-  private static final org.apache.thrift.protocol.TField MESSAGE_FIELD_DESC = new org.apache.thrift.protocol.TField(
-    "message",
-    org.apache.thrift.protocol.TType.STRING,
-    (short) 2
+  private static final TField MESSAGE_FIELD_DESC = new TField(
+      "message",
+      TType.STRING,
+      (short) 2
   );
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
@@ -50,9 +66,10 @@ public class LogEntry
   public String message; // required
 
   /**
-   * The set of fields this struct contains, along with convenience methods for finding and manipulating them.
+   * The set of fields this struct contains, along with convenience methods for finding and
+   * manipulating them.
    */
-  public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+  public enum _Fields implements TFieldIdEnum {
     CATEGORY((short) 1, "category"),
     MESSAGE((short) 2, "message");
 
@@ -115,34 +132,34 @@ public class LogEntry
   }
 
   // isset id assignments
-  public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+  public static final Map<_Fields, FieldMetaData> metaDataMap;
 
   static {
-    Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(
-      _Fields.class
+    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(
+        _Fields.class
     );
     tmpMap.put(
-      _Fields.CATEGORY, new org.apache.thrift.meta_data.FieldMetaData(
-      "category", org.apache.thrift.TFieldRequirementType.DEFAULT,
-      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)
+        _Fields.CATEGORY, new FieldMetaData(
+        "category", TFieldRequirementType.DEFAULT,
+        new FieldValueMetaData(TType.STRING)
     )
     );
     tmpMap.put(
-      _Fields.MESSAGE, new org.apache.thrift.meta_data.FieldMetaData(
-      "message", org.apache.thrift.TFieldRequirementType.DEFAULT,
-      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)
+        _Fields.MESSAGE, new FieldMetaData(
+        "message", TFieldRequirementType.DEFAULT,
+        new FieldValueMetaData(TType.STRING)
     )
     );
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(LogEntry.class, metaDataMap);
+    FieldMetaData.addStructMetaDataMap(LogEntry.class, metaDataMap);
   }
 
   public LogEntry() {
   }
 
   public LogEntry(
-    String category,
-    String message
+      String category,
+      String message
   ) {
     this();
     this.category = category;
@@ -257,7 +274,8 @@ public class LogEntry
   }
 
   /**
-   * Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+   * Returns true if field corresponding to fieldID is set (has been assigned a value) and
+   * false otherwise
    */
   public boolean isSet(_Fields field) {
     if (field == null) {
@@ -332,7 +350,7 @@ public class LogEntry
       return lastComparison;
     }
     if (isSetCategory()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.category, typedOther.category);
+      lastComparison = TBaseHelper.compareTo(this.category, typedOther.category);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -342,7 +360,7 @@ public class LogEntry
       return lastComparison;
     }
     if (isSetMessage()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.message, typedOther.message);
+      lastComparison = TBaseHelper.compareTo(this.message, typedOther.message);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -354,12 +372,12 @@ public class LogEntry
     return _Fields.findByThriftId(fieldId);
   }
 
-  public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+  public void read(TProtocol iprot) throws TException {
     schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
   }
 
-  public void write(org.apache.thrift.protocol.TProtocol oprot)
-    throws org.apache.thrift.TException {
+  public void write(TProtocol oprot)
+      throws TException {
     schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
   }
 
@@ -389,35 +407,35 @@ public class LogEntry
     return sb.toString();
   }
 
-  public void validate() throws org.apache.thrift.TException {
+  public void validate() throws TException {
     // check for required fields
   }
 
   private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
     try {
       write(
-        new org.apache.thrift.protocol.TCompactProtocol(
-          new org.apache.thrift.transport.TIOStreamTransport(
-            out
+          new TCompactProtocol(
+              new TIOStreamTransport(
+                  out
+              )
           )
-        )
       );
-    } catch (org.apache.thrift.TException te) {
+    } catch (TException te) {
       throw new java.io.IOException(te);
     }
   }
 
   private void readObject(java.io.ObjectInputStream in)
-    throws java.io.IOException, ClassNotFoundException {
+      throws java.io.IOException, ClassNotFoundException {
     try {
       read(
-        new org.apache.thrift.protocol.TCompactProtocol(
-          new org.apache.thrift.transport.TIOStreamTransport(
-            in
+          new TCompactProtocol(
+              new TIOStreamTransport(
+                  in
+              )
           )
-        )
       );
-    } catch (org.apache.thrift.TException te) {
+    } catch (TException te) {
       throw new java.io.IOException(te);
     }
   }
@@ -430,34 +448,34 @@ public class LogEntry
 
   private static class LogEntryStandardScheme extends StandardScheme<LogEntry> {
 
-    public void read(org.apache.thrift.protocol.TProtocol iprot, LogEntry struct)
-      throws org.apache.thrift.TException {
-      org.apache.thrift.protocol.TField schemeField;
+    public void read(TProtocol iprot, LogEntry struct)
+        throws TException {
+      TField schemeField;
       iprot.readStructBegin();
       while (true) {
         schemeField = iprot.readFieldBegin();
-        if (schemeField.type == org.apache.thrift.protocol.TType.STOP) {
+        if (schemeField.type == TType.STOP) {
           break;
         }
         switch (schemeField.id) {
           case 1: // CATEGORY
-            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+            if (schemeField.type == TType.STRING) {
               struct.category = iprot.readString();
               struct.setCategoryIsSet(true);
             } else {
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
           case 2: // MESSAGE
-            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+            if (schemeField.type == TType.STRING) {
               struct.message = iprot.readString();
               struct.setMessageIsSet(true);
             } else {
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
           default:
-            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            TProtocolUtil.skip(iprot, schemeField.type);
         }
         iprot.readFieldEnd();
       }
@@ -467,8 +485,8 @@ public class LogEntry
       struct.validate();
     }
 
-    public void write(org.apache.thrift.protocol.TProtocol oprot, LogEntry struct)
-      throws org.apache.thrift.TException {
+    public void write(TProtocol oprot, LogEntry struct)
+        throws TException {
       struct.validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
@@ -497,8 +515,8 @@ public class LogEntry
   private static class LogEntryTupleScheme extends TupleScheme<LogEntry> {
 
     @Override
-    public void write(org.apache.thrift.protocol.TProtocol prot, LogEntry struct)
-      throws org.apache.thrift.TException {
+    public void write(TProtocol prot, LogEntry struct)
+        throws TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
       BitSet optionals = new BitSet();
       if (struct.isSetCategory()) {
@@ -517,8 +535,8 @@ public class LogEntry
     }
 
     @Override
-    public void read(org.apache.thrift.protocol.TProtocol prot, LogEntry struct)
-      throws org.apache.thrift.TException {
+    public void read(TProtocol prot, LogEntry struct)
+        throws TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
       BitSet incoming = iprot.readBitSet(2);
       if (incoming.get(0)) {

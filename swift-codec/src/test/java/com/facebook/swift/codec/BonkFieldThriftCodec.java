@@ -7,7 +7,7 @@ import com.facebook.swift.codec.internal.TProtocolReader;
 import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftType;
 
-import static com.facebook.swift.codec.coercion.DefaultJavaCoercions.byteBufferToString;
+import static com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions.byteBufferToString;
 
 public class BonkFieldThriftCodec implements ThriftCodec<BonkField> {
 

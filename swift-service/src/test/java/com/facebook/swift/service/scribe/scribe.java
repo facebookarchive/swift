@@ -9,11 +9,44 @@ package com.facebook.swift.service.scribe;
  *  @generated
  */
 
+import org.apache.thrift.ProcessFunction;
+import org.apache.thrift.TApplicationException;
+import org.apache.thrift.TBase;
+import org.apache.thrift.TBaseHelper;
+import org.apache.thrift.TBaseProcessor;
+import org.apache.thrift.TException;
+import org.apache.thrift.TFieldIdEnum;
+import org.apache.thrift.TFieldRequirementType;
+import org.apache.thrift.TProcessor;
+import org.apache.thrift.TServiceClient;
+import org.apache.thrift.TServiceClientFactory;
+import org.apache.thrift.async.AsyncMethodCallback;
+import org.apache.thrift.async.TAsyncClient;
+import org.apache.thrift.async.TAsyncClientFactory;
+import org.apache.thrift.async.TAsyncClientManager;
+import org.apache.thrift.async.TAsyncMethodCall;
+import org.apache.thrift.meta_data.EnumMetaData;
+import org.apache.thrift.meta_data.FieldMetaData;
+import org.apache.thrift.meta_data.ListMetaData;
+import org.apache.thrift.meta_data.StructMetaData;
+import org.apache.thrift.protocol.TCompactProtocol;
+import org.apache.thrift.protocol.TField;
+import org.apache.thrift.protocol.TList;
+import org.apache.thrift.protocol.TMessage;
+import org.apache.thrift.protocol.TMessageType;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.protocol.TProtocolFactory;
+import org.apache.thrift.protocol.TProtocolUtil;
+import org.apache.thrift.protocol.TStruct;
 import org.apache.thrift.protocol.TTupleProtocol;
+import org.apache.thrift.protocol.TType;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
 import org.apache.thrift.scheme.TupleScheme;
+import org.apache.thrift.transport.TIOStreamTransport;
+import org.apache.thrift.transport.TMemoryInputTransport;
+import org.apache.thrift.transport.TNonblockingTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,138 +63,132 @@ public class scribe {
 
   public interface Iface {
 
-    public ResultCode Log(List<LogEntry> messages) throws org.apache.thrift.TException;
+    public ResultCode Log(List<LogEntry> messages) throws TException;
 
   }
 
   public interface AsyncIface {
 
     public void Log(
-      List<LogEntry> messages,
-      org.apache.thrift.async.AsyncMethodCallback<AsyncClient.Log_call> resultHandler
-    ) throws org.apache.thrift.TException;
+        List<LogEntry> messages,
+        AsyncMethodCallback<AsyncClient.Log_call> resultHandler
+    ) throws TException;
 
   }
 
-  public static class Client extends org.apache.thrift.TServiceClient implements Iface {
-    public static class Factory implements org.apache.thrift.TServiceClientFactory<Client> {
+  public static class Client extends TServiceClient implements Iface {
+    public static class Factory implements TServiceClientFactory<Client> {
       public Factory() {
       }
 
-      public Client getClient(org.apache.thrift.protocol.TProtocol prot) {
+      public Client getClient(TProtocol prot) {
         return new Client(prot);
       }
 
-      public Client getClient(
-        org.apache.thrift.protocol.TProtocol iprot,
-        org.apache.thrift.protocol.TProtocol oprot
-      ) {
+      public Client getClient( TProtocol iprot, TProtocol oprot) {
         return new Client(iprot, oprot);
       }
     }
 
-    public Client(org.apache.thrift.protocol.TProtocol prot) {
+    public Client(TProtocol prot) {
       super(prot, prot);
     }
 
-    public Client(
-      org.apache.thrift.protocol.TProtocol iprot,
-      org.apache.thrift.protocol.TProtocol oprot
-    ) {
+    public Client( TProtocol iprot, TProtocol oprot) {
       super(iprot, oprot);
     }
 
-    public ResultCode Log(List<LogEntry> messages) throws org.apache.thrift.TException {
+    public ResultCode Log(List<LogEntry> messages) throws TException {
       send_Log(messages);
       return recv_Log();
     }
 
-    public void send_Log(List<LogEntry> messages) throws org.apache.thrift.TException {
+    public void send_Log(List<LogEntry> messages) throws TException {
       Log_args args = new Log_args();
       args.setMessages(messages);
       sendBase("Log", args);
     }
 
-    public ResultCode recv_Log() throws org.apache.thrift.TException {
+    public ResultCode recv_Log() throws TException {
       Log_result result = new Log_result();
       receiveBase(result, "Log");
       if (result.isSetSuccess()) {
         return result.success;
       }
-      throw new org.apache.thrift.TApplicationException(
-        org.apache.thrift.TApplicationException.MISSING_RESULT,
-        "Log failed: unknown result"
+      throw new TApplicationException(
+          TApplicationException.MISSING_RESULT,
+          "Log failed: unknown result"
       );
     }
 
   }
 
-  public static class AsyncClient extends org.apache.thrift.async.TAsyncClient
-    implements AsyncIface {
+  public static class AsyncClient extends TAsyncClient
+      implements AsyncIface {
     public static class Factory
-      implements org.apache.thrift.async.TAsyncClientFactory<AsyncClient> {
-      private org.apache.thrift.async.TAsyncClientManager clientManager;
-      private org.apache.thrift.protocol.TProtocolFactory protocolFactory;
+        implements TAsyncClientFactory<AsyncClient> {
+      private TAsyncClientManager clientManager;
+      private TProtocolFactory protocolFactory;
 
       public Factory(
-        org.apache.thrift.async.TAsyncClientManager clientManager,
-        org.apache.thrift.protocol.TProtocolFactory protocolFactory
+          TAsyncClientManager clientManager,
+          TProtocolFactory protocolFactory
       ) {
         this.clientManager = clientManager;
         this.protocolFactory = protocolFactory;
       }
 
-      public AsyncClient getAsyncClient(org.apache.thrift.transport.TNonblockingTransport transport) {
+      public AsyncClient getAsyncClient(TNonblockingTransport transport) {
         return new AsyncClient(protocolFactory, clientManager, transport);
       }
     }
 
     public AsyncClient(
-      org.apache.thrift.protocol.TProtocolFactory protocolFactory,
-      org.apache.thrift.async.TAsyncClientManager clientManager,
-      org.apache.thrift.transport.TNonblockingTransport transport
+        TProtocolFactory protocolFactory,
+        TAsyncClientManager clientManager,
+        TNonblockingTransport transport
     ) {
       super(protocolFactory, clientManager, transport);
     }
 
     public void Log(
-      List<LogEntry> messages,
-      org.apache.thrift.async.AsyncMethodCallback<Log_call> resultHandler
-    ) throws org.apache.thrift.TException {
+        List<LogEntry> messages,
+        AsyncMethodCallback<Log_call> resultHandler
+    ) throws TException {
       checkReady();
       Log_call method_call = new Log_call(
-        messages,
-        resultHandler,
-        this,
-        ___protocolFactory,
-        ___transport
+          messages,
+          resultHandler,
+          this,
+          ___protocolFactory,
+          ___transport
       );
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
-    public static class Log_call extends org.apache.thrift.async.TAsyncMethodCall {
+    public static class Log_call extends TAsyncMethodCall {
       private List<LogEntry> messages;
 
       public Log_call(
-        List<LogEntry> messages,
-        org.apache.thrift.async.AsyncMethodCallback<Log_call> resultHandler,
-        org.apache.thrift.async.TAsyncClient client,
-        org.apache.thrift.protocol.TProtocolFactory protocolFactory,
-        org.apache.thrift.transport.TNonblockingTransport transport
-      ) throws org.apache.thrift.TException {
+          List<LogEntry> messages,
+          AsyncMethodCallback<Log_call> resultHandler,
+          TAsyncClient client,
+          TProtocolFactory protocolFactory,
+          TNonblockingTransport transport
+      ) throws TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.messages = messages;
       }
 
-      public void write_args(org.apache.thrift.protocol.TProtocol prot)
-        throws org.apache.thrift.TException {
+      public void write_args(TProtocol prot)
+          throws TException {
         prot.writeMessageBegin(
-          new org.apache.thrift.protocol.TMessage(
-            "Log",
-            org.apache.thrift.protocol.TMessageType.CALL,
-            0
-          )
+            new TMessage(
+                "Log",
+                TMessageType.CALL,
+                0
+            )
         );
         Log_args args = new Log_args();
         args.setMessages(messages);
@@ -169,15 +196,15 @@ public class scribe {
         prot.writeMessageEnd();
       }
 
-      public ResultCode getResult() throws org.apache.thrift.TException {
-        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+      public ResultCode getResult() throws TException {
+        if (getState() != TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
-        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(
-          getFrameBuffer().array()
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(
+            getFrameBuffer().array()
         );
-        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(
-          memoryTransport
+        TProtocol prot = client.getProtocolFactory().getProtocol(
+            memoryTransport
         );
         return (new Client(prot)).recv_Log();
       }
@@ -185,33 +212,33 @@ public class scribe {
 
   }
 
-  public static class Processor<I extends Iface> extends org.apache.thrift.TBaseProcessor<I>
-    implements org.apache.thrift.TProcessor {
+  public static class Processor<I extends Iface> extends TBaseProcessor<I>
+      implements TProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class.getName());
 
     public Processor(I iface) {
       super(
-        iface,
-        getProcessMap(new HashMap<String, org.apache.thrift.ProcessFunction<I, ? extends org.apache.thrift.TBase>>())
+          iface,
+          getProcessMap(new HashMap<String, ProcessFunction<I, ? extends TBase>>())
       );
     }
 
     protected Processor(
-      I iface,
-      Map<String, org.apache.thrift.ProcessFunction<I, ? extends org.apache.thrift.TBase>> processMap
+        I iface,
+        Map<String, ProcessFunction<I, ? extends TBase>> processMap
     ) {
       super(iface, getProcessMap(processMap));
     }
 
-    private static <I extends Iface> Map<String, org.apache.thrift.ProcessFunction<I, ? extends org.apache.thrift.TBase>> getProcessMap(
-      Map<String, org.apache.thrift.ProcessFunction<I, ? extends org.apache.thrift.TBase>> processMap
+    private static <I extends Iface> Map<String, ProcessFunction<I, ? extends TBase>> getProcessMap(
+        Map<String, ProcessFunction<I, ? extends TBase>> processMap
     ) {
       processMap.put("Log", new Log());
       return processMap;
     }
 
     private static class Log<I extends Iface>
-      extends org.apache.thrift.ProcessFunction<I, Log_args> {
+        extends ProcessFunction<I, Log_args> {
       public Log() {
         super("Log");
       }
@@ -220,7 +247,7 @@ public class scribe {
         return new Log_args();
       }
 
-      protected Log_result getResult(I iface, Log_args args) throws org.apache.thrift.TException {
+      protected Log_result getResult(I iface, Log_args args) throws TException {
         Log_result result = new Log_result();
         result.success = iface.Log(args.messages);
         return result;
@@ -229,20 +256,21 @@ public class scribe {
 
   }
 
-  public static class Log_args implements org.apache.thrift.TBase<Log_args, Log_args._Fields>,
-    java.io.Serializable,
-    Cloneable {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct(
-      "Log_args"
+  public static class Log_args implements TBase<Log_args, Log_args._Fields>,
+      java.io.Serializable,
+      Cloneable {
+    private static final TStruct STRUCT_DESC = new TStruct(
+        "Log_args"
     );
 
-    private static final org.apache.thrift.protocol.TField MESSAGES_FIELD_DESC = new org.apache.thrift.protocol.TField(
-      "messages",
-      org.apache.thrift.protocol.TType.LIST,
-      (short) 1
+    private static final TField MESSAGES_FIELD_DESC = new TField(
+        "messages",
+        TType.LIST,
+        (short) 1
     );
 
-    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes =
+        new HashMap<Class<? extends IScheme>, SchemeFactory>();
 
     static {
       schemes.put(StandardScheme.class, new Log_argsStandardSchemeFactory());
@@ -252,9 +280,10 @@ public class scribe {
     public List<LogEntry> messages; // required
 
     /**
-     * The set of fields this struct contains, along with convenience methods for finding and manipulating them.
+     * The set of fields this struct contains, along with convenience methods for finding and
+     * manipulating them.
      */
-    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+    public enum _Fields implements TFieldIdEnum {
       MESSAGES((short) 1, "messages");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -314,33 +343,33 @@ public class scribe {
     }
 
     // isset id assignments
-    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
 
     static {
-      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(
-        _Fields.class
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(
+          _Fields.class
       );
       tmpMap.put(
-        _Fields.MESSAGES, new org.apache.thrift.meta_data.FieldMetaData(
-        "messages", org.apache.thrift.TFieldRequirementType.DEFAULT,
-        new org.apache.thrift.meta_data.ListMetaData(
-          org.apache.thrift.protocol.TType.LIST,
-          new org.apache.thrift.meta_data.StructMetaData(
-            org.apache.thrift.protocol.TType.STRUCT,
-            LogEntry.class
+          _Fields.MESSAGES, new FieldMetaData(
+          "messages", TFieldRequirementType.DEFAULT,
+          new ListMetaData(
+              TType.LIST,
+              new StructMetaData(
+                  TType.STRUCT,
+                  LogEntry.class
+              )
           )
-        )
       )
       );
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Log_args.class, metaDataMap);
+      FieldMetaData.addStructMetaDataMap(Log_args.class, metaDataMap);
     }
 
     public Log_args() {
     }
 
     public Log_args(
-      List<LogEntry> messages
+        List<LogEntry> messages
     ) {
       this();
       this.messages = messages;
@@ -432,7 +461,8 @@ public class scribe {
     }
 
     /**
-     * Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+     * Returns true if field corresponding to fieldID is set (has been assigned a value) and
+     * false otherwise
      */
     public boolean isSet(_Fields field) {
       if (field == null) {
@@ -494,9 +524,9 @@ public class scribe {
         return lastComparison;
       }
       if (isSetMessages()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(
-          this.messages,
-          typedOther.messages
+        lastComparison = TBaseHelper.compareTo(
+            this.messages,
+            typedOther.messages
         );
         if (lastComparison != 0) {
           return lastComparison;
@@ -509,13 +539,13 @@ public class scribe {
       return _Fields.findByThriftId(fieldId);
     }
 
-    public void read(org.apache.thrift.protocol.TProtocol iprot)
-      throws org.apache.thrift.TException {
+    public void read(TProtocol iprot)
+        throws TException {
       schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
     }
 
-    public void write(org.apache.thrift.protocol.TProtocol oprot)
-      throws org.apache.thrift.TException {
+    public void write(TProtocol oprot)
+        throws TException {
       schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
     }
 
@@ -535,35 +565,35 @@ public class scribe {
       return sb.toString();
     }
 
-    public void validate() throws org.apache.thrift.TException {
+    public void validate() throws TException {
       // check for required fields
     }
 
     private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
       try {
         write(
-          new org.apache.thrift.protocol.TCompactProtocol(
-            new org.apache.thrift.transport.TIOStreamTransport(
-              out
+            new TCompactProtocol(
+                new TIOStreamTransport(
+                    out
+                )
             )
-          )
         );
-      } catch (org.apache.thrift.TException te) {
+      } catch (TException te) {
         throw new java.io.IOException(te);
       }
     }
 
     private void readObject(java.io.ObjectInputStream in)
-      throws java.io.IOException, ClassNotFoundException {
+        throws java.io.IOException, ClassNotFoundException {
       try {
         read(
-          new org.apache.thrift.protocol.TCompactProtocol(
-            new org.apache.thrift.transport.TIOStreamTransport(
-              in
+            new TCompactProtocol(
+                new TIOStreamTransport(
+                    in
+                )
             )
-          )
         );
-      } catch (org.apache.thrift.TException te) {
+      } catch (TException te) {
         throw new java.io.IOException(te);
       }
     }
@@ -576,20 +606,20 @@ public class scribe {
 
     private static class Log_argsStandardScheme extends StandardScheme<Log_args> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, Log_args struct)
-        throws org.apache.thrift.TException {
-        org.apache.thrift.protocol.TField schemeField;
+      public void read(TProtocol iprot, Log_args struct)
+          throws TException {
+        TField schemeField;
         iprot.readStructBegin();
         while (true) {
           schemeField = iprot.readFieldBegin();
-          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) {
+          if (schemeField.type == TType.STOP) {
             break;
           }
           switch (schemeField.id) {
             case 1: // MESSAGES
-              if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+              if (schemeField.type == TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list0 = iprot.readListBegin();
+                  TList _list0 = iprot.readListBegin();
                   struct.messages = new ArrayList<LogEntry>(_list0.size);
                   for (int _i1 = 0; _i1 < _list0.size; ++_i1) {
                     LogEntry _elem2; // required
@@ -601,22 +631,23 @@ public class scribe {
                 }
                 struct.setMessagesIsSet(true);
               } else {
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+                TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
             default:
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              TProtocolUtil.skip(iprot, schemeField.type);
           }
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
 
-        // check for required fields of primitive type, which can't be checked in the validate method
+        // check for required fields of primitive type, which can't be checked in the
+        // validate method
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, Log_args struct)
-        throws org.apache.thrift.TException {
+      public void write(TProtocol oprot, Log_args struct)
+          throws TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -624,10 +655,10 @@ public class scribe {
           oprot.writeFieldBegin(MESSAGES_FIELD_DESC);
           {
             oprot.writeListBegin(
-              new org.apache.thrift.protocol.TList(
-                org.apache.thrift.protocol.TType.STRUCT,
-                struct.messages.size()
-              )
+                new TList(
+                    TType.STRUCT,
+                    struct.messages.size()
+                )
             );
             for (LogEntry _iter3 : struct.messages) {
               _iter3.write(oprot);
@@ -651,8 +682,8 @@ public class scribe {
     private static class Log_argsTupleScheme extends TupleScheme<Log_args> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, Log_args struct)
-        throws org.apache.thrift.TException {
+      public void write(TProtocol prot, Log_args struct)
+          throws TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetMessages()) {
@@ -670,15 +701,15 @@ public class scribe {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, Log_args struct)
-        throws org.apache.thrift.TException {
+      public void read(TProtocol prot, Log_args struct)
+          throws TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list5 = new org.apache.thrift.protocol.TList(
-              org.apache.thrift.protocol.TType.STRUCT,
-              iprot.readI32()
+            TList _list5 = new TList(
+                TType.STRUCT,
+                iprot.readI32()
             );
             struct.messages = new ArrayList<LogEntry>(_list5.size);
             for (int _i6 = 0; _i6 < _list5.size; ++_i6) {
@@ -695,20 +726,21 @@ public class scribe {
 
   }
 
-  public static class Log_result implements org.apache.thrift.TBase<Log_result, Log_result._Fields>,
-    java.io.Serializable,
-    Cloneable {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct(
-      "Log_result"
+  public static class Log_result implements TBase<Log_result, Log_result._Fields>,
+      java.io.Serializable,
+      Cloneable {
+    private static final TStruct STRUCT_DESC = new TStruct(
+        "Log_result"
     );
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField(
-      "success",
-      org.apache.thrift.protocol.TType.I32,
-      (short) 0
+    private static final TField SUCCESS_FIELD_DESC = new TField(
+        "success",
+        TType.I32,
+        (short) 0
     );
 
-    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes =
+        new HashMap<Class<? extends IScheme>, SchemeFactory>();
 
     static {
       schemes.put(StandardScheme.class, new Log_resultStandardSchemeFactory());
@@ -721,9 +753,10 @@ public class scribe {
     public ResultCode success; // required
 
     /**
-     * The set of fields this struct contains, along with convenience methods for finding and manipulating them.
+     * The set of fields this struct contains, along with convenience methods for finding and
+     * manipulating them.
      */
-    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+    public enum _Fields implements TFieldIdEnum {
       /**
        * @see ResultCode
        */
@@ -786,30 +819,30 @@ public class scribe {
     }
 
     // isset id assignments
-    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
 
     static {
-      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(
-        _Fields.class
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(
+          _Fields.class
       );
       tmpMap.put(
-        _Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData(
-        "success", org.apache.thrift.TFieldRequirementType.DEFAULT,
-        new org.apache.thrift.meta_data.EnumMetaData(
-          org.apache.thrift.protocol.TType.ENUM,
-          ResultCode.class
-        )
+          _Fields.SUCCESS, new FieldMetaData(
+          "success", TFieldRequirementType.DEFAULT,
+          new EnumMetaData(
+              TType.ENUM,
+              ResultCode.class
+          )
       )
       );
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Log_result.class, metaDataMap);
+      FieldMetaData.addStructMetaDataMap(Log_result.class, metaDataMap);
     }
 
     public Log_result() {
     }
 
     public Log_result(
-      ResultCode success
+        ResultCode success
     ) {
       this();
       this.success = success;
@@ -888,7 +921,8 @@ public class scribe {
     }
 
     /**
-     * Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+     * Returns true if field corresponding to fieldID is set (has been assigned a value) and
+     * false otherwise
      */
     public boolean isSet(_Fields field) {
       if (field == null) {
@@ -950,7 +984,7 @@ public class scribe {
         return lastComparison;
       }
       if (isSetSuccess()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -962,13 +996,13 @@ public class scribe {
       return _Fields.findByThriftId(fieldId);
     }
 
-    public void read(org.apache.thrift.protocol.TProtocol iprot)
-      throws org.apache.thrift.TException {
+    public void read(TProtocol iprot)
+        throws TException {
       schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
     }
 
-    public void write(org.apache.thrift.protocol.TProtocol oprot)
-      throws org.apache.thrift.TException {
+    public void write(TProtocol oprot)
+        throws TException {
       schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
     }
 
@@ -988,35 +1022,35 @@ public class scribe {
       return sb.toString();
     }
 
-    public void validate() throws org.apache.thrift.TException {
+    public void validate() throws TException {
       // check for required fields
     }
 
     private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
       try {
         write(
-          new org.apache.thrift.protocol.TCompactProtocol(
-            new org.apache.thrift.transport.TIOStreamTransport(
-              out
+            new TCompactProtocol(
+                new TIOStreamTransport(
+                    out
+                )
             )
-          )
         );
-      } catch (org.apache.thrift.TException te) {
+      } catch (TException te) {
         throw new java.io.IOException(te);
       }
     }
 
     private void readObject(java.io.ObjectInputStream in)
-      throws java.io.IOException, ClassNotFoundException {
+        throws java.io.IOException, ClassNotFoundException {
       try {
         read(
-          new org.apache.thrift.protocol.TCompactProtocol(
-            new org.apache.thrift.transport.TIOStreamTransport(
-              in
+            new TCompactProtocol(
+                new TIOStreamTransport(
+                    in
+                )
             )
-          )
         );
-      } catch (org.apache.thrift.TException te) {
+      } catch (TException te) {
         throw new java.io.IOException(te);
       }
     }
@@ -1029,37 +1063,38 @@ public class scribe {
 
     private static class Log_resultStandardScheme extends StandardScheme<Log_result> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, Log_result struct)
-        throws org.apache.thrift.TException {
-        org.apache.thrift.protocol.TField schemeField;
+      public void read(TProtocol iprot, Log_result struct)
+          throws TException {
+        TField schemeField;
         iprot.readStructBegin();
         while (true) {
           schemeField = iprot.readFieldBegin();
-          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) {
+          if (schemeField.type == TType.STOP) {
             break;
           }
           switch (schemeField.id) {
             case 0: // SUCCESS
-              if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
+              if (schemeField.type == TType.I32) {
                 struct.success = ResultCode.findByValue(iprot.readI32());
                 struct.setSuccessIsSet(true);
               } else {
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+                TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
             default:
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              TProtocolUtil.skip(iprot, schemeField.type);
           }
           iprot.readFieldEnd();
         }
         iprot.readStructEnd();
 
-        // check for required fields of primitive type, which can't be checked in the validate method
+        // check for required fields of primitive type, which can't be checked in the
+        // validate method
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, Log_result struct)
-        throws org.apache.thrift.TException {
+      public void write(TProtocol oprot, Log_result struct)
+          throws TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -1083,8 +1118,8 @@ public class scribe {
     private static class Log_resultTupleScheme extends TupleScheme<Log_result> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, Log_result struct)
-        throws org.apache.thrift.TException {
+      public void write(TProtocol prot, Log_result struct)
+          throws TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetSuccess()) {
@@ -1097,8 +1132,8 @@ public class scribe {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, Log_result struct)
-        throws org.apache.thrift.TException {
+      public void read(TProtocol prot, Log_result struct)
+          throws TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {

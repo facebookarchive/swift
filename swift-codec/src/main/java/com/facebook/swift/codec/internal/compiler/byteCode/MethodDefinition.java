@@ -648,13 +648,27 @@ public class MethodDefinition {
     } else {
       instructionList.add(new InsnNode(ACONST_NULL));
     }
-    instructionList.add(new VarInsnNode(Type.getType(type.getType()).getOpcode(ISTORE), variable.getSlot()));
+
+    instructionList.add(
+        new VarInsnNode(
+            Type.getType(type.getType()).getOpcode(ISTORE),
+            variable.getSlot()
+        )
+    );
+
     return this;
   }
 
   public MethodDefinition loadVariable(LocalVariableDefinition variable) {
     ParameterizedType type = variable.getType();
-    instructionList.add(new VarInsnNode(Type.getType(type.getType()).getOpcode(ILOAD), variable.getSlot()));
+
+    instructionList.add(
+        new VarInsnNode(
+            Type.getType(type.getType()).getOpcode(ILOAD),
+            variable.getSlot()
+        )
+    );
+
     return this;
   }
 
@@ -667,7 +681,14 @@ public class MethodDefinition {
 
   public MethodDefinition storeVariable(LocalVariableDefinition variable) {
     ParameterizedType type = variable.getType();
-    instructionList.add(new VarInsnNode(Type.getType(type.getType()).getOpcode(ISTORE), variable.getSlot()));
+
+    instructionList.add(
+        new VarInsnNode(
+            Type.getType(type.getType()).getOpcode(ISTORE),
+            variable.getSlot()
+        )
+    );
+
     return this;
   }
 }

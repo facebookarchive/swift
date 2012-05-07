@@ -1,7 +1,7 @@
 /*
  * Copyright 2004-present Facebook. All Rights Reserved.
  */
-package com.facebook.swift.codec.builtin;
+package com.facebook.swift.codec.internal.builtin;
 
 import com.facebook.swift.codec.ThriftCodec;
 import com.facebook.swift.codec.internal.TProtocolReader;
@@ -9,22 +9,22 @@ import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.base.Preconditions;
 
-public class DoubleThriftCodec implements ThriftCodec<Double> {
+public class IntegerThriftCodec implements ThriftCodec<Integer> {
   @Override
   public ThriftType getType() {
-    return ThriftType.DOUBLE;
+    return ThriftType.I32;
   }
 
   @Override
-  public Double read(TProtocolReader protocol) throws Exception {
+  public Integer read(TProtocolReader protocol) throws Exception {
     Preconditions.checkNotNull(protocol, "protocol is null");
-    return protocol.readDouble();
+    return protocol.readI32();
   }
 
   @Override
-  public void write(Double value, TProtocolWriter protocol) throws Exception {
+  public void write(Integer value, TProtocolWriter protocol) throws Exception {
     Preconditions.checkNotNull(value, "value is null");
     Preconditions.checkNotNull(protocol, "protocol is null");
-    protocol.writeDouble(value);
+    protocol.writeI32(value);
   }
 }

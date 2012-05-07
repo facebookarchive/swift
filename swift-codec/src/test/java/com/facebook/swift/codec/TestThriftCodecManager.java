@@ -3,7 +3,7 @@
  */
 package com.facebook.swift.codec;
 
-import com.facebook.swift.codec.coercion.DefaultJavaCoercions;
+import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
 import com.facebook.swift.codec.internal.ThriftCodecFactory;
 import com.facebook.swift.codec.metadata.ThriftEnumMetadata;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;

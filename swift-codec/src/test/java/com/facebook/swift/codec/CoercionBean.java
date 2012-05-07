@@ -147,7 +147,9 @@ public class CoercionBean {
     if (Float.compare(that.primitiveFloat, primitiveFloat) != 0) {
       return false;
     }
-    if (booleanValue != null ? !booleanValue.equals(that.booleanValue) : that.booleanValue != null) {
+    if (booleanValue != null ?
+        !booleanValue.equals(that.booleanValue) :
+        that.booleanValue != null) {
       return false;
     }
     if (byteValue != null ? !byteValue.equals(that.byteValue) : that.byteValue != null) {
@@ -162,7 +164,9 @@ public class CoercionBean {
     if (floatValue != null ? !floatValue.equals(that.floatValue) : that.floatValue != null) {
       return false;
     }
-    if (integerValue != null ? !integerValue.equals(that.integerValue) : that.integerValue != null) {
+    if (integerValue != null ?
+        !integerValue.equals(that.integerValue) :
+        that.integerValue != null) {
       return false;
     }
     if (longValue != null ? !longValue.equals(that.longValue) : that.longValue != null) {

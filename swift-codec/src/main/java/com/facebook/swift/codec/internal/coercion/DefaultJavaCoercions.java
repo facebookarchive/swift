@@ -1,7 +1,7 @@
 /*
  * Copyright 2004-present Facebook. All Rights Reserved.
  */
-package com.facebook.swift.codec.coercion;
+package com.facebook.swift.codec.internal.coercion;
 
 import java.nio.ByteBuffer;
 

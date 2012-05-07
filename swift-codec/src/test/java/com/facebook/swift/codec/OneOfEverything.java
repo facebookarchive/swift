@@ -148,16 +148,22 @@ public class OneOfEverything {
     if (aShort != that.aShort) {
       return false;
     }
-    if (aBooleanKeyMap != null ? !aBooleanKeyMap.equals(that.aBooleanKeyMap) : that.aBooleanKeyMap != null) {
+    if (aBooleanKeyMap != null ?
+        !aBooleanKeyMap.equals(that.aBooleanKeyMap) :
+        that.aBooleanKeyMap != null) {
       return false;
     }
-    if (aBooleanList != null ? !aBooleanList.equals(that.aBooleanList) : that.aBooleanList != null) {
+    if (aBooleanList != null ?
+        !aBooleanList.equals(that.aBooleanList) :
+        that.aBooleanList != null) {
       return false;
     }
     if (aBooleanSet != null ? !aBooleanSet.equals(that.aBooleanSet) : that.aBooleanSet != null) {
       return false;
     }
-    if (aBooleanValueMap != null ? !aBooleanValueMap.equals(that.aBooleanValueMap) : that.aBooleanValueMap != null) {
+    if (aBooleanValueMap != null ?
+        !aBooleanValueMap.equals(that.aBooleanValueMap) :
+        that.aBooleanValueMap != null) {
       return false;
     }
     if (aByteKeyMap != null ? !aByteKeyMap.equals(that.aByteKeyMap) : that.aByteKeyMap != null) {
@@ -169,25 +175,37 @@ public class OneOfEverything {
     if (aByteSet != null ? !aByteSet.equals(that.aByteSet) : that.aByteSet != null) {
       return false;
     }
-    if (aByteValueMap != null ? !aByteValueMap.equals(that.aByteValueMap) : that.aByteValueMap != null) {
+    if (aByteValueMap != null ?
+        !aByteValueMap.equals(that.aByteValueMap) :
+        that.aByteValueMap != null) {
       return false;
     }
     if (aCustomEnum != that.aCustomEnum) {
       return false;
     }
-    if (aCustomEnumKeyMap != null ? !aCustomEnumKeyMap.equals(that.aCustomEnumKeyMap) : that.aCustomEnumKeyMap != null) {
+    if (aCustomEnumKeyMap != null ?
+        !aCustomEnumKeyMap.equals(that.aCustomEnumKeyMap) :
+        that.aCustomEnumKeyMap != null) {
       return false;
     }
-    if (aCustomEnumList != null ? !aCustomEnumList.equals(that.aCustomEnumList) : that.aCustomEnumList != null) {
+    if (aCustomEnumList != null ?
+        !aCustomEnumList.equals(that.aCustomEnumList) :
+        that.aCustomEnumList != null) {
       return false;
     }
-    if (aCustomEnumSet != null ? !aCustomEnumSet.equals(that.aCustomEnumSet) : that.aCustomEnumSet != null) {
+    if (aCustomEnumSet != null ?
+        !aCustomEnumSet.equals(that.aCustomEnumSet) :
+        that.aCustomEnumSet != null) {
       return false;
     }
-    if (aCustomEnumValueMap != null ? !aCustomEnumValueMap.equals(that.aCustomEnumValueMap) : that.aCustomEnumValueMap != null) {
+    if (aCustomEnumValueMap != null ?
+        !aCustomEnumValueMap.equals(that.aCustomEnumValueMap) :
+        that.aCustomEnumValueMap != null) {
       return false;
     }
-    if (aDoubleKeyMap != null ? !aDoubleKeyMap.equals(that.aDoubleKeyMap) : that.aDoubleKeyMap != null) {
+    if (aDoubleKeyMap != null ?
+        !aDoubleKeyMap.equals(that.aDoubleKeyMap) :
+        that.aDoubleKeyMap != null) {
       return false;
     }
     if (aDoubleList != null ? !aDoubleList.equals(that.aDoubleList) : that.aDoubleList != null) {
@@ -196,7 +214,9 @@ public class OneOfEverything {
     if (aDoubleSet != null ? !aDoubleSet.equals(that.aDoubleSet) : that.aDoubleSet != null) {
       return false;
     }
-    if (aDoubleValueMap != null ? !aDoubleValueMap.equals(that.aDoubleValueMap) : that.aDoubleValueMap != null) {
+    if (aDoubleValueMap != null ?
+        !aDoubleValueMap.equals(that.aDoubleValueMap) :
+        that.aDoubleValueMap != null) {
       return false;
     }
     if (aEnum != that.aEnum) {
@@ -211,19 +231,27 @@ public class OneOfEverything {
     if (aEnumSet != null ? !aEnumSet.equals(that.aEnumSet) : that.aEnumSet != null) {
       return false;
     }
-    if (aEnumValueMap != null ? !aEnumValueMap.equals(that.aEnumValueMap) : that.aEnumValueMap != null) {
+    if (aEnumValueMap != null ?
+        !aEnumValueMap.equals(that.aEnumValueMap) :
+        that.aEnumValueMap != null) {
       return false;
     }
-    if (aIntegerKeyMap != null ? !aIntegerKeyMap.equals(that.aIntegerKeyMap) : that.aIntegerKeyMap != null) {
+    if (aIntegerKeyMap != null ?
+        !aIntegerKeyMap.equals(that.aIntegerKeyMap) :
+        that.aIntegerKeyMap != null) {
       return false;
     }
-    if (aIntegerList != null ? !aIntegerList.equals(that.aIntegerList) : that.aIntegerList != null) {
+    if (aIntegerList != null ?
+        !aIntegerList.equals(that.aIntegerList) :
+        that.aIntegerList != null) {
       return false;
     }
     if (aIntegerSet != null ? !aIntegerSet.equals(that.aIntegerSet) : that.aIntegerSet != null) {
       return false;
     }
-    if (aIntegerValueMap != null ? !aIntegerValueMap.equals(that.aIntegerValueMap) : that.aIntegerValueMap != null) {
+    if (aIntegerValueMap != null ?
+        !aIntegerValueMap.equals(that.aIntegerValueMap) :
+        that.aIntegerValueMap != null) {
       return false;
     }
     if (aLongKeyMap != null ? !aLongKeyMap.equals(that.aLongKeyMap) : that.aLongKeyMap != null) {
@@ -235,16 +263,24 @@ public class OneOfEverything {
     if (aLongSet != null ? !aLongSet.equals(that.aLongSet) : that.aLongSet != null) {
       return false;
     }
-    if (aLongValueMap != null ? !aLongValueMap.equals(that.aLongValueMap) : that.aLongValueMap != null) {
+    if (aLongValueMap != null ?
+        !aLongValueMap.equals(that.aLongValueMap) :
+        that.aLongValueMap != null) {
       return false;
     }
-    if (aMapOfListToSet != null ? !aMapOfListToSet.equals(that.aMapOfListToSet) : that.aMapOfListToSet != null) {
+    if (aMapOfListToSet != null ?
+        !aMapOfListToSet.equals(that.aMapOfListToSet) :
+        that.aMapOfListToSet != null) {
       return false;
     }
-    if (aSetOfListsOfMaps != null ? !aSetOfListsOfMaps.equals(that.aSetOfListsOfMaps) : that.aSetOfListsOfMaps != null) {
+    if (aSetOfListsOfMaps != null ?
+        !aSetOfListsOfMaps.equals(that.aSetOfListsOfMaps) :
+        that.aSetOfListsOfMaps != null) {
       return false;
     }
-    if (aShortKeyMap != null ? !aShortKeyMap.equals(that.aShortKeyMap) : that.aShortKeyMap != null) {
+    if (aShortKeyMap != null ?
+        !aShortKeyMap.equals(that.aShortKeyMap) :
+        that.aShortKeyMap != null) {
       return false;
     }
     if (aShortList != null ? !aShortList.equals(that.aShortList) : that.aShortList != null) {
@@ -253,13 +289,17 @@ public class OneOfEverything {
     if (aShortSet != null ? !aShortSet.equals(that.aShortSet) : that.aShortSet != null) {
       return false;
     }
-    if (aShortValueMap != null ? !aShortValueMap.equals(that.aShortValueMap) : that.aShortValueMap != null) {
+    if (aShortValueMap != null ?
+        !aShortValueMap.equals(that.aShortValueMap) :
+        that.aShortValueMap != null) {
       return false;
     }
     if (aString != null ? !aString.equals(that.aString) : that.aString != null) {
       return false;
     }
-    if (aStringKeyMap != null ? !aStringKeyMap.equals(that.aStringKeyMap) : that.aStringKeyMap != null) {
+    if (aStringKeyMap != null ?
+        !aStringKeyMap.equals(that.aStringKeyMap) :
+        that.aStringKeyMap != null) {
       return false;
     }
     if (aStringList != null ? !aStringList.equals(that.aStringList) : that.aStringList != null) {
@@ -268,13 +308,17 @@ public class OneOfEverything {
     if (aStringSet != null ? !aStringSet.equals(that.aStringSet) : that.aStringSet != null) {
       return false;
     }
-    if (aStringValueMap != null ? !aStringValueMap.equals(that.aStringValueMap) : that.aStringValueMap != null) {
+    if (aStringValueMap != null ?
+        !aStringValueMap.equals(that.aStringValueMap) :
+        that.aStringValueMap != null) {
       return false;
     }
     if (aStruct != null ? !aStruct.equals(that.aStruct) : that.aStruct != null) {
       return false;
     }
-    if (aStructKeyMap != null ? !aStructKeyMap.equals(that.aStructKeyMap) : that.aStructKeyMap != null) {
+    if (aStructKeyMap != null ?
+        !aStructKeyMap.equals(that.aStructKeyMap) :
+        that.aStructKeyMap != null) {
       return false;
     }
     if (aStructList != null ? !aStructList.equals(that.aStructList) : that.aStructList != null) {
@@ -283,7 +327,9 @@ public class OneOfEverything {
     if (aStructSet != null ? !aStructSet.equals(that.aStructSet) : that.aStructSet != null) {
       return false;
     }
-    if (aStructValueMap != null ? !aStructValueMap.equals(that.aStructValueMap) : that.aStructValueMap != null) {
+    if (aStructValueMap != null ?
+        !aStructValueMap.equals(that.aStructValueMap) :
+        that.aStructValueMap != null) {
       return false;
     }
 

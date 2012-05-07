@@ -24,7 +24,8 @@ public class TypeParameterUtils {
    * See the License for the specific language governing permissions and
    * limitations under the License.
    */
-  // http://geronimo.apache.org/maven/xbean/3.6/xbean-reflect/apidocs/src-html/org/apache/xbean/recipe/RecipeHelper.html
+  // http://geronimo.apache.org/maven/xbean/3.6/xbean-reflect/apidocs/src-html/
+  // org/apache/xbean/recipe/RecipeHelper.html
   public static Type[] getTypeParameters(Class<?> desiredType, Type type) {
     if (type instanceof Class) {
       Class<?> rawClass = (Class<?>) type;

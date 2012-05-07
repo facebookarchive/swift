@@ -84,7 +84,9 @@ public class ThriftServiceProcessor implements TProcessor {
         reader.readStructBegin();
         while (reader.nextField()) {
           short fieldId = reader.getFieldId();
-          ThriftCodec<?> codec = codecManager.getCodec(method.getGenericParameterTypes()[fieldId - 1]);
+          ThriftCodec<?> codec = codecManager.getCodec(
+              method.getGenericParameterTypes()[fieldId - 1]
+          );
           args[fieldId - 1] = reader.readField(codec);
         }
         reader.readStructEnd();

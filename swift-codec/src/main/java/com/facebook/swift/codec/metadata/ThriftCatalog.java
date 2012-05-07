@@ -4,9 +4,9 @@
 package com.facebook.swift.codec.metadata;
 
 import com.facebook.swift.codec.ThriftProtocolType;
-import com.facebook.swift.codec.coercion.DefaultJavaCoercions;
-import com.facebook.swift.codec.coercion.FromThrift;
-import com.facebook.swift.codec.coercion.ToThrift;
+import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
+import com.facebook.swift.codec.internal.coercion.FromThrift;
+import com.facebook.swift.codec.internal.coercion.ToThrift;
 import com.facebook.swift.codec.metadata.Problems.Monitor;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;

@@ -3,9 +3,9 @@
  */
 package com.facebook.swift.codec;
 
-import com.facebook.swift.codec.builtin.BooleanThriftCodec;
-import com.facebook.swift.codec.builtin.SetThriftCodec;
-import com.facebook.swift.codec.coercion.DefaultJavaCoercions;
+import com.facebook.swift.codec.internal.builtin.BooleanThriftCodec;
+import com.facebook.swift.codec.internal.builtin.SetThriftCodec;
+import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
 import com.facebook.swift.codec.internal.TProtocolReader;
 import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftCatalog;

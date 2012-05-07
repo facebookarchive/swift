@@ -117,7 +117,8 @@ public class ThriftStructMetadataBuilder<T> {
       for (Constructor<?> constructor : structClass.getConstructors()) {
         if (constructor.isAnnotationPresent(ThriftConstructor.class)) {
           problems.addWarning(
-              "Struct class [%s] has a builder class, but constructor %s annotated with @ThriftConstructor",
+              "Struct class [%s] has a builder class, but constructor %s annotated with " +
+                  "@ThriftConstructor",
               structClass.getName(),
               constructor
           );
@@ -369,7 +370,9 @@ public class ThriftStructMetadataBuilder<T> {
     );
   }
 
-  private List<ThriftMethodInjection> toThriftMethodInjections(List<MethodInjection> methodInjections) {
+  private List<ThriftMethodInjection> toThriftMethodInjections(
+      List<MethodInjection> methodInjections) {
+
     return Lists.transform(
         methodInjections, new Function<MethodInjection, ThriftMethodInjection>() {
       @Override
@@ -383,7 +386,9 @@ public class ThriftStructMetadataBuilder<T> {
     );
   }
 
-  private List<ThriftParameterInjection> toThriftParameterInjections(List<ParameterInjection> parameters) {
+  private List<ThriftParameterInjection> toThriftParameterInjections(
+      List<ParameterInjection> parameters) {
+
     return Lists.transform(
         parameters, new Function<ParameterInjection, ThriftParameterInjection>() {
       @Override
@@ -430,7 +435,8 @@ public class ThriftStructMetadataBuilder<T> {
 
     if (builderMethodInjections.isEmpty()) {
       problems.addError(
-          "Struct builder class [%s] does not have a public builder method annotated with @ThriftConstructor",
+          "Struct builder class [%s] does not have a public builder method annotated with " +
+              "@ThriftConstructor",
           builderClass.getName()
       );
     }
