@@ -371,7 +371,8 @@ public class ThriftStructMetadataBuilder<T> {
   }
 
   private List<ThriftMethodInjection> toThriftMethodInjections(
-      List<MethodInjection> methodInjections) {
+      List<MethodInjection> methodInjections
+  ) {
 
     return Lists.transform(
         methodInjections, new Function<MethodInjection, ThriftMethodInjection>() {
@@ -387,7 +388,8 @@ public class ThriftStructMetadataBuilder<T> {
   }
 
   private List<ThriftParameterInjection> toThriftParameterInjections(
-      List<ParameterInjection> parameters) {
+      List<ParameterInjection> parameters
+  ) {
 
     return Lists.transform(
         parameters, new Function<ParameterInjection, ThriftParameterInjection>() {

@@ -42,9 +42,10 @@ public class ThriftFieldExtractor implements ThriftExtraction {
     sb.append("ThriftFieldExtractor");
     sb.append("{id=").append(id);
     sb.append(", name=").append(name);
-    sb.append(", field=").append(field.getDeclaringClass().getSimpleName()).append(".").append(
-      field.getName()
-    );
+    sb.append(", field=")
+        .append(field.getDeclaringClass().getSimpleName())
+        .append(".")
+        .append(field.getName());
     sb.append('}');
     return sb.toString();
   }

@@ -20,9 +20,11 @@ public class ThriftServiceMetadata {
   public ThriftServiceMetadata(Class<?> serviceClass, ThriftCatalog catalog) {
     Preconditions.checkNotNull(serviceClass, "serviceClass is null");
     ThriftService thriftService = serviceClass.getAnnotation(ThriftService.class);
-    Preconditions.checkArgument(thriftService != null,
+    Preconditions.checkArgument(
+        thriftService != null,
         "Service class %s is not annotated with @ThriftService",
-        serviceClass.getName());
+        serviceClass.getName()
+    );
 
     if (thriftService.value().length() == 0) {
       name = serviceClass.getName();

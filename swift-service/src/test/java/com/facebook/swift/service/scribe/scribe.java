@@ -85,7 +85,7 @@ public class scribe {
         return new Client(prot);
       }
 
-      public Client getClient( TProtocol iprot, TProtocol oprot) {
+      public Client getClient(TProtocol iprot, TProtocol oprot) {
         return new Client(iprot, oprot);
       }
     }
@@ -94,7 +94,7 @@ public class scribe {
       super(prot, prot);
     }
 
-    public Client( TProtocol iprot, TProtocol oprot) {
+    public Client(TProtocol iprot, TProtocol oprot) {
       super(iprot, oprot);
     }
 

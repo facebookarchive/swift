@@ -3,8 +3,8 @@
  */
 package com.facebook.swift.codec.internal;
 
-import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.codec.ThriftCodec;
+import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
 
 public interface ThriftCodecFactory {

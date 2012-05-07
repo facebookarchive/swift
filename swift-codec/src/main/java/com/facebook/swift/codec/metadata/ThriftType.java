@@ -190,7 +190,8 @@ public class ThriftType {
             protocolType != ThriftProtocolType.SET &&
             protocolType != ThriftProtocolType.LIST &&
             protocolType != ThriftProtocolType.MAP,
-        "Coercion is not supported for %s", protocolType );
+        "Coercion is not supported for %s", protocolType
+    );
     return new ThriftType(this, javaType);
   }
 

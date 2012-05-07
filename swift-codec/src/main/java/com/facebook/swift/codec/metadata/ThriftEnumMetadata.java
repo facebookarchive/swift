@@ -22,17 +22,20 @@ public class ThriftEnumMetadata<T extends Enum<T>> {
     Method enumValueMethod = null;
     for (Method method : enumClass.getMethods()) {
       if (method.isAnnotationPresent(ThriftEnumValue.class)) {
-        Preconditions.checkArgument(Modifier.isPublic(method.getModifiers()),
+        Preconditions.checkArgument(
+            Modifier.isPublic(method.getModifiers()),
             "Enum class %s @ThriftEnumValue method is not public: %s",
             enumClass.getName(),
             method
         );
-        Preconditions.checkArgument(!Modifier.isStatic(method.getModifiers()),
+        Preconditions.checkArgument(
+            !Modifier.isStatic(method.getModifiers()),
             "Enum class %s @ThriftEnumValue method is static: %s",
             enumClass.getName(),
             method
         );
-        Preconditions.checkArgument(method.getTypeParameters().length == 0,
+        Preconditions.checkArgument(
+            method.getTypeParameters().length == 0,
             "Enum class %s @ThriftEnumValue method has parameters: %s",
             enumClass.getName(),
             method
@@ -86,7 +89,7 @@ public class ThriftEnumMetadata<T extends Enum<T>> {
     return enumClass;
   }
 
-  public boolean hasExplicitThriftValue()  {
+  public boolean hasExplicitThriftValue() {
     return byEnumValue != null;
   }
 

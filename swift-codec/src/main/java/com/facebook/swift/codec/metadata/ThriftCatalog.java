@@ -118,10 +118,12 @@ public class ThriftCatalog {
         toThriftCoercions.keySet(),
         fromThriftCoercions.keySet()
     );
-    Preconditions.checkArgument(difference.isEmpty(),
+    Preconditions.checkArgument(
+        difference.isEmpty(),
         "Coercion class %s does not have matched @ToThrift and @FromThrift methods for types %s",
         coercionsClass.getName(),
-        difference);
+        difference
+    );
 
     // add the coercions
     Map<Type, TypeCoercion> coercions = new HashMap<>();
@@ -158,8 +160,10 @@ public class ThriftCatalog {
     if (coercion != null) {
       return coercion.getThriftType();
     }
-    throw new RuntimeException("Type is not annotated with @ThriftStruct or an automatically " +
-        "supported type: " + javaType);
+    throw new RuntimeException(
+        "Type is not annotated with @ThriftStruct or an automatically " +
+            "supported type: " + javaType
+    );
   }
 
   /**
@@ -193,27 +197,27 @@ public class ThriftCatalog {
       case MAP: {
         Type[] types = getTypeParameters(Map.class, javaType);
         checkArgument(
-          types != null && types.length == 2,
-          "Unable to extract Map key and value types from %s",
-          javaType
+            types != null && types.length == 2,
+            "Unable to extract Map key and value types from %s",
+            javaType
         );
         return map(getThriftType(types[0]), getThriftType(types[1]));
       }
       case SET: {
         Type[] types = getTypeParameters(Set.class, javaType);
         checkArgument(
-          types != null && types.length == 1,
-          "Unable to extract Set element type from %s",
-          javaType
+            types != null && types.length == 1,
+            "Unable to extract Set element type from %s",
+            javaType
         );
         return set(getThriftType(types[0]));
       }
       case LIST: {
         Type[] types = getTypeParameters(Iterable.class, javaType);
         checkArgument(
-          types != null && types.length == 1,
-          "Unable to extract List element type from %s",
-          javaType
+            types != null && types.length == 1,
+            "Unable to extract List element type from %s",
+            javaType
         );
         return list(getThriftType(types[0]));
       }
@@ -236,7 +240,7 @@ public class ThriftCatalog {
   public <T extends Enum<T>> ThriftEnumMetadata<T> getThriftEnumMetadata(Class<?> enumClass) {
     ThriftEnumMetadata<?> enumMetadata = enums.get(enumClass);
     if (enumMetadata == null) {
-      enumMetadata = new ThriftEnumMetadata<>((Class<T>)enumClass);
+      enumMetadata = new ThriftEnumMetadata<>((Class<T>) enumClass);
       enums.put(enumClass, enumMetadata);
     }
     return (ThriftEnumMetadata<T>) enumMetadata;
@@ -252,14 +256,14 @@ public class ThriftCatalog {
     Deque<Class<?>> stack = this.stack.get();
     if (stack.contains(structClass)) {
       String path = Joiner.on("->").join(
-        transform(
-          concat(stack, ImmutableList.of(structClass)), new Function<Class<?>, Object>() {
-          @Override
-          public Object apply(@Nullable Class<?> input) {
-            return input.getName();
+          transform(
+              concat(stack, ImmutableList.of(structClass)), new Function<Class<?>, Object>() {
+            @Override
+            public Object apply(@Nullable Class<?> input) {
+              return input.getName();
+            }
           }
-        }
-        )
+          )
       );
       throw new IllegalArgumentException("Circular references are not allowed: " + path);
     }
@@ -269,8 +273,8 @@ public class ThriftCatalog {
       ThriftStructMetadata<T> structMetadata = (ThriftStructMetadata<T>) structs.get(structClass);
       if (structMetadata == null) {
         ThriftStructMetadataBuilder<T> builder = new ThriftStructMetadataBuilder<>(
-          this,
-          structClass
+            this,
+            structClass
         );
         structMetadata = builder.build();
         structs.put(structClass, structMetadata);
@@ -279,10 +283,10 @@ public class ThriftCatalog {
     } finally {
       Class<?> top = stack.pop();
       checkState(
-        structClass.equals(top),
-        "ThriftCatalog circularity detection stack is corrupt: expected %s, but got %s",
-        structClass,
-        top
+          structClass.equals(top),
+          "ThriftCatalog circularity detection stack is corrupt: expected %s, but got %s",
+          structClass,
+          top
       );
     }
   }

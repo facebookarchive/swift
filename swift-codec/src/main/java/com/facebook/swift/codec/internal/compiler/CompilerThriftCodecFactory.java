@@ -8,13 +8,13 @@ import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.codec.ThriftProtocolType;
 import com.facebook.swift.codec.internal.TProtocolReader;
 import com.facebook.swift.codec.internal.TProtocolWriter;
+import com.facebook.swift.codec.internal.ThriftCodecFactory;
 import com.facebook.swift.codec.internal.compiler.byteCode.CaseStatement;
 import com.facebook.swift.codec.internal.compiler.byteCode.ClassDefinition;
 import com.facebook.swift.codec.internal.compiler.byteCode.FieldDefinition;
 import com.facebook.swift.codec.internal.compiler.byteCode.MethodDefinition;
 import com.facebook.swift.codec.internal.compiler.byteCode.NamedParameterDefinition;
 import com.facebook.swift.codec.internal.compiler.byteCode.ParameterizedType;
-import com.facebook.swift.codec.internal.ThriftCodecFactory;
 import com.facebook.swift.codec.metadata.ThriftConstructorInjection;
 import com.facebook.swift.codec.metadata.ThriftExtraction;
 import com.facebook.swift.codec.metadata.ThriftFieldExtractor;
@@ -41,7 +41,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import static com.facebook.swift.codec.ThriftProtocolType.*;
+import static com.facebook.swift.codec.ThriftProtocolType.ENUM;
+import static com.facebook.swift.codec.ThriftProtocolType.LIST;
+import static com.facebook.swift.codec.ThriftProtocolType.MAP;
+import static com.facebook.swift.codec.ThriftProtocolType.SET;
+import static com.facebook.swift.codec.ThriftProtocolType.STRUCT;
 import static com.facebook.swift.codec.internal.compiler.byteCode.Access.BRIDGE;
 import static com.facebook.swift.codec.internal.compiler.byteCode.Access.FINAL;
 import static com.facebook.swift.codec.internal.compiler.byteCode.Access.PRIVATE;
@@ -515,7 +519,7 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
         ThriftExtraction extraction = field.getExtraction();
         if (extraction instanceof ThriftFieldExtractor) {
           ThriftFieldExtractor fieldExtractor = (ThriftFieldExtractor) extraction;
-          write.getField( fieldExtractor.getField());
+          write.getField(fieldExtractor.getField());
         } else if (extraction instanceof ThriftMethodExtractor) {
           ThriftMethodExtractor methodExtractor = (ThriftMethodExtractor) extraction;
           write.invokeVirtual(methodExtractor.getMethod());
@@ -834,7 +838,7 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
       case STRING:
       case STRUCT:
       case ENUM:
-        return type((Class<?>)type.getJavaType());
+        return type((Class<?>) type.getJavaType());
       case MAP:
         return type(
             Map.class,

@@ -44,10 +44,13 @@ import static org.objectweb.asm.Opcodes.ACONST_NULL;
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ARETURN;
 import static org.objectweb.asm.Opcodes.CHECKCAST;
+import static org.objectweb.asm.Opcodes.DCONST_0;
 import static org.objectweb.asm.Opcodes.DUP;
+import static org.objectweb.asm.Opcodes.FCONST_0;
 import static org.objectweb.asm.Opcodes.GETFIELD;
+import static org.objectweb.asm.Opcodes.GETSTATIC;
 import static org.objectweb.asm.Opcodes.GOTO;
-import static org.objectweb.asm.Opcodes.*;
+import static org.objectweb.asm.Opcodes.ICONST_0;
 import static org.objectweb.asm.Opcodes.ICONST_1;
 import static org.objectweb.asm.Opcodes.ICONST_2;
 import static org.objectweb.asm.Opcodes.ICONST_3;
@@ -55,14 +58,20 @@ import static org.objectweb.asm.Opcodes.ICONST_4;
 import static org.objectweb.asm.Opcodes.ICONST_5;
 import static org.objectweb.asm.Opcodes.ICONST_M1;
 import static org.objectweb.asm.Opcodes.IFEQ;
+import static org.objectweb.asm.Opcodes.IFNONNULL;
+import static org.objectweb.asm.Opcodes.IFNULL;
 import static org.objectweb.asm.Opcodes.ILOAD;
 import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
+import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.ISTORE;
+import static org.objectweb.asm.Opcodes.LCONST_0;
 import static org.objectweb.asm.Opcodes.NEW;
+import static org.objectweb.asm.Opcodes.POP;
 import static org.objectweb.asm.Opcodes.PUTFIELD;
 import static org.objectweb.asm.Opcodes.PUTSTATIC;
 import static org.objectweb.asm.Opcodes.RETURN;
+import static org.objectweb.asm.Opcodes.SWAP;
 
 public class MethodDefinition {
   private final EnumSet<Access> access;
@@ -78,19 +87,19 @@ public class MethodDefinition {
   private int nextSlot;
 
   public MethodDefinition(
-    EnumSet<Access> access,
-    String name,
-    ParameterizedType returnType,
-    NamedParameterDefinition... parameters
+      EnumSet<Access> access,
+      String name,
+      ParameterizedType returnType,
+      NamedParameterDefinition... parameters
   ) {
     this(access, name, returnType, ImmutableList.copyOf(parameters));
   }
 
   public MethodDefinition(
-    EnumSet<Access> access,
-    String name,
-    ParameterizedType returnType,
-    List<NamedParameterDefinition> parameters
+      EnumSet<Access> access,
+      String name,
+      ParameterizedType returnType,
+      List<NamedParameterDefinition> parameters
   ) {
     this.access = access;
     this.name = name;
@@ -103,8 +112,8 @@ public class MethodDefinition {
 
     if (!access.contains(STATIC)) {
       localVariables.put(
-        "this",
-        new LocalVariableDefinition("this", 0, type(Object.class))
+          "this",
+          new LocalVariableDefinition("this", 0, type(Object.class))
       );
       nextSlot++;
     }
@@ -115,8 +124,8 @@ public class MethodDefinition {
         parameterName = "arg" + argId;
       }
       localVariables.put(
-        parameterName,
-        new LocalVariableDefinition(parameterName, localVariables.size(), parameter.getType())
+          parameterName,
+          new LocalVariableDefinition(parameterName, localVariables.size(), parameter.getType())
       );
       argId++;
       nextSlot += Type.getType(parameter.getType().getType()).getSize();
@@ -134,9 +143,9 @@ public class MethodDefinition {
   ) {
     Preconditions.checkNotNull(name, "name is null");
     checkArgument(
-      !localVariables.containsKey(name),
-      "There is already a local variable named %s",
-      name
+        !localVariables.containsKey(name),
+        "There is already a local variable named %s",
+        name
     );
 
     LocalVariableDefinition variable = new LocalVariableDefinition(name, nextSlot, type);
@@ -230,21 +239,21 @@ public class MethodDefinition {
 
   public static String methodDescription(Class<?> returnType, List<Class<?>> parameterTypes) {
     return methodDescription(
-      type(returnType),
-      Lists.transform(parameterTypes, toParameterizedType())
+        type(returnType),
+        Lists.transform(parameterTypes, toParameterizedType())
     );
   }
 
   public static String methodDescription(
-    ParameterizedType returnType,
-    ParameterizedType... parameterTypes
+      ParameterizedType returnType,
+      ParameterizedType... parameterTypes
   ) {
     return methodDescription(returnType, ImmutableList.copyOf(parameterTypes));
   }
 
   public static String methodDescription(
-    ParameterizedType returnType,
-    List<ParameterizedType> parameterTypes
+      ParameterizedType returnType,
+      List<ParameterizedType> parameterTypes
   ) {
     StringBuilder sb = new StringBuilder();
     sb.append("(");
@@ -255,15 +264,15 @@ public class MethodDefinition {
   }
 
   public static String genericMethodSignature(
-    ParameterizedType returnType,
-    ParameterizedType... parameterTypes
+      ParameterizedType returnType,
+      ParameterizedType... parameterTypes
   ) {
     return genericMethodSignature(returnType, ImmutableList.copyOf(parameterTypes));
   }
 
   public static String genericMethodSignature(
-    ParameterizedType returnType,
-    List<ParameterizedType> parameterTypes
+      ParameterizedType returnType,
+      List<ParameterizedType> parameterTypes
   ) {
     StringBuilder sb = new StringBuilder();
     sb.append("(");
@@ -307,26 +316,26 @@ public class MethodDefinition {
   }
 
   public MethodDefinition invokeConstructor(
-    ParameterizedType type,
-    ParameterizedType... parameterTypes
+      ParameterizedType type,
+      ParameterizedType... parameterTypes
   ) {
     invokeConstructor(type, ImmutableList.copyOf(parameterTypes));
     return this;
   }
 
   public MethodDefinition invokeConstructor(
-    ParameterizedType type,
-    List<ParameterizedType> parameterTypes
+      ParameterizedType type,
+      List<ParameterizedType> parameterTypes
   ) {
     invokeSpecial(type, "<init>", type(void.class), parameterTypes);
     return this;
   }
 
   public MethodDefinition invokeSpecial(
-    ParameterizedType type,
-    String name,
-    ParameterizedType returnType,
-    List<ParameterizedType> parameterTypes
+      ParameterizedType type,
+      String name,
+      ParameterizedType returnType,
+      List<ParameterizedType> parameterTypes
   ) {
     instructionList.add(
         new MethodInsnNode(
@@ -364,10 +373,10 @@ public class MethodDefinition {
   }
 
   public MethodDefinition invokeVirtual(
-    Class<?> type,
-    String name,
-    Class<?> returnType,
-    Class<?>... parameterTypes
+      Class<?> type,
+      String name,
+      Class<?> returnType,
+      Class<?>... parameterTypes
   ) {
     instructionList.add(
         new MethodInsnNode(
@@ -381,10 +390,10 @@ public class MethodDefinition {
   }
 
   public MethodDefinition invokeVirtual(
-    ParameterizedType type,
-    String name,
-    ParameterizedType returnType,
-    ParameterizedType... parameterTypes
+      ParameterizedType type,
+      String name,
+      ParameterizedType returnType,
+      ParameterizedType... parameterTypes
   ) {
     instructionList.add(
         new MethodInsnNode(
@@ -452,9 +461,9 @@ public class MethodDefinition {
   }
 
   public MethodDefinition getField(
-    ParameterizedType target,
-    String fieldName,
-    ParameterizedType fieldType
+      ParameterizedType target,
+      String fieldName,
+      ParameterizedType fieldType
   ) {
     instructionList.add(
         new FieldInsnNode(
@@ -474,9 +483,9 @@ public class MethodDefinition {
   }
 
   public MethodDefinition getStaticField(
-    ParameterizedType target,
-    String fieldName,
-    ParameterizedType fieldType
+      ParameterizedType target,
+      String fieldName,
+      ParameterizedType fieldType
   ) {
     instructionList.add(
         new FieldInsnNode(
@@ -496,9 +505,9 @@ public class MethodDefinition {
   }
 
   public MethodDefinition putStaticField(
-    ParameterizedType target,
-    String fieldName,
-    ParameterizedType fieldType
+      ParameterizedType target,
+      String fieldName,
+      ParameterizedType fieldType
   ) {
     instructionList.add(
         new FieldInsnNode(
@@ -528,28 +537,28 @@ public class MethodDefinition {
     checkArgument(!field.getAccess().contains(STATIC), "Field is static: %s", field);
 
     instructionList.add(
-      new FieldInsnNode(
-        PUTFIELD,
-        target.getClassName(),
-        field.getName(),
-        field.getType().getType()
-      )
+        new FieldInsnNode(
+            PUTFIELD,
+            target.getClassName(),
+            field.getName(),
+            field.getType().getType()
+        )
     );
     return this;
   }
 
   public MethodDefinition putField(
-    ParameterizedType target,
-    String fieldName,
-    ParameterizedType fieldType
+      ParameterizedType target,
+      String fieldName,
+      ParameterizedType fieldType
   ) {
     instructionList.add(
-      new FieldInsnNode(
-        PUTFIELD,
-        target.getClassName(),
-        fieldName,
-        fieldType.getType()
-      )
+        new FieldInsnNode(
+            PUTFIELD,
+            target.getClassName(),
+            fieldName,
+            fieldType.getType()
+        )
     );
     return this;
   }

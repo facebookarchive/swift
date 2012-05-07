@@ -14,8 +14,8 @@ public class BonkBuilder {
   private final int type;
 
   public BonkBuilder(
-    String message,
-    int type
+      String message,
+      int type
   ) {
     this.message = message;
     this.type = type;

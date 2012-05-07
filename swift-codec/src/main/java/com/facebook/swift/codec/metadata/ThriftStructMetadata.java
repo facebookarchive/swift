@@ -28,32 +28,34 @@ public class ThriftStructMetadata<T> {
   private final List<ThriftMethodInjection> methodInjections;
 
   public ThriftStructMetadata(
-    String structName,
-    Class<T> structClass,
-    Class<?> builderClass,
-    ThriftMethodInjection builderMethod,
-    List<ThriftFieldMetadata> fields,
-    ThriftConstructorInjection constructor,
-    List<ThriftMethodInjection> methodInjections
+      String structName,
+      Class<T> structClass,
+      Class<?> builderClass,
+      ThriftMethodInjection builderMethod,
+      List<ThriftFieldMetadata> fields,
+      ThriftConstructorInjection constructor,
+      List<ThriftMethodInjection> methodInjections
   ) {
     this.builderClass = builderClass;
     this.builderMethod = builderMethod;
     this.structName = checkNotNull(structName, "structName is null");
     this.structClass = checkNotNull(structClass, "structClass is null");
     this.constructor = checkNotNull(constructor, "constructor is null");
-    this.fields = ImmutableSortedMap.copyOf(Maps.uniqueIndex(
-      checkNotNull(fields, "fields is null"), new Function<ThriftFieldMetadata, Short>() {
-      @Override
-      public Short apply(@Nullable ThriftFieldMetadata input) {
-        return input.getId();
-      }
-    }
-    ));
+    this.fields = ImmutableSortedMap.copyOf(
+        Maps.uniqueIndex(
+            checkNotNull(fields, "fields is null"), new Function<ThriftFieldMetadata, Short>() {
+          @Override
+          public Short apply(@Nullable ThriftFieldMetadata input) {
+            return input.getId();
+          }
+        }
+        )
+    );
     this.methodInjections = ImmutableList.copyOf(
-      checkNotNull(
-        methodInjections,
-        "methodInjections is null"
-      )
+        checkNotNull(
+            methodInjections,
+            "methodInjections is null"
+        )
     );
   }
 

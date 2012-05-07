@@ -22,19 +22,21 @@ public interface ThriftCodec<T> {
 
   /**
    * Reads a value from supplied Thrift protocol reader.
+   *
    * @param protocol the protocol to read from
    * @return the value; not null
    * @throws Exception if any problems occurred when reading or coercing  the value
    */
   public T read(TProtocolReader protocol)
-    throws Exception;
+      throws Exception;
 
   /**
    * Writes a value to the supplied Thrift protocol writer.
-   * @param value the value to write; not null
-   * @param protocol  the protocol to write to
+   *
+   * @param value    the value to write; not null
+   * @param protocol the protocol to write to
    * @throws Exception if any problems occurred when writing or coercing  the value
    */
   public void write(T value, TProtocolWriter protocol)
-    throws Exception;
+      throws Exception;
 }

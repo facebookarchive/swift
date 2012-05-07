@@ -36,11 +36,11 @@ public class FieldDefinition {
 
   public FieldNode getFieldNode() {
     return new FieldNode(
-      toAccessModifier(access),
-      name,
-      type.getType(),
-      type.getGenericSignature(),
-      null
+        toAccessModifier(access),
+        name,
+        type.getType(),
+        type.getGenericSignature(),
+        null
     );
   }
 

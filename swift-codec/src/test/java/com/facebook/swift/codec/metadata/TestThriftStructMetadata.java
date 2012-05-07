@@ -51,10 +51,10 @@ public class TestThriftStructMetadata {
   }
 
   private void verifyParameterInjection(
-    ThriftStructMetadata<?> metadata,
-    int id,
-    String name,
-    int parameterIndex
+      ThriftStructMetadata<?> metadata,
+      int id,
+      String name,
+      int parameterIndex
   ) {
     ThriftInjection injection = metadata.getField(id).getInjections().get(0);
     assertThat(injection).isNotNull().isInstanceOf(ThriftParameterInjection.class);
@@ -65,10 +65,10 @@ public class TestThriftStructMetadata {
   }
 
   private void verifyMethodExtraction(
-    ThriftStructMetadata<?> metadata,
-    int id,
-    String name,
-    String methodName
+      ThriftStructMetadata<?> metadata,
+      int id,
+      String name,
+      String methodName
   ) {
     ThriftExtraction extraction = metadata.getField(id).getExtraction();
     assertThat(extraction).isNotNull().isInstanceOf(ThriftMethodExtractor.class);
@@ -105,14 +105,14 @@ public class TestThriftStructMetadata {
   }
 
   private <T> ThriftStructMetadata<T> testMetadataBuild(
-    Class<T> structClass,
-    int expectedConstructorParameters,
-    int expectedMethodInjections
+      Class<T> structClass,
+      int expectedConstructorParameters,
+      int expectedMethodInjections
   ) {
     ThriftCatalog catalog = new ThriftCatalog();
     ThriftStructMetadataBuilder<T> builder = new ThriftStructMetadataBuilder<>(
-      catalog,
-      structClass
+        catalog,
+        structClass
     );
     assertNotNull(builder);
 

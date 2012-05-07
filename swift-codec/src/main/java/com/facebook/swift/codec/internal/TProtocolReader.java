@@ -252,7 +252,7 @@ public class TProtocolReader {
       throws Exception {
 
     TMap tMap = protocol.readMapBegin();
-    Map<K,V> map = new HashMap<>();
+    Map<K, V> map = new HashMap<>();
     for (int i = 0; i < tMap.size; i++) {
       K key = keyCodec.read(this);
       V value = valueCodec.read(this);

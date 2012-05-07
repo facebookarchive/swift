@@ -16,18 +16,18 @@ public class ThriftConstructorInjection {
   private final List<ThriftParameterInjection> parameters;
 
   public ThriftConstructorInjection(
-    Constructor<?> constructor,
-    ThriftParameterInjection... parameters
+      Constructor<?> constructor,
+      ThriftParameterInjection... parameters
   ) {
     this(
-      checkNotNull(constructor, "constructor is null"),
-      ImmutableList.copyOf(checkNotNull(parameters, "parameters is null"))
+        checkNotNull(constructor, "constructor is null"),
+        ImmutableList.copyOf(checkNotNull(parameters, "parameters is null"))
     );
   }
 
   public ThriftConstructorInjection(
-    Constructor<?> constructor,
-    List<ThriftParameterInjection> parameters
+      Constructor<?> constructor,
+      List<ThriftParameterInjection> parameters
   ) {
     this.constructor = checkNotNull(constructor, "constructor is null");
     this.parameters = ImmutableList.copyOf(checkNotNull(parameters, "parameters is null"));

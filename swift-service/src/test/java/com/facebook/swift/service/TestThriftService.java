@@ -114,12 +114,14 @@ public class TestThriftService {
   private List<com.facebook.swift.service.LogEntry> toSwiftLogEntry(
       ImmutableList<LogEntry> messages
   ) {
-    return Lists.transform(messages, new Function<LogEntry, com.facebook.swift.service.LogEntry>() {
+    return Lists.transform(
+        messages, new Function<LogEntry, com.facebook.swift.service.LogEntry>() {
       @Override
       public com.facebook.swift.service.LogEntry apply(@Nullable LogEntry input) {
         return new com.facebook.swift.service.LogEntry(input.category, input.message);
       }
-    });
+    }
+    );
   }
 
 }

@@ -53,8 +53,8 @@ public class ReflectionHelper {
    * Find methods that are tagged with a given annotation somewhere in the hierarchy
    */
   public static Collection<Method> findAnnotatedMethods(
-    Class<?> type,
-    Class<? extends Annotation> annotation
+      Class<?> type,
+      Class<? extends Annotation> annotation
   ) {
 
     List<Method> result = new ArrayList<Method>();
@@ -69,10 +69,10 @@ public class ReflectionHelper {
 
       // look for annotations recursively in super-classes or interfaces
       Method managedMethod = findAnnotatedMethod(
-        type,
-        annotation,
-        method.getName(),
-        method.getParameterTypes()
+          type,
+          annotation,
+          method.getName(),
+          method.getParameterTypes()
       );
       if (managedMethod != null) {
         result.add(managedMethod);
@@ -83,10 +83,10 @@ public class ReflectionHelper {
   }
 
   public static Method findAnnotatedMethod(
-    Class<?> configClass,
-    Class<? extends Annotation> annotation,
-    String methodName,
-    Class<?>... paramTypes
+      Class<?> configClass,
+      Class<? extends Annotation> annotation,
+      String methodName,
+      Class<?>... paramTypes
   ) {
     try {
       Method method = configClass.getDeclaredMethod(methodName, paramTypes);
@@ -99,10 +99,10 @@ public class ReflectionHelper {
 
     if (configClass.getSuperclass() != null) {
       Method managedMethod = findAnnotatedMethod(
-        configClass.getSuperclass(),
-        annotation,
-        methodName,
-        paramTypes
+          configClass.getSuperclass(),
+          annotation,
+          methodName,
+          paramTypes
       );
       if (managedMethod != null) {
         return managedMethod;
@@ -120,8 +120,8 @@ public class ReflectionHelper {
   }
 
   public static Collection<Field> findAnnotatedFields(
-    Class<?> type,
-    Class<? extends Annotation> annotation
+      Class<?> type,
+      Class<? extends Annotation> annotation
   ) {
     List<Field> result = new ArrayList<>();
 

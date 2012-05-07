@@ -24,7 +24,9 @@ import org.apache.thrift.protocol.TType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import static org.apache.thrift.TApplicationException.*;
+import static org.apache.thrift.TApplicationException.INTERNAL_ERROR;
+import static org.apache.thrift.TApplicationException.PROTOCOL_ERROR;
+import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
 
 /**
  * Example TProcessor that wraps a Thrift service.  This should only be considered an example, and
@@ -40,9 +42,11 @@ public class ThriftServiceProcessor implements TProcessor {
       Object service,
       ThriftCodecManager codecManager
   ) {
-    this(service,
+    this(
+        service,
         codecManager,
-        new ThriftServiceMetadata(service.getClass(), codecManager.getCatalog()));
+        new ThriftServiceMetadata(service.getClass(), codecManager.getCatalog())
+    );
   }
 
   public ThriftServiceProcessor(
@@ -128,7 +132,7 @@ public class ThriftServiceProcessor implements TProcessor {
       return true;
     } catch (Exception e) {
       TApplicationException exception;
-      if (e instanceof  TApplicationException) {
+      if (e instanceof TApplicationException) {
         exception = (TApplicationException) e;
       } else {
         exception = new TApplicationException(INTERNAL_ERROR, e.getMessage());

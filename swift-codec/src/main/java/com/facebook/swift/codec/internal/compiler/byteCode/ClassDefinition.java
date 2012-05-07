@@ -25,10 +25,10 @@ public class ClassDefinition {
   private final List<MethodDefinition> methods = new ArrayList<>();
 
   public ClassDefinition(
-    EnumSet<Access> access,
-    String name,
-    ParameterizedType superClass,
-    ParameterizedType... interfaces
+      EnumSet<Access> access,
+      String name,
+      ParameterizedType superClass,
+      ParameterizedType... interfaces
   ) {
     this.access = toAccessModifier(access);
     this.name = name;
@@ -81,17 +81,17 @@ public class ClassDefinition {
   }
 
   public static String genericClassSignature(
-    ParameterizedType classType,
-    ParameterizedType... interfaceTypes
+      ParameterizedType classType,
+      ParameterizedType... interfaceTypes
   ) {
     return Joiner.on("").join(
-      concat(ImmutableList.of(classType), ImmutableList.copyOf(interfaceTypes))
+        concat(ImmutableList.of(classType), ImmutableList.copyOf(interfaceTypes))
     );
   }
 
   public static String genericClassSignature(
-    ParameterizedType classType,
-    List<ParameterizedType> interfaceTypes
+      ParameterizedType classType,
+      List<ParameterizedType> interfaceTypes
   ) {
     return Joiner.on("").join(concat(ImmutableList.of(classType), interfaceTypes));
   }

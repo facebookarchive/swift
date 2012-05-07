@@ -18,7 +18,7 @@ public class DynamicClassLoader extends ClassLoader {
   }
 
   public Class<?> defineClass(String name, byte[] byteCode)
-    throws ClassFormatError {
+      throws ClassFormatError {
     return defineClass(name, byteCode, 0, byteCode.length);
   }
 

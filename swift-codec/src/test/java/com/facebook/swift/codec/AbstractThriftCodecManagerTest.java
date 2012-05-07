@@ -3,11 +3,11 @@
  */
 package com.facebook.swift.codec;
 
+import com.facebook.swift.codec.internal.TProtocolReader;
+import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.internal.builtin.BooleanThriftCodec;
 import com.facebook.swift.codec.internal.builtin.SetThriftCodec;
 import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
-import com.facebook.swift.codec.internal.TProtocolReader;
-import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftCatalog;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
 import com.facebook.swift.codec.metadata.ThriftType;
@@ -125,8 +125,8 @@ public abstract class AbstractThriftCodecManagerTest {
   public void testDefaultCoercion() throws Exception {
     CoercionBean coercion = new CoercionBean(
         true,
-        (byte)1,
-        (short)2,
+        (byte) 1,
+        (short) 2,
         3,
         4L,
         5.5f,
@@ -250,7 +250,7 @@ public abstract class AbstractThriftCodecManagerTest {
     one.aDoubleKeyMap = ImmutableMap.copyOf(HashBiMap.create(one.aDoubleValueMap).inverse());
     one.aStringKeyMap = ImmutableMap.copyOf(HashBiMap.create(one.aStringValueMap).inverse());
     one.aStructKeyMap = ImmutableMap.copyOf(HashBiMap.create(one.aStructValueMap).inverse());
-    one.aEnumKeyMap = ImmutableMap.of( Fruit.APPLE, "apple", Fruit.BANANA, "banana");
+    one.aEnumKeyMap = ImmutableMap.of(Fruit.APPLE, "apple", Fruit.BANANA, "banana");
     one.aCustomEnumKeyMap = ImmutableMap.of(Letter.A, "a", Letter.B, "b");
 
     one.aSetOfListsOfMaps = ImmutableSet.<List<Map<String, BonkField>>>of(

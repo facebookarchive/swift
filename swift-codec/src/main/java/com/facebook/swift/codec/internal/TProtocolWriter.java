@@ -133,7 +133,12 @@ public class TProtocolWriter {
     protocol.writeFieldEnd();
   }
 
-  public <K,V> void writeMapField(String name, short id, ThriftCodec<Map<K,V>> codec, Map<K,V> map)
+  public <K, V> void writeMapField(
+      String name,
+      short id,
+      ThriftCodec<Map<K, V>> codec,
+      Map<K, V> map
+  )
       throws Exception {
     if (map == null) {
       return;
@@ -144,10 +149,12 @@ public class TProtocolWriter {
     protocol.writeFieldEnd();
   }
 
-  public <T extends Enum<T>> void writeEnumField(String name,
+  public <T extends Enum<T>> void writeEnumField(
+      String name,
       short id,
       ThriftCodec<T> codec,
-      T enumValue)
+      T enumValue
+  )
       throws Exception {
 
     if (enumValue == null) {

@@ -3,8 +3,8 @@
  */
 package com.facebook.swift.codec;
 
-import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
 import com.facebook.swift.codec.internal.ThriftCodecFactory;
+import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
 import com.facebook.swift.codec.metadata.ThriftEnumMetadata;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
 import com.facebook.swift.codec.metadata.ThriftType;
@@ -18,7 +18,17 @@ import org.testng.annotations.Test;
 
 import java.nio.ByteBuffer;
 
-import static com.facebook.swift.codec.metadata.ThriftType.*;
+import static com.facebook.swift.codec.metadata.ThriftType.BOOL;
+import static com.facebook.swift.codec.metadata.ThriftType.BYTE;
+import static com.facebook.swift.codec.metadata.ThriftType.DOUBLE;
+import static com.facebook.swift.codec.metadata.ThriftType.I16;
+import static com.facebook.swift.codec.metadata.ThriftType.I32;
+import static com.facebook.swift.codec.metadata.ThriftType.I64;
+import static com.facebook.swift.codec.metadata.ThriftType.STRING;
+import static com.facebook.swift.codec.metadata.ThriftType.enumType;
+import static com.facebook.swift.codec.metadata.ThriftType.list;
+import static com.facebook.swift.codec.metadata.ThriftType.map;
+import static com.facebook.swift.codec.metadata.ThriftType.set;
 import static com.google.common.base.Charsets.UTF_8;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -84,18 +94,24 @@ public class TestThriftCodecManager {
 
   @Test
   public void testCollectionThriftTypes() throws Exception {
-    testRoundTripSerialize(set(STRING), ImmutableSet.of(
+    testRoundTripSerialize(
+        set(STRING), ImmutableSet.of(
         toByteBuffer("some string"),
         toByteBuffer("another string")
-    ) );
-    testRoundTripSerialize(list(STRING), ImmutableList.of(
+    )
+    );
+    testRoundTripSerialize(
+        list(STRING), ImmutableList.of(
         toByteBuffer("some string"),
         toByteBuffer("another string")
-    ));
-    testRoundTripSerialize(map(STRING, STRING), ImmutableMap.of(
+    )
+    );
+    testRoundTripSerialize(
+        map(STRING, STRING), ImmutableMap.of(
         toByteBuffer("1"), toByteBuffer("one"),
         toByteBuffer("2"), toByteBuffer("two")
-    ));
+    )
+    );
   }
 
   @Test
@@ -160,8 +176,8 @@ public class TestThriftCodecManager {
     // verify they are the same
     assertEquals(copy, value);
   }
-  
+
   private ByteBuffer toByteBuffer(String string) {
     return ByteBuffer.wrap(string.getBytes(UTF_8));
-  }  
+  }
 }

@@ -14,7 +14,8 @@ import com.facebook.swift.codec.metadata.ThriftStructMetadata;
 public class ReflectionThriftCodecFactory implements ThriftCodecFactory {
   @Override
   public <T> ThriftCodec<T> generateThriftTypeCodec(
-      ThriftCodecManager codecManager, ThriftStructMetadata<T> metadata
+      ThriftCodecManager codecManager,
+      ThriftStructMetadata<T> metadata
   ) {
     return new ReflectionThriftCodec<>(codecManager, metadata);
   }

@@ -105,9 +105,9 @@ public class Problems {
 
   private ConfigurationException getException() {
     ImmutableList<Message> messages = new ImmutableList.Builder<Message>()
-      .addAll(errors)
-      .addAll(warnings)
-      .build();
+        .addAll(errors)
+        .addAll(warnings)
+        .build();
 
     return new ConfigurationException(messages);
   }

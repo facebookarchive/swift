@@ -13,8 +13,8 @@ public class BonkConstructor {
 
   @ThriftConstructor
   public BonkConstructor(
-    @ThriftField(name = "message") String message,
-    @ThriftField(name = "type") int type
+      @ThriftField(name = "message") String message,
+      @ThriftField(name = "type") int type
   ) {
     this.message = message;
     this.type = type;
