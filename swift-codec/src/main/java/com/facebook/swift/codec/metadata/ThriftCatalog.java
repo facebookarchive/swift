@@ -34,6 +34,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 
 import static com.facebook.swift.codec.ThriftProtocolType.inferProtocolType;
+import static com.facebook.swift.codec.metadata.ReflectionHelper.getIterableType;
+import static com.facebook.swift.codec.metadata.ReflectionHelper.getMapKeyType;
+import static com.facebook.swift.codec.metadata.ReflectionHelper.getMapValueType;
 import static com.facebook.swift.codec.metadata.ThriftType.BOOL;
 import static com.facebook.swift.codec.metadata.ThriftType.BYTE;
 import static com.facebook.swift.codec.metadata.ThriftType.DOUBLE;
@@ -47,8 +50,6 @@ import static com.facebook.swift.codec.metadata.ThriftType.list;
 import static com.facebook.swift.codec.metadata.ThriftType.map;
 import static com.facebook.swift.codec.metadata.ThriftType.set;
 import static com.facebook.swift.codec.metadata.ThriftType.struct;
-import static com.facebook.swift.codec.metadata.TypeParameterUtils.getTypeParameters;
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Iterables.transform;
@@ -226,31 +227,17 @@ public class ThriftCatalog {
         return struct(structMetadata);
       }
       case MAP: {
-        Type[] types = getTypeParameters(Map.class, javaType);
-        checkArgument(
-            types != null && types.length == 2,
-            "Unable to extract Map key and value types from %s",
-            javaType
-        );
-        return map(getThriftType(types[0]), getThriftType(types[1]));
+        Type mapKeyType = getMapKeyType(javaType);
+        Type mapValueType = getMapValueType(javaType);
+        return map(getThriftType(mapKeyType), getThriftType(mapValueType));
       }
       case SET: {
-        Type[] types = getTypeParameters(Set.class, javaType);
-        checkArgument(
-            types != null && types.length == 1,
-            "Unable to extract Set element type from %s",
-            javaType
-        );
-        return set(getThriftType(types[0]));
+        Type elementType = getIterableType(javaType);
+        return set(getThriftType(elementType));
       }
       case LIST: {
-        Type[] types = getTypeParameters(Iterable.class, javaType);
-        checkArgument(
-            types != null && types.length == 1,
-            "Unable to extract List element type from %s",
-            javaType
-        );
-        return list(getThriftType(types[0]));
+        Type elementType = getIterableType(javaType);
+        return list(getThriftType(elementType));
       }
       case ENUM: {
         Class<?> enumClass = TypeToken.of(javaType).getRawType();

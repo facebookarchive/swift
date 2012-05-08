@@ -15,18 +15,57 @@
  */
 package com.facebook.swift.codec.metadata;
 
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.reflect.TypeToken;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import static java.lang.reflect.Modifier.isStatic;
 
-public class ReflectionHelper {
+final class ReflectionHelper {
+  private ReflectionHelper() {
+  }
+
+  private static final Type MAP_KEY_TYPE;
+  private static final Type MAP_VALUE_TYPE;
+  private static final Type ITERATOR_TYPE;
+  private static final Type ITERATOR_ELEMENT_TYPE;
+
+  static {
+    try {
+      Method mapPutMethod = Map.class.getMethod("put", Object.class, Object.class);
+      MAP_KEY_TYPE = mapPutMethod.getGenericParameterTypes()[0];
+      MAP_VALUE_TYPE = mapPutMethod.getGenericParameterTypes()[1];
+
+      ITERATOR_TYPE = Iterable.class.getMethod("iterator").getGenericReturnType();
+      ITERATOR_ELEMENT_TYPE = Iterator.class.getMethod("next").getGenericReturnType();
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+
+  }
+
+  public static Type getMapKeyType(Type type) {
+    return TypeToken.of(type).resolveType(MAP_KEY_TYPE).getType();
+  }
+
+  public static Type getMapValueType(Type type) {
+    return TypeToken.of(type).resolveType(MAP_VALUE_TYPE).getType();
+  }
+
+  public static Type getIterableType(Type type) {
+    return TypeToken.of(type).resolveType(ITERATOR_TYPE).resolveType(ITERATOR_ELEMENT_TYPE).getType();
+  }
+
   public static Iterable<Method> getAllDeclaredMethods(Class<?> type) {
     ImmutableList.Builder<Method> methods = ImmutableList.builder();
 
@@ -57,7 +96,7 @@ public class ReflectionHelper {
       Class<? extends Annotation> annotation
   ) {
 
-    List<Method> result = new ArrayList<Method>();
+    List<Method> result = new ArrayList<>();
 
     // gather all publicly available methods
     // this returns everything, even if it's declared in a parent
