@@ -30,6 +30,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.apache.thrift.protocol.TProtocol;
 
+import javax.annotation.concurrent.ThreadSafe;
 import java.lang.reflect.Type;
 import java.util.concurrent.ExecutionException;
 
@@ -38,6 +39,7 @@ import java.util.concurrent.ExecutionException;
  * unknown types as needed.  Since codec creation can be very expensive only one instance of this
  * class should be created.
  */
+@ThreadSafe
 public class ThriftCodecManager {
   private final ThriftCatalog catalog;
   private final LoadingCache<ThriftType, ThriftCodec<?>> typeCodecs;
