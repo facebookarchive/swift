@@ -54,10 +54,13 @@ public class ThriftCodecManager {
   }
 
   public ThriftCodecManager(
-      ThriftCodecFactory factory,
+      final ThriftCodecFactory factory,
       final ThriftCatalog catalog,
       ThriftCodec<?>... codecs
   ) {
+    Preconditions.checkNotNull(factory, "factory is null");
+    Preconditions.checkNotNull(catalog, "catalog is null");
+
     this.catalog = catalog;
     this.factory = factory;
 
@@ -66,7 +69,7 @@ public class ThriftCodecManager {
           public ThriftCodec<?> load(ThriftType type) throws Exception {
             switch (type.getProtocolType()) {
               case STRUCT: {
-                return ThriftCodecManager.this.factory.generateThriftTypeCodec(
+                return factory.generateThriftTypeCodec(
                     ThriftCodecManager.this,
                     type.getStructMetadata()
                 );
@@ -99,18 +102,18 @@ public class ThriftCodecManager {
         }
     );
 
-    for (ThriftCodec<?> codec : codecs) {
-      typeCodecs.put(codec.getType(), codec);
-    }
+    addCodec(new BooleanThriftCodec());
+    addCodec(new ByteThriftCodec());
+    addCodec(new ShortThriftCodec());
+    addCodec(new IntegerThriftCodec());
+    addCodec(new LongThriftCodec());
+    addCodec(new DoubleThriftCodec());
+    addCodec(new ByteBufferThriftCodec());
+    addCodec(new VoidThriftCodec());
 
-    addCodecIfPresent(new BooleanThriftCodec());
-    addCodecIfPresent(new ByteThriftCodec());
-    addCodecIfPresent(new ShortThriftCodec());
-    addCodecIfPresent(new IntegerThriftCodec());
-    addCodecIfPresent(new LongThriftCodec());
-    addCodecIfPresent(new DoubleThriftCodec());
-    addCodecIfPresent(new ByteBufferThriftCodec());
-    addCodecIfPresent(new VoidThriftCodec());
+    for (ThriftCodec<?> codec : codecs) {
+      addCodec(codec);
+    }
   }
 
   public ThriftCodec<?> getCodec(Type javaType) {
@@ -162,11 +165,5 @@ public class ThriftCodecManager {
   public void write(ThriftType type, Object value, TProtocol protocol) throws Exception {
     ThriftCodec<Object> codec = (ThriftCodec<Object>) getCodec(type);
     codec.write(value, new TProtocolWriter(protocol));
-  }
-
-  private void addCodecIfPresent(ThriftCodec<?> codec) {
-    if (typeCodecs.getIfPresent(codec.getType()) == null) {
-      typeCodecs.put(codec.getType(), codec);
-    }
   }
 }
