@@ -32,6 +32,7 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.util.CheckClassAdapter;
 
+import javax.annotation.concurrent.Immutable;
 import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
 import java.nio.ByteBuffer;
@@ -60,6 +61,7 @@ import static com.facebook.swift.codec.internal.compiler.byteCode.ParameterizedT
 /**
  * Creates Thrift codecs directly in byte code.
  */
+@Immutable
 public class CompilerThriftCodecFactory implements ThriftCodecFactory {
   private static final String PACKAGE = "$thrift";
 

@@ -20,6 +20,7 @@ import com.google.common.collect.Lists;
 import com.google.inject.ConfigurationException;
 import com.google.inject.spi.Message;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.util.List;
 
 import static java.lang.String.format;
@@ -29,6 +30,7 @@ import static java.util.Collections.emptyList;
  * Problems collects all known issues with metadata task.  This allows all known problems to be
  * reported together instead of one at a time.
  */
+@NotThreadSafe
 public class Problems {
   private final List<Message> errors = Lists.newArrayList();
   private final List<Message> warnings = Lists.newArrayList();

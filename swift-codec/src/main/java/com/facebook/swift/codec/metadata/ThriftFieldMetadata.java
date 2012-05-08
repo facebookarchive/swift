@@ -5,11 +5,17 @@ package com.facebook.swift.codec.metadata;
 
 import com.google.common.collect.ImmutableList;
 
+import javax.annotation.concurrent.Immutable;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+/**
+ * ThriftFieldMetadata defines a single thrift field including the value extraction and injection
+ * points.
+ */
+@Immutable
 public class ThriftFieldMetadata {
   private final short id;
   private final ThriftType type;

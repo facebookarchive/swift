@@ -5,8 +5,10 @@ package com.facebook.swift.codec.metadata;
 
 import com.google.common.base.Preconditions;
 
+import javax.annotation.concurrent.Immutable;
 import java.lang.reflect.Method;
 
+@Immutable
 public class TypeCoercion {
   private final ThriftType thriftType;
   private final Method toThrift;

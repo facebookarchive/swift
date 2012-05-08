@@ -3,6 +3,9 @@
  */
 package com.facebook.swift.codec.internal.compiler.byteCode;
 
+import javax.annotation.concurrent.Immutable;
+
+@Immutable
 public class CaseStatement {
   public static CaseStatement caseStatement(int key, String label) {
     return new CaseStatement(label, key);

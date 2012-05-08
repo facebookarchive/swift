@@ -21,6 +21,8 @@ import org.apache.thrift.protocol.TProtocolException;
 import org.apache.thrift.protocol.TProtocolUtil;
 import org.apache.thrift.protocol.TType;
 
+import javax.annotation.concurrent.Immutable;
+import javax.annotation.concurrent.ThreadSafe;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -33,11 +35,15 @@ import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
  * is not production ready.  For example, this class makes assumptions about the thrift id of
  * method parameters, and does not support Thrift exceptions properly.
  */
+@ThreadSafe
 public class ThriftServiceProcessor implements TProcessor {
   private final Object service;
   private final ThriftServiceMetadata serviceMetadata;
   private final ThriftCodecManager codecManager;
 
+  /**
+   * @param service the service to expose; must be thread safe
+   */
   public ThriftServiceProcessor(
       Object service,
       ThriftCodecManager codecManager
@@ -49,6 +55,9 @@ public class ThriftServiceProcessor implements TProcessor {
     );
   }
 
+  /**
+   * @param service the service to expose; must be thread safe
+   */
   public ThriftServiceProcessor(
       Object service,
       ThriftCodecManager codecManager, ThriftServiceMetadata serviceMetadata

@@ -7,6 +7,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import org.objectweb.asm.tree.ClassNode;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -16,6 +17,7 @@ import static com.google.common.collect.Iterables.any;
 import static com.google.common.collect.Iterables.concat;
 import static org.objectweb.asm.Opcodes.V1_6;
 
+@NotThreadSafe
 public class ClassDefinition {
   private final int access;
   private final String name;

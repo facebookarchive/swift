@@ -8,10 +8,12 @@ import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
+import javax.annotation.concurrent.Immutable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.List;
 
+@Immutable
 public class ThriftMethodMetadata {
   private final String name;
   private final ThriftType returnType;

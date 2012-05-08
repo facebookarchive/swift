@@ -21,11 +21,13 @@ import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSortedMap;
 
+import javax.annotation.concurrent.Immutable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedMap;
 
+@Immutable
 public class ReflectionThriftCodec<T> implements ThriftCodec<T> {
   private final ThriftStructMetadata<T> metadata;
   private final SortedMap<Short, ThriftCodec<?>> fields;

@@ -13,6 +13,7 @@ import org.apache.thrift.protocol.TProtocolUtil;
 import org.apache.thrift.protocol.TSet;
 import org.apache.thrift.protocol.TType;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,6 +25,7 @@ import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkState;
 
+@NotThreadSafe
 public class TProtocolReader {
   private final TProtocol protocol;
   private TField currentField;

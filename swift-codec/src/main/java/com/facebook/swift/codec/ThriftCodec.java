@@ -11,6 +11,8 @@ import com.facebook.swift.codec.metadata.ThriftType;
  * A single type codec for reading and writing in Thrift format.  Each codec is symmetric and
  * therefore only supports a single concrete type.
  *
+ * Implementations of this interface are expected to be thread safe.
+ *
  * @param <T> the type this codec supports
  */
 public interface ThriftCodec<T> {

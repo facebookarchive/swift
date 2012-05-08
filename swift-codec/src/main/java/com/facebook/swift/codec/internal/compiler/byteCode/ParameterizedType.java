@@ -8,8 +8,10 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.Immutable;
 import java.util.List;
 
+@Immutable
 public class ParameterizedType {
   public static ParameterizedType type(String className) {
     return new ParameterizedType(className);

@@ -9,8 +9,10 @@ import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.base.Preconditions;
 
+import javax.annotation.concurrent.Immutable;
 import java.util.Map;
 
+@Immutable
 public class MapThriftCodec<K, V> implements ThriftCodec<Map<K, V>> {
   private final ThriftType thriftType;
   private final ThriftCodec<K> keyCodec;

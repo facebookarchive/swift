@@ -9,10 +9,12 @@ import com.facebook.swift.service.ThriftService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
+import javax.annotation.concurrent.Immutable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Map;
 
+@Immutable
 public class ThriftServiceMetadata {
   private final String name;
   private final Map<String, ThriftMethodMetadata> methods;

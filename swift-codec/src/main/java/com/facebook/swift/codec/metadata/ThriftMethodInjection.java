@@ -5,11 +5,13 @@ package com.facebook.swift.codec.metadata;
 
 import com.google.common.base.Joiner;
 
+import javax.annotation.concurrent.Immutable;
 import java.lang.reflect.Method;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+@Immutable
 public class ThriftMethodInjection {
   private final Method method;
   private final List<ThriftParameterInjection> parameters;

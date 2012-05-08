@@ -9,9 +9,12 @@ import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.base.Preconditions;
 
+import javax.annotation.concurrent.Immutable;
+
 /**
  * VoidThriftCodec is a convenience codec used for service invocations that return void type.
  */
+@Immutable
 public class VoidThriftCodec implements ThriftCodec<Void> {
   @Override
   public ThriftType getType() {

@@ -7,10 +7,12 @@ import com.facebook.swift.codec.ThriftEnumValue;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
+import javax.annotation.concurrent.Immutable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Map;
 
+@Immutable
 public class ThriftEnumMetadata<T extends Enum<T>> {
   private final Class<T> enumClass;
   private final Map<Integer, T> byEnumValue;

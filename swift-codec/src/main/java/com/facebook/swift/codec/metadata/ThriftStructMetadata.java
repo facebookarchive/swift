@@ -9,12 +9,14 @@ import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Maps;
 
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.Immutable;
 import java.util.Collection;
 import java.util.List;
 import java.util.SortedMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+@Immutable
 public class ThriftStructMetadata<T> {
   private final String structName;
   private final Class<T> structClass;

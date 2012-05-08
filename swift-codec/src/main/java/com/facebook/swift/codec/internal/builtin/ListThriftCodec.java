@@ -9,8 +9,10 @@ import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.base.Preconditions;
 
+import javax.annotation.concurrent.Immutable;
 import java.util.List;
 
+@Immutable
 public class ListThriftCodec<T> implements ThriftCodec<List<T>> {
   private final ThriftCodec<T> elementCodec;
   private final ThriftType type;

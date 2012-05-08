@@ -7,10 +7,12 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import org.objectweb.asm.tree.FieldNode;
 
+import javax.annotation.concurrent.Immutable;
 import java.util.EnumSet;
 
 import static com.facebook.swift.codec.internal.compiler.byteCode.Access.toAccessModifier;
 
+@Immutable
 public class FieldDefinition {
   private final ImmutableSet<Access> access;
   private final String name;

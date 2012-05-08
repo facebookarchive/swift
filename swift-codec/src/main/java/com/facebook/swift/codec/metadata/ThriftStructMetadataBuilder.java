@@ -19,6 +19,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.NotThreadSafe;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -50,6 +51,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Lists.newArrayListWithCapacity;
 import static java.util.Arrays.asList;
 
+@NotThreadSafe
 public class ThriftStructMetadataBuilder<T> {
   private final String structName;
   private final Class<T> structClass;

@@ -6,11 +6,13 @@ package com.facebook.swift.codec.metadata;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 
+import javax.annotation.concurrent.Immutable;
 import java.lang.reflect.Constructor;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+@Immutable
 public class ThriftConstructorInjection {
   private final Constructor<?> constructor;
   private final List<ThriftParameterInjection> parameters;

@@ -9,6 +9,9 @@ import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.base.Preconditions;
 
+import javax.annotation.concurrent.Immutable;
+
+@Immutable
 public class ByteThriftCodec implements ThriftCodec<Byte> {
   @Override
   public ThriftType getType() {

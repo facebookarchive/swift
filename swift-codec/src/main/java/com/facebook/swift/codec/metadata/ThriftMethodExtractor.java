@@ -3,11 +3,13 @@
  */
 package com.facebook.swift.codec.metadata;
 
+import javax.annotation.concurrent.Immutable;
 import java.lang.reflect.Method;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+@Immutable
 public class ThriftMethodExtractor implements ThriftExtraction {
   private final short id;
   private final String name;

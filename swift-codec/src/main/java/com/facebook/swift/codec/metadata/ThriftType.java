@@ -8,6 +8,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
 
+import javax.annotation.concurrent.Immutable;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -21,6 +22,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * ThriftType contains all metadata necessary for converting the java type to and from Thrift.
  */
+@Immutable
 public class ThriftType {
   public static final ThriftType BOOL = new ThriftType(ThriftProtocolType.BOOL, boolean.class);
   public static final ThriftType BYTE = new ThriftType(ThriftProtocolType.BYTE, byte.class);

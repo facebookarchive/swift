@@ -5,8 +5,10 @@ package com.facebook.swift.codec.metadata;
 
 import com.google.common.base.Preconditions;
 
+import javax.annotation.concurrent.Immutable;
 import java.lang.reflect.Field;
 
+@Immutable
 public class ThriftFieldInjection implements ThriftInjection {
   private final short id;
   private final String name;

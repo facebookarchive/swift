@@ -8,9 +8,12 @@ import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.codec.internal.ThriftCodecFactory;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
 
+import javax.annotation.concurrent.Immutable;
+
 /**
  * Creates reflection based thrift codecs.
  */
+@Immutable
 public class ReflectionThriftCodecFactory implements ThriftCodecFactory {
   @Override
   public <T> ThriftCodec<T> generateThriftTypeCodec(

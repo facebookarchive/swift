@@ -6,7 +6,9 @@ package com.facebook.swift.codec.internal.compiler.byteCode;
 import com.google.common.base.Function;
 
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.Immutable;
 
+@Immutable
 public class NamedParameterDefinition {
   public static NamedParameterDefinition arg(Class<?> type) {
     return new NamedParameterDefinition(null, ParameterizedType.type(type));
