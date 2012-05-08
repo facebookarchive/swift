@@ -12,10 +12,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
@@ -31,7 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ConcurrentMap;
 
 import static com.facebook.swift.codec.ThriftProtocolType.inferProtocolType;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getIterableType;
@@ -62,9 +58,10 @@ import static com.google.common.collect.Iterables.transform;
 @ThreadSafe
 public class ThriftCatalog {
   private final Problems.Monitor monitor;
-  private final LoadingCache<Class<?>, ThriftStructMetadata<?>> structs;
-  private final LoadingCache<Class<?>, ThriftEnumMetadata<?>> enums;
-  private final Map<Type, TypeCoercion> coercions = new ConcurrentHashMap<>();
+  private final ConcurrentMap<Class<?>, ThriftStructMetadata<?>> structs =
+      new ConcurrentHashMap<>();
+  private final ConcurrentMap<Class<?>, ThriftEnumMetadata<?>> enums = new ConcurrentHashMap<>();
+  private final ConcurrentMap<Type, TypeCoercion> coercions = new ConcurrentHashMap<>();
 
   private final ThreadLocal<Deque<Class<?>>> stack = new ThreadLocal<Deque<Class<?>>>() {
     @Override
@@ -81,29 +78,6 @@ public class ThriftCatalog {
   public ThriftCatalog(Monitor monitor) {
     this.monitor = monitor;
     addDefaultCoercions(DefaultJavaCoercions.class);
-
-    structs = CacheBuilder.newBuilder().build(
-        new CacheLoader<Class<?>, ThriftStructMetadata<?>>() {
-          @Override
-          public ThriftStructMetadata<?> load(Class<?> structClass) {
-            return extractThriftStructMetadata(structClass);
-          }
-        }
-    );
-
-    enums = CacheBuilder.newBuilder().build(
-        new CacheLoader<Class<?>, ThriftEnumMetadata<?>>() {
-          @Override
-          public ThriftEnumMetadata<?> load(Class<?> enumClass) {
-            return extractMetadata(enumClass);
-          }
-
-          // Generic type inference gets confused when you use recursive types
-          private <T extends Enum<T>> ThriftEnumMetadata<?> extractMetadata(Class<?> enumClass) {
-            return new ThriftEnumMetadata<>((Class<T>) enumClass);
-          }
-        }
-    );
   }
 
   @VisibleForTesting
@@ -255,13 +229,17 @@ public class ThriftCatalog {
    * annotated with @ThriftEnumValue, the value of this method will be used for the encoded thrift
    * value; otherwise the Enum.ordinal() method will be used.
    */
-  public <T extends Enum<T>> ThriftEnumMetadata<T> getThriftEnumMetadata(Class<?> enumClass) {
-    try {
-      ThriftEnumMetadata<?> enumMetadata = enums.get(enumClass);
-      return (ThriftEnumMetadata<T>) enumMetadata;
-    } catch (ExecutionException e) {
-      throw Throwables.propagate(e);
+  public <T extends Enum<T>> ThriftEnumMetadata<?> getThriftEnumMetadata(Class<?> enumClass) {
+    ThriftEnumMetadata<?> enumMetadata = enums.get(enumClass);
+    if (enumMetadata == null) {
+      enumMetadata = new ThriftEnumMetadata<>((Class<T>) enumClass);
+
+      ThriftEnumMetadata<?> current = enums.putIfAbsent(enumClass, enumMetadata);
+      if (current != null) {
+        enumMetadata = current;
+      }
     }
+    return enumMetadata;
   }
 
   /**
@@ -269,12 +247,19 @@ public class ThriftCatalog {
    * annotated with @ThriftStruct.
    */
   public <T> ThriftStructMetadata<T> getThriftStructMetadata(Class<T> structClass) {
-    try {
-      ThriftStructMetadata<?> structMetadata = structs.get(structClass);
-      return (ThriftStructMetadata<T>) structMetadata;
-    } catch (ExecutionException e) {
-      throw Throwables.propagate(e);
+    ThriftStructMetadata<?> structMetadata = structs.get(structClass);
+    if (structMetadata == null) {
+      structMetadata = extractThriftStructMetadata(structClass);
+
+      ThriftStructMetadata<?> current = structs.putIfAbsent(
+          structClass,
+          structMetadata
+      );
+      if (current != null) {
+        structMetadata = current;
+      }
     }
+    return (ThriftStructMetadata<T>) structMetadata;
   }
 
   private <T> ThriftStructMetadata<T> extractThriftStructMetadata(Class<T> structClass) {
