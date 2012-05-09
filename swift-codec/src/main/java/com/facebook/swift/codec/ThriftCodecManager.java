@@ -43,7 +43,6 @@ import java.util.concurrent.ExecutionException;
 public class ThriftCodecManager {
   private final ThriftCatalog catalog;
   private final LoadingCache<ThriftType, ThriftCodec<?>> typeCodecs;
-  private final ThriftCodecFactory factory;
 
   public ThriftCodecManager(ThriftCodec<?>... codecs) {
     this(new CompilerThriftCodecFactory(), codecs);
@@ -62,7 +61,6 @@ public class ThriftCodecManager {
     Preconditions.checkNotNull(catalog, "catalog is null");
 
     this.catalog = catalog;
-    this.factory = factory;
 
     typeCodecs = CacheBuilder.newBuilder().build(
         new CacheLoader<ThriftType, ThriftCodec<?>>() {
