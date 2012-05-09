@@ -116,9 +116,9 @@ public class TestThriftStructMetadata {
     );
     assertNotNull(builder);
 
-    assertNotNull(builder.getProblems());
-    builder.getProblems().throwIfHasErrors();
-    assertEquals(builder.getProblems().getWarnings().size(), 0);
+    assertNotNull(builder.getMetadataErrors());
+    builder.getMetadataErrors().throwIfHasErrors();
+    assertEquals(builder.getMetadataErrors().getWarnings().size(), 0);
 
     ThriftStructMetadata<T> metadata = builder.build();
     assertNotNull(metadata);

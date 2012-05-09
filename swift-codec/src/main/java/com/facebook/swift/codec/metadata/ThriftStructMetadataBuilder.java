@@ -69,19 +69,19 @@ public class ThriftStructMetadataBuilder<T> {
   private final List<MethodInjection> methodInjections = newArrayList();
 
   private final ThriftCatalog catalog;
-  private final Problems problems;
+  private final MetadataErrors metadataErrors;
 
   public ThriftStructMetadataBuilder(ThriftCatalog catalog, Class<T> structClass) {
     this.catalog = checkNotNull(catalog, "catalog is null");
     this.structClass = checkNotNull(structClass, "structClass is null");
-    this.problems = new Problems(catalog.getMonitor());
+    this.metadataErrors = new MetadataErrors(catalog.getMonitor());
 
     // Verify struct class is public and not abstract
     if (Modifier.isAbstract(structClass.getModifiers())) {
-      problems.addError("Struct class [%s] is abstract", structClass.getName());
+      metadataErrors.addError("Struct class [%s] is abstract", structClass.getName());
     }
     if (!Modifier.isPublic(structClass.getModifiers())) {
-      problems.addError("Struct class [%s] is not public", structClass.getName());
+      metadataErrors.addError("Struct class [%s] is not public", structClass.getName());
     }
 
     // name
@@ -93,7 +93,7 @@ public class ThriftStructMetadataBuilder<T> {
         structName = structClass.getSimpleName();
       }
     } else {
-      problems.addError(
+      metadataErrors.addError(
           "Struct class [%s] does not have a @ThriftStruct annotation",
           structClass.getName()
       );
@@ -118,7 +118,7 @@ public class ThriftStructMetadataBuilder<T> {
       // verify struct class does not have @ThriftConstructors
       for (Constructor<?> constructor : structClass.getConstructors()) {
         if (constructor.isAnnotationPresent(ThriftConstructor.class)) {
-          problems.addWarning(
+          metadataErrors.addWarning(
               "Struct class [%s] has a builder class, but constructor %s annotated with " +
                   "@ThriftConstructor",
               structClass.getName(),
@@ -189,7 +189,7 @@ public class ThriftStructMetadataBuilder<T> {
       // fields must have an id
       if (id == null) {
         for (FieldMetadata field : fields) {
-          problems.addError(
+          metadataErrors.addError(
               "ThriftStruct %s field %s, does not have an id",
               structName,
               field.extractName()
@@ -208,7 +208,7 @@ public class ThriftStructMetadataBuilder<T> {
       String name;
       if (!names.isEmpty()) {
         if (names.size() > 1) {
-          problems.addWarning("Field %s has multiple names %s", id, names);
+          metadataErrors.addWarning("Field %s has multiple names %s", id, names);
         }
         name = names.iterator().next();
       } else {
@@ -231,10 +231,10 @@ public class ThriftStructMetadataBuilder<T> {
         );
       }
       if (protocolTypes.size() > 1) {
-        problems.addError("Field %s has multiple conflicting protocol types %s", id, protocolTypes);
+        metadataErrors.addError("Field %s has multiple conflicting protocol types %s", id, protocolTypes);
         continue;
       } else if (protocolTypes.isEmpty()) {
-        problems.addError("Could not infer Thrift type for field %s", id);
+        metadataErrors.addError("Could not infer Thrift type for field %s", id);
         continue;
       }
       ThriftProtocolType type = protocolTypes.iterator().next();
@@ -255,7 +255,7 @@ public class ThriftStructMetadataBuilder<T> {
 
         TypeCoercion coercion = catalog.getDefaultCoercion(javaType);
         if (coercion == null) {
-          problems.addError(
+          metadataErrors.addError(
               "Type %s is not a supported thrift type and does not have type coercion",
               javaType
           );
@@ -266,13 +266,13 @@ public class ThriftStructMetadataBuilder<T> {
     }
   }
 
-  public Problems getProblems() {
-    return problems;
+  public MetadataErrors getMetadataErrors() {
+    return metadataErrors;
   }
 
   public ThriftStructMetadata<T> build() {
     // we can only build if there are no errors
-    problems.throwIfHasErrors();
+    metadataErrors.throwIfHasErrors();
 
     ThriftMethodInjection builderMethodInjection = null;
     if (builderClass != null) {
@@ -426,26 +426,26 @@ public class ThriftStructMetadataBuilder<T> {
     for (Method method : getAllDeclaredMethods(builderClass)) {
       if (method.isAnnotationPresent(ThriftConstructor.class) || hasThriftFieldAnnotation(method)) {
         if (!Modifier.isPublic(method.getModifiers())) {
-          problems.addError(
+          metadataErrors.addError(
               "@ThriftConstructor method [%s] is not public",
               method.toGenericString()
           );
         }
         if (Modifier.isStatic(method.getModifiers())) {
-          problems.addError("@ThriftConstructor method [%s] is static", method.toGenericString());
+          metadataErrors.addError("@ThriftConstructor method [%s] is static", method.toGenericString());
         }
       }
     }
 
     if (builderMethodInjections.isEmpty()) {
-      problems.addError(
+      metadataErrors.addError(
           "Struct builder class [%s] does not have a public builder method annotated with " +
               "@ThriftConstructor",
           builderClass.getName()
       );
     }
     if (builderMethodInjections.size() > 1) {
-      problems.addError(
+      metadataErrors.addError(
           "Multiple builder methods are annotated with @ThriftConstructor ",
           builderMethodInjections
       );
@@ -462,7 +462,7 @@ public class ThriftStructMetadataBuilder<T> {
       }
 
       if (!Modifier.isPublic(constructor.getModifiers())) {
-        problems.addError("@ThriftConstructor [%s] is not public", constructor.toGenericString());
+        metadataErrors.addError("@ThriftConstructor [%s] is not public", constructor.toGenericString());
         continue;
       }
 
@@ -483,14 +483,14 @@ public class ThriftStructMetadataBuilder<T> {
       try {
         Constructor<?> constructor = clazz.getDeclaredConstructor();
         if (!Modifier.isPublic(constructor.getModifiers())) {
-          problems.addError(
+          metadataErrors.addError(
               "Default constructor [%s] is not public",
               constructor.toGenericString()
           );
         }
         constructorInjections.add(new ConstructorInjection(constructor));
       } catch (Exception e) {
-        problems.addError(
+        metadataErrors.addError(
             "Struct class [%s] does not have a public no-arg constructor",
             clazz.getName()
         );
@@ -498,7 +498,7 @@ public class ThriftStructMetadataBuilder<T> {
     }
 
     if (constructorInjections.size() > 1) {
-      problems.addError(
+      metadataErrors.addError(
           "Multiple constructors are annotated with @ThriftConstructor ",
           constructorInjections
       );
@@ -514,10 +514,10 @@ public class ThriftStructMetadataBuilder<T> {
     for (Field field : getAllDeclaredFields(clazz)) {
       if (field.isAnnotationPresent(ThriftField.class)) {
         if (!Modifier.isPublic(field.getModifiers())) {
-          problems.addError("@ThriftField field [%s] is not public", field.toGenericString());
+          metadataErrors.addError("@ThriftField field [%s] is not public", field.toGenericString());
         }
         if (Modifier.isStatic(field.getModifiers())) {
-          problems.addError("@ThriftField field [%s] is static", field.toGenericString());
+          metadataErrors.addError("@ThriftField field [%s] is static", field.toGenericString());
         }
       }
     }
@@ -548,10 +548,10 @@ public class ThriftStructMetadataBuilder<T> {
     for (Method method : getAllDeclaredMethods(clazz)) {
       if (method.isAnnotationPresent(ThriftField.class) || hasThriftFieldAnnotation(method)) {
         if (!Modifier.isPublic(method.getModifiers())) {
-          problems.addError("@ThriftField method [%s] is not public", method.toGenericString());
+          metadataErrors.addError("@ThriftField method [%s] is not public", method.toGenericString());
         }
         if (Modifier.isStatic(method.getModifiers())) {
-          problems.addError("@ThriftField method [%s] is static", method.toGenericString());
+          metadataErrors.addError("@ThriftField method [%s] is static", method.toGenericString());
         }
       }
     }
@@ -574,7 +574,7 @@ public class ThriftStructMetadataBuilder<T> {
         fields.add(methodExtractor);
         extractors.add(methodExtractor);
       } else {
-        problems.addError(
+        metadataErrors.addError(
             "Reader method %s.%s is not allowed on a builder class",
             clazz.getName(),
             method.getName()
@@ -593,28 +593,28 @@ public class ThriftStructMetadataBuilder<T> {
               method.getGenericParameterTypes()
           );
           if (annotation.value() != Short.MIN_VALUE) {
-            problems.addError(
+            metadataErrors.addError(
                 "A method with annotated parameters can not have a field id specified: %s.%s ",
                 clazz.getName(),
                 method.getName()
             );
           }
           if (!annotation.name().isEmpty()) {
-            problems.addError(
+            metadataErrors.addError(
                 "A method with annotated parameters can not have a field name specified: %s.%s ",
                 clazz.getName(),
                 method.getName()
             );
           }
           if (annotation.protocolType() != UNKNOWN) {
-            problems.addError(
+            metadataErrors.addError(
                 "A method with annotated parameters can not have a field type specified: %s.%s ",
                 clazz.getName(),
                 method.getName()
             );
           }
           if (annotation.required()) {
-            problems.addError(
+            metadataErrors.addError(
                 "A method with annotated parameters can not be marked as required: %s.%s ",
                 clazz.getName(),
                 method.getName()
@@ -632,14 +632,14 @@ public class ThriftStructMetadataBuilder<T> {
         fields.addAll(parameters);
         methodInjections.add(new MethodInjection(method, parameters));
       } else {
-        problems.addError(
+        metadataErrors.addError(
             "Inject method %s.%s is not allowed on struct class, since struct has a builder",
             clazz.getName(),
             method.getName()
         );
       }
     } else {
-      problems.addError(
+      metadataErrors.addError(
           "Method %s.%s is not a supported getter or setter",
           clazz.getName(),
           method.getName()
@@ -687,7 +687,7 @@ public class ThriftStructMetadataBuilder<T> {
         // verify either id or name is set
         // todo add name discovery
         if (parameterInjection.getId() == null && parameterInjection.getName() == null) {
-          problems.addError(
+          metadataErrors.addError(
               "@ThriftConstructor %s parameter %s does not have name or id specified",
               methodSignature,
               parameterIndex

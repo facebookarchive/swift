@@ -7,7 +7,7 @@ import com.facebook.swift.codec.ThriftProtocolType;
 import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
 import com.facebook.swift.codec.internal.coercion.FromThrift;
 import com.facebook.swift.codec.internal.coercion.ToThrift;
-import com.facebook.swift.codec.metadata.Problems.Monitor;
+import com.facebook.swift.codec.metadata.MetadataErrors.Monitor;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -57,7 +57,7 @@ import static com.google.common.collect.Iterables.transform;
  */
 @ThreadSafe
 public class ThriftCatalog {
-  private final Problems.Monitor monitor;
+  private final MetadataErrors.Monitor monitor;
   private final ConcurrentMap<Class<?>, ThriftStructMetadata<?>> structs =
       new ConcurrentHashMap<>();
   private final ConcurrentMap<Class<?>, ThriftEnumMetadata<?>> enums = new ConcurrentHashMap<>();
@@ -71,7 +71,7 @@ public class ThriftCatalog {
   };
 
   public ThriftCatalog() {
-    this(Problems.NULL_MONITOR);
+    this(MetadataErrors.NULL_MONITOR);
   }
 
   @VisibleForTesting
