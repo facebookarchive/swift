@@ -95,27 +95,33 @@ public class ThriftCatalog {
     Map<ThriftType, Method> fromThriftCoercions = new HashMap<>();
     for (Method method : coercionsClass.getDeclaredMethods()) {
       if (method.isAnnotationPresent(ToThrift.class)) {
-        Preconditions.checkArgument(
-            Modifier.isStatic(method.getModifiers()),
-            "Method %s is not static", method.toGenericString()
-        );
+        verifyCoercionMethod(method);
         ThriftType thriftType = getThriftType(method.getGenericReturnType());
+        ThriftType coercedType = thriftType.coerceTo(method.getGenericParameterTypes()[0]);
+
+        Method oldValue = toThriftCoercions.put(coercedType, method);
         Preconditions.checkArgument(
-            thriftType != null,
-            "Method %s does not return a known thrift type", method.toGenericString()
+            oldValue == null,
+            "Coercion class two @ToThrift methods (%s and %s) for type %s",
+            coercionsClass.getName(),
+            method,
+            oldValue,
+            coercedType
         );
-        toThriftCoercions.put(thriftType.coerceTo(method.getGenericParameterTypes()[0]), method);
       } else if (method.isAnnotationPresent(FromThrift.class)) {
-        Preconditions.checkArgument(
-            Modifier.isStatic(method.getModifiers()),
-            "Method %s is not static", method.toGenericString()
-        );
+        verifyCoercionMethod(method);
         ThriftType thriftType = getThriftType(method.getGenericParameterTypes()[0]);
+        ThriftType coercedType = thriftType.coerceTo(method.getGenericReturnType());
+
+        Method oldValue = fromThriftCoercions.put(coercedType, method);
         Preconditions.checkArgument(
-            thriftType != null,
-            "Method %s does not return a known thrift type", method.toGenericString()
+            oldValue == null,
+            "Coercion class two @FromThrift methods (%s and %s) for type %s",
+            coercionsClass.getName(),
+            method,
+            oldValue,
+            coercedType
         );
-        fromThriftCoercions.put(thriftType.coerceTo(method.getGenericReturnType()), method);
       }
     }
 
@@ -137,15 +143,36 @@ public class ThriftCatalog {
       ThriftType type = entry.getKey();
       Method toThriftMethod = entry.getValue();
       Method fromThriftMethod = fromThriftCoercions.get(type);
-      Preconditions.checkState(fromThriftCoercions != null);
+      // this should never happen due to the difference check above, but be careful
+      Preconditions.checkState(
+          fromThriftCoercions != null,
+          "Coercion class %s does not have matched @ToThrift and @FromThrift methods for type %s",
+          coercionsClass.getName(),
+          type
+      );
       TypeCoercion coercion = new TypeCoercion(type, toThriftMethod, fromThriftMethod);
       coercions.put(type.getJavaType(), coercion);
     }
     this.coercions.putAll(coercions);
   }
 
+  private void verifyCoercionMethod(Method method) {
+    Preconditions.checkArgument(
+        Modifier.isStatic(method.getModifiers()),
+        "Method %s is not static", method.toGenericString()
+    );
+    Preconditions.checkArgument(
+        method.getParameterTypes().length == 1,
+        "Method %s must have exactly one parameter", method.toGenericString()
+    );
+    Preconditions.checkArgument(
+        method.getReturnType() != void.class,
+        "Method %s must have a return value", method.toGenericString()
+    );
+  }
+
   /**
-   * Gets the default ThriftCoercion for the specified type.
+   * Gets the default TypeCoercion (and associated ThriftType) for the specified Java type.
    */
   public TypeCoercion getDefaultCoercion(Type type) {
     return coercions.get(type);
@@ -154,8 +181,11 @@ public class ThriftCatalog {
   /**
    * Gets the ThriftType for the specified Java type.  The native Thrift type for the Java type will
    * be inferred from the Java type, and if necessary type coercions will be applied.
+   *
+   * @return the ThriftType for the specified java type; never null
+   * @throws IllegalArgumentException if the Java Type can not be coerced to a ThriftType
    */
-  public ThriftType getThriftType(Type javaType) {
+  public ThriftType getThriftType(Type javaType) throws IllegalArgumentException {
     ThriftProtocolType protocolType = inferProtocolType(javaType);
     if (protocolType != null) {
       return getThriftType(javaType, protocolType);
@@ -166,10 +196,7 @@ public class ThriftCatalog {
     if (coercion != null) {
       return coercion.getThriftType();
     }
-    throw new RuntimeException(
-        "Type is not annotated with @ThriftStruct or an automatically " +
-            "supported type: " + javaType
-    );
+    throw new IllegalArgumentException("Type can not be coerced to a Thrift type: " + javaType);
   }
 
   /**
