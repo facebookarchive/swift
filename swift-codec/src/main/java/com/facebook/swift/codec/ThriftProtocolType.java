@@ -19,7 +19,7 @@ public enum ThriftProtocolType {
   I16((byte) 6, short.class),
   I32((byte) 8, int.class),
   I64((byte) 10, long.class),
-  STRING((byte) 11, ByteBuffer.class),
+  STRING((byte) 11, null),
   STRUCT((byte) 12, null),
   MAP((byte) 13, null),
   SET((byte) 14, null),
@@ -37,10 +37,6 @@ public enum ThriftProtocolType {
   private ThriftProtocolType(byte type) {
     this.type = type;
     defaultJavaType = null;
-  }
-
-  public Class<?> getDefaultJavaType() {
-    return defaultJavaType;
   }
 
   public boolean isJavaPrimitive() {
@@ -65,7 +61,8 @@ public enum ThriftProtocolType {
 
   public static boolean isSupportedJavaType(Type genericType) {
     Class<?> rawType = TypeToken.of(genericType).getRawType();
-    return Enum.class.isAssignableFrom(rawType) ||
+    return ByteBuffer.class.isAssignableFrom(rawType) ||
+        Enum.class.isAssignableFrom(rawType) ||
         Map.class.isAssignableFrom(rawType) ||
         Iterable.class.isAssignableFrom(rawType) ||
         rawType.isAnnotationPresent(ThriftStruct.class) ||
@@ -79,6 +76,9 @@ public enum ThriftProtocolType {
     if (protocolType != null) {
       return protocolType;
     }
+    if (ByteBuffer.class.isAssignableFrom(rawType)) {
+      return STRING;
+    }
     if (Enum.class.isAssignableFrom(rawType)) {
       return ENUM;
     }
@@ -91,6 +91,7 @@ public enum ThriftProtocolType {
     if (Iterable.class.isAssignableFrom(rawType)) {
       return LIST;
     }
+    // The void type is used by service methods and is encoded as an empty struct
     if (void.class.isAssignableFrom(rawType)) {
       return STRUCT;
     }

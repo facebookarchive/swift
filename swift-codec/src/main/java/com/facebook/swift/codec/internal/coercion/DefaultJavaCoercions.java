@@ -98,7 +98,7 @@ public final class DefaultJavaCoercions {
     if (value == null) {
       return null;
     }
-    return new String(value.array(), value.arrayOffset(), value.remaining(), UTF_8);
+    return UTF_8.decode(value.duplicate()).toString();
   }
 
   @ToThrift
@@ -106,6 +106,6 @@ public final class DefaultJavaCoercions {
     if (value == null) {
       return null;
     }
-    return ByteBuffer.wrap(value.getBytes(UTF_8));
+    return UTF_8.encode(value);
   }
 }
