@@ -73,6 +73,31 @@ public class ThriftStructMetadataBuilder<T> {
     this.structClass = checkNotNull(structClass, "structClass is null");
     this.metadataErrors = new MetadataErrors(catalog.getMonitor());
 
+    // verify the class is public and has the correct annotations
+    verifyStructClass();
+
+    // assign the struct name from the annotation or from the Java class
+    structName = extractStructName();
+    // get the builder class from the annotation or from the Java class
+    builderClass = extractBuilderClass();
+    // extract all of the annotated constructor and report an error if
+    // there is more than one or none
+    // also extract thrift fields from the annotated parameters and verify
+    extractFromConstructors();
+    // extract thrift fields from the annotated fields and verify
+    extractFromFields();
+    // extract thrift fields from the annotated methods (and parameters) and verify
+    extractFromMethods();
+
+    // finally normalize the field metadata using things like
+    normalizeThriftFields(catalog);
+  }
+
+  public MetadataErrors getMetadataErrors() {
+    return metadataErrors;
+  }
+
+  private void verifyStructClass() {
     // Verify struct class is public and not abstract
     if (Modifier.isAbstract(structClass.getModifiers())) {
       metadataErrors.addError("Struct class [%s] is abstract", structClass.getName());
@@ -81,31 +106,39 @@ public class ThriftStructMetadataBuilder<T> {
       metadataErrors.addError("Struct class [%s] is not public", structClass.getName());
     }
 
-    // name
-    ThriftStruct annotation = structClass.getAnnotation(ThriftStruct.class);
-    if (annotation != null) {
-      if (!annotation.value().isEmpty()) {
-        structName = annotation.value();
-      } else {
-        structName = structClass.getSimpleName();
-      }
-    } else {
+    if (!structClass.isAnnotationPresent(ThriftStruct.class)) {
       metadataErrors.addError(
           "Struct class [%s] does not have a @ThriftStruct annotation",
           structClass.getName()
       );
-      structName = structClass.getSimpleName();
     }
+  }
 
-    // builder class
-    if (!annotation.builder().equals(void.class)) {
-      builderClass = annotation.builder();
+  private String extractStructName() {
+    ThriftStruct annotation = structClass.getAnnotation(ThriftStruct.class);
+    if (annotation == null) {
+      return structClass.getSimpleName();
+    } else if (!annotation.value().isEmpty()) {
+      return annotation.value();
     } else {
-      builderClass = null;
+      return structClass.getSimpleName();
     }
+  }
 
-    // constructors
-    if (builderClass != null) {
+  private Class<?> extractBuilderClass() {
+    ThriftStruct annotation = structClass.getAnnotation(ThriftStruct.class);
+    if (annotation != null && !annotation.builder().equals(void.class)) {
+      return annotation.builder();
+    } else {
+      return null;
+    }
+  }
+
+  private void extractFromConstructors() {
+    if (builderClass == null) {
+      // struct class must have a valid constructor
+      addConstructors(structClass);
+    } else {
       // builder class must have a valid constructor
       addConstructors(builderClass);
 
@@ -123,288 +156,59 @@ public class ThriftStructMetadataBuilder<T> {
           );
         }
       }
-    } else {
-      // struct class must have a valid constructor
-      addConstructors(structClass);
     }
+  }
 
-    // fields
-    if (builderClass != null) {
-      addFields(builderClass, false, true);
-      addFields(structClass, true, false);
-    } else {
-      addFields(structClass, true, true);
-    }
-
-    // methods
-    if (builderClass != null) {
-      addMethods(builderClass, false, true);
-      addMethods(structClass, true, false);
-    } else {
-      addMethods(structClass, true, true);
-    }
-
-    // group fields by explicit name or by name extracted from field, method or property
-    Multimap<String, FieldMetadata> fieldsByName = Multimaps.index(
-        fields,
-        getOrExtractThriftFieldName()
-    );
-
-    // for each name group set the ids on the fields without ids
-    Set<String> fieldsWithConflictingIds = new HashSet<>();
-    for (Entry<String, Collection<FieldMetadata>> entry : fieldsByName.asMap().entrySet()) {
-      Collection<FieldMetadata> fields = entry.getValue();
-
-      // skip all entries without a name or singleton groups... we'll deal with these below
-      if (fields.size() <= 1) {
+  private void addConstructors(Class<?> clazz) {
+    for (Constructor<?> constructor : clazz.getConstructors()) {
+      if (constructor.isSynthetic()) {
+        continue;
+      }
+      if (!constructor.isAnnotationPresent(ThriftConstructor.class)) {
         continue;
       }
 
-      Set<Short> ids = ImmutableSet.copyOf(
-          Optional.presentInstances(transform(fields, getThriftFieldId()))
-      );
-
-      if (ids.size() == 1) {
-        // propagate the id to all fields in this group
-        short id = Iterables.getOnlyElement(ids);
-        for (FieldMetadata field : fields) {
-          field.setId(id);
-        }
-      }
-      if (ids.size() > 1) {
-        metadataErrors.addError(
-            "ThriftStruct '%s' field '%s' has multiple ids: %s",
-            structName,
-            entry.getKey(),
-            ids
-        );
-        fieldsWithConflictingIds.add(entry.getKey());
-      }
-
-    }
-
-    // group fields by id
-    Multimap<Optional<Short>, FieldMetadata> fieldsById = Multimaps.index(
-        fields,
-        getThriftFieldId()
-    );
-    for (Entry<Optional<Short>, Collection<FieldMetadata>> entry : fieldsById.asMap().entrySet()) {
-      Short id = entry.getKey().orNull();
-      Collection<FieldMetadata> fields = entry.getValue();
-
-      // fields must have an id
-      if (id == null) {
-        for (String fieldName : newTreeSet(transform(fields, getThriftFieldName()))) {
-          // only report errors for fields that don't have conflicting ids
-          if (!fieldsWithConflictingIds.contains(fieldName)) {
-            metadataErrors.addError(
-                "ThriftStruct %s fields %s do not have an id",
-                structName,
-                newTreeSet(transform(fields, getThriftFieldName()))
-            );
-          }
-        }
+      if (!Modifier.isPublic(constructor.getModifiers())) {
+        metadataErrors.addError("@ThriftConstructor [%s] is not public", constructor.toGenericString());
         continue;
       }
 
-      // assure all fields with the same id have the same name
-      Set<String> names = ImmutableSet.copyOf(
-          filter(
-              transform(fields, getThriftFieldName()),
-              notNull()
-          )
+      List<ParameterInjection> parameters = getParameterInjections(
+          constructor.toGenericString(),
+          constructor.getParameterAnnotations(),
+          constructor.getGenericParameterTypes()
       );
-      String name;
-      if (!names.isEmpty()) {
-        if (names.size() > 1) {
-          metadataErrors.addWarning("ThriftStruct %s field %s has multiple names %s",
-              structName,
-              id,
-              names);
-        }
-        name = names.iterator().next();
-      } else {
-        // pick a name for this field
-        name = Iterables.find(transform(fields, extractThriftFieldName()), notNull());
+      if (parameters != null) {
+        fields.addAll(parameters);
+        constructorInjections.add(new ConstructorInjection(constructor, parameters));
       }
-      for (FieldMetadata field : fields) {
-        field.setName(name);
-      }
+    }
 
-      // fields be a supported Thrift Type
-      boolean isSupportedType = true;
-      for (FieldMetadata field : fields) {
-        if (!catalog.isSupportedStructFieldType(field.getJavaType())) {
+    // add the default constructor
+    if (constructorInjections.isEmpty()) {
+      try {
+        Constructor<?> constructor = clazz.getDeclaredConstructor();
+        if (!Modifier.isPublic(constructor.getModifiers())) {
           metadataErrors.addError(
-              "ThriftStruct %s field %s(%s) type %s is not a supported Java type",
-              structName,
-              name,
-              id,
-              TypeToken.of(field.getJavaType())
+              "Default constructor [%s] is not public",
+              constructor.toGenericString()
           );
-          isSupportedType = false;
-          // only report the error once
-          break;
         }
-      }
-
-      // fields must have the same type
-      if (isSupportedType) {
-        Set<ThriftType> types = new HashSet<>();
-        for (FieldMetadata field : fields) {
-          types.add(catalog.getThriftType(field.getJavaType()));
-        }
-        if (types.size() > 1) {
-          metadataErrors.addWarning("ThriftStruct %s field %s(%s) has multiple types %s",
-              structName,
-              name,
-              id,
-              types);
-        }
+        constructorInjections.add(new ConstructorInjection(constructor));
+      } catch (Exception e) {
+        metadataErrors.addError(
+            "Struct class [%s] does not have a public no-arg constructor",
+            clazz.getName()
+        );
       }
     }
-  }
 
-  public MetadataErrors getMetadataErrors() {
-    return metadataErrors;
-  }
-
-  public ThriftStructMetadata<T> build() {
-    // we can only build if there are no errors
-    metadataErrors.throwIfHasErrors();
-
-    ThriftMethodInjection builderMethodInjection = null;
-    if (builderClass != null) {
-      MethodInjection builderMethod = builderMethodInjections.get(0);
-      builderMethodInjection = new ThriftMethodInjection(
-          builderMethod.getMethod(),
-          toThriftParameterInjections(builderMethod.getParameters())
+    if (constructorInjections.size() > 1) {
+      metadataErrors.addError(
+          "Multiple constructors are annotated with @ThriftConstructor ",
+          constructorInjections
       );
     }
-    ConstructorInjection constructor = constructorInjections.get(0);
-
-    Multimap<Optional<Short>, FieldMetadata> fieldsById = Multimaps.index(
-        fields,
-        getThriftFieldId()
-    );
-    Iterable<ThriftFieldMetadata> fieldsMetadata = Iterables.transform(
-        fieldsById.asMap().values(),
-        new Function<Collection<FieldMetadata>, ThriftFieldMetadata>() {
-          @Override
-          public ThriftFieldMetadata apply(Collection<FieldMetadata> input) {
-            checkArgument(!input.isEmpty(), "input is empty");
-
-            short id = -1;
-            String name = null;
-            ThriftType type = null;
-
-            ImmutableList.Builder<ThriftInjection> injections = ImmutableList.builder();
-            ThriftExtraction extraction = null;
-
-            for (FieldMetadata fieldMetadata : input) {
-              id = fieldMetadata.getId();
-              name = fieldMetadata.getName();
-              type = catalog.getThriftType(fieldMetadata.getJavaType());
-              if (fieldMetadata instanceof FieldInjection) {
-                FieldInjection fieldInjection = (FieldInjection) fieldMetadata;
-                injections.add(
-                    new ThriftFieldInjection(
-                        fieldInjection.getId(),
-                        fieldInjection.getName(),
-                        fieldInjection.getField()
-                    )
-                );
-              } else if (fieldMetadata instanceof ParameterInjection) {
-                ParameterInjection parameterInjection = (ParameterInjection) fieldMetadata;
-                injections.add(
-                    new ThriftParameterInjection(
-                        parameterInjection.getId(),
-                        parameterInjection.getName(),
-                        parameterInjection.getParameterIndex(),
-                        fieldMetadata.getJavaType()
-                    )
-                );
-              } else if (fieldMetadata instanceof FieldExtractor) {
-                FieldExtractor fieldExtractor = (FieldExtractor) fieldMetadata;
-                extraction = new ThriftFieldExtractor(
-                    fieldExtractor.getId(),
-                    fieldExtractor.getName(),
-                    fieldExtractor.getField()
-                );
-              } else if (fieldMetadata instanceof MethodExtractor) {
-                MethodExtractor methodExtractor = (MethodExtractor) fieldMetadata;
-                extraction = new ThriftMethodExtractor(
-                    methodExtractor.getId(),
-                    methodExtractor.getName(),
-                    methodExtractor.getMethod()
-                );
-              }
-            }
-            TypeCoercion coercion = null;
-            if (type.isCoerced()) {
-              coercion = catalog.getDefaultCoercion(type.getJavaType());
-            }
-            ThriftFieldMetadata thriftFieldMetadata = new ThriftFieldMetadata(
-                id,
-                type,
-                name,
-                injections.build(),
-                extraction,
-                coercion
-            );
-            return thriftFieldMetadata;
-          }
-        }
-    );
-
-    return new ThriftStructMetadata<>(
-        structName,
-        structClass,
-        builderClass,
-        builderMethodInjection,
-        ImmutableList.copyOf(fieldsMetadata),
-        new ThriftConstructorInjection(
-            constructor.getConstructor(),
-            toThriftParameterInjections(constructor.getParameters())
-        ),
-        toThriftMethodInjections(methodInjections)
-    );
-  }
-
-  private List<ThriftMethodInjection> toThriftMethodInjections(
-      List<MethodInjection> methodInjections
-  ) {
-
-    return Lists.transform(
-        methodInjections, new Function<MethodInjection, ThriftMethodInjection>() {
-      @Override
-      public ThriftMethodInjection apply(MethodInjection injection) {
-        return new ThriftMethodInjection(
-            injection.getMethod(),
-            toThriftParameterInjections(injection.getParameters())
-        );
-      }
-    }
-    );
-  }
-
-  private List<ThriftParameterInjection> toThriftParameterInjections(
-      List<ParameterInjection> parameters
-  ) {
-
-    return Lists.transform(
-        parameters, new Function<ParameterInjection, ThriftParameterInjection>() {
-      @Override
-      public ThriftParameterInjection apply(ParameterInjection injection) {
-        return new ThriftParameterInjection(
-            injection.getId(),
-            injection.getName(),
-            injection.getParameterIndex(),
-            injection.getJavaType()
-        );
-      }
-    }
-    );
   }
 
   private void addBuilderMethods() {
@@ -451,56 +255,15 @@ public class ThriftStructMetadataBuilder<T> {
     }
   }
 
-  private void addConstructors(Class<?> clazz) {
-    for (Constructor<?> constructor : clazz.getConstructors()) {
-      if (constructor.isSynthetic()) {
-        continue;
-      }
-      if (!constructor.isAnnotationPresent(ThriftConstructor.class)) {
-        continue;
-      }
-
-      if (!Modifier.isPublic(constructor.getModifiers())) {
-        metadataErrors.addError("@ThriftConstructor [%s] is not public", constructor.toGenericString());
-        continue;
-      }
-
-      List<ParameterInjection> parameters = getParameterInjections(
-          constructor.toGenericString(),
-          constructor.getParameterAnnotations(),
-          constructor.getGenericParameterTypes()
-      );
-      if (parameters != null) {
-        fields.addAll(parameters);
-        constructorInjections.add(new ConstructorInjection(constructor, parameters));
-      }
-    }
-
-    // add the default constructor
-    if (constructorInjections.isEmpty()) {
-      // todo look for builder class
-      try {
-        Constructor<?> constructor = clazz.getDeclaredConstructor();
-        if (!Modifier.isPublic(constructor.getModifiers())) {
-          metadataErrors.addError(
-              "Default constructor [%s] is not public",
-              constructor.toGenericString()
-          );
-        }
-        constructorInjections.add(new ConstructorInjection(constructor));
-      } catch (Exception e) {
-        metadataErrors.addError(
-            "Struct class [%s] does not have a public no-arg constructor",
-            clazz.getName()
-        );
-      }
-    }
-
-    if (constructorInjections.size() > 1) {
-      metadataErrors.addError(
-          "Multiple constructors are annotated with @ThriftConstructor ",
-          constructorInjections
-      );
+  private void extractFromFields() {
+    if (builderClass == null) {
+      // struct fields are readable and writable
+      addFields(structClass, true, true);
+    } else {
+      // builder fields are writable
+      addFields(builderClass, false, true);
+      // struct fields are readable
+      addFields(structClass, true, false);
     }
   }
 
@@ -535,6 +298,18 @@ public class ThriftStructMetadataBuilder<T> {
       FieldInjection fieldInjection = new FieldInjection(fieldField, annotation);
       fields.add(fieldInjection);
       fieldInjections.add(fieldInjection);
+    }
+  }
+
+  private void extractFromMethods() {
+    if (builderClass != null) {
+      // builder methods are writable
+      addMethods(builderClass, false, true);
+      // struct methods are readable
+      addMethods(structClass, true, false);
+    } else {
+      // struct methods are readable and writable
+      addMethods(structClass, true, true);
     }
   }
 
@@ -615,9 +390,10 @@ public class ThriftStructMetadataBuilder<T> {
         } else {
           parameters = ImmutableList.of(
               new ParameterInjection(
-                  0, annotation, extractFieldName(
-                  method
-              ), method.getGenericParameterTypes()[0]
+                  0,
+                  annotation,
+                  extractFieldName(method),
+                  method.getGenericParameterTypes()[0]
               )
           );
         }
@@ -648,6 +424,29 @@ public class ThriftStructMetadataBuilder<T> {
       }
     }
     return false;
+  }
+
+  private static String extractFieldName(Method method) {
+    checkNotNull(method, "method is null");
+    String methodName = method.getName();
+    if ((methodName.startsWith("get") || methodName.startsWith("set")) && methodName.length() > 3) {
+      String name = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);
+      return name;
+    } else if (methodName.startsWith("is") && methodName.length() > 2) {
+      String name = Character.toLowerCase(methodName.charAt(2)) + methodName.substring(3);
+      return name;
+    } else {
+      return methodName;
+    }
+
+  }
+
+  private boolean isValidateGetter(Method method) {
+    return method.getParameterTypes().length == 0 && method.getReturnType() != void.class;
+  }
+
+  private boolean isValidateSetter(Method method) {
+    return method.getParameterTypes().length >= 1;
   }
 
   private List<ParameterInjection> getParameterInjections(
@@ -697,27 +496,334 @@ public class ThriftStructMetadataBuilder<T> {
     return parameters;
   }
 
-  private boolean isValidateGetter(Method method) {
-    return method.getParameterTypes().length == 0 && method.getReturnType() != void.class;
+  private void normalizeThriftFields(ThriftCatalog catalog) {
+    // assign all fields an id (if possible)
+    Set<String> fieldsWithConflictingIds = inferThriftFieldIds();
+
+    // group fields by id
+    Multimap<Optional<Short>, FieldMetadata> fieldsById = Multimaps.index(
+        fields,
+        getThriftFieldId()
+    );
+    for (Entry<Optional<Short>, Collection<FieldMetadata>> entry : fieldsById.asMap().entrySet()) {
+      Collection<FieldMetadata> fields = entry.getValue();
+
+      // fields must have an id
+      if (!entry.getKey().isPresent()) {
+        for (String fieldName : newTreeSet(transform(fields, getThriftFieldName()))) {
+          // only report errors for fields that don't have conflicting ids
+          if (!fieldsWithConflictingIds.contains(fieldName)) {
+            metadataErrors.addError(
+                "ThriftStruct %s fields %s do not have an id",
+                structName,
+                newTreeSet(transform(fields, getThriftFieldName()))
+            );
+          }
+        }
+        continue;
+      }
+      short fieldId = entry.getKey().get();
+
+      // assure all fields for this ID have the same name
+      String fieldName = extractFieldName(fieldId, fields);
+      for (FieldMetadata field : fields) {
+        field.setName(fieldName);
+      }
+
+      // verify fields have a supported java type and all fields
+      // for this ID have the same thrift type
+      verifyFieldType(fieldId, fieldName, fields, catalog);
+    }
   }
 
-  private boolean isValidateSetter(Method method) {
-    return method.getParameterTypes().length >= 1;
+  /**
+   * Assigns all fields an id if possible.  Fields are grouped by name and for each group, if there
+   * is a single id, all fields in the group are assigned this id.  If the group has multiple ids,
+   * an error is reported.
+   */
+  private Set<String> inferThriftFieldIds() {
+    // group fields by explicit name or by name extracted from field, method or property
+    Multimap<String, FieldMetadata> fieldsByName = Multimaps.index(
+        fields,
+        getOrExtractThriftFieldName()
+    );
+
+    // for each name group, set the ids on the fields without ids
+    Set<String> fieldsWithConflictingIds = new HashSet<>();
+    for (Entry<String, Collection<FieldMetadata>> entry : fieldsByName.asMap().entrySet()) {
+      Collection<FieldMetadata> fields = entry.getValue();
+
+      // skip all entries without a name or singleton groups... we'll deal with these later
+      if (fields.size() <= 1) {
+        continue;
+      }
+
+      // all ids used by this named field
+      Set<Short> ids = ImmutableSet.copyOf(
+          Optional.presentInstances(transform(fields, getThriftFieldId()))
+      );
+
+      // multiple conflicting ids
+      if (ids.size() > 1) {
+        metadataErrors.addError(
+            "ThriftStruct '%s' field '%s' has multiple ids: %s",
+            structName,
+            entry.getKey(),
+            ids
+        );
+        fieldsWithConflictingIds.add(entry.getKey());
+        continue;
+      }
+
+      // single id, so set on all fields in this group (groups with no id are handled later)
+      if (ids.size() == 1) {
+        // propagate the id to all fields in this group
+        short id = Iterables.getOnlyElement(ids);
+        for (FieldMetadata field : fields) {
+          field.setId(id);
+        }
+      }
+    }
+    return fieldsWithConflictingIds;
   }
 
-  private static String extractFieldName(Method method) {
-    checkNotNull(method, "method is null");
-    String methodName = method.getName();
-    if ((methodName.startsWith("get") || methodName.startsWith("set")) && methodName.length() > 3) {
-      String name = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);
-      return name;
-    } else if (methodName.startsWith("is") && methodName.length() > 2) {
-      String name = Character.toLowerCase(methodName.charAt(2)) + methodName.substring(3);
-      return name;
+  private String extractFieldName(
+      short id,
+      Collection<FieldMetadata> fields
+  ) {
+    // get the names used by these fields
+    Set<String> names = ImmutableSet.copyOf(
+        filter(transform(fields, getThriftFieldName()), notNull())
+    );
+
+    String name;
+    if (!names.isEmpty()) {
+      if (names.size() > 1) {
+        metadataErrors.addWarning("ThriftStruct %s field %s has multiple names %s",
+            structName,
+            id,
+            names);
+      }
+      name = names.iterator().next();
     } else {
-      return methodName;
+      // pick a name for this field
+      name = Iterables.find(transform(fields, extractThriftFieldName()), notNull());
+    }
+    return name;
+  }
+
+  /**
+   * Verifies that the the fields all have a supported Java type and that all fields map to the
+   * exact same ThriftType.
+   */
+  private void verifyFieldType(
+      short id,
+      String name,
+      Collection<FieldMetadata> fields,
+      ThriftCatalog catalog
+  ) {
+    boolean isSupportedType = true;
+    for (FieldMetadata field : fields) {
+      if (!catalog.isSupportedStructFieldType(field.getJavaType())) {
+        metadataErrors.addError(
+            "ThriftStruct %s field %s(%s) type %s is not a supported Java type",
+            structName,
+            name,
+            id,
+            TypeToken.of(field.getJavaType())
+        );
+        isSupportedType = false;
+        // only report the error once
+        break;
+      }
     }
 
+    // fields must have the same type
+    if (isSupportedType) {
+      Set<ThriftType> types = new HashSet<>();
+      for (FieldMetadata field : fields) {
+        types.add(catalog.getThriftType(field.getJavaType()));
+      }
+      if (types.size() > 1) {
+        metadataErrors.addWarning(
+            "ThriftStruct %s field %s(%s) has multiple types %s",
+            structName,
+            name,
+            id,
+            types
+        );
+      }
+    }
+  }
+
+  //
+  // Build final metadata
+  //
+
+  public ThriftStructMetadata<T> build() {
+    // this code assumes that metadata is clean
+    metadataErrors.throwIfHasErrors();
+
+    // builder constructor injection
+    ThriftMethodInjection builderMethodInjection = buildBuilderConstructorInjections();
+
+    // constructor injection (or factory method for builder)
+    ThriftConstructorInjection constructorInjection = buildConstructorInjections();
+
+    // fields injections
+    Iterable<ThriftFieldMetadata> fieldsMetadata = buildFieldInjections();
+
+    // methods injections
+    List<ThriftMethodInjection> methodInjections = buildMethodInjections();
+
+    return new ThriftStructMetadata<>(
+        structName,
+        structClass,
+        builderClass,
+        builderMethodInjection,
+        ImmutableList.copyOf(fieldsMetadata),
+        constructorInjection,
+        methodInjections
+    );
+  }
+
+  private ThriftMethodInjection buildBuilderConstructorInjections() {
+    ThriftMethodInjection builderMethodInjection = null;
+    if (builderClass != null) {
+      MethodInjection builderMethod = builderMethodInjections.get(0);
+      builderMethodInjection = new ThriftMethodInjection(
+          builderMethod.getMethod(),
+          buildParameterInjections(builderMethod.getParameters())
+      );
+    }
+    return builderMethodInjection;
+  }
+
+  private ThriftConstructorInjection buildConstructorInjections() {
+    ConstructorInjection constructor = constructorInjections.get(0);
+    return new ThriftConstructorInjection(
+        constructor.getConstructor(),
+        buildParameterInjections(constructor.getParameters())
+    );
+  }
+
+  private Iterable<ThriftFieldMetadata> buildFieldInjections() {
+    Multimap<Optional<Short>, FieldMetadata> fieldsById = Multimaps.index(
+        fields,
+        getThriftFieldId()
+    );
+    return Iterables.transform(
+        fieldsById.asMap().values(),
+        new Function<Collection<FieldMetadata>, ThriftFieldMetadata>() {
+          @Override
+          public ThriftFieldMetadata apply(Collection<FieldMetadata> input) {
+            checkArgument(!input.isEmpty(), "input is empty");
+            return buildField(input);
+          }
+        }
+    );
+  }
+
+  private ThriftFieldMetadata buildField(Collection<FieldMetadata> input) {
+    short id = -1;
+    String name = null;
+    ThriftType type = null;
+
+    // process field injections and extractions
+    ImmutableList.Builder<ThriftInjection> injections = ImmutableList.builder();
+    ThriftExtraction extraction = null;
+    for (FieldMetadata fieldMetadata : input) {
+      id = fieldMetadata.getId();
+      name = fieldMetadata.getName();
+      type = catalog.getThriftType(fieldMetadata.getJavaType());
+
+      if (fieldMetadata instanceof FieldInjection) {
+        FieldInjection fieldInjection = (FieldInjection) fieldMetadata;
+        injections.add(
+            new ThriftFieldInjection(
+                fieldInjection.getId(),
+                fieldInjection.getName(),
+                fieldInjection.getField()
+            )
+        );
+      } else if (fieldMetadata instanceof ParameterInjection) {
+        ParameterInjection parameterInjection = (ParameterInjection) fieldMetadata;
+        injections.add(
+            new ThriftParameterInjection(
+                parameterInjection.getId(),
+                parameterInjection.getName(),
+                parameterInjection.getParameterIndex(),
+                fieldMetadata.getJavaType()
+            )
+        );
+      } else if (fieldMetadata instanceof FieldExtractor) {
+        FieldExtractor fieldExtractor = (FieldExtractor) fieldMetadata;
+        extraction = new ThriftFieldExtractor(
+            fieldExtractor.getId(),
+            fieldExtractor.getName(),
+            fieldExtractor.getField()
+        );
+      } else if (fieldMetadata instanceof MethodExtractor) {
+        MethodExtractor methodExtractor = (MethodExtractor) fieldMetadata;
+        extraction = new ThriftMethodExtractor(
+            methodExtractor.getId(),
+            methodExtractor.getName(),
+            methodExtractor.getMethod()
+        );
+      }
+    }
+
+    // add type coercion
+    TypeCoercion coercion = null;
+    if (type.isCoerced()) {
+      coercion = catalog.getDefaultCoercion(type.getJavaType());
+    }
+
+    ThriftFieldMetadata thriftFieldMetadata = new ThriftFieldMetadata(
+        id,
+        type,
+        name,
+        injections.build(),
+        extraction,
+        coercion
+    );
+    return thriftFieldMetadata;
+  }
+
+  private List<ThriftMethodInjection> buildMethodInjections() {
+
+    return Lists.transform(
+        methodInjections,
+        new Function<MethodInjection, ThriftMethodInjection>() {
+          @Override
+          public ThriftMethodInjection apply(MethodInjection injection) {
+            return new ThriftMethodInjection(
+                injection.getMethod(),
+                buildParameterInjections(injection.getParameters())
+            );
+          }
+        }
+    );
+  }
+
+  private List<ThriftParameterInjection> buildParameterInjections(
+      List<ParameterInjection> parameters
+  ) {
+
+    return Lists.transform(
+        parameters,
+        new Function<ParameterInjection, ThriftParameterInjection>() {
+          @Override
+          public ThriftParameterInjection apply(ParameterInjection injection) {
+            return new ThriftParameterInjection(
+                injection.getId(),
+                injection.getName(),
+                injection.getParameterIndex(),
+                injection.getJavaType()
+            );
+          }
+        }
+    );
   }
 
   static abstract class FieldMetadata {
