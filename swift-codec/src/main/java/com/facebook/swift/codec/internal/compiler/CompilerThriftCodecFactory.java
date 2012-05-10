@@ -423,7 +423,7 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
             ThriftFieldInjection fieldInjection = (ThriftFieldInjection) injection;
 
             // if field is an Object && field != null
-            if (!field.getType().getProtocolType().isJavaPrimitive()) {
+            if (!isProtocolTypeJavaPrimitive(field)) {
               read.loadVariable("f_" + field.getName())
                   .ifNullGoto("field_is_null_" + field.getName());
             }
@@ -434,7 +434,7 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
                 .putField(fieldInjection.getField());
 
             // else do nothing
-            if (!field.getType().getProtocolType().isJavaPrimitive()) {
+            if (!isProtocolTypeJavaPrimitive(field)) {
               read.visitLabel("field_is_null_" + field.getName());
             }
           }
@@ -445,7 +445,7 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
       for (ThriftMethodInjection methodInjection : metadata.getMethodInjections()) {
         // if any parameter is non-null, invoke the method
         for (ThriftParameterInjection parameter : methodInjection.getParameters()) {
-          if (!TypeToken.of(parameter.getJavaType()).getRawType().isPrimitive()) {
+          if (!isParameterTypeJavaPrimitive(parameter)) {
             read.loadVariable("f_" + parameter.getName());
             read.ifNotNullGoto("invoke_" + methodInjection.getMethod().toGenericString());
           } else {
@@ -528,7 +528,7 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
         }
 
         // if field value is null, don't write the field
-        if (!TypeToken.of(field.getType().getJavaType()).getRawType().isPrimitive()) {
+        if (!isFieldTypeJavaPrimitive(field)) {
           write.dup();
           write.ifNullGoto("field_is_null_" + field.getName());
         }
@@ -538,7 +538,7 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
           write.invokeStatic(field.getCoercion().getToThrift());
 
           // if coerced value is null, don't write the field
-          if (!field.getType().getProtocolType().isJavaPrimitive()) {
+          if (!isProtocolTypeJavaPrimitive(field)) {
             write.dup();
             write.ifNullGoto("field_is_null_" + field.getName());
           }
@@ -730,8 +730,7 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
 
         // if raw or coerced value are object types, we may not have written due to nulls
         // so we need to clean up the stack
-        if (!field.getType().getProtocolType().isJavaPrimitive() ||
-            !TypeToken.of(field.getType().getJavaType()).getRawType().isPrimitive()) {
+        if (!isProtocolTypeJavaPrimitive(field) || !isFieldTypeJavaPrimitive(field)) {
 
           // value was written so skip cleanup
           write.gotoLabel("field_end_" + field.getName());
@@ -814,6 +813,28 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory {
     );
 
     return codecClass;
+  }
+
+  private boolean isParameterTypeJavaPrimitive(ThriftParameterInjection parameter) {
+    return isJavaPrimitive(TypeToken.of(parameter.getJavaType()));
+  }
+
+  private boolean isFieldTypeJavaPrimitive(ThriftFieldMetadata field) {
+    return isJavaPrimitive(TypeToken.of(field.getType().getJavaType()));
+  }
+
+  private boolean isProtocolTypeJavaPrimitive(ThriftFieldMetadata field) {
+    if (field.getType().isCoerced()) {
+      return isJavaPrimitive(TypeToken.of(field.getType().getUncoercedType().getJavaType()));
+    } else {
+      return isJavaPrimitive(TypeToken.of(field.getType().getJavaType()));
+    }
+  }
+
+  private boolean isJavaPrimitive(TypeToken<?> typeToken) {
+    return typeToken
+        .getRawType()
+        .isPrimitive();
   }
 
   private boolean needsCodec(ThriftFieldMetadata fieldMetadata) {

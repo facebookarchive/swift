@@ -3,7 +3,7 @@
  */
 package com.facebook.swift.codec.metadata;
 
-import com.facebook.swift.codec.ThriftProtocolType;
+import com.facebook.swift.codec.ThriftStruct;
 import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
 import com.facebook.swift.codec.internal.coercion.FromThrift;
 import com.facebook.swift.codec.internal.coercion.ToThrift;
@@ -21,6 +21,7 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
@@ -29,7 +30,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.facebook.swift.codec.ThriftProtocolType.inferProtocolType;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getIterableType;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getMapKeyType;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getMapValueType;
@@ -186,9 +186,53 @@ public class ThriftCatalog {
    * @throws IllegalArgumentException if the Java Type can not be coerced to a ThriftType
    */
   public ThriftType getThriftType(Type javaType) throws IllegalArgumentException {
-    ThriftProtocolType protocolType = inferProtocolType(javaType);
-    if (protocolType != null) {
-      return getThriftType(javaType, protocolType);
+    Class<?> rawType = TypeToken.of(javaType).getRawType();
+    if (boolean.class == rawType) {
+      return BOOL;
+    }
+    if (byte.class == rawType) {
+      return BYTE;
+    }
+    if (short.class == rawType) {
+      return I16;
+    }
+    if (int.class == rawType) {
+      return I32;
+    }
+    if (long.class == rawType) {
+      return I64;
+    }
+    if (double.class == rawType) {
+      return DOUBLE;
+    }
+    if (ByteBuffer.class.isAssignableFrom(rawType)) {
+      return STRING;
+    }
+    if (Enum.class.isAssignableFrom(rawType)) {
+      Class<?> enumClass = TypeToken.of(javaType).getRawType();
+      ThriftEnumMetadata<? extends Enum<?>> thriftEnumMetadata = getThriftEnumMetadata(enumClass);
+      return enumType(thriftEnumMetadata);
+    }
+    if (Map.class.isAssignableFrom(rawType)) {
+      Type mapKeyType = getMapKeyType(javaType);
+      Type mapValueType = getMapValueType(javaType);
+      return map(getThriftType(mapKeyType), getThriftType(mapValueType));
+    }
+    if (Set.class.isAssignableFrom(rawType)) {
+      Type elementType = getIterableType(javaType);
+      return set(getThriftType(elementType));
+    }
+    if (Iterable.class.isAssignableFrom(rawType)) {
+      Type elementType = getIterableType(javaType);
+      return list(getThriftType(elementType));
+    }
+    // The void type is used by service methods and is encoded as an empty struct
+    if (void.class.isAssignableFrom(rawType)) {
+      return VOID;
+    }
+    if (rawType.isAnnotationPresent(ThriftStruct.class)) {
+      ThriftStructMetadata<?> structMetadata = getThriftStructMetadata(rawType);
+      return struct(structMetadata);
     }
 
     // coerce the type if possible
@@ -199,56 +243,57 @@ public class ThriftCatalog {
     throw new IllegalArgumentException("Type can not be coerced to a Thrift type: " + javaType);
   }
 
-  /**
-   * Gets the ThriftType for the specified Java type encoded as the specified Thrift type.  This
-   * method can create type that require coercions that have not been registered with this catalog.
-   */
-  public ThriftType getThriftType(Type javaType, ThriftProtocolType protocolType) {
-    switch (protocolType) {
-      case BOOL:
-        return BOOL.coerceTo(javaType);
-      case BYTE:
-        return BYTE.coerceTo(javaType);
-      case DOUBLE:
-        return DOUBLE.coerceTo(javaType);
-      case I16:
-        return I16.coerceTo(javaType);
-      case I32:
-        return I32.coerceTo(javaType);
-      case I64:
-        return I64.coerceTo(javaType);
-      case STRING:
-        return STRING.coerceTo(javaType);
-      case STRUCT: {
-        Class<?> structClass = (Class<?>) javaType;
-        if (structClass == void.class) {
-          return VOID;
-        }
-        ThriftStructMetadata<?> structMetadata = getThriftStructMetadata(structClass);
-        return struct(structMetadata);
-      }
-      case MAP: {
-        Type mapKeyType = getMapKeyType(javaType);
-        Type mapValueType = getMapValueType(javaType);
-        return map(getThriftType(mapKeyType), getThriftType(mapValueType));
-      }
-      case SET: {
-        Type elementType = getIterableType(javaType);
-        return set(getThriftType(elementType));
-      }
-      case LIST: {
-        Type elementType = getIterableType(javaType);
-        return list(getThriftType(elementType));
-      }
-      case ENUM: {
-        Class<?> enumClass = TypeToken.of(javaType).getRawType();
-        ThriftEnumMetadata<? extends Enum<?>> thriftEnumMetadata = getThriftEnumMetadata(enumClass);
-        return enumType(thriftEnumMetadata);
-      }
-      default: {
-        throw new IllegalStateException("Write does not support fields of type " + protocolType);
-      }
+  public boolean isSupportedStructFieldType(Type javaType) {
+    Class<?> rawType = TypeToken.of(javaType).getRawType();
+    if (boolean.class == rawType) {
+      return true;
     }
+    if (byte.class == rawType) {
+      return true;
+    }
+    if (short.class == rawType) {
+      return true;
+    }
+    if (int.class == rawType) {
+      return true;
+    }
+    if (long.class == rawType) {
+      return true;
+    }
+    if (double.class == rawType) {
+      return true;
+    }
+    if (ByteBuffer.class.isAssignableFrom(rawType)) {
+      return true;
+    }
+    if (Enum.class.isAssignableFrom(rawType)) {
+      return true;
+    }
+    if (Map.class.isAssignableFrom(rawType)) {
+      Type mapKeyType = getMapKeyType(javaType);
+      Type mapValueType = getMapValueType(javaType);
+      return isSupportedStructFieldType(mapKeyType) && isSupportedStructFieldType(mapValueType);
+    }
+    if (Set.class.isAssignableFrom(rawType)) {
+      Type elementType = getIterableType(javaType);
+      return isSupportedStructFieldType(elementType);
+    }
+    if (Iterable.class.isAssignableFrom(rawType)) {
+      Type elementType = getIterableType(javaType);
+      return isSupportedStructFieldType(elementType);
+    }
+    if (rawType.isAnnotationPresent(ThriftStruct.class)) {
+      return true;
+    }
+
+    // NOTE: void is not a supported struct type
+
+    // coerce the type if possible
+    TypeCoercion coercion = coercions.get(javaType);
+    if (coercion != null) {
+      return true;
+    }
+    return false;
   }
 
   /**

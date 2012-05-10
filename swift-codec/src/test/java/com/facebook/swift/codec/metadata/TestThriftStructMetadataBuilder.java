@@ -83,34 +83,6 @@ public class TestThriftStructMetadataBuilder {
   }
 
   @Test
-  public void testUnsupportedThriftType() throws Exception {
-    ThriftStructMetadataBuilder<UnsupportedThriftType> builder = new ThriftStructMetadataBuilder<>(
-        new ThriftCatalog(),
-        UnsupportedThriftType.class
-    );
-
-    MetadataErrors metadataErrors = builder.getMetadataErrors();
-
-    assertThat(metadataErrors.getErrors())
-        .as("metadata errors")
-        .hasSize(1);
-
-    assertThat(metadataErrors.getWarnings())
-        .as("metadata warnings")
-        .isEmpty();
-
-    assertThat(metadataErrors.getErrors().get(0).getMessage())
-        .as("error message")
-        .containsIgnoringCase("not a supported thrift type");
-  }
-
-  @ThriftStruct
-  public static class UnsupportedThriftType {
-    @ThriftField(value = 1, protocolType = STRING)
-    public Lock unsupportedThriftType;
-  }
-
-  @Test
   public void testUnsupportedType() throws Exception {
     ThriftStructMetadataBuilder<UnsupportedJavaType> builder = new ThriftStructMetadataBuilder<>(
         new ThriftCatalog(),
@@ -129,7 +101,7 @@ public class TestThriftStructMetadataBuilder {
 
     assertThat(metadataErrors.getErrors().get(0).getMessage())
         .as("error message")
-        .containsIgnoringCase("Could not infer Thrift type");
+        .containsIgnoringCase("not a supported Java type");
   }
 
   @ThriftStruct
@@ -137,4 +109,36 @@ public class TestThriftStructMetadataBuilder {
     @ThriftField(1)
     public Lock unsupportedJavaType;
   }
+
+  @Test
+  public void testMultipleTypes() throws Exception {
+    ThriftStructMetadataBuilder<MultipleTypes> builder = new ThriftStructMetadataBuilder<>(
+        new ThriftCatalog(),
+        MultipleTypes.class
+    );
+
+    MetadataErrors metadataErrors = builder.getMetadataErrors();
+
+    assertThat(metadataErrors.getErrors())
+        .as("metadata errors")
+        .isEmpty();
+
+    assertThat(metadataErrors.getWarnings())
+        .as("metadata warnings")
+        .hasSize(1);
+
+    assertThat(metadataErrors.getWarnings().get(0).getMessage())
+        .as("error message")
+        .containsIgnoringCase("multiple types");
+  }
+
+  @ThriftStruct
+  public static class MultipleTypes {
+    @ThriftField(1)
+    public int getFoo() { return 0; }
+
+    @ThriftField
+    public void setFoo(short value) { }
+  }
+
 }

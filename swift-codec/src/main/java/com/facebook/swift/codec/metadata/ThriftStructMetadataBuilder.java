@@ -5,7 +5,6 @@ package com.facebook.swift.codec.metadata;
 
 import com.facebook.swift.codec.ThriftConstructor;
 import com.facebook.swift.codec.ThriftField;
-import com.facebook.swift.codec.ThriftProtocolType;
 import com.facebook.swift.codec.ThriftStruct;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
@@ -32,8 +31,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import static com.facebook.swift.codec.ThriftProtocolType.UNKNOWN;
-import static com.facebook.swift.codec.ThriftProtocolType.isSupportedJavaType;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.findAnnotatedMethods;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getAllDeclaredFields;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getAllDeclaredMethods;
@@ -41,8 +38,6 @@ import static com.facebook.swift.codec.metadata.ThriftStructMetadataBuilder.Fiel
 import static com.facebook.swift.codec.metadata.ThriftStructMetadataBuilder.FieldMetadata.getOrExtractThriftFieldName;
 import static com.facebook.swift.codec.metadata.ThriftStructMetadataBuilder.FieldMetadata.getThriftFieldId;
 import static com.facebook.swift.codec.metadata.ThriftStructMetadataBuilder.FieldMetadata.getThriftFieldName;
-import static com.facebook.swift.codec.metadata.ThriftStructMetadataBuilder.FieldMetadata.getThriftFieldProtocolType;
-import static com.facebook.swift.codec.metadata.ThriftStructMetadataBuilder.FieldMetadata.inferThriftFieldProtocolType;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.notNull;
@@ -222,7 +217,10 @@ public class ThriftStructMetadataBuilder<T> {
       String name;
       if (!names.isEmpty()) {
         if (names.size() > 1) {
-          metadataErrors.addWarning("Field %s has multiple names %s", id, names);
+          metadataErrors.addWarning("ThriftStruct %s field %s has multiple names %s",
+              structName,
+              id,
+              names);
         }
         name = names.iterator().next();
       } else {
@@ -233,48 +231,35 @@ public class ThriftStructMetadataBuilder<T> {
         field.setName(name);
       }
 
-      // assure all fields have the same protocol type
-      // get explicitly set protocol types
-      Set<ThriftProtocolType> protocolTypes = ImmutableSet.copyOf(
-          filter(transform(fields, getThriftFieldProtocolType()), notNull())
-      );
-      // if none, infer protocol type from java type
-      if (protocolTypes.isEmpty()) {
-        protocolTypes = ImmutableSet.copyOf(
-            filter(transform(fields, inferThriftFieldProtocolType(catalog)), notNull())
-        );
-      }
-      if (protocolTypes.size() > 1) {
-        metadataErrors.addError("Field %s has multiple conflicting protocol types %s", id, protocolTypes);
-        continue;
-      } else if (protocolTypes.isEmpty()) {
-        metadataErrors.addError("Could not infer Thrift type for field %s(%s)", name, id);
-        continue;
-      }
-      ThriftProtocolType type = protocolTypes.iterator().next();
+      // fields be a supported Thrift Type
+      boolean isSupportedType = true;
       for (FieldMetadata field : fields) {
-        field.setProtocolType(type);
+        if (!catalog.isSupportedStructFieldType(field.getJavaType())) {
+          metadataErrors.addError(
+              "ThriftStruct %s field %s(%s) type %s is not a supported Java type",
+              structName,
+              name,
+              id,
+              TypeToken.of(field.getJavaType())
+          );
+          isSupportedType = false;
+          // only report the error once
+          break;
+        }
       }
 
-      // add type coercions if necessary
-      for (FieldMetadata field : fields) {
-        Type javaType = field.getJavaType();
-
-        if (!isSupportedJavaType(javaType) && field.getCoercion() == null) {
-          TypeCoercion coercion = catalog.getDefaultCoercion(javaType);
-          if (coercion == null) {
-            metadataErrors.addError(
-                "Field %s(%s) type %s is not a supported thrift type and does not have type coercion",
-                name,
-                id,
-                TypeToken.of(javaType)
-            );
-            // only report first field per id
-            break;
-          }
-          else {
-            field.setCoercion(coercion);
-          }
+      // fields must have the same type
+      if (isSupportedType) {
+        Set<ThriftType> types = new HashSet<>();
+        for (FieldMetadata field : fields) {
+          types.add(catalog.getThriftType(field.getJavaType()));
+        }
+        if (types.size() > 1) {
+          metadataErrors.addWarning("ThriftStruct %s field %s(%s) has multiple types %s",
+              structName,
+              name,
+              id,
+              types);
         }
       }
     }
@@ -620,13 +605,6 @@ public class ThriftStructMetadataBuilder<T> {
                 method.getName()
             );
           }
-          if (annotation.protocolType() != UNKNOWN) {
-            metadataErrors.addError(
-                "A method with annotated parameters can not have a field type specified: %s.%s ",
-                clazz.getName(),
-                method.getName()
-            );
-          }
           if (annotation.required()) {
             metadataErrors.addError(
                 "A method with annotated parameters can not be marked as required: %s.%s ",
@@ -745,8 +723,6 @@ public class ThriftStructMetadataBuilder<T> {
   static abstract class FieldMetadata {
     private Short id;
     private String name;
-    private ThriftProtocolType protocolType;
-    private TypeCoercion coercion;
 
     private FieldMetadata(ThriftField annotation) {
       checkNotNull(annotation, "annotation is null");
@@ -755,9 +731,6 @@ public class ThriftStructMetadataBuilder<T> {
       }
       if (!annotation.name().isEmpty()) {
         name = annotation.name();
-      }
-      if (annotation.protocolType() != UNKNOWN) {
-        protocolType = annotation.protocolType();
       }
     }
 
@@ -781,33 +754,6 @@ public class ThriftStructMetadataBuilder<T> {
 
     public abstract String extractName();
 
-    public ThriftProtocolType getProtocolType() {
-      return protocolType;
-    }
-
-    public void setProtocolType(ThriftProtocolType protocolType) {
-      this.protocolType = protocolType;
-    }
-
-    public TypeCoercion getCoercion() {
-      return coercion;
-    }
-
-    public void setCoercion(TypeCoercion coercion) {
-      checkNotNull(coercion, "coercion is null");
-      if (getProtocolType() == null) {
-        setProtocolType(coercion.getThriftType().getProtocolType());
-      } else {
-        checkArgument(
-            coercion.getThriftType().getProtocolType() == getProtocolType(),
-            "Coercion protocol type %s does not match declared field protocol type %s",
-            coercion.getThriftType().getProtocolType(),
-            getProtocolType()
-        );
-      }
-      this.coercion = coercion;
-    }
-
     static <T extends FieldMetadata> Function<T, Optional<Short>> getThriftFieldId() {
       return new Function<T, Optional<Short>>() {
         @Override
@@ -829,54 +775,6 @@ public class ThriftStructMetadataBuilder<T> {
             return null;
           }
           return input.getName();
-        }
-      };
-    }
-
-    static <T extends FieldMetadata> Function<T, ThriftProtocolType> getThriftFieldProtocolType() {
-      return new Function<T, ThriftProtocolType>() {
-        @Override
-        public ThriftProtocolType apply(@Nullable T input) {
-          if (input == null) {
-            return null;
-          }
-          return input.getProtocolType();
-        }
-      };
-    }
-
-    // lame coding style limits force this code to be ugly
-    static <T extends FieldMetadata> Function<T, ThriftProtocolType>
-    inferThriftFieldProtocolType(final ThriftCatalog catalog) {
-
-      return new Function<T, ThriftProtocolType>() {
-        @Override
-        public ThriftProtocolType apply(@Nullable T input) {
-          if (input == null) {
-            return null;
-          }
-
-          // check for explicit type
-          ThriftProtocolType protocolType = input.getProtocolType();
-          if (protocolType != null) {
-            return protocolType;
-          }
-
-          // infer from java type
-          Type javaType = input.getJavaType();
-          protocolType = ThriftProtocolType.inferProtocolType(javaType);
-          if (protocolType != null) {
-            return protocolType;
-          }
-
-          // infer from default coercion
-          TypeCoercion coercion = catalog.getDefaultCoercion(input.getJavaType());
-          if (coercion != null) {
-            input.setCoercion(coercion);
-            return coercion.getThriftType().getProtocolType();
-          }
-
-          return null;
         }
       };
     }

@@ -24,6 +24,4 @@ public @interface ThriftField {
   String name() default "";
 
   boolean required() default false;
-
-  ThriftProtocolType protocolType() default ThriftProtocolType.UNKNOWN;
 }

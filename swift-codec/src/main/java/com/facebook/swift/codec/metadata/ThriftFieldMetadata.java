@@ -4,6 +4,7 @@
 package com.facebook.swift.codec.metadata;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.reflect.TypeToken;
 
 import javax.annotation.concurrent.Immutable;
 import java.util.List;
