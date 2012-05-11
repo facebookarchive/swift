@@ -125,12 +125,8 @@ public class MethodDefinition {
       if (parameterName == null) {
         parameterName = "arg" + argId;
       }
-      localVariables.put(
-          parameterName,
-          new LocalVariableDefinition(parameterName, localVariables.size(), parameter.getType())
-      );
+      addLocalVariable(parameter.getType(), parameterName);
       argId++;
-      nextSlot += Type.getType(parameter.getType().getType()).getSize();
     }
   }
 
@@ -161,6 +157,12 @@ public class MethodDefinition {
     LocalVariableDefinition variable = addLocalVariable(type, name);
     initializeLocalVariable(variable);
     return variable;
+  }
+
+  public LocalVariableDefinition getLocalVariable(String name) {
+    LocalVariableDefinition localVariableDefinition = localVariables.get(name);
+    Preconditions.checkArgument(localVariableDefinition != null, "No local variable %s", name);
+    return localVariableDefinition;
   }
 
   public MethodDefinition visitLabel(String name) {

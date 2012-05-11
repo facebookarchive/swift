@@ -11,6 +11,7 @@ import com.google.common.reflect.TypeToken;
 import javax.annotation.concurrent.Immutable;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -63,7 +64,7 @@ public class ThriftType {
   public static <E> ThriftType list(ThriftType valueType) {
     checkNotNull(valueType, "valueType is null");
 
-    Type javaType = new TypeToken<Set<E>>() {}
+    Type javaType = new TypeToken<List<E>>() {}
         .where(new TypeParameter<E>() {}, (TypeToken<E>) TypeToken.of(valueType.getJavaType()))
         .getType();
     return new ThriftType(ThriftProtocolType.LIST, javaType, null, valueType);
