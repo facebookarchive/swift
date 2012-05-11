@@ -11,49 +11,64 @@ import java.util.concurrent.Executor;
  * @author jaxlaw
  */
 public class ThriftServerDef {
-    private final int serverPort;
-    private final int maxFrameSize;
-    private final TProcessorFactory processorFactory;
-    private final TProtocolFactory inProtoalFact;
-    private final TProtocolFactory outProtoalFact;
-    private final Executor executor;
-    private final String name;
+  private final int serverPort;
+  private final int maxFrameSize;
+  private final TProcessorFactory processorFactory;
+  private final TProtocolFactory inProtocolFact;
+  private final TProtocolFactory outProtocolFact;
+  private final boolean headerTransport;
+  private final Executor executor;
+  private final String name;
 
-    public ThriftServerDef(String name, int serverPort, int maxFrameSize, TProcessorFactory factory, TProtocolFactory inProtoalFact, TProtocolFactory outProtoalFact, Executor executor) {
-        this.name = name;
-        this.serverPort = serverPort;
-        this.maxFrameSize = maxFrameSize;
-        this.processorFactory = factory;
-        this.inProtoalFact = inProtoalFact;
-        this.outProtoalFact = outProtoalFact;
-        this.executor = executor;
-    }
+  public ThriftServerDef(
+    String name,
+    int serverPort,
+    int maxFrameSize,
+    TProcessorFactory factory,
+    TProtocolFactory inProtoalFact,
+    TProtocolFactory outProtoalFact,
+    boolean useHeaderTransport,
+    Executor executor
+  ) {
+    this.name = name;
+    this.serverPort = serverPort;
+    this.maxFrameSize = maxFrameSize;
+    this.processorFactory = factory;
+    this.inProtocolFact = inProtoalFact;
+    this.outProtocolFact = outProtoalFact;
+    this.headerTransport = useHeaderTransport;
+    this.executor = executor;
+  }
 
-    public int getServerPort() {
-        return serverPort;
-    }
+  public int getServerPort() {
+    return serverPort;
+  }
 
-    public int getMaxFrameSize() {
-        return maxFrameSize;
-    }
+  public int getMaxFrameSize() {
+    return maxFrameSize;
+  }
 
-    public TProcessorFactory getProcessorFactory() {
-        return processorFactory;
-    }
+  public TProcessorFactory getProcessorFactory() {
+    return processorFactory;
+  }
 
-    public TProtocolFactory getInProtocolFactory() {
-        return inProtoalFact;
-    }
+  public TProtocolFactory getInProtocolFactory() {
+    return inProtocolFact;
+  }
 
-    public TProtocolFactory getOutProtocolFactory() {
-        return outProtoalFact;
-    }
+  public TProtocolFactory getOutProtocolFactory() {
+    return outProtocolFact;
+  }
 
-    public Executor getExecutor() {
-        return executor;
-    }
+  public boolean isHeaderTransport() {
+    return headerTransport;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public Executor getExecutor() {
+    return executor;
+  }
+
+  public String getName() {
+    return name;
+  }
 }

@@ -12,51 +12,56 @@ import org.jboss.netty.channel.Channel;
  * @author jaxlaw
  */
 public class TNiftyTransport extends TTransport {
-    private final Channel channel;
-    private final ChannelBuffer buf;
-    private final ChannelBuffer out;
-    private static final int DEFAULT_OUTPUT_BUFFER_SIZE = 1024;
+  private final Channel channel;
+  private final ChannelBuffer buf;
+  private final ChannelBuffer out;
+  private static final int DEFAULT_OUTPUT_BUFFER_SIZE = 1024;
 
-    public TNiftyTransport(Channel channel, ChannelBuffer buf) {
-        this.channel = channel;
-        this.buf = buf;
-        this.out = ChannelBuffers.dynamicBuffer(DEFAULT_OUTPUT_BUFFER_SIZE);
-    }
+  public TNiftyTransport(Channel channel, ChannelBuffer buf) {
+    this.channel = channel;
+    this.buf = buf;
+    this.out = ChannelBuffers.dynamicBuffer(DEFAULT_OUTPUT_BUFFER_SIZE);
+  }
 
-    @Override
-    public boolean isOpen() {
-        return channel.isOpen();
-    }
+  @Override
+  public boolean isOpen() {
+    return channel.isOpen();
+  }
 
-    @Override
-    public void open() throws TTransportException {
-        // no-op
-    }
+  @Override
+  public void open() throws TTransportException {
+    // no-op
+  }
 
-    @Override
-    public void close() {
-        // no-op
-        channel.close();
-    }
+  @Override
+  public void close() {
+    // no-op
+    channel.close();
+  }
 
-    @Override
-    public int read(byte[] bytes, int offset, int length) throws TTransportException {
-        int remaining = buf.readableBytes();
-        if (length > remaining) {
-            buf.readBytes(bytes, offset, remaining);
-            return remaining;
-        } else {
-            buf.readBytes(bytes, offset, length);
-            return length;
-        }
+  @Override
+  public int read(byte[] bytes, int offset, int length) throws TTransportException {
+    int remaining = buf.readableBytes();
+    if (length > remaining) {
+      buf.readBytes(bytes, offset, remaining);
+      return remaining;
+    } else {
+      buf.readBytes(bytes, offset, length);
+      return length;
     }
+  }
 
-    @Override
-    public void write(byte[] bytes, int offset, int length) throws TTransportException {
-        out.writeBytes(bytes, offset, length);
-    }
+  @Override
+  public void write(byte[] bytes, int offset, int length) throws TTransportException {
+    out.writeBytes(bytes, offset, length);
+  }
 
-    public ChannelBuffer getOutputBuffer() {
-        return out;
-    }
+  public ChannelBuffer getOutputBuffer() {
+    return out;
+  }
+
+  @Override
+  public void flush() throws TTransportException {
+    channel.write(out);
+  }
 }
