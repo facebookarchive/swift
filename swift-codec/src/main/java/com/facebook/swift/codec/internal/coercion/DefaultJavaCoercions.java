@@ -108,4 +108,16 @@ public final class DefaultJavaCoercions {
     }
     return UTF_8.encode(value);
   }
+
+  @FromThrift
+  public static byte[] byteBufferToByteArray(ByteBuffer buffer) {
+    byte[] result = new byte[buffer.remaining()];
+    buffer.duplicate().get(result);
+    return result;
+  }
+
+  @ToThrift
+  public static ByteBuffer byteArrayToByteBuffer(byte[] value) {
+    return ByteBuffer.wrap(value);
+  }
 }
