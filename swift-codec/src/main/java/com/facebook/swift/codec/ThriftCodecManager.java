@@ -28,6 +28,7 @@ import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.reflect.TypeToken;
 import org.apache.thrift.protocol.TProtocol;
 
 import javax.annotation.concurrent.ThreadSafe;
@@ -133,6 +134,10 @@ public class ThriftCodecManager {
     } catch (ExecutionException e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  public <T> ThriftCodec<T> getCodec(TypeToken<T> type) {
+    return (ThriftCodec<T>) getCodec(type.getType());
   }
 
   /**
