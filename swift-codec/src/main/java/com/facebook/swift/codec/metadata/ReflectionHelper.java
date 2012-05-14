@@ -15,11 +15,19 @@
  */
 package com.facebook.swift.codec.metadata;
 
+import com.facebook.swift.codec.ThriftField;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
+import com.thoughtworks.paranamer.AdaptiveParanamer;
+import com.thoughtworks.paranamer.AnnotationParanamer;
+import com.thoughtworks.paranamer.BytecodeReadingParanamer;
+import com.thoughtworks.paranamer.CachingParanamer;
+import com.thoughtworks.paranamer.Paranamer;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -177,5 +185,67 @@ final class ReflectionHelper {
     }
 
     return result;
+  }
+
+  private static final Paranamer PARANAMER = new CachingParanamer(
+      new AdaptiveParanamer(
+          new ThriftFieldParanamer(),
+          new BytecodeReadingParanamer(),
+          new GeneralParanamer())
+  );
+
+  public static String[] extractParameterNames(AccessibleObject methodOrConstructor) {
+    String[] names = PARANAMER.lookupParameterNames(methodOrConstructor);
+    return names;
+  }
+
+  private static class ThriftFieldParanamer extends AnnotationParanamer {
+    @Override
+    protected String getNamedValue(Annotation annotation) {
+      if (annotation instanceof ThriftField) {
+        String name = ((ThriftField) annotation).name();
+        if (!name.isEmpty()) {
+          return name;
+        }
+      }
+      return  super.getNamedValue(annotation);
+    }
+
+    @Override
+    protected boolean isNamed(Annotation annotation) {
+      return (annotation instanceof ThriftField) ||
+          super.isNamed(annotation);
+    }
+  }
+
+  private static class GeneralParanamer implements Paranamer {
+    @Override
+    public String[] lookupParameterNames(AccessibleObject methodOrConstructor) {
+      String[] names;
+      if (methodOrConstructor instanceof Method) {
+        Method method = (Method) methodOrConstructor;
+        names = new String[method.getParameterTypes().length];
+      } else if (methodOrConstructor instanceof Constructor<?>) {
+        Constructor<?> constructor = (Constructor<?>) methodOrConstructor;
+        names = new String[constructor.getParameterTypes().length];
+      } else {
+        throw new IllegalArgumentException(
+            "methodOrConstructor is not an instance of Method " +
+                "or Constructor but is " + methodOrConstructor.getClass().getName()
+        );
+      }
+      for (int i = 0; i < names.length; i++) {
+        names[i] = "arg" + i;
+      }
+      return names;
+
+    }
+
+    @Override
+    public String[] lookupParameterNames(
+        AccessibleObject methodOrConstructor, boolean throwExceptionIfMissing
+    ) {
+      return lookupParameterNames(methodOrConstructor);
+    }
   }
 }
