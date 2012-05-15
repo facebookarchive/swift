@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <p/>
  * </code>
  *
- * @author jaxlaw
  */
 public class ThriftServerDefBuilder {
   private static final AtomicInteger ID = new AtomicInteger(1);

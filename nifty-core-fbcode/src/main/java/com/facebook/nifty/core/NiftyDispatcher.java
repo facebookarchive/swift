@@ -20,7 +20,6 @@ import java.util.concurrent.Executor;
 /**
  * Dispatch TNiftyTransport to the TProcessor and write output back.
  *
- * @author jaxlaw
  */
 public class NiftyDispatcher extends SimpleChannelUpstreamHandler {
 
@@ -61,7 +60,8 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler {
                 }
               );
             } catch (TException e1) {
-              log.error("Exception during thrift message dispatch", e1);
+              log.error("Exception while invoking!", e1);
+              closeChannel(ctx);
             }
 
           }
@@ -74,8 +74,13 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler {
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-    // most of the time this is just socket close by client
-    // thrift protocol does not define any connection shutdown
-    log.debug("Exception caught in dispatcher : ", e.getCause());
+    // Any out of band exception are caught here and we tear down the socket
+    closeChannel(ctx);
+  }
+
+  private void closeChannel(ChannelHandlerContext ctx) {
+    if (ctx.getChannel().isOpen()) {
+      ctx.getChannel().close();
+    }
   }
 }

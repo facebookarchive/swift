@@ -9,7 +9,6 @@ import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
 /**
  * Converts ChannelBuffer into TNiftyTransport.
  *
- * @author jaxlaw
  */
 public class NettyThriftDecoder extends OneToOneDecoder {
   @Override

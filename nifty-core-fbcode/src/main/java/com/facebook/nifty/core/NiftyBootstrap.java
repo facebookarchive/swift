@@ -17,7 +17,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * A lifecycle object that manages starting up and shutting down multiple core channels.
  *
- * @author jaxlaw
  */
 public class NiftyBootstrap {
   private static final Logger log = LoggerFactory.getLogger(NiftyBootstrap.class);
@@ -33,11 +32,11 @@ public class NiftyBootstrap {
    * @param thriftServerDefs
    */
   @Inject
-  public NiftyBootstrap(Set<ThriftServerDef> thriftServerDefs) {
+  public NiftyBootstrap(Set<ThriftServerDef> thriftServerDefs, NettyConfigBuilder configBuilder) {
     this.thriftServerDefs = thriftServerDefs;
     this.transports = new ArrayList<NettyServerTransport>();
     for (ThriftServerDef thriftServerDef : thriftServerDefs) {
-      transports.add(new NettyServerTransport(thriftServerDef));
+      transports.add(new NettyServerTransport(thriftServerDef, configBuilder));
     }
 
   }

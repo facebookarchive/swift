@@ -5,11 +5,6 @@ import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-/**
- * Author @jaxlaw
- * Date: 4/20/12
- * Time: 3:51 PM
- */
 public class TestServerDefBuilder {
 
   @Test(groups = "fast")

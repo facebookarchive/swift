@@ -1,20 +1,37 @@
 package com.facebook.nifty.guice;
 
+import com.facebook.nifty.core.NettyConfigBuilder;
 import com.facebook.nifty.core.ThriftServerDef;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 
 import javax.inject.Provider;
 
-/**
- * Author @jaxlaw
- * Date: 4/22/12
- * Time: 10:25 PM
- */
 public abstract class NiftyModule extends AbstractModule {
+
+  private boolean configBound = false;
+
   @Override
   protected void configure() {
     configureNifty();
+  }
+
+  public NiftyModule withDefaultNettyConfig() {
+    if (!configBound) {
+      binder().bind(NettyConfigBuilder.class).toInstance(new NettyConfigBuilder());
+      configBound = true;
+      return this;
+    }
+    throw iae();
+  }
+
+  public NiftyModule withNettyConfig(Class<? extends Provider<NettyConfigBuilder>> provider) {
+    if (!configBound) {
+      binder().bind(NettyConfigBuilder.class).toProvider(provider);
+      configBound = true;
+      return this;
+    }
+    throw iae();
   }
 
   /**
@@ -70,5 +87,11 @@ public abstract class NiftyModule extends AbstractModule {
       Multibinder.newSetBinder(binder(), ThriftServerDef.class)
         .addBinding().to(key).asEagerSingleton();
     }
+  }
+
+  private IllegalStateException iae() {
+    return new IllegalStateException(
+      "config already bound ! call useDefaultNettyConfig or withNettyConfig only once."
+    );
   }
 }

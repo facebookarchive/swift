@@ -49,7 +49,7 @@ public class Main {
           protected void configureNifty() {
             bind().toProvider(ExampleThriftServerProvider.class);
           }
-        }
+        }.withDefaultNettyConfig()
       )
       .getInstance(LifeCycleManager.class)
       .start();

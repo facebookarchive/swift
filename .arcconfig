@@ -1,0 +1,4 @@
+{
+    "project_id" : "nifty",
+    "conduit_uri" : "https://phabricator.fb.com/api/"
+}

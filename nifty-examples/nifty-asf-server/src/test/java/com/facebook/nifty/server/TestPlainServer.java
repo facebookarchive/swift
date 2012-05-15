@@ -1,5 +1,6 @@
 package com.facebook.nifty.server;
 
+import com.facebook.nifty.client.NiftyClient;
 import com.facebook.nifty.core.NiftyBootstrap;
 import com.facebook.nifty.core.ThriftServerDefBuilder;
 import com.facebook.nifty.guice.NiftyModule;
@@ -25,11 +26,6 @@ import java.net.ServerSocket;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Author @jaxlaw
- * Date: 4/24/12
- * Time: 3:56 PM
- */
 public class TestPlainServer {
 
   private static final Logger log = LoggerFactory.getLogger(TestPlainServer.class);
@@ -65,7 +61,7 @@ public class TestPlainServer {
                       @Override
                       public ResultCode Log(List<LogEntry> messages) throws TException {
                         for (LogEntry message : messages) {
-                          log.info("%s: %s", message.getCategory(), message.getMessage());
+                          log.info("{}: {}", message.getCategory(), message.getMessage());
                         }
                         return ResultCode.OK;
                       }
@@ -88,10 +84,25 @@ public class TestPlainServer {
     client.Log(Arrays.asList(new LogEntry("hello", "world")));
   }
 
+  @Test(groups = "fast")
+  public void testMethodCallsWithNiftyClient() throws Exception {
+    scribe.Client client = makeNiftyClient();
+    int max = (int) (Math.random() * 100);
+    for (int i = 0; i < max; i++) {
+      client.Log(Arrays.asList(new LogEntry("hello", "world " + i)));
+    }
+  }
+
+
   private scribe.Client makeClient() throws TTransportException {
     TSocket socket = new TSocket("localhost", port);
     socket.open();
     TBinaryProtocol tp = new TBinaryProtocol(new TFramedTransport(socket));
+    return new scribe.Client(tp);
+  }
+
+  private scribe.Client makeNiftyClient() throws TTransportException {
+    TBinaryProtocol tp = new TBinaryProtocol((new NiftyClient().connectSync(new InetSocketAddress("localhost", port))));
     return new scribe.Client(tp);
   }
 

@@ -15,7 +15,6 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Counters for number of channels open, generic traffic stats and maybe cleanup logic here.
  *
- * @author jaxlaw
  */
 public class ChannelStatistics extends SimpleChannelHandler {
 

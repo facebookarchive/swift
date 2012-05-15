@@ -24,6 +24,11 @@
     </dependency>
     <dependency>
       <groupId>com.facebook.nifty</groupId>
+      <artifactId>nifty-client</artifactId>
+      <version>0.0.1-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>com.facebook.nifty</groupId>
       <artifactId>nifty-core-asf</artifactId>
       <version>0.0.1-SNAPSHOT</version>
     </dependency>
@@ -42,6 +47,21 @@
     <dependency>
       <groupId>org.apache.thrift</groupId>
       <artifactId>libthrift</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.6.4</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>1.6.4</version>
+    </dependency>
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <version>1.2.13</version>
     </dependency>
     <dependency>
       <groupId>org.testng</groupId>

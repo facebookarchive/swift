@@ -1,5 +1,6 @@
 package com.facebook.nifty.server;
 
+import com.facebook.nifty.core.NettyConfigBuilder;
 import com.facebook.nifty.core.NiftyBootstrap;
 import com.facebook.nifty.core.ThriftServerDefBuilder;
 import com.facebook.nifty.guice.NiftyModule;
@@ -12,6 +13,7 @@ import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Provider;
 import java.util.List;
 
 /**
@@ -46,7 +48,7 @@ public class Plain {
                 .build()
             );
           }
-        }
+        }.withNettyConfig(NettyConfigProvider.class)
       )
       .getInstance(NiftyBootstrap.class);
     bootstrap.start();
@@ -58,6 +60,18 @@ public class Plain {
         }
       }
     );
+  }
+
+  public static class NettyConfigProvider implements Provider<NettyConfigBuilder> {
+
+    @Override
+    public NettyConfigBuilder get() {
+      NettyConfigBuilder nettyConfigBuilder = new NettyConfigBuilder();
+      nettyConfigBuilder.getSocketChannelConfig().setTcpNoDelay(true);
+      nettyConfigBuilder.getSocketChannelConfig().setConnectTimeoutMillis(5000);
+      nettyConfigBuilder.getSocketChannelConfig().setTcpNoDelay(true);
+      return nettyConfigBuilder;
+    }
   }
 
 }

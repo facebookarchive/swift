@@ -3,6 +3,7 @@ package com.facebook.nifty.server;
 import com.facebook.fb303.FacebookBase;
 import com.facebook.fb303.FacebookService;
 import com.facebook.fb303.fb_status;
+import com.facebook.nifty.core.NettyConfigBuilder;
 import com.facebook.nifty.core.NettyServerTransport;
 import com.facebook.nifty.core.ThriftServerDefBuilder;
 import junit.framework.Assert;
@@ -20,11 +21,6 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.util.concurrent.Executors;
 
-/**
- * Author @jaxlaw
- * Date: 4/20/12
- * Time: 3:54 PM
- */
 public class TestNettyServerTransport {
 
   public static final String VERSION = "1.0";
@@ -62,7 +58,8 @@ public class TestNettyServerTransport {
             }
           )
         )
-        .build()
+        .build(),
+      new NettyConfigBuilder()
     );
     transport.start(Executors.newCachedThreadPool(), Executors.newCachedThreadPool());
   }

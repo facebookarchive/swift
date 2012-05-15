@@ -22,7 +22,6 @@ import java.util.concurrent.ExecutorService;
  * A core channel the decode framed Thrift message, dispatches to the TProcessor given
  * and then encode message back to Thrift frame.
  *
- * @author jaxlaw
  */
 public class NettyServerTransport {
   private static final Logger log = LoggerFactory.getLogger(NettyServerTransport.class);
@@ -32,10 +31,12 @@ public class NettyServerTransport {
   private ServerBootstrap bootstrap;
   private Channel serverChannel;
   private final ThriftServerDef def;
+  private final NettyConfigBuilder configBuilder;
 
   @Inject
-  public NettyServerTransport(final ThriftServerDef def) {
+  public NettyServerTransport(final ThriftServerDef def, NettyConfigBuilder configBuilder) {
     this.def = def;
+    this.configBuilder = configBuilder;
     this.port = def.getServerPort();
     if (def.isHeaderTransport()) {
       throw new UnsupportedOperationException("ASF version does not support THeaderTransport !");
@@ -65,6 +66,7 @@ public class NettyServerTransport {
         workerExecutor
       )
     );
+    bootstrap.setOptions(configBuilder.getOptions());
     bootstrap.setPipelineFactory(pipelineFactory);
     log.info("starting transport {}:{}", def.getName(), port);
     serverChannel = bootstrap.bind(new InetSocketAddress(port));

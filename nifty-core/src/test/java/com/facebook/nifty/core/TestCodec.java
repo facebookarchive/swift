@@ -10,11 +10,6 @@ import org.jboss.netty.channel.ChannelEvent;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.testng.annotations.Test;
 
-/**
- * Author @jaxlaw
- * Date: 4/20/12
- * Time: 2:38 PM
- */
 public class TestCodec {
   @Test(groups = "fast")
   public void testDecoder() {
