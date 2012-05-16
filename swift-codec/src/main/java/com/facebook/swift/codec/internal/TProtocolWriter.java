@@ -36,14 +36,14 @@ public class TProtocolWriter {
     protocol.writeStructEnd();
   }
 
-  public void writeField(String name, short id, ThriftCodec<Object> codec, Object value)
+  public void writeField(String name, short id, ThriftCodec<?> codec, Object value)
       throws Exception {
     if (value == null) {
       return;
     }
 
     protocol.writeFieldBegin(new TField(name, codec.getType().getProtocolType().getType(), id));
-    codec.write(value, this);
+    ((ThriftCodec<Object>) codec).write(value, this);
     protocol.writeFieldEnd();
   }
 

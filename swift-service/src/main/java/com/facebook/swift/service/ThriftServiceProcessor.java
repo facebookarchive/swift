@@ -3,31 +3,24 @@
  */
 package com.facebook.swift.service;
 
-import com.facebook.swift.codec.ThriftCodec;
 import com.facebook.swift.codec.ThriftCodecManager;
-import com.facebook.swift.codec.internal.TProtocolReader;
-import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.service.metadata.ThriftMethodMetadata;
 import com.facebook.swift.service.metadata.ThriftServiceMetadata;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TMessage;
 import org.apache.thrift.protocol.TMessageType;
 import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.protocol.TProtocolException;
 import org.apache.thrift.protocol.TProtocolUtil;
 import org.apache.thrift.protocol.TType;
 
-import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.ThreadSafe;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.util.Map;
 
-import static org.apache.thrift.TApplicationException.INTERNAL_ERROR;
-import static org.apache.thrift.TApplicationException.PROTOCOL_ERROR;
 import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
 
 /**
@@ -37,9 +30,7 @@ import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
  */
 @ThreadSafe
 public class ThriftServiceProcessor implements TProcessor {
-  private final Object service;
-  private final ThriftServiceMetadata serviceMetadata;
-  private final ThriftCodecManager codecManager;
+  private final Map<String, ThriftMethodProcessor> methods;
 
   /**
    * @param service the service to expose; must be thread safe
@@ -66,9 +57,17 @@ public class ThriftServiceProcessor implements TProcessor {
     Preconditions.checkNotNull(serviceMetadata, "serviceMetadata is null");
     Preconditions.checkNotNull(codecManager, "codecManager is null");
 
-    this.service = service;
-    this.serviceMetadata = serviceMetadata;
-    this.codecManager = codecManager;
+    ImmutableMap.Builder<String, ThriftMethodProcessor> builder = ImmutableMap.builder();
+    for (ThriftMethodMetadata methodMetadata : serviceMetadata.getMethods().values()) {
+      builder.put(
+          methodMetadata.getName(), new ThriftMethodProcessor(
+          service,
+          methodMetadata,
+          codecManager
+      )
+      );
+    }
+    methods = builder.build();
   }
 
   @Override
@@ -79,78 +78,30 @@ public class ThriftServiceProcessor implements TProcessor {
 
     try {
       // lookup method
-      ThriftMethodMetadata methodMetadata = serviceMetadata.getMethod(methodName);
-      if (methodMetadata == null) {
+      ThriftMethodProcessor method = methods.get(methodName);
+      if (method == null) {
         TProtocolUtil.skip(in, TType.STRUCT);
-        in.readMessageEnd();
         throw new TApplicationException(
             UNKNOWN_METHOD,
             "Invalid method name: '" + methodName + "'"
         );
       }
-      Method method = methodMetadata.getMethod();
-
-      // read args
-      Object[] args = new Object[method.getParameterTypes().length];
-      TProtocolReader reader = new TProtocolReader(in);
-      try {
-        reader.readStructBegin();
-        while (reader.nextField()) {
-          short fieldId = reader.getFieldId();
-          ThriftCodec<?> codec = codecManager.getCodec(
-              method.getGenericParameterTypes()[fieldId - 1]
-          );
-          args[fieldId - 1] = reader.readField(codec);
-        }
-        reader.readStructEnd();
-      } catch (Exception e) {
-        throw new TApplicationException(PROTOCOL_ERROR, e.getMessage());
-      }
 
       // invoke method
-      Object result;
-      try {
-        result = method.invoke(service, args);
-      } catch (Throwable e) {
-        if (e instanceof InvocationTargetException) {
-          InvocationTargetException invocationTargetException = (InvocationTargetException) e;
-          if (invocationTargetException.getTargetException() != null) {
-            e = invocationTargetException.getTargetException();
-          }
-        }
-        Throwables.propagateIfInstanceOf(e, Exception.class);
-        throw Throwables.propagate(e);
-      }
+      method.process(in, out, sequenceId);
 
-      // write the response
-      ThriftCodec<Object> resultCodec =
-          (ThriftCodec<Object>) codecManager.getCodec(methodMetadata.getReturnType());
-
-      out.writeMessageBegin(new TMessage(methodName, TMessageType.REPLY, sequenceId));
-      try {
-        TProtocolWriter writer = new TProtocolWriter(out);
-        writer.writeStructBegin(methodName + "_result");
-        writer.writeField("result", (short) 0, resultCodec, result);
-        writer.writeStructEnd();
-      } catch (Exception e) {
-        throw new TProtocolException(e);
-      }
+      return true;
+    } catch (TApplicationException e) {
+      // Application exceptions are sent to client, and the connection can be reused
+      out.writeMessageBegin(new TMessage(methodName, TMessageType.EXCEPTION, sequenceId));
+      e.write(out);
       out.writeMessageEnd();
       out.getTransport().flush();
-
       return true;
     } catch (Exception e) {
-      TApplicationException exception;
-      if (e instanceof TApplicationException) {
-        exception = (TApplicationException) e;
-      } else {
-        exception = new TApplicationException(INTERNAL_ERROR, e.getMessage());
-      }
-      out.writeMessageBegin(new TMessage(methodName, TMessageType.EXCEPTION, sequenceId));
-      exception.write(out);
-      out.writeMessageEnd();
-      out.getTransport().flush();
-      return true;
+      // Other exceptions are not recoverable. The input or output streams may be corrupt.
+      Throwables.propagateIfInstanceOf(e, TException.class);
+      throw new TException(e);
     } finally {
       try {
         in.readMessageEnd();

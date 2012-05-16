@@ -18,6 +18,7 @@ package com.facebook.swift.codec.metadata;
 import com.facebook.swift.codec.ThriftField;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 import com.thoughtworks.paranamer.AdaptiveParanamer;
 import com.thoughtworks.paranamer.AnnotationParanamer;
@@ -36,10 +37,11 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static java.lang.reflect.Modifier.isStatic;
 
-final class ReflectionHelper {
+public final class ReflectionHelper {
   private ReflectionHelper() {
   }
 
@@ -72,6 +74,37 @@ final class ReflectionHelper {
 
   public static Type getIterableType(Type type) {
     return TypeToken.of(type).resolveType(ITERATOR_TYPE).resolveType(ITERATOR_ELEMENT_TYPE).getType();
+  }
+
+  public static <T extends Annotation> Set<T> getAllClassAnnotations(
+      Class<?> type,
+      Class<T> annotation) {
+
+    // if the class is directly annotated, it is considered the only annotation
+    if (type.isAnnotationPresent(annotation)) {
+      return ImmutableSet.of(type.getAnnotation(annotation));
+    }
+
+    // otherwise find all annotations from all super classes and interfaces
+    ImmutableSet.Builder<T> builder = ImmutableSet.builder();
+    addAllClassAnnotations(type, annotation, builder);
+    return builder.build();
+  }
+
+  private static <T extends Annotation> void addAllClassAnnotations(
+      Class<?> type,
+      Class<T> annotation,
+      ImmutableSet.Builder<T> builder) {
+
+    if (type.isAnnotationPresent(annotation)) {
+      builder.add(type.getAnnotation(annotation));
+    }
+    if (type.getSuperclass() != null) {
+      addAllClassAnnotations(type.getSuperclass(), annotation, builder);
+    }
+    for (Class<?> anInterface : type.getInterfaces()) {
+      addAllClassAnnotations(anInterface, annotation, builder);
+    }
   }
 
   public static Iterable<Method> getAllDeclaredMethods(Class<?> type) {
