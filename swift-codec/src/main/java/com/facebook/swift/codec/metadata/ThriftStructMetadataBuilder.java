@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import static com.facebook.swift.codec.metadata.ReflectionHelper.extractParameterNames;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.findAnnotatedMethods;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getAllDeclaredFields;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getAllDeclaredMethods;
@@ -174,9 +175,9 @@ public class ThriftStructMetadataBuilder<T> {
       }
 
       List<ParameterInjection> parameters = getParameterInjections(
-          constructor.toGenericString(),
           constructor.getParameterAnnotations(),
-          constructor.getGenericParameterTypes()
+          constructor.getGenericParameterTypes(),
+          extractParameterNames(constructor)
       );
       if (parameters != null) {
         fields.addAll(parameters);
@@ -214,9 +215,9 @@ public class ThriftStructMetadataBuilder<T> {
   private void addBuilderMethods() {
     for (Method method : findAnnotatedMethods(builderClass, ThriftConstructor.class)) {
       List<ParameterInjection> parameters = getParameterInjections(
-          method.toGenericString(),
           method.getParameterAnnotations(),
-          method.getGenericParameterTypes()
+          method.getGenericParameterTypes(),
+          extractParameterNames(method)
       );
       // parameters are null if the method is misconfigured
       if (parameters != null) {
@@ -362,9 +363,9 @@ public class ThriftStructMetadataBuilder<T> {
             Predicates.instanceOf(ThriftField.class)
         )) {
           parameters = getParameterInjections(
-              method.toGenericString(),
               method.getParameterAnnotations(),
-              method.getGenericParameterTypes()
+              method.getGenericParameterTypes(),
+              extractParameterNames(method)
           );
           if (annotation.value() != Short.MIN_VALUE) {
             metadataErrors.addError(
@@ -450,51 +451,35 @@ public class ThriftStructMetadataBuilder<T> {
   }
 
   private List<ParameterInjection> getParameterInjections(
-      String methodSignature,
       Annotation[][] parameterAnnotations,
-      Type[] parameterTypes
+      Type[] parameterTypes,
+      String[] parameterNames
   ) {
-    boolean invalid = false;
 
     List<ParameterInjection> parameters = newArrayListWithCapacity(parameterAnnotations.length);
     for (int parameterIndex = 0; parameterIndex < parameterAnnotations.length; parameterIndex++) {
       Annotation[] annotations = parameterAnnotations[parameterIndex];
       Type parameterType = parameterTypes[parameterIndex];
+
+      ThriftField thriftField = null;
       for (Annotation annotation : annotations) {
-        if (!(annotation instanceof ThriftField)) {
-          invalid = true;
-          continue;
+        if (annotation instanceof ThriftField) {
+          thriftField = (ThriftField) annotation;
         }
-
-        ThriftField thriftField = (ThriftField) annotation;
-
-        ParameterInjection parameterInjection = new ParameterInjection(
-            parameterIndex,
-            thriftField,
-            "arg" + parameterIndex,
-            parameterType
-        );
-
-        // verify either id or name is set
-        // todo add name discovery
-        if (parameterInjection.getId() == null && parameterInjection.getName() == null) {
-          metadataErrors.addError(
-              "@ThriftConstructor %s parameter %s does not have name or id specified",
-              methodSignature,
-              parameterIndex
-          );
-          invalid = true;
-          continue;
-        }
-
-        parameters.add(parameterInjection);
       }
-    }
-    if (invalid) {
-      return null;
+
+      ParameterInjection parameterInjection = new ParameterInjection(
+          parameterIndex,
+          thriftField,
+          parameterNames[parameterIndex],
+          parameterType
+      );
+
+      parameters.add(parameterInjection);
     }
     return parameters;
   }
+
 
   private void normalizeThriftFields(ThriftCatalog catalog) {
     // assign all fields an id (if possible)
@@ -510,13 +495,13 @@ public class ThriftStructMetadataBuilder<T> {
 
       // fields must have an id
       if (!entry.getKey().isPresent()) {
-        for (String fieldName : newTreeSet(transform(fields, getThriftFieldName()))) {
+        for (String fieldName : newTreeSet(transform(fields, getOrExtractThriftFieldName()))) {
           // only report errors for fields that don't have conflicting ids
           if (!fieldsWithConflictingIds.contains(fieldName)) {
             metadataErrors.addError(
                 "ThriftStruct %s fields %s do not have an id",
                 structName,
-                newTreeSet(transform(fields, getThriftFieldName()))
+                newTreeSet(transform(fields, getOrExtractThriftFieldName()))
             );
           }
         }
@@ -831,12 +816,13 @@ public class ThriftStructMetadataBuilder<T> {
     private String name;
 
     private FieldMetadata(ThriftField annotation) {
-      checkNotNull(annotation, "annotation is null");
-      if (annotation.value() != Short.MIN_VALUE) {
-        id = annotation.value();
-      }
-      if (!annotation.name().isEmpty()) {
-        name = annotation.name();
+      if (annotation != null) {
+        if (annotation.value() != Short.MIN_VALUE) {
+          id = annotation.value();
+        }
+        if (!annotation.name().isEmpty()) {
+          name = annotation.name();
+        }
       }
     }
 

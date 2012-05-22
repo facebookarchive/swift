@@ -15,6 +15,37 @@ import static org.fest.assertions.Assertions.assertThat;
 public class TestThriftStructMetadataBuilder {
 
   @Test
+  public void testNoId() throws Exception {
+    ThriftStructMetadataBuilder<NoId> builder = new ThriftStructMetadataBuilder<>(
+        new ThriftCatalog(),
+        NoId.class
+    );
+
+    MetadataErrors metadataErrors = builder.getMetadataErrors();
+
+    assertThat(metadataErrors.getErrors())
+        .as("metadata errors")
+        .hasSize(1);
+
+    assertThat(metadataErrors.getWarnings())
+        .as("metadata warnings")
+        .isEmpty();
+
+    assertThat(metadataErrors.getErrors().get(0).getMessage())
+        .as("error message")
+        .containsIgnoringCase("not have an id");
+  }
+
+  @ThriftStruct
+  public static class NoId {
+    @ThriftField
+    public String getField1() { return null; }
+
+    @ThriftField
+    public void setField1(String value) { }
+  }
+
+  @Test
   public void testMultipleIds() throws Exception {
     ThriftStructMetadataBuilder<MultipleIds> builder = new ThriftStructMetadataBuilder<>(
         new ThriftCatalog(),
