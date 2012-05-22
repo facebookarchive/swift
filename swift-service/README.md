@@ -1,6 +1,7 @@
 # Swift Service
 
-Swift Service is a simple library annotating services to be exported with Thrift.
+Swift Service is a simple library annotating services to be exported with
+Thrift.
 
 ## Service
 

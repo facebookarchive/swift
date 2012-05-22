@@ -1,10 +1,14 @@
 # Swift
 
-Swift is an easy-to-use, annotation-based Java library for creating Thrift serializable types and services.
+Swift is an easy-to-use, annotation-based Java library for creating Thrift
+serializable types and services.
 
 # Swift Codec
 
-[Swift Codec](swift-codec/README.md) is a simple library specifying how Java objects are convered to and from Thrift.  This library is simmilar to JaxRS (XML) and Jackson (JSON), but for Thirft.  Swift codec supports field, method, costructor, and builder injection.  For example:
+[Swift Codec](swift-codec/README.md) is a simple library specifying how Java
+objects are converted to and from Thrift.  This library is similar to JaxB
+(XML) and Jackson (JSON), but for Thrift.  Swift codec supports field, method,
+constructor, and builder injection.  For example:
 
     @ThriftStruct
     public class LogEntry {
@@ -12,10 +16,7 @@ Swift is an easy-to-use, annotation-based Java library for creating Thrift seria
       private final String message;
     
       @ThriftConstructor
-      public LogEntry(
-          @ThriftField(name = "category") String category,
-          @ThriftField(name = "message") String message
-      ) {
+      public LogEntry(String category, String message) {
         this.category = category;
         this.message = message;
       }
@@ -34,7 +35,8 @@ Swift is an easy-to-use, annotation-based Java library for creating Thrift seria
 
 # Swift Service
 
-[Swift Service](swift-service/README.md) is a simple library annotating services to be exported with Thrift.   For example:
+[Swift Service](swift-service/README.md) is a simple library annotating
+services to be exported with Thrift.   For example:
 
     @ThriftService("scribe")
     public class InMemoryScribe {
