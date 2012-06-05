@@ -71,15 +71,15 @@
       </dependency>
 
       <dependency>
-        <groupId>com.facebook.jcommon</groupId>
+        <groupId>com.facebook.nifty</groupId>
         <artifactId>nifty-core</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>0.0.1-SNAPSHOT</version>
       </dependency>
 
       <dependency>
-        <groupId>com.facebook.jcommon</groupId>
+        <groupId>com.facebook.nifty</groupId>
         <artifactId>nifty-core-asf</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>0.0.1-SNAPSHOT</version>
       </dependency>
 
       <dependency>
