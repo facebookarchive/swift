@@ -5,11 +5,12 @@ package com.facebook.swift.codec.metadata;
 
 /**
  * ThriftInjection contains information an injection point for a single thrift field.
- *
+ * <p/>
  * Implementation of this interface are expected to be thread safe.
  */
-public interface ThriftInjection {
-  short getId();
+public interface ThriftInjection
+{
+    short getId();
 
-  String getName();
+    String getName();
 }

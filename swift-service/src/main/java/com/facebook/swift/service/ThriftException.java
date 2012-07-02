@@ -13,10 +13,11 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  */
 @Documented
 @Retention(RUNTIME)
-public @interface ThriftException {
-  Class<? extends Throwable> type();
+public @interface ThriftException
+{
+    Class<? extends Throwable> type();
 
-  short id();
+    short id();
 
-  String name() default "";
+    String name() default "";
 }

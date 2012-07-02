@@ -3,6 +3,7 @@
  */
 package com.facebook.swift.service;
 
-public enum ResultCode {
-  OK, TRY_LATER
+public enum ResultCode
+{
+    OK, TRY_LATER
 }

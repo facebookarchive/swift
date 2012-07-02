@@ -16,35 +16,39 @@ import javax.annotation.concurrent.Immutable;
  * the supplied ThriftCoercion.
  */
 @Immutable
-public class CoercionThriftCodec<T> implements ThriftCodec<T> {
-  private final ThriftCodec<Object> codec;
-  private final TypeCoercion typeCoercion;
-  private final ThriftType thriftType;
+public class CoercionThriftCodec<T> implements ThriftCodec<T>
+{
+    private final ThriftCodec<Object> codec;
+    private final TypeCoercion typeCoercion;
+    private final ThriftType thriftType;
 
-  public CoercionThriftCodec(
-      ThriftCodec<?> codec,
-      TypeCoercion typeCoercion
-  ) {
-    this.codec = (ThriftCodec<Object>) codec;
-    this.typeCoercion = typeCoercion;
-    this.thriftType = typeCoercion.getThriftType();
-  }
+    public CoercionThriftCodec(ThriftCodec<?> codec, TypeCoercion typeCoercion)
+    {
+        this.codec = (ThriftCodec<Object>) codec;
+        this.typeCoercion = typeCoercion;
+        this.thriftType = typeCoercion.getThriftType();
+    }
 
-  @Override
-  public ThriftType getType() {
-    return thriftType;
-  }
+    @Override
+    public ThriftType getType()
+    {
+        return thriftType;
+    }
 
-  @Override
-  public T read(TProtocolReader protocol) throws Exception {
-    Object thriftValue = codec.read(protocol);
-    T javaValue = (T) typeCoercion.getFromThrift().invoke(null, thriftValue);
-    return javaValue;
-  }
+    @Override
+    public T read(TProtocolReader protocol)
+            throws Exception
+    {
+        Object thriftValue = codec.read(protocol);
+        T javaValue = (T) typeCoercion.getFromThrift().invoke(null, thriftValue);
+        return javaValue;
+    }
 
-  @Override
-  public void write(T javaValue, TProtocolWriter protocol) throws Exception {
-    Object thriftValue = typeCoercion.getToThrift().invoke(null, javaValue);
-    codec.write(thriftValue, protocol);
-  }
+    @Override
+    public void write(T javaValue, TProtocolWriter protocol)
+            throws Exception
+    {
+        Object thriftValue = typeCoercion.getToThrift().invoke(null, javaValue);
+        codec.write(thriftValue, protocol);
+    }
 }

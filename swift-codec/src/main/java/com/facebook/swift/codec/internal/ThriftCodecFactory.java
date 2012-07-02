@@ -10,9 +10,7 @@ import com.facebook.swift.codec.metadata.ThriftStructMetadata;
 /**
  * Implementations of this interface are expected to be thread safe.
  */
-public interface ThriftCodecFactory {
-  <T> ThriftCodec<T> generateThriftTypeCodec(
-      ThriftCodecManager codecManager,
-      ThriftStructMetadata<T> metadata
-  );
+public interface ThriftCodecFactory
+{
+    <T> ThriftCodec<T> generateThriftTypeCodec(ThriftCodecManager codecManager, ThriftStructMetadata<T> metadata);
 }

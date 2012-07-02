@@ -18,5 +18,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 @Retention(RUNTIME)
 @Target({METHOD, CONSTRUCTOR})
-public @interface ThriftConstructor {
+public @interface ThriftConstructor
+{
 }

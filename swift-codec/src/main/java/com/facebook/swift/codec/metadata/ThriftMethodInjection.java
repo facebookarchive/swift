@@ -12,33 +12,38 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 @Immutable
-public class ThriftMethodInjection {
-  private final Method method;
-  private final List<ThriftParameterInjection> parameters;
+public class ThriftMethodInjection
+{
+    private final Method method;
+    private final List<ThriftParameterInjection> parameters;
 
-  public ThriftMethodInjection(Method method, List<ThriftParameterInjection> parameters) {
-    checkNotNull(method, "method is null");
-    checkNotNull(parameters, "parameters is null");
+    public ThriftMethodInjection(Method method, List<ThriftParameterInjection> parameters)
+    {
+        checkNotNull(method, "method is null");
+        checkNotNull(parameters, "parameters is null");
 
-    this.method = method;
-    this.parameters = parameters;
-  }
+        this.method = method;
+        this.parameters = parameters;
+    }
 
-  public Method getMethod() {
-    return method;
-  }
+    public Method getMethod()
+    {
+        return method;
+    }
 
-  public List<ThriftParameterInjection> getParameters() {
-    return parameters;
-  }
+    public List<ThriftParameterInjection> getParameters()
+    {
+        return parameters;
+    }
 
-  @Override
-  public String toString() {
-    final StringBuilder sb = new StringBuilder();
-    sb.append(method.getName());
-    sb.append('(');
-    Joiner.on(", ").appendTo(sb, parameters);
-    sb.append(')');
-    return sb.toString();
-  }
+    @Override
+    public String toString()
+    {
+        final StringBuilder sb = new StringBuilder();
+        sb.append(method.getName());
+        sb.append('(');
+        Joiner.on(", ").appendTo(sb, parameters);
+        sb.append(')');
+        return sb.toString();
+    }
 }

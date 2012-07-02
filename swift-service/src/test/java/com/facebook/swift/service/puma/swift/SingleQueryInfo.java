@@ -13,42 +13,45 @@ import java.util.List;
 import java.util.Map;
 
 @ThriftStruct
-public class SingleQueryInfo {
-  private final String logicalTableName;
-  private final Map<String, String> filter;
-  private final List<String> selectList;
+public class SingleQueryInfo
+{
+    private final String logicalTableName;
+    private final Map<String, String> filter;
+    private final List<String> selectList;
 
-  @ThriftConstructor
-  public SingleQueryInfo(
-      String logicalTableName,
-      Map<String, String> filter,
-      List<String> selectList
-  ) {
-    this.logicalTableName = logicalTableName;
-    if (filter != null) {
-      this.filter = ImmutableMap.copyOf(filter);
-    } else {
-      this.filter = ImmutableMap.of();
+    @ThriftConstructor
+    public SingleQueryInfo(String logicalTableName, Map<String, String> filter, List<String> selectList)
+    {
+        this.logicalTableName = logicalTableName;
+        if (filter != null) {
+            this.filter = ImmutableMap.copyOf(filter);
+        }
+        else {
+            this.filter = ImmutableMap.of();
+        }
+        if (selectList != null) {
+            this.selectList = ImmutableList.copyOf(selectList);
+        }
+        else {
+            this.selectList = ImmutableList.of();
+        }
     }
-    if (selectList != null) {
-      this.selectList = ImmutableList.copyOf(selectList);
-    } else {
-      this.selectList = ImmutableList.of();
+
+    @ThriftField(1)
+    public String getLogicalTableName()
+    {
+        return logicalTableName;
     }
-  }
 
-  @ThriftField(1)
-  public String getLogicalTableName() {
-    return logicalTableName;
-  }
+    @ThriftField(2)
+    public Map<String, String> getFilter()
+    {
+        return filter;
+    }
 
-  @ThriftField(2)
-  public Map<String, String> getFilter() {
-    return filter;
-  }
-
-  @ThriftField(3)
-  public List<String> getSelectList() {
-    return selectList;
-  }
+    @ThriftField(3)
+    public List<String> getSelectList()
+    {
+        return selectList;
+    }
 }

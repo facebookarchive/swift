@@ -41,244 +41,232 @@ import java.util.Set;
 
 import static java.lang.reflect.Modifier.isStatic;
 
-public final class ReflectionHelper {
-  private ReflectionHelper() {
-  }
-
-  private static final Type MAP_KEY_TYPE;
-  private static final Type MAP_VALUE_TYPE;
-  private static final Type ITERATOR_TYPE;
-  private static final Type ITERATOR_ELEMENT_TYPE;
-
-  static {
-    try {
-      Method mapPutMethod = Map.class.getMethod("put", Object.class, Object.class);
-      MAP_KEY_TYPE = mapPutMethod.getGenericParameterTypes()[0];
-      MAP_VALUE_TYPE = mapPutMethod.getGenericParameterTypes()[1];
-
-      ITERATOR_TYPE = Iterable.class.getMethod("iterator").getGenericReturnType();
-      ITERATOR_ELEMENT_TYPE = Iterator.class.getMethod("next").getGenericReturnType();
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
+public final class ReflectionHelper
+{
+    private ReflectionHelper()
+    {
     }
 
-  }
+    private static final Type MAP_KEY_TYPE;
+    private static final Type MAP_VALUE_TYPE;
+    private static final Type ITERATOR_TYPE;
+    private static final Type ITERATOR_ELEMENT_TYPE;
 
-  public static Type getMapKeyType(Type type) {
-    return TypeToken.of(type).resolveType(MAP_KEY_TYPE).getType();
-  }
+    static {
+        try {
+            Method mapPutMethod = Map.class.getMethod("put", Object.class, Object.class);
+            MAP_KEY_TYPE = mapPutMethod.getGenericParameterTypes()[0];
+            MAP_VALUE_TYPE = mapPutMethod.getGenericParameterTypes()[1];
 
-  public static Type getMapValueType(Type type) {
-    return TypeToken.of(type).resolveType(MAP_VALUE_TYPE).getType();
-  }
-
-  public static Type getIterableType(Type type) {
-    return TypeToken.of(type).resolveType(ITERATOR_TYPE).resolveType(ITERATOR_ELEMENT_TYPE).getType();
-  }
-
-  public static <T extends Annotation> Set<T> getAllClassAnnotations(
-      Class<?> type,
-      Class<T> annotation) {
-
-    // if the class is directly annotated, it is considered the only annotation
-    if (type.isAnnotationPresent(annotation)) {
-      return ImmutableSet.of(type.getAnnotation(annotation));
-    }
-
-    // otherwise find all annotations from all super classes and interfaces
-    ImmutableSet.Builder<T> builder = ImmutableSet.builder();
-    addAllClassAnnotations(type, annotation, builder);
-    return builder.build();
-  }
-
-  private static <T extends Annotation> void addAllClassAnnotations(
-      Class<?> type,
-      Class<T> annotation,
-      ImmutableSet.Builder<T> builder) {
-
-    if (type.isAnnotationPresent(annotation)) {
-      builder.add(type.getAnnotation(annotation));
-    }
-    if (type.getSuperclass() != null) {
-      addAllClassAnnotations(type.getSuperclass(), annotation, builder);
-    }
-    for (Class<?> anInterface : type.getInterfaces()) {
-      addAllClassAnnotations(anInterface, annotation, builder);
-    }
-  }
-
-  public static Iterable<Method> getAllDeclaredMethods(Class<?> type) {
-    ImmutableList.Builder<Method> methods = ImmutableList.builder();
-
-    for (Class<?> clazz = type;
-         (clazz != null) && !clazz.equals(Object.class);
-         clazz = clazz.getSuperclass()) {
-
-      methods.addAll(ImmutableList.copyOf(clazz.getDeclaredMethods()));
-    }
-    return methods.build();
-  }
-
-  public static Iterable<Field> getAllDeclaredFields(Class<?> type) {
-    ImmutableList.Builder<Field> fields = ImmutableList.builder();
-    for (Class<?> clazz = type;
-         (clazz != null) && !clazz.equals(Object.class);
-         clazz = clazz.getSuperclass()) {
-      fields.addAll(ImmutableList.copyOf(clazz.getDeclaredFields()));
-    }
-    return fields.build();
-  }
-
-  /**
-   * Find methods that are tagged with a given annotation somewhere in the hierarchy
-   */
-  public static Collection<Method> findAnnotatedMethods(
-      Class<?> type,
-      Class<? extends Annotation> annotation
-  ) {
-
-    List<Method> result = new ArrayList<>();
-
-    // gather all publicly available methods
-    // this returns everything, even if it's declared in a parent
-    for (Method method : type.getMethods()) {
-      // skip methods that are used internally by the vm for implementing covariance, etc
-      if (method.isSynthetic() || method.isBridge() || isStatic(method.getModifiers())) {
-        continue;
-      }
-
-      // look for annotations recursively in super-classes or interfaces
-      Method managedMethod = findAnnotatedMethod(
-          type,
-          annotation,
-          method.getName(),
-          method.getParameterTypes()
-      );
-      if (managedMethod != null) {
-        result.add(managedMethod);
-      }
-    }
-
-    return result;
-  }
-
-  public static Method findAnnotatedMethod(
-      Class<?> configClass,
-      Class<? extends Annotation> annotation,
-      String methodName,
-      Class<?>... paramTypes
-  ) {
-    try {
-      Method method = configClass.getDeclaredMethod(methodName, paramTypes);
-      if (method != null && method.isAnnotationPresent(annotation)) {
-        return method;
-      }
-    } catch (NoSuchMethodException e) {
-      // ignore
-    }
-
-    if (configClass.getSuperclass() != null) {
-      Method managedMethod = findAnnotatedMethod(
-          configClass.getSuperclass(),
-          annotation,
-          methodName,
-          paramTypes
-      );
-      if (managedMethod != null) {
-        return managedMethod;
-      }
-    }
-
-    for (Class<?> iface : configClass.getInterfaces()) {
-      Method managedMethod = findAnnotatedMethod(iface, annotation, methodName, paramTypes);
-      if (managedMethod != null) {
-        return managedMethod;
-      }
-    }
-
-    return null;
-  }
-
-  public static Collection<Field> findAnnotatedFields(
-      Class<?> type,
-      Class<? extends Annotation> annotation
-  ) {
-    List<Field> result = new ArrayList<>();
-
-    // gather all publicly available methods
-    // this returns everything, even if it's declared in a parent
-    for (Field field : type.getFields()) {
-      if (field.isSynthetic() || isStatic(field.getModifiers())) {
-        continue;
-      }
-
-      if (field.isAnnotationPresent(annotation)) {
-        result.add(field);
-      }
-    }
-
-    return result;
-  }
-
-  private static final Paranamer PARANAMER = new CachingParanamer(
-      new AdaptiveParanamer(
-          new ThriftFieldParanamer(),
-          new BytecodeReadingParanamer(),
-          new GeneralParanamer())
-  );
-
-  public static String[] extractParameterNames(AccessibleObject methodOrConstructor) {
-    String[] names = PARANAMER.lookupParameterNames(methodOrConstructor);
-    return names;
-  }
-
-  private static class ThriftFieldParanamer extends AnnotationParanamer {
-    @Override
-    protected String getNamedValue(Annotation annotation) {
-      if (annotation instanceof ThriftField) {
-        String name = ((ThriftField) annotation).name();
-        if (!name.isEmpty()) {
-          return name;
+            ITERATOR_TYPE = Iterable.class.getMethod("iterator").getGenericReturnType();
+            ITERATOR_ELEMENT_TYPE = Iterator.class.getMethod("next").getGenericReturnType();
         }
-      }
-      return  super.getNamedValue(annotation);
+        catch (Exception e) {
+            throw Throwables.propagate(e);
+        }
     }
 
-    @Override
-    protected boolean isNamed(Annotation annotation) {
-      return (annotation instanceof ThriftField) ||
-          super.isNamed(annotation);
-    }
-  }
-
-  private static class GeneralParanamer implements Paranamer {
-    @Override
-    public String[] lookupParameterNames(AccessibleObject methodOrConstructor) {
-      String[] names;
-      if (methodOrConstructor instanceof Method) {
-        Method method = (Method) methodOrConstructor;
-        names = new String[method.getParameterTypes().length];
-      } else if (methodOrConstructor instanceof Constructor<?>) {
-        Constructor<?> constructor = (Constructor<?>) methodOrConstructor;
-        names = new String[constructor.getParameterTypes().length];
-      } else {
-        throw new IllegalArgumentException(
-            "methodOrConstructor is not an instance of Method " +
-                "or Constructor but is " + methodOrConstructor.getClass().getName()
-        );
-      }
-      for (int i = 0; i < names.length; i++) {
-        names[i] = "arg" + i;
-      }
-      return names;
-
+    public static Type getMapKeyType(Type type)
+    {
+        return TypeToken.of(type).resolveType(MAP_KEY_TYPE).getType();
     }
 
-    @Override
-    public String[] lookupParameterNames(
-        AccessibleObject methodOrConstructor, boolean throwExceptionIfMissing
-    ) {
-      return lookupParameterNames(methodOrConstructor);
+    public static Type getMapValueType(Type type)
+    {
+        return TypeToken.of(type).resolveType(MAP_VALUE_TYPE).getType();
     }
-  }
+
+    public static Type getIterableType(Type type)
+    {
+        return TypeToken.of(type).resolveType(ITERATOR_TYPE).resolveType(ITERATOR_ELEMENT_TYPE).getType();
+    }
+
+    public static <T extends Annotation> Set<T> getAllClassAnnotations(Class<?> type, Class<T> annotation)
+    {
+        // if the class is directly annotated, it is considered the only annotation
+        if (type.isAnnotationPresent(annotation)) {
+            return ImmutableSet.of(type.getAnnotation(annotation));
+        }
+
+        // otherwise find all annotations from all super classes and interfaces
+        ImmutableSet.Builder<T> builder = ImmutableSet.builder();
+        addAllClassAnnotations(type, annotation, builder);
+        return builder.build();
+    }
+
+    private static <T extends Annotation> void addAllClassAnnotations(Class<?> type, Class<T> annotation, ImmutableSet.Builder<T> builder)
+    {
+        if (type.isAnnotationPresent(annotation)) {
+            builder.add(type.getAnnotation(annotation));
+        }
+        if (type.getSuperclass() != null) {
+            addAllClassAnnotations(type.getSuperclass(), annotation, builder);
+        }
+        for (Class<?> anInterface : type.getInterfaces()) {
+            addAllClassAnnotations(anInterface, annotation, builder);
+        }
+    }
+
+    public static Iterable<Method> getAllDeclaredMethods(Class<?> type)
+    {
+        ImmutableList.Builder<Method> methods = ImmutableList.builder();
+
+        for (Class<?> clazz = type; (clazz != null) && !clazz.equals(Object.class); clazz = clazz.getSuperclass()) {
+            methods.addAll(ImmutableList.copyOf(clazz.getDeclaredMethods()));
+        }
+        return methods.build();
+    }
+
+    public static Iterable<Field> getAllDeclaredFields(Class<?> type)
+    {
+        ImmutableList.Builder<Field> fields = ImmutableList.builder();
+        for (Class<?> clazz = type; (clazz != null) && !clazz.equals(Object.class); clazz = clazz.getSuperclass()) {
+            fields.addAll(ImmutableList.copyOf(clazz.getDeclaredFields()));
+        }
+        return fields.build();
+    }
+
+    /**
+     * Find methods that are tagged with a given annotation somewhere in the hierarchy
+     */
+    public static Collection<Method> findAnnotatedMethods(Class<?> type, Class<? extends Annotation> annotation)
+    {
+        List<Method> result = new ArrayList<>();
+
+        // gather all publicly available methods
+        // this returns everything, even if it's declared in a parent
+        for (Method method : type.getMethods()) {
+            // skip methods that are used internally by the vm for implementing covariance, etc
+            if (method.isSynthetic() || method.isBridge() || isStatic(method.getModifiers())) {
+                continue;
+            }
+
+            // look for annotations recursively in super-classes or interfaces
+            Method managedMethod = findAnnotatedMethod(
+                    type,
+                    annotation,
+                    method.getName(),
+                    method.getParameterTypes());
+            if (managedMethod != null) {
+                result.add(managedMethod);
+            }
+        }
+
+        return result;
+    }
+
+    public static Method findAnnotatedMethod(Class<?> configClass, Class<? extends Annotation> annotation, String methodName, Class<?>... paramTypes)
+    {
+        try {
+            Method method = configClass.getDeclaredMethod(methodName, paramTypes);
+            if (method != null && method.isAnnotationPresent(annotation)) {
+                return method;
+            }
+        }
+        catch (NoSuchMethodException e) {
+            // ignore
+        }
+
+        if (configClass.getSuperclass() != null) {
+            Method managedMethod = findAnnotatedMethod(
+                    configClass.getSuperclass(),
+                    annotation,
+                    methodName,
+                    paramTypes);
+            if (managedMethod != null) {
+                return managedMethod;
+            }
+        }
+
+        for (Class<?> iface : configClass.getInterfaces()) {
+            Method managedMethod = findAnnotatedMethod(iface, annotation, methodName, paramTypes);
+            if (managedMethod != null) {
+                return managedMethod;
+            }
+        }
+
+        return null;
+    }
+
+    public static Collection<Field> findAnnotatedFields(Class<?> type, Class<? extends Annotation> annotation)
+    {
+        List<Field> result = new ArrayList<>();
+
+        // gather all publicly available methods
+        // this returns everything, even if it's declared in a parent
+        for (Field field : type.getFields()) {
+            if (field.isSynthetic() || isStatic(field.getModifiers())) {
+                continue;
+            }
+
+            if (field.isAnnotationPresent(annotation)) {
+                result.add(field);
+            }
+        }
+
+        return result;
+    }
+
+    private static final Paranamer PARANAMER = new CachingParanamer(
+            new AdaptiveParanamer(
+                    new ThriftFieldParanamer(),
+                    new BytecodeReadingParanamer(),
+                    new GeneralParanamer()));
+
+    public static String[] extractParameterNames(AccessibleObject methodOrConstructor)
+    {
+        String[] names = PARANAMER.lookupParameterNames(methodOrConstructor);
+        return names;
+    }
+
+    private static class ThriftFieldParanamer extends AnnotationParanamer
+    {
+        @Override
+        protected String getNamedValue(Annotation annotation)
+        {
+            if (annotation instanceof ThriftField) {
+                String name = ((ThriftField) annotation).name();
+                if (!name.isEmpty()) {
+                    return name;
+                }
+            }
+            return super.getNamedValue(annotation);
+        }
+
+        @Override
+        protected boolean isNamed(Annotation annotation)
+        {
+            return (annotation instanceof ThriftField) || super.isNamed(annotation);
+        }
+    }
+
+    private static class GeneralParanamer implements Paranamer
+    {
+        @Override
+        public String[] lookupParameterNames(AccessibleObject methodOrConstructor)
+        {
+            String[] names;
+            if (methodOrConstructor instanceof Method) {
+                Method method = (Method) methodOrConstructor;
+                names = new String[method.getParameterTypes().length];
+            }
+            else if (methodOrConstructor instanceof Constructor<?>) {
+                Constructor<?> constructor = (Constructor<?>) methodOrConstructor;
+                names = new String[constructor.getParameterTypes().length];
+            }
+            else {
+                throw new IllegalArgumentException("methodOrConstructor is not an instance of Method or Constructor but is " + methodOrConstructor.getClass().getName());
+            }
+            for (int i = 0; i < names.length; i++) {
+                names[i] = "arg" + i;
+            }
+            return names;
+        }
+
+        @Override
+        public String[] lookupParameterNames(AccessibleObject methodOrConstructor, boolean throwExceptionIfMissing)
+        {
+            return lookupParameterNames(methodOrConstructor);
+        }
+    }
 }

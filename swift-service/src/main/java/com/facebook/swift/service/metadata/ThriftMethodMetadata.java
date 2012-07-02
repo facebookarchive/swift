@@ -27,121 +27,121 @@ import java.util.Map;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.extractParameterNames;
 
 @Immutable
-public class ThriftMethodMetadata {
-  private final String name;
-  private final ThriftType returnType;
-  private final List<ThriftFieldMetadata> parameters;
-  private final Method method;
-  private final ImmutableMap<Short,ThriftType> exceptions;
+public class ThriftMethodMetadata
+{
+    private final String name;
+    private final ThriftType returnType;
+    private final List<ThriftFieldMetadata> parameters;
+    private final Method method;
+    private final ImmutableMap<Short, ThriftType> exceptions;
 
-  public ThriftMethodMetadata(Method method, ThriftCatalog catalog) {
-    Preconditions.checkNotNull(method, "method is null");
-    Preconditions.checkNotNull(catalog, "catalog is null");
+    public ThriftMethodMetadata(Method method, ThriftCatalog catalog)
+    {
+        Preconditions.checkNotNull(method, "method is null");
+        Preconditions.checkNotNull(catalog, "catalog is null");
 
-    this.method = method;
-    
-    ThriftMethod thriftMethod = method.getAnnotation(ThriftMethod.class);
-    Preconditions.checkArgument(thriftMethod != null, "Method is not annotated with @ThriftMethod");
+        this.method = method;
 
-    Preconditions.checkArgument(
-        !Modifier.isStatic(method.getModifiers()),
-        "Method %s is static", method.toGenericString()
-    );
+        ThriftMethod thriftMethod = method.getAnnotation(ThriftMethod.class);
+        Preconditions.checkArgument(thriftMethod != null, "Method is not annotated with @ThriftMethod");
 
-    if (thriftMethod.value().length() == 0) {
-      name = method.getName();
-    } else {
-      name = thriftMethod.value();
-    }
+        Preconditions.checkArgument(!Modifier.isStatic(method.getModifiers()), "Method %s is static", method.toGenericString());
 
-    returnType = catalog.getThriftType(method.getGenericReturnType());
-
-    ImmutableList.Builder<ThriftFieldMetadata> builder = ImmutableList.builder();
-    Type[] parameterTypes = method.getGenericParameterTypes();
-    String[] parameterNames = extractParameterNames(method);
-    Annotation[][] parameterAnnotations = method.getParameterAnnotations();
-    for (int index = 0; index < parameterTypes.length; index++) {
-      ThriftField thriftField = null;
-      for (Annotation annotation : parameterAnnotations[index]) {
-        if (annotation instanceof ThriftField) {
-          thriftField = (ThriftField) annotation;
-          break;
+        if (thriftMethod.value().length() == 0) {
+            name = method.getName();
         }
-      }
-
-      short parameterId = Short.MIN_VALUE;
-      String parameterName = null;
-      if (thriftField != null) {
-        parameterId = thriftField.value();
-        if (!thriftField.name().isEmpty()) {
-          parameterName = thriftField.name();
+        else {
+            name = thriftMethod.value();
         }
-      }
-      if (parameterId == Short.MIN_VALUE) {
-        parameterId = (short) (index + 1);
-      }
-      if (parameterName == null) {
-        parameterName = parameterNames[index];
-      }
 
-      Type parameterType = parameterTypes[index];
+        returnType = catalog.getThriftType(method.getGenericReturnType());
 
-      ThriftType thriftType = catalog.getThriftType(parameterType);
+        ImmutableList.Builder<ThriftFieldMetadata> builder = ImmutableList.builder();
+        Type[] parameterTypes = method.getGenericParameterTypes();
+        String[] parameterNames = extractParameterNames(method);
+        Annotation[][] parameterAnnotations = method.getParameterAnnotations();
+        for (int index = 0; index < parameterTypes.length; index++) {
+            ThriftField thriftField = null;
+            for (Annotation annotation : parameterAnnotations[index]) {
+                if (annotation instanceof ThriftField) {
+                    thriftField = (ThriftField) annotation;
+                    break;
+                }
+            }
 
-      ThriftFieldMetadata fieldMetadata = new ThriftFieldMetadata(
-          parameterId,
-          thriftType,
-          parameterName,
-          ImmutableList.<ThriftInjection>of(
-              new ThriftParameterInjection(
-                  parameterId,
-                  parameterName,
-                  index,
-                  parameterType
-              )
-          ),
-          null,
-          null
-      );
-      builder.add(fieldMetadata);
+            short parameterId = Short.MIN_VALUE;
+            String parameterName = null;
+            if (thriftField != null) {
+                parameterId = thriftField.value();
+                if (!thriftField.name().isEmpty()) {
+                    parameterName = thriftField.name();
+                }
+            }
+            if (parameterId == Short.MIN_VALUE) {
+                parameterId = (short) (index + 1);
+            }
+            if (parameterName == null) {
+                parameterName = parameterNames[index];
+            }
+
+            Type parameterType = parameterTypes[index];
+
+            ThriftType thriftType = catalog.getThriftType(parameterType);
+
+            ThriftFieldMetadata fieldMetadata = new ThriftFieldMetadata(
+                    parameterId,
+                    thriftType,
+                    parameterName,
+                    ImmutableList.<ThriftInjection>of(new ThriftParameterInjection(parameterId, parameterName, index, parameterType)),
+                    null,
+                    null
+            );
+            builder.add(fieldMetadata);
+        }
+        parameters = builder.build();
+
+        ImmutableMap.Builder<Short, ThriftType> exceptions = ImmutableMap.builder();
+        if (thriftMethod.exception().length > 0) {
+            for (ThriftException thriftException : thriftMethod.exception()) {
+                exceptions.put(thriftException.id(), catalog.getThriftType(thriftException.type()));
+            }
+        }
+        else if (method.getExceptionTypes().length == 1) {
+            Class<?> exceptionClass = method.getExceptionTypes()[0];
+            if (exceptionClass.isAnnotationPresent(ThriftStruct.class)) {
+                exceptions.put((short) 1, catalog.getThriftType(exceptionClass));
+            }
+        }
+        this.exceptions = exceptions.build();
     }
-    parameters = builder.build();
 
-    ImmutableMap.Builder<Short, ThriftType> exceptions = ImmutableMap.builder();
-    if (thriftMethod.exception().length > 0) {
-      for (ThriftException thriftException : thriftMethod.exception()) {
-        exceptions.put(thriftException.id(), catalog.getThriftType(thriftException.type()));
-      }
-    } else if (method.getExceptionTypes().length == 1) {
-      Class<?> exceptionClass = method.getExceptionTypes()[0];
-      if (exceptionClass.isAnnotationPresent(ThriftStruct.class)) {
-        exceptions.put((short) 1, catalog.getThriftType(exceptionClass));
-      }
+    public String getName()
+    {
+        return name;
     }
-    this.exceptions = exceptions.build();
-  }
 
-  public String getName() {
-    return name;
-  }
+    public ThriftType getReturnType()
+    {
+        return returnType;
+    }
 
-  public ThriftType getReturnType() {
-    return returnType;
-  }
+    public List<ThriftFieldMetadata> getParameters()
+    {
+        return parameters;
+    }
 
-  public List<ThriftFieldMetadata> getParameters() {
-    return parameters;
-  }
+    public Map<Short, ThriftType> getExceptions()
+    {
+        return exceptions;
+    }
 
-  public Map<Short, ThriftType> getExceptions() {
-    return exceptions;
-  }
+    public ThriftType getException(short id)
+    {
+        return exceptions.get(id);
+    }
 
-  public ThriftType getException(short id) {
-    return exceptions.get(id);
-  }
-
-  public Method getMethod() {
-    return method;
-  }
+    public Method getMethod()
+    {
+        return method;
+    }
 }

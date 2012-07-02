@@ -13,47 +13,53 @@ import java.util.EnumSet;
 import static com.facebook.swift.codec.internal.compiler.byteCode.Access.toAccessModifier;
 
 @Immutable
-public class FieldDefinition {
-  private final ImmutableSet<Access> access;
-  private final String name;
-  private final ParameterizedType type;
+public class FieldDefinition
+{
+    private final ImmutableSet<Access> access;
+    private final String name;
+    private final ParameterizedType type;
 
-  public FieldDefinition(EnumSet<Access> access, String name, ParameterizedType type) {
-    this.access = Sets.immutableEnumSet(access);
-    this.name = name;
-    this.type = type;
-  }
+    public FieldDefinition(EnumSet<Access> access, String name, ParameterizedType type)
+    {
+        this.access = Sets.immutableEnumSet(access);
+        this.name = name;
+        this.type = type;
+    }
 
-  public ImmutableSet<Access> getAccess() {
-    return access;
-  }
+    public ImmutableSet<Access> getAccess()
+    {
+        return access;
+    }
 
-  public String getName() {
-    return name;
-  }
+    public String getName()
+    {
+        return name;
+    }
 
-  public ParameterizedType getType() {
-    return type;
-  }
+    public ParameterizedType getType()
+    {
+        return type;
+    }
 
-  public FieldNode getFieldNode() {
-    return new FieldNode(
-        toAccessModifier(access),
-        name,
-        type.getType(),
-        type.getGenericSignature(),
-        null
-    );
-  }
+    public FieldNode getFieldNode()
+    {
+        return new FieldNode(
+                toAccessModifier(access),
+                name,
+                type.getType(),
+                type.getGenericSignature(),
+                null);
+    }
 
-  @Override
-  public String toString() {
-    final StringBuilder sb = new StringBuilder();
-    sb.append("FieldDefinition");
-    sb.append("{access=").append(access);
-    sb.append(", name='").append(name).append('\'');
-    sb.append(", type=").append(type);
-    sb.append('}');
-    return sb.toString();
-  }
+    @Override
+    public String toString()
+    {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("FieldDefinition");
+        sb.append("{access=").append(access);
+        sb.append(", name='").append(name).append('\'');
+        sb.append(", type=").append(type);
+        sb.append('}');
+        return sb.toString();
+    }
 }

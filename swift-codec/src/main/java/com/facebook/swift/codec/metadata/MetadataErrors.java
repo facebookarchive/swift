@@ -24,98 +24,114 @@ import java.util.List;
 /**
  * MetadataErrors collects all known issues with metadata extraction.  This allows all known
  * problems to be reported together instead of one at a time.
- *
+ * <p/>
  * This code is heavily based on https://github.com/dain/platform/blob/master/configuration/src/main/java/com/proofpoint/configuration/Problems.java
  */
 @NotThreadSafe
-public class MetadataErrors {
-  private final List<MetadataErrorException> errors = Lists.newArrayList();
-  private final List<MetadataWarningException> warnings = Lists.newArrayList();
-  private final Monitor monitor;
+public class MetadataErrors
+{
+    private final List<MetadataErrorException> errors = Lists.newArrayList();
+    private final List<MetadataWarningException> warnings = Lists.newArrayList();
+    private final Monitor monitor;
 
-  public interface Monitor {
-    void onError(MetadataErrorException errorMessage);
+    public interface Monitor
+    {
+        void onError(MetadataErrorException errorMessage);
 
-    void onWarning(MetadataWarningException warningMessage);
-  }
-
-  public static final NullMonitor NULL_MONITOR = new NullMonitor();
-
-  private static final class NullMonitor implements MetadataErrors.Monitor {
-    @Override
-    public void onError(MetadataErrorException unused) {
+        void onWarning(MetadataWarningException warningMessage);
     }
 
-    @Override
-    public void onWarning(MetadataWarningException unused) {
+    public static final NullMonitor NULL_MONITOR = new NullMonitor();
+
+    private static final class NullMonitor implements MetadataErrors.Monitor
+    {
+        @Override
+        public void onError(MetadataErrorException unused)
+        {
+        }
+
+        @Override
+        public void onWarning(MetadataWarningException unused)
+        {
+        }
     }
-  }
 
-  public MetadataErrors() {
-    this.monitor = NULL_MONITOR;
-  }
-
-  public MetadataErrors(Monitor monitor) {
-    this.monitor = monitor;
-  }
-
-  public void throwIfHasErrors() throws MetadataErrorException {
-    if (!errors.isEmpty()) {
-      MetadataErrorException exception = new MetadataErrorException(
-          "Metadata extraction encountered %s errors and %s warnings",
-          errors.size(),
-          warnings.size()
-      );
-      for (MetadataErrorException error : errors) {
-        exception.addSuppressed(error);
-      }
-      for (MetadataWarningException warning : warnings) {
-        exception.addSuppressed(warning);
-      }
-      throw exception;
+    public MetadataErrors()
+    {
+        this.monitor = NULL_MONITOR;
     }
-  }
 
-  public List<MetadataErrorException> getErrors() {
-    return ImmutableList.copyOf(errors);
-  }
-
-  public void addError(String format, Object... params) {
-    MetadataErrorException message = new MetadataErrorException(format, params);
-    errors.add(message);
-    monitor.onError(message);
-  }
-
-  public void addError(Throwable e, String format, Object... params) {
-    MetadataErrorException message = new MetadataErrorException(e,format, params);
-    errors.add(message);
-    monitor.onError(message);
-  }
-
-  public List<MetadataWarningException> getWarnings() {
-    return ImmutableList.copyOf(warnings);
-  }
-
-  public void addWarning(String format, Object... params) {
-    MetadataWarningException message = new MetadataWarningException(format, params);
-    warnings.add(message);
-    monitor.onWarning(message);
-  }
-
-  public void addWarning(Throwable e, String format, Object... params) {
-    MetadataWarningException message = new MetadataWarningException(e, format, params);
-    warnings.add(message);
-    monitor.onWarning(message);
-  }
-
-  public String toString() {
-    StringBuilder builder = new StringBuilder();
-    for (MetadataErrorException error : errors) {
-      builder.append(error.getMessage()).append('\n');
+    public MetadataErrors(Monitor monitor)
+    {
+        this.monitor = monitor;
     }
-    for (MetadataWarningException warning : warnings) {
-      builder.append(warning.getMessage()).append('\n');
+
+    public void throwIfHasErrors()
+            throws MetadataErrorException
+    {
+        if (!errors.isEmpty()) {
+            MetadataErrorException exception = new MetadataErrorException(
+                    "Metadata extraction encountered %s errors and %s warnings",
+                    errors.size(),
+                    warnings.size()
+            );
+            for (MetadataErrorException error : errors) {
+                exception.addSuppressed(error);
+            }
+            for (MetadataWarningException warning : warnings) {
+                exception.addSuppressed(warning);
+            }
+            throw exception;
+        }
     }
-    return builder.toString();
-  }
+
+    public List<MetadataErrorException> getErrors()
+    {
+        return ImmutableList.copyOf(errors);
+    }
+
+    public void addError(String format, Object... params)
+    {
+        MetadataErrorException message = new MetadataErrorException(format, params);
+        errors.add(message);
+        monitor.onError(message);
+    }
+
+    public void addError(Throwable e, String format, Object... params)
+    {
+        MetadataErrorException message = new MetadataErrorException(e, format, params);
+        errors.add(message);
+        monitor.onError(message);
+    }
+
+    public List<MetadataWarningException> getWarnings()
+    {
+        return ImmutableList.copyOf(warnings);
+    }
+
+    public void addWarning(String format, Object... params)
+    {
+        MetadataWarningException message = new MetadataWarningException(format, params);
+        warnings.add(message);
+        monitor.onWarning(message);
+    }
+
+    public void addWarning(Throwable e, String format, Object... params)
+    {
+        MetadataWarningException message = new MetadataWarningException(e, format, params);
+        warnings.add(message);
+        monitor.onWarning(message);
+    }
+
+    public String toString()
+    {
+        StringBuilder builder = new StringBuilder();
+        for (MetadataErrorException error : errors) {
+            builder.append(error.getMessage()).append('\n');
+        }
+        for (MetadataWarningException warning : warnings) {
+            builder.append(warning.getMessage()).append('\n');
+        }
+        return builder.toString();
+    }
 }

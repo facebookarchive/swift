@@ -13,8 +13,9 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 @Retention(RUNTIME)
 @Target({TYPE})
-public @interface ThriftStruct {
-  String value() default "";
+public @interface ThriftStruct
+{
+    String value() default "";
 
-  Class<?> builder() default void.class;
+    Class<?> builder() default void.class;
 }

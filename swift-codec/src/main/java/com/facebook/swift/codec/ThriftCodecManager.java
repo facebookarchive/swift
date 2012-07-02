@@ -41,132 +41,149 @@ import java.util.concurrent.ExecutionException;
  * class should be created.
  */
 @ThreadSafe
-public class ThriftCodecManager {
-  private final ThriftCatalog catalog;
-  private final LoadingCache<ThriftType, ThriftCodec<?>> typeCodecs;
+public class ThriftCodecManager
+{
+    private final ThriftCatalog catalog;
+    private final LoadingCache<ThriftType, ThriftCodec<?>> typeCodecs;
 
-  public ThriftCodecManager(ThriftCodec<?>... codecs) {
-    this(new CompilerThriftCodecFactory(), codecs);
-  }
+    public ThriftCodecManager(ThriftCodec<?>... codecs)
+    {
+        this(new CompilerThriftCodecFactory(), codecs);
+    }
 
-  public ThriftCodecManager(ThriftCodecFactory factory, ThriftCodec<?>... codecs) {
-    this(factory, new ThriftCatalog(), codecs);
-  }
+    public ThriftCodecManager(ThriftCodecFactory factory, ThriftCodec<?>... codecs)
+    {
+        this(factory, new ThriftCatalog(), codecs);
+    }
 
-  public ThriftCodecManager(
-      final ThriftCodecFactory factory,
-      final ThriftCatalog catalog,
-      ThriftCodec<?>... codecs
-  ) {
-    Preconditions.checkNotNull(factory, "factory is null");
-    Preconditions.checkNotNull(catalog, "catalog is null");
+    public ThriftCodecManager(
+            final ThriftCodecFactory factory,
+            final ThriftCatalog catalog,
+            ThriftCodec<?>... codecs
+    )
+    {
+        Preconditions.checkNotNull(factory, "factory is null");
+        Preconditions.checkNotNull(catalog, "catalog is null");
 
-    this.catalog = catalog;
+        this.catalog = catalog;
 
-    typeCodecs = CacheBuilder.newBuilder().build(
-        new CacheLoader<ThriftType, ThriftCodec<?>>() {
-          public ThriftCodec<?> load(ThriftType type) throws Exception {
-            switch (type.getProtocolType()) {
-              case STRUCT: {
-                return factory.generateThriftTypeCodec(
-                    ThriftCodecManager.this,
-                    type.getStructMetadata()
-                );
-              }
-              case MAP: {
-                ThriftCodec<?> keyCodec = typeCodecs.get(type.getKeyType());
-                ThriftCodec<?> valueCodec = typeCodecs.get(type.getValueType());
-                return new MapThriftCodec<>(type, keyCodec, valueCodec);
-              }
-              case SET: {
-                ThriftCodec<?> elementCodec = typeCodecs.get(type.getValueType());
-                return new SetThriftCodec<>(type, elementCodec);
-              }
-              case LIST: {
-                ThriftCodec<?> elementCodec = typeCodecs.get(type.getValueType());
-                return new ListThriftCodec<>(type, elementCodec);
-              }
-              case ENUM: {
-                return new EnumThriftCodec<>(type);
-              }
-              default:
-                if (type.isCoerced()) {
-                  ThriftCodec<?> codec = getCodec(type.getUncoercedType());
-                  TypeCoercion coercion = catalog.getDefaultCoercion(type.getJavaType());
-                  return new CoercionThriftCodec<>(codec, coercion);
+        typeCodecs = CacheBuilder.newBuilder().build(new CacheLoader<ThriftType, ThriftCodec<?>>()
+        {
+            public ThriftCodec<?> load(ThriftType type)
+                    throws Exception
+            {
+                switch (type.getProtocolType()) {
+                    case STRUCT: {
+                        return factory.generateThriftTypeCodec(ThriftCodecManager.this, type.getStructMetadata());
+                    }
+                    case MAP: {
+                        ThriftCodec<?> keyCodec = typeCodecs.get(type.getKeyType());
+                        ThriftCodec<?> valueCodec = typeCodecs.get(type.getValueType());
+                        return new MapThriftCodec<>(type, keyCodec, valueCodec);
+                    }
+                    case SET: {
+                        ThriftCodec<?> elementCodec = typeCodecs.get(type.getValueType());
+                        return new SetThriftCodec<>(type, elementCodec);
+                    }
+                    case LIST: {
+                        ThriftCodec<?> elementCodec = typeCodecs.get(type.getValueType());
+                        return new ListThriftCodec<>(type, elementCodec);
+                    }
+                    case ENUM: {
+                        return new EnumThriftCodec<>(type);
+                    }
+                    default:
+                        if (type.isCoerced()) {
+                            ThriftCodec<?> codec = getCodec(type.getUncoercedType());
+                            TypeCoercion coercion = catalog.getDefaultCoercion(type.getJavaType());
+                            return new CoercionThriftCodec<>(codec, coercion);
+                        }
+                        throw new IllegalArgumentException("Unsupported Thrift type " + type);
                 }
-                throw new IllegalArgumentException("Unsupported Thrift type " + type);
             }
-          }
+        });
+
+        addCodec(new BooleanThriftCodec());
+        addCodec(new ByteThriftCodec());
+        addCodec(new ShortThriftCodec());
+        addCodec(new IntegerThriftCodec());
+        addCodec(new LongThriftCodec());
+        addCodec(new DoubleThriftCodec());
+        addCodec(new ByteBufferThriftCodec());
+        addCodec(new VoidThriftCodec());
+
+        for (ThriftCodec<?> codec : codecs) {
+            addCodec(codec);
         }
-    );
-
-    addCodec(new BooleanThriftCodec());
-    addCodec(new ByteThriftCodec());
-    addCodec(new ShortThriftCodec());
-    addCodec(new IntegerThriftCodec());
-    addCodec(new LongThriftCodec());
-    addCodec(new DoubleThriftCodec());
-    addCodec(new ByteBufferThriftCodec());
-    addCodec(new VoidThriftCodec());
-
-    for (ThriftCodec<?> codec : codecs) {
-      addCodec(codec);
     }
-  }
 
-  public ThriftCodec<?> getCodec(Type javaType) {
-    ThriftType thriftType = catalog.getThriftType(javaType);
-    Preconditions.checkArgument(thriftType != null, "Unsupported java type %s", javaType);
-    return getCodec(thriftType);
-  }
-
-  public <T> ThriftCodec<T> getCodec(Class<T> javaType) {
-    ThriftType thriftType = catalog.getThriftType(javaType);
-    Preconditions.checkArgument(thriftType != null, "Unsupported java type %s", javaType.getName());
-    return (ThriftCodec<T>) getCodec(thriftType);
-  }
-
-  public ThriftCodec<?> getCodec(ThriftType type) {
-    try {
-      ThriftCodec<?> thriftCodec = typeCodecs.get(type);
-      return thriftCodec;
-    } catch (ExecutionException e) {
-      throw Throwables.propagate(e);
+    public ThriftCodec<?> getCodec(Type javaType)
+    {
+        ThriftType thriftType = catalog.getThriftType(javaType);
+        Preconditions.checkArgument(thriftType != null, "Unsupported java type %s", javaType);
+        return getCodec(thriftType);
     }
-  }
 
-  public <T> ThriftCodec<T> getCodec(TypeToken<T> type) {
-    return (ThriftCodec<T>) getCodec(type.getType());
-  }
+    public <T> ThriftCodec<T> getCodec(Class<T> javaType)
+    {
+        ThriftType thriftType = catalog.getThriftType(javaType);
+        Preconditions.checkArgument(thriftType != null, "Unsupported java type %s", javaType.getName());
+        return (ThriftCodec<T>) getCodec(thriftType);
+    }
 
-  /**
-   * Adds or replaces the codec associated with the type contained in the codec.  This does not
-   * replace any current users of the existing codec associated with the type.
-   */
-  public void addCodec(ThriftCodec<?> codec) {
-    typeCodecs.put(codec.getType(), codec);
-  }
+    public ThriftCodec<?> getCodec(ThriftType type)
+    {
+        try {
+            ThriftCodec<?> thriftCodec = typeCodecs.get(type);
+            return thriftCodec;
+        }
+        catch (ExecutionException e) {
+            throw Throwables.propagate(e);
+        }
+    }
 
-  public ThriftCatalog getCatalog() {
-    return catalog;
-  }
+    public <T> ThriftCodec<T> getCodec(TypeToken<T> type)
+    {
+        return (ThriftCodec<T>) getCodec(type.getType());
+    }
 
-  public <T> T read(Class<T> type, TProtocol protocol) throws Exception {
-    return getCodec(type).read(new TProtocolReader(protocol));
-  }
+    /**
+     * Adds or replaces the codec associated with the type contained in the codec.  This does not
+     * replace any current users of the existing codec associated with the type.
+     */
+    public void addCodec(ThriftCodec<?> codec)
+    {
+        typeCodecs.put(codec.getType(), codec);
+    }
 
-  public Object read(ThriftType type, TProtocol protocol) throws Exception {
-    ThriftCodec<?> codec = getCodec(type);
-    return codec.read(new TProtocolReader(protocol));
-  }
+    public ThriftCatalog getCatalog()
+    {
+        return catalog;
+    }
 
-  public <T> void write(Class<T> type, T value, TProtocol protocol) throws Exception {
-    getCodec(type).write(value, new TProtocolWriter(protocol));
-  }
+    public <T> T read(Class<T> type, TProtocol protocol)
+            throws Exception
+    {
+        return getCodec(type).read(new TProtocolReader(protocol));
+    }
 
-  public void write(ThriftType type, Object value, TProtocol protocol) throws Exception {
-    ThriftCodec<Object> codec = (ThriftCodec<Object>) getCodec(type);
-    codec.write(value, new TProtocolWriter(protocol));
-  }
+    public Object read(ThriftType type, TProtocol protocol)
+            throws Exception
+    {
+        ThriftCodec<?> codec = getCodec(type);
+        return codec.read(new TProtocolReader(protocol));
+    }
+
+    public <T> void write(Class<T> type, T value, TProtocol protocol)
+            throws Exception
+    {
+        getCodec(type).write(value, new TProtocolWriter(protocol));
+    }
+
+    public void write(ThriftType type, Object value, TProtocol protocol)
+            throws Exception
+    {
+        ThriftCodec<Object> codec = (ThriftCodec<Object>) getCodec(type);
+        codec.write(value, new TProtocolWriter(protocol));
+    }
 }

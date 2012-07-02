@@ -20,250 +20,273 @@ import java.util.Map;
 import java.util.Set;
 
 @NotThreadSafe
-public class TProtocolWriter {
-  private final TProtocol protocol;
+public class TProtocolWriter
+{
+    private final TProtocol protocol;
 
-  public TProtocolWriter(TProtocol protocol) {
-    this.protocol = protocol;
-  }
-
-  public void writeStructBegin(String name) throws TException {
-    protocol.writeStructBegin(new TStruct(name));
-  }
-
-  public void writeStructEnd() throws TException {
-    protocol.writeFieldStop();
-    protocol.writeStructEnd();
-  }
-
-  public void writeField(String name, short id, ThriftCodec<?> codec, Object value)
-      throws Exception {
-    if (value == null) {
-      return;
+    public TProtocolWriter(TProtocol protocol)
+    {
+        this.protocol = protocol;
     }
 
-    protocol.writeFieldBegin(new TField(name, codec.getType().getProtocolType().getType(), id));
-    ((ThriftCodec<Object>) codec).write(value, this);
-    protocol.writeFieldEnd();
-  }
-
-  public void writeBinaryField(String name, short id, ByteBuffer buf) throws TException {
-    if (buf == null) {
-      return;
-    }
-    protocol.writeFieldBegin(new TField(name, TType.STRING, id));
-    protocol.writeBinary(buf);
-    protocol.writeFieldEnd();
-  }
-
-  public void writeBoolField(String name, short id, boolean b) throws TException {
-    protocol.writeFieldBegin(new TField(name, TType.BOOL, id));
-    protocol.writeBool(b);
-    protocol.writeFieldEnd();
-  }
-
-  public void writeByteField(String name, short id, byte b) throws TException {
-    protocol.writeFieldBegin(new TField(name, TType.BYTE, id));
-    protocol.writeByte(b);
-    protocol.writeFieldEnd();
-  }
-
-  public void writeDoubleField(String name, short id, double dub) throws TException {
-    protocol.writeFieldBegin(new TField(name, TType.DOUBLE, id));
-    protocol.writeDouble(dub);
-    protocol.writeFieldEnd();
-  }
-
-  public void writeI16Field(String name, short id, short i16) throws TException {
-    protocol.writeFieldBegin(new TField(name, TType.I16, id));
-    protocol.writeI16(i16);
-    protocol.writeFieldEnd();
-  }
-
-  public void writeI32Field(String name, short id, int i32) throws TException {
-    protocol.writeFieldBegin(new TField(name, TType.I32, id));
-    protocol.writeI32(i32);
-    protocol.writeFieldEnd();
-  }
-
-  public void writeI64Field(String name, short id, long i64) throws TException {
-    protocol.writeFieldBegin(new TField(name, TType.I64, id));
-    protocol.writeI64(i64);
-    protocol.writeFieldEnd();
-  }
-
-  public void writeStringField(String name, short id, String string) throws TException {
-    if (string == null) {
-      return;
+    public void writeStructBegin(String name)
+            throws TException
+    {
+        protocol.writeStructBegin(new TStruct(name));
     }
 
-    protocol.writeFieldBegin(new TField(name, TType.STRING, id));
-    protocol.writeString(string);
-    protocol.writeFieldEnd();
-  }
-
-  public <T> void writeStructField(String name, short id, ThriftCodec<T> codec, T struct)
-      throws Exception {
-    if (struct == null) {
-      return;
+    public void writeStructEnd()
+            throws TException
+    {
+        protocol.writeFieldStop();
+        protocol.writeStructEnd();
     }
 
-    protocol.writeFieldBegin(new TField(name, TType.STRUCT, id));
-    codec.write(struct, this);
-    protocol.writeFieldEnd();
-  }
+    public void writeField(String name, short id, ThriftCodec<?> codec, Object value)
+            throws Exception
+    {
+        if (value == null) {
+            return;
+        }
 
-  public <E> void writeSetField(String name, short id, ThriftCodec<Set<E>> codec, Set<E> set)
-      throws Exception {
-    if (set == null) {
-      return;
+        protocol.writeFieldBegin(new TField(name, codec.getType().getProtocolType().getType(), id));
+        ((ThriftCodec<Object>) codec).write(value, this);
+        protocol.writeFieldEnd();
     }
 
-    protocol.writeFieldBegin(new TField(name, TType.SET, id));
-    codec.write(set, this);
-    protocol.writeFieldEnd();
-  }
-
-  public <E> void writeListField(String name, short id, ThriftCodec<List<E>> codec, List<E> list)
-      throws Exception {
-    if (list == null) {
-      return;
+    public void writeBinaryField(String name, short id, ByteBuffer buf)
+            throws TException
+    {
+        if (buf == null) {
+            return;
+        }
+        protocol.writeFieldBegin(new TField(name, TType.STRING, id));
+        protocol.writeBinary(buf);
+        protocol.writeFieldEnd();
     }
 
-    protocol.writeFieldBegin(new TField(name, TType.LIST, id));
-    codec.write(list, this);
-    protocol.writeFieldEnd();
-  }
-
-  public <K, V> void writeMapField(
-      String name,
-      short id,
-      ThriftCodec<Map<K, V>> codec,
-      Map<K, V> map
-  )
-      throws Exception {
-    if (map == null) {
-      return;
+    public void writeBoolField(String name, short id, boolean b)
+            throws TException
+    {
+        protocol.writeFieldBegin(new TField(name, TType.BOOL, id));
+        protocol.writeBool(b);
+        protocol.writeFieldEnd();
     }
 
-    protocol.writeFieldBegin(new TField(name, TType.MAP, id));
-    codec.write(map, this);
-    protocol.writeFieldEnd();
-  }
-
-  public <T extends Enum<T>> void writeEnumField(
-      String name,
-      short id,
-      ThriftCodec<T> codec,
-      T enumValue
-  )
-      throws Exception {
-
-    if (enumValue == null) {
-      return;
+    public void writeByteField(String name, short id, byte b)
+            throws TException
+    {
+        protocol.writeFieldBegin(new TField(name, TType.BYTE, id));
+        protocol.writeByte(b);
+        protocol.writeFieldEnd();
     }
 
-    protocol.writeFieldBegin(new TField(name, TType.I32, id));
-    codec.write(enumValue, this);
-    protocol.writeFieldEnd();
-  }
-
-  public void writeBinary(ByteBuffer buf) throws TException {
-    if (buf == null) {
-      return;
-    }
-    protocol.writeBinary(buf);
-  }
-
-  public void writeBool(boolean b) throws TException {
-    protocol.writeBool(b);
-  }
-
-  public void writeByte(byte b) throws TException {
-    protocol.writeByte(b);
-  }
-
-  public void writeI16(short i16) throws TException {
-    protocol.writeI16(i16);
-  }
-
-  public void writeI32(int i32) throws TException {
-    protocol.writeI32(i32);
-  }
-
-  public void writeI64(long i64) throws TException {
-    protocol.writeI64(i64);
-  }
-
-  public void writeDouble(double dub) throws TException {
-    protocol.writeDouble(dub);
-  }
-
-  public void writeString(String string) throws TException {
-    if (string == null) {
-      return;
-    }
-    protocol.writeString(string);
-  }
-
-  public <T> void writeSet(ThriftCodec<T> elementCodec, Set<T> set) throws Exception {
-    if (set == null) {
-      return;
+    public void writeDoubleField(String name, short id, double dub)
+            throws TException
+    {
+        protocol.writeFieldBegin(new TField(name, TType.DOUBLE, id));
+        protocol.writeDouble(dub);
+        protocol.writeFieldEnd();
     }
 
-    protocol.writeSetBegin(
-        new TSet(
-            elementCodec.getType().getProtocolType().getType(),
-            set.size()
-        )
-    );
-
-    for (T element : set) {
-      elementCodec.write(element, this);
+    public void writeI16Field(String name, short id, short i16)
+            throws TException
+    {
+        protocol.writeFieldBegin(new TField(name, TType.I16, id));
+        protocol.writeI16(i16);
+        protocol.writeFieldEnd();
     }
 
-    protocol.writeSetEnd();
-  }
-
-  public <T> void writeList(ThriftCodec<T> elementCodec, List<T> list) throws Exception {
-    if (list == null) {
-      return;
+    public void writeI32Field(String name, short id, int i32)
+            throws TException
+    {
+        protocol.writeFieldBegin(new TField(name, TType.I32, id));
+        protocol.writeI32(i32);
+        protocol.writeFieldEnd();
     }
 
-    protocol.writeListBegin(
-        new TList(elementCodec.getType().getProtocolType().getType(), list.size())
-    );
-
-    for (T element : list) {
-      elementCodec.write(element, this);
+    public void writeI64Field(String name, short id, long i64)
+            throws TException
+    {
+        protocol.writeFieldBegin(new TField(name, TType.I64, id));
+        protocol.writeI64(i64);
+        protocol.writeFieldEnd();
     }
 
-    protocol.writeListEnd();
-  }
+    public void writeStringField(String name, short id, String string)
+            throws TException
+    {
+        if (string == null) {
+            return;
+        }
 
-  public <K, V> void writeMap(
-      ThriftCodec<K> keyCodec,
-      ThriftCodec<V> valueCodec,
-      Map<K, V> map
-  ) throws Exception {
-
-    if (map == null) {
-      return;
+        protocol.writeFieldBegin(new TField(name, TType.STRING, id));
+        protocol.writeString(string);
+        protocol.writeFieldEnd();
     }
 
-    protocol.writeMapBegin(
-        new TMap(
-            keyCodec.getType().getProtocolType().getType(),
-            valueCodec.getType().getProtocolType().getType(),
-            map.size()
-        )
-    );
+    public <T> void writeStructField(String name, short id, ThriftCodec<T> codec, T struct)
+            throws Exception
+    {
+        if (struct == null) {
+            return;
+        }
 
-    for (Map.Entry<K, V> entry : map.entrySet()) {
-      keyCodec.write(entry.getKey(), this);
-      valueCodec.write(entry.getValue(), this);
+        protocol.writeFieldBegin(new TField(name, TType.STRUCT, id));
+        codec.write(struct, this);
+        protocol.writeFieldEnd();
     }
 
-    protocol.writeMapEnd();
-  }
+    public <E> void writeSetField(String name, short id, ThriftCodec<Set<E>> codec, Set<E> set)
+            throws Exception
+    {
+        if (set == null) {
+            return;
+        }
+
+        protocol.writeFieldBegin(new TField(name, TType.SET, id));
+        codec.write(set, this);
+        protocol.writeFieldEnd();
+    }
+
+    public <E> void writeListField(String name, short id, ThriftCodec<List<E>> codec, List<E> list)
+            throws Exception
+    {
+        if (list == null) {
+            return;
+        }
+
+        protocol.writeFieldBegin(new TField(name, TType.LIST, id));
+        codec.write(list, this);
+        protocol.writeFieldEnd();
+    }
+
+    public <K, V> void writeMapField(String name, short id, ThriftCodec<Map<K, V>> codec, Map<K, V> map)
+            throws Exception
+    {
+        if (map == null) {
+            return;
+        }
+
+        protocol.writeFieldBegin(new TField(name, TType.MAP, id));
+        codec.write(map, this);
+        protocol.writeFieldEnd();
+    }
+
+    public <T extends Enum<T>> void writeEnumField(String name, short id, ThriftCodec<T> codec, T enumValue)
+            throws Exception
+    {
+
+        if (enumValue == null) {
+            return;
+        }
+
+        protocol.writeFieldBegin(new TField(name, TType.I32, id));
+        codec.write(enumValue, this);
+        protocol.writeFieldEnd();
+    }
+
+    public void writeBinary(ByteBuffer buf)
+            throws TException
+    {
+        if (buf == null) {
+            return;
+        }
+        protocol.writeBinary(buf);
+    }
+
+    public void writeBool(boolean b)
+            throws TException
+    {
+        protocol.writeBool(b);
+    }
+
+    public void writeByte(byte b)
+            throws TException
+    {
+        protocol.writeByte(b);
+    }
+
+    public void writeI16(short i16)
+            throws TException
+    {
+        protocol.writeI16(i16);
+    }
+
+    public void writeI32(int i32)
+            throws TException
+    {
+        protocol.writeI32(i32);
+    }
+
+    public void writeI64(long i64)
+            throws TException
+    {
+        protocol.writeI64(i64);
+    }
+
+    public void writeDouble(double dub)
+            throws TException
+    {
+        protocol.writeDouble(dub);
+    }
+
+    public void writeString(String string)
+            throws TException
+    {
+        if (string == null) {
+            return;
+        }
+        protocol.writeString(string);
+    }
+
+    public <T> void writeSet(ThriftCodec<T> elementCodec, Set<T> set)
+            throws Exception
+    {
+        if (set == null) {
+            return;
+        }
+
+        protocol.writeSetBegin(new TSet(elementCodec.getType().getProtocolType().getType(), set.size()));
+
+        for (T element : set) {
+            elementCodec.write(element, this);
+        }
+
+        protocol.writeSetEnd();
+    }
+
+    public <T> void writeList(ThriftCodec<T> elementCodec, List<T> list)
+            throws Exception
+    {
+        if (list == null) {
+            return;
+        }
+
+        protocol.writeListBegin(new TList(elementCodec.getType().getProtocolType().getType(), list.size()));
+
+        for (T element : list) {
+            elementCodec.write(element, this);
+        }
+
+        protocol.writeListEnd();
+    }
+
+    public <K, V> void writeMap(ThriftCodec<K> keyCodec, ThriftCodec<V> valueCodec, Map<K, V> map)
+            throws Exception
+    {
+
+        if (map == null) {
+            return;
+        }
+
+        protocol.writeMapBegin(new TMap(keyCodec.getType().getProtocolType().getType(), valueCodec.getType().getProtocolType().getType(), map.size()));
+
+        for (Map.Entry<K, V> entry : map.entrySet()) {
+            keyCodec.write(entry.getKey(), this);
+            valueCodec.write(entry.getValue(), this);
+        }
+
+        protocol.writeMapEnd();
+    }
 }

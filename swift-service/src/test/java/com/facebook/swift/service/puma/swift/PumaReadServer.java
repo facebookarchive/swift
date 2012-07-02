@@ -9,81 +9,79 @@ import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.Map;
 
-public class PumaReadServer implements PumaReadService {
-  private ReadSemanticException exception;
+public class PumaReadServer implements PumaReadService
+{
+    private ReadSemanticException exception;
 
-  public void setException(ReadSemanticException exception) {
-    this.exception = exception;
-  }
-
-  @Override
-  public List<ReadResultQueryInfo> getResult(List<ReadQueryInfoTimeString> reader)
-      throws ReadSemanticException {
-
-    if (exception != null) {
-      throw exception;
+    public void setException(ReadSemanticException exception)
+    {
+        this.exception = exception;
     }
 
-    ImmutableList.Builder<ReadResultQueryInfo> result = ImmutableList.builder();
-    for (ReadQueryInfoTimeString readQueryInfoTimeString : reader) {
-      result.add(new ReadResultQueryInfo(1, data(readQueryInfoTimeString.getSelectList())));
+    @Override
+    public List<ReadResultQueryInfo> getResult(List<ReadQueryInfoTimeString> reader)
+            throws ReadSemanticException
+    {
+        if (exception != null) {
+            throw exception;
+        }
+
+        ImmutableList.Builder<ReadResultQueryInfo> result = ImmutableList.builder();
+        for (ReadQueryInfoTimeString readQueryInfoTimeString : reader) {
+            result.add(new ReadResultQueryInfo(1, data(readQueryInfoTimeString.getSelectList())));
+        }
+        return result.build();
     }
-    return result.build();
-  }
 
-  @Override
-  public List<ReadResultQueryInfoTimeString> getResultTimeString(List<ReadQueryInfoTimeString> reader)
-      throws ReadSemanticException {
+    @Override
+    public List<ReadResultQueryInfoTimeString> getResultTimeString(List<ReadQueryInfoTimeString> reader)
+            throws ReadSemanticException
+    {
+        if (exception != null) {
+            throw exception;
+        }
 
-    if (exception != null) {
-      throw exception;
+        ImmutableList.Builder<ReadResultQueryInfoTimeString> result = ImmutableList.builder();
+        for (ReadQueryInfoTimeString readQueryInfoTimeString : reader) {
+            result.add(new ReadResultQueryInfoTimeString(
+                    readQueryInfoTimeString.getStartTime(),
+                    data(readQueryInfoTimeString.getSelectList())));
+        }
+        return result.build();
     }
 
-    ImmutableList.Builder<ReadResultQueryInfoTimeString> result = ImmutableList.builder();
-    for (ReadQueryInfoTimeString readQueryInfoTimeString : reader) {
-      result.add(
-          new ReadResultQueryInfoTimeString(
-              readQueryInfoTimeString.getStartTime(),
-              data(readQueryInfoTimeString.getSelectList())
-          )
-      );
+    @Override
+    public List<ReadResultQueryInfo> mergeQueryAggregation(MergeAggregationQueryInfo mergeAggregationQueryInfo)
+            throws ReadSemanticException
+    {
+        throw new UnsupportedOperationException();
     }
-    return result.build();
-  }
 
-  @Override
-  public List<ReadResultQueryInfo> mergeQueryAggregation(
-      MergeAggregationQueryInfo mergeAggregationQueryInfo
-  )
-      throws ReadSemanticException {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public long latestQueryableTime(String category, String appName, List<Integer> bucketNumbers)
-      throws ReadSemanticException {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public List<Long> latestQueryableTimes(
-      String category,
-      String appName,
-      List<Integer> bucketNumbers
-  )
-      throws ReadSemanticException {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void close() {
-  }
-
-  private Map<String, String> data(List<String> columns) {
-    ImmutableMap.Builder<String, String> data = ImmutableMap.builder();
-    for (String column : columns) {
-      data.put(column, column);
+    @Override
+    public long latestQueryableTime(String category, String appName, List<Integer> bucketNumbers)
+            throws ReadSemanticException
+    {
+        throw new UnsupportedOperationException();
     }
-    return data.build();
-  }
+
+    @Override
+    public List<Long> latestQueryableTimes(String category, String appName, List<Integer> bucketNumbers)
+            throws ReadSemanticException
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void close()
+    {
+    }
+
+    private Map<String, String> data(List<String> columns)
+    {
+        ImmutableMap.Builder<String, String> data = ImmutableMap.builder();
+        for (String column : columns) {
+            data.put(column, column);
+        }
+        return data.build();
+    }
 }

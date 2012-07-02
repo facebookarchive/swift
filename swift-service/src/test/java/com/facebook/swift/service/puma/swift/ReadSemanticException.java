@@ -8,37 +8,42 @@ import com.facebook.swift.codec.ThriftField;
 import com.facebook.swift.codec.ThriftStruct;
 
 @ThriftStruct
-public class ReadSemanticException extends Exception {
-  @ThriftConstructor
-  public ReadSemanticException(String message) {
-    super(message);
-  }
-
-  @ThriftField(1)
-  public String getMessage() {
-    return super.getMessage();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
+public class ReadSemanticException extends Exception
+{
+    @ThriftConstructor
+    public ReadSemanticException(String message)
+    {
+        super(message);
     }
 
-    final ReadSemanticException that = (ReadSemanticException) o;
-
-    if (getMessage() != null ? !getMessage().equals(that.getMessage()) : that.getMessage() != null) {
-      return false;
+    @ThriftField(1)
+    public String getMessage()
+    {
+        return super.getMessage();
     }
 
-    return true;
-  }
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
-  @Override
-  public int hashCode() {
-    return getMessage() != null ? getMessage().hashCode() : 0;
-  }
+        final ReadSemanticException that = (ReadSemanticException) o;
+
+        if (getMessage() != null ? !getMessage().equals(that.getMessage()) : that.getMessage() != null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return getMessage() != null ? getMessage().hashCode() : 0;
+    }
 }

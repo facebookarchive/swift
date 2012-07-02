@@ -3,12 +3,15 @@
  */
 package com.facebook.swift.codec.metadata;
 
-public class MetadataErrorException extends RuntimeException {
-  public MetadataErrorException(String formatString, Object... args) {
-    super("Error: " + String.format(formatString, args));
-  }
+public class MetadataErrorException extends RuntimeException
+{
+    public MetadataErrorException(String formatString, Object... args)
+    {
+        super("Error: " + String.format(formatString, args));
+    }
 
-  public MetadataErrorException(Throwable cause, String formatString, Object... args) {
-    super("Error: " + String.format(formatString, args), cause);
-  }
+    public MetadataErrorException(Throwable cause, String formatString, Object... args)
+    {
+        super("Error: " + String.format(formatString, args), cause);
+    }
 }

@@ -15,26 +15,32 @@ import javax.annotation.concurrent.Immutable;
  * VoidThriftCodec is a convenience codec used for service invocations that return void type.
  */
 @Immutable
-public class VoidThriftCodec implements ThriftCodec<Void> {
-  @Override
-  public ThriftType getType() {
-    return ThriftType.VOID;
-  }
+public class VoidThriftCodec implements ThriftCodec<Void>
+{
+    @Override
+    public ThriftType getType()
+    {
+        return ThriftType.VOID;
+    }
 
-  /**
-   * Always returns null without reading anything from the stream.
-   */
-  @Override
-  public Void read(TProtocolReader protocol) throws Exception {
-    Preconditions.checkNotNull(protocol, "protocol is null");
-    return null;
-  }
+    /**
+     * Always returns null without reading anything from the stream.
+     */
+    @Override
+    public Void read(TProtocolReader protocol)
+            throws Exception
+    {
+        Preconditions.checkNotNull(protocol, "protocol is null");
+        return null;
+    }
 
-  /**
-   * Always returns without writing to the stream.
-   */
-  @Override
-  public void write(Void value, TProtocolWriter protocol) throws Exception {
-    Preconditions.checkNotNull(protocol, "protocol is null");
-  }
+    /**
+     * Always returns without writing to the stream.
+     */
+    @Override
+    public void write(Void value, TProtocolWriter protocol)
+            throws Exception
+    {
+        Preconditions.checkNotNull(protocol, "protocol is null");
+    }
 }

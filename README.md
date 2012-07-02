@@ -11,25 +11,29 @@ objects are converted to and from Thrift.  This library is similar to JaxB
 constructor, and builder injection.  For example:
 
     @ThriftStruct
-    public class LogEntry {
-      private final String category;
-      private final String message;
-    
-      @ThriftConstructor
-      public LogEntry(String category, String message) {
-        this.category = category;
-        this.message = message;
-      }
-    
-      @ThriftField(1)
-      public String getCategory() {
-        return category;
-      }
-    
-      @ThriftField(2)
-      public String getMessage() {
-        return message;
-      }
+    public class LogEntry
+    {
+        private final String category;
+        private final String message;
+
+        @ThriftConstructor
+        public LogEntry(String category, String message)
+        {
+            this.category = category;
+            this.message = message;
+        }
+
+        @ThriftField(1)
+        public String getCategory()
+        {
+            return category;
+        }
+
+        @ThriftField(2)
+        public String getMessage()
+        {
+            return message;
+        }
     }    
 
 
@@ -39,17 +43,20 @@ constructor, and builder injection.  For example:
 services to be exported with Thrift.   For example:
 
     @ThriftService("scribe")
-    public class InMemoryScribe {
-      private final List<LogEntry> messages = new ArrayList<>();
-    
-      public List<LogEntry> getMessages() {
-        return messages;
-      }
-    
-      @ThriftMethod("Log")
-      public ResultCode log(List<LogEntry> messages) {
-        this.messages.addAll(messages);
-        return ResultCode.OK;
-      }
+    public class InMemoryScribe
+    {
+        private final List<LogEntry> messages = new ArrayList<>();
+
+        public List<LogEntry> getMessages()
+        {
+            return messages;
+        }
+
+        @ThriftMethod("Log")
+        public ResultCode log(List<LogEntry> messages)
+        {
+            this.messages.addAll(messages);
+            return ResultCode.OK;
+        }
     }
 

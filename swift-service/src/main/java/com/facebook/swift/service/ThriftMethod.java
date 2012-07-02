@@ -16,8 +16,9 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 @Retention(RUNTIME)
 @Target(METHOD)
-public @interface ThriftMethod {
-  String value() default "";
+public @interface ThriftMethod
+{
+    String value() default "";
 
-  ThriftException[] exception() default {};
+    ThriftException[] exception() default {};
 }

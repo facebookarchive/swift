@@ -3,6 +3,7 @@
  */
 package com.facebook.swift.codec;
 
-public enum Fruit {
-  APPLE, BANANA, CHERRY
+public enum Fruit
+{
+    APPLE, BANANA, CHERRY
 }

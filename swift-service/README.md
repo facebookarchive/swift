@@ -15,23 +15,27 @@ having to annotate twice.  For example the scribe server below implements the
 scribe interface:
 
     @ThriftService
-    public interface Scribe{
-      @ThriftMethod
-      ResultCode log(List<LogEntry> messages);
+    public interface Scribe
+    {
+        @ThriftMethod
+        ResultCode log(List<LogEntry> messages);
     }
 
-    public class SwiftScribe implements Scribe {
-      private final List<LogEntry> messages = new ArrayList<>();
-    
-      public List<LogEntry> getMessages() {
-        return messages;
-      }
-    
-      @Override
-      public ResultCode log(List<LogEntry> messages) {
-        this.messages.addAll(messages);
-        return ResultCode.OK;
-      }
+    public class SwiftScribe implements Scribe
+    {
+        private final List<LogEntry> messages = new ArrayList<>();
+
+        public List<LogEntry> getMessages()
+        {
+            return messages;
+        }
+
+        @Override
+        public ResultCode log(List<LogEntry> messages)
+        {
+            this.messages.addAll(messages);
+            return ResultCode.OK;
+        }
     }
 
 # Method
@@ -42,9 +46,10 @@ don't, just add a value to the annotation like this
 `@ThriftMethod("myMethodName")`.
 
     @ThriftService
-    public interface Scribe {
-      @ThriftMethod("Log")
-      ResultCode process(List<LogEntry> messages);
+    public interface Scribe
+    {
+        @ThriftMethod("Log")
+        ResultCode process(List<LogEntry> messages);
     }
 
 # Parameters
@@ -56,9 +61,10 @@ parameter names match the Java parameter names.  If you want to use a different
 id or name, simply annotate the parameter as follows:
 
     @ThriftService
-    public interface Scribe {
-      @ThriftMethod
-      ResultCode log(@ThriftField(value = 3, name = "mesg") List<LogEntry> messages);
+    public interface Scribe
+    {
+        @ThriftMethod
+        ResultCode log(@ThriftField(value = 3, name = "mesg") List<LogEntry> messages);
     }
 
 # Exceptions
@@ -73,7 +79,8 @@ add the extremely verbose `@ThriftException` annotations as follows:
           @ThriftException(type = MyException.class, id = 1),
           @ThriftException(type = MyOther.class, id = 2)
     })
-    void doSomething() throws MyException, MyOther {
+    void doSomething() throws MyException, MyOther
+    {
     }   
 
 # Client Manager
@@ -92,14 +99,15 @@ for cleanup of the resources.  This mean if your client interface extend
 AutoClose, you can use Java 7 resource management to clean up the socket.
 
     @ThriftService
-    public interface Scribe extends AutoCloseable {
-      @ThriftMethod
-      ResultCode log(List<LogEntry> messages);
+    public interface Scribe extends AutoCloseable
+    {
+        @ThriftMethod
+        ResultCode log(List<LogEntry> messages);
     }
 
     ThriftClientManager clientManager = new ThriftClientManager();
     try (Scribe scribe = clientManager.createClient(fromParts("localhost", port), Scribe.class)) {
-      return scribe.log(entries);
+        return scribe.log(entries);
     }
 
 # Server TProcessor

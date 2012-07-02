@@ -20,15 +20,17 @@ Thrift field have the same name, so if they don't just add a name to the
 annotation like this: `@ThriftField(value = 1, name="myFieldName")`.
 
     @ThriftStruct
-    public class Bonk {
-      @ThriftField(1)
-      public String message;
-    
-      @ThriftField(2)
-      public int type;
-    
-      public BonkField() {
-      }
+    public class Bonk
+    {
+        @ThriftField(1)
+        public String message;
+
+        @ThriftField(2)
+        public int type;
+
+        public BonkField()
+        {
+        }
     } 
 
 ## Beans
@@ -39,29 +41,34 @@ only need to specify the Thrift field id on one of them.  You can override the
 Thrift field name in the annotation if necessary.
 
     @ThriftStruct
-    public class Bonk {
-      private String message;
-      private int type;
-    
-      @ThriftField(1)
-      public String getMessage() {
-        return message;
-      }
-    
-      @ThriftField
-      public void setMessage(String message) {
-        this.message = message;
-      }
-    
-      @ThriftField(2)
-      public int getType() {
-        return type;
-      }
-    
-      @ThriftField
-      public void setType(int type) {
-        this.type = type;
-      }
+    public class Bonk
+    {
+        private String message;
+        private int type;
+
+        @ThriftField(1)
+        public String getMessage()
+        {
+            return message;
+        }
+
+        @ThriftField
+        public void setMessage(String message)
+        {
+            this.message = message;
+        }
+
+        @ThriftField(2)
+        public int getType()
+        {
+            return type;
+        }
+
+        @ThriftField
+        public void setType(int type)
+        {
+            this.type = type;
+        }
     }
  
 ## Constructor
@@ -76,25 +83,29 @@ Otherwise, you will need to annotate the parameters with
 
     @Immutable
     @ThriftStruct
-    public class Bonk {
-      private final String message;
-      private final int type;
-    
-      @ThriftConstructor
-      public Bonk(String message, int type) {
-        this.message = message;
-        this.type = type;
-      }
-    
-      @ThriftField(1)
-      public String getMessage() {
-        return message;
-      }
-    
-      @ThriftField(2)
-      public int getType() {
-        return type;
-      }
+    public class Bonk
+    {
+        private final String message;
+        private final int type;
+
+        @ThriftConstructor
+        public Bonk(String message, int type)
+        {
+            this.message = message;
+            this.type = type;
+        }
+
+        @ThriftField(1)
+        public String getMessage()
+        {
+            return message;
+        }
+
+        @ThriftField(2)
+        public int getType()
+        {
+            return type;
+        }
     }
 
 ## Builder
@@ -108,49 +119,54 @@ method itself.
 
     @Immutable
     @ThriftStruct(builder = Builder.class)
-    public class Bonk {
-      private final String message;
-      private final int type;
-    
-      public Bonk(
-        String message,
-        int type
-      ) {
-        this.message = message;
-        this.type = type;
-      }
-    
-      @ThriftField(1)
-      public String getMessage() {
-        return message;
-      }
-    
-      @ThriftField(2)
-      public int getType() {
-        return type;
-      }
-      
-      public static class Builder {
-        private String message;
-        private int type;
-    
-        @ThriftField
-        public Builder setMessage(String message) {
-          this.message = message;
-          return this;
+    public class Bonk
+    {
+        private final String message;
+        private final int type;
+
+        public Bonk(String message, int type)
+        {
+            this.message = message;
+            this.type = type;
         }
-    
-        @ThriftField
-        public Builder setType(int type) {
-          this.type = type;
-          return this;
+
+        @ThriftField(1)
+        public String getMessage()
+        {
+            return message;
         }
-    
-        @ThriftConstructor
-        public Bonk create() {
-          return new Bonk(message, type);
+
+        @ThriftField(2)
+        public int getType()
+        {
+            return type;
         }
-      }
+
+        public static class Builder
+        {
+            private String message;
+            private int type;
+
+            @ThriftField
+            public Builder setMessage(String message)
+            {
+                this.message = message;
+                return this;
+            }
+
+            @ThriftField
+            public Builder setType(int type)
+            {
+                this.type = type;
+                return this;
+            }
+
+            @ThriftConstructor
+            public Bonk create()
+            {
+                return new Bonk(message, type);
+            }
+        }
     }
 
 # Enumerations
@@ -162,8 +178,9 @@ Swift automatically maps Java enumerations to a Thrift int.
 Swift supports standard Java enumerations directly as a Thrift enumeration
 using the Java ordinal value as the Thrift enum value.
 
-    public enum Fruit {
-      APPLE, BANANA, CHERRY
+    public enum Fruit
+    {
+        APPLE, BANANA, CHERRY
     }
 
 ## Explicit Value
@@ -171,20 +188,22 @@ using the Java ordinal value as the Thrift enum value.
 For custom enumerations, you can annotate a method on the enumeration to
 supply an int value.
 
-    public enum Letter {
-      A(65), B(66), C(67), D(68);
-    
-      private final int asciiValue;
-    
-      Letter(int asciiValue) {
-    
-        this.asciiValue = asciiValue;
-      }
-    
-      @ThriftEnumValue
-      public int getAsciiValue() {
-        return asciiValue;
-      }
+    public enum Letter
+    {
+        A(65), B(66), C(67), D(68);
+
+        private final int asciiValue;
+
+        Letter(int asciiValue)
+        {
+            this.asciiValue = asciiValue;
+        }
+
+        @ThriftEnumValue
+        public int getAsciiValue()
+        {
+            return asciiValue;
+        }
     }
 
 # Todo

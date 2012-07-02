@@ -16,6 +16,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 @Retention(RUNTIME)
 @Target(TYPE)
-public @interface ThriftService {
-  String value() default "";
+public @interface ThriftService
+{
+    String value() default "";
 }
