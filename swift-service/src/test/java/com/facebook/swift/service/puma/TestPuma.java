@@ -72,8 +72,10 @@ public class TestPuma
         NiftyBootstrap bootstrap = createNiftyBootstrap(processor, port);
 
         // create client
-        ThriftClientManager clientManager = new ThriftClientManager();
-        try (PumaReadService pumaClient = clientManager.createClient(fromParts("localhost", port), PumaReadService.class)) {
+        try (
+                ThriftClientManager clientManager = new ThriftClientManager();
+                PumaReadService pumaClient = clientManager.createClient(fromParts("localhost", port), PumaReadService.class)
+        ) {
             // invoke puma
             List<ReadResultQueryInfoTimeString> results = pumaClient.getResultTimeString(requestArgs);
             verifyResults(results);
@@ -109,12 +111,13 @@ public class TestPuma
         ReadSemanticException exception = new ReadSemanticException("my exception");
         puma.setException(exception);
 
-        ThriftClientManager clientManager = new ThriftClientManager();
-
         TProcessor processor = new ThriftServiceProcessor(puma, new ThriftCodecManager());
         int port = getRandomPort();
         NiftyBootstrap bootstrap = createNiftyBootstrap(processor, port);
-        try (PumaReadService pumaClient = clientManager.createClient(fromParts("localhost", port), PumaReadService.class)) {
+        try (
+                ThriftClientManager clientManager = new ThriftClientManager();
+                PumaReadService pumaClient = clientManager.createClient(fromParts("localhost", port), PumaReadService.class)
+        ) {
             pumaClient.getResultTimeString(requestArgs);
             fail("Expected ReadSemanticException");
         }

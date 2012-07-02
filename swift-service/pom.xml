@@ -58,6 +58,12 @@
 
         <dependency>
             <groupId>com.facebook.nifty</groupId>
+            <artifactId>nifty-client</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.facebook.nifty</groupId>
             <artifactId>nifty-core</artifactId>
             <scope>test</scope>
         </dependency>

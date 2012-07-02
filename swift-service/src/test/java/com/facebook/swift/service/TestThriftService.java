@@ -92,8 +92,10 @@ public class TestThriftService
     private com.facebook.swift.service.ResultCode logSwift(int port, List<com.facebook.swift.service.LogEntry> entries)
             throws Exception
     {
-        ThriftClientManager clientManager = new ThriftClientManager();
-        try (Scribe scribe = clientManager.createClient(fromParts("localhost", port), Scribe.class)) {
+        try (
+                ThriftClientManager clientManager = new ThriftClientManager();
+                Scribe scribe = clientManager.createClient(fromParts("localhost", port), Scribe.class)
+        ) {
             return scribe.log(entries);
         }
     }
