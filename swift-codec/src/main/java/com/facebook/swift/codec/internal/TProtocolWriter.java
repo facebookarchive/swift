@@ -42,7 +42,7 @@ public class TProtocolWriter
         protocol.writeStructEnd();
     }
 
-    public void writeField(String name, short id, ThriftCodec<?> codec, Object value)
+    public <T> void writeField(String name, short id, ThriftCodec<T> codec, T value)
             throws Exception
     {
         if (value == null) {
@@ -50,7 +50,7 @@ public class TProtocolWriter
         }
 
         protocol.writeFieldBegin(new TField(name, codec.getType().getProtocolType().getType(), id));
-        ((ThriftCodec<Object>) codec).write(value, this);
+        codec.write(value, this);
         protocol.writeFieldEnd();
     }
 
