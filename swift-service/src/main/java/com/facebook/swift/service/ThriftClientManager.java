@@ -45,8 +45,7 @@ public class ThriftClientManager implements AutoCloseable
             throws TTransportException
     {
         // build method index
-        ThriftServiceMetadata thriftServiceMetadata = new ThriftServiceMetadata(type, codecManager.getCatalog()
-        );
+        ThriftServiceMetadata thriftServiceMetadata = new ThriftServiceMetadata(type, codecManager.getCatalog());
         ImmutableMap.Builder<Method, ThriftMethodHandler> methods = ImmutableMap.builder();
         for (ThriftMethodMetadata methodMetadata : thriftServiceMetadata.getMethods().values()) {
             ThriftMethodHandler methodHandler = new ThriftMethodHandler(methodMetadata, codecManager);

@@ -62,6 +62,7 @@ public class ThriftCatalog
     private final ConcurrentMap<Class<?>, ThriftStructMetadata<?>> structs = new ConcurrentHashMap<>();
     private final ConcurrentMap<Class<?>, ThriftEnumMetadata<?>> enums = new ConcurrentHashMap<>();
     private final ConcurrentMap<Type, TypeCoercion> coercions = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Class<?>, ThriftType> manualTypes = new ConcurrentHashMap<>();
 
     private final ThreadLocal<Deque<Class<?>>> stack = new ThreadLocal<Deque<Class<?>>>()
     {
@@ -88,6 +89,11 @@ public class ThriftCatalog
     Monitor getMonitor()
     {
         return monitor;
+    }
+
+    public void addThriftType(ThriftType thriftType)
+    {
+        manualTypes.put(TypeToken.of(thriftType.getJavaType()).getRawType(), thriftType);
     }
 
     /**
@@ -182,6 +188,10 @@ public class ThriftCatalog
             throws IllegalArgumentException
     {
         Class<?> rawType = TypeToken.of(javaType).getRawType();
+        ThriftType manualType = manualTypes.get(rawType);
+        if (manualType != null) {
+            return manualType;
+        }
         if (boolean.class == rawType) {
             return BOOL;
         }

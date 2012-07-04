@@ -156,10 +156,7 @@ public class LogEntry
     {
     }
 
-    public LogEntry(
-            String category,
-            String message
-    )
+    public LogEntry(String category, String message)
     {
         this();
         this.category = category;
