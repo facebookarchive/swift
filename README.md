@@ -5,7 +5,7 @@ serializable types and services.
 
 # Swift Codec
 
-[Swift Codec](swift-codec/README.md) is a simple library specifying how Java
+[Swift Codec](https://github.com/facebook/swift/tree/master/swift-codec) is a simple library specifying how Java
 objects are converted to and from Thrift.  This library is similar to JaxB
 (XML) and Jackson (JSON), but for Thrift.  Swift codec supports field, method,
 constructor, and builder injection.  For example:
@@ -39,7 +39,7 @@ constructor, and builder injection.  For example:
 
 # Swift Service
 
-[Swift Service](swift-service/README.md) is a simple library annotating
+[Swift Service](https://github.com/facebook/swift/tree/master/swift-service) is a simple library annotating
 services to be exported with Thrift.   For example:
 
     @ThriftService("scribe")
