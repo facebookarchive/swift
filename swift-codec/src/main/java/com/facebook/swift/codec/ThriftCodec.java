@@ -3,9 +3,8 @@
  */
 package com.facebook.swift.codec;
 
-import com.facebook.swift.codec.internal.TProtocolReader;
-import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftType;
+import org.apache.thrift.protocol.TProtocol;
 
 /**
  * A single type codec for reading and writing in Thrift format.  Each codec is symmetric and
@@ -30,7 +29,7 @@ public interface ThriftCodec<T>
      * @return the value; not null
      * @throws Exception if any problems occurred when reading or coercing  the value
      */
-    public T read(TProtocolReader protocol)
+    public T read(TProtocol protocol)
             throws Exception;
 
     /**
@@ -40,6 +39,6 @@ public interface ThriftCodec<T>
      * @param protocol the protocol to write to
      * @throws Exception if any problems occurred when writing or coercing  the value
      */
-    public void write(T value, TProtocolWriter protocol)
+    public void write(T value, TProtocol protocol)
             throws Exception;
 }

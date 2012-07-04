@@ -4,10 +4,9 @@
 package com.facebook.swift.codec.internal.coercion;
 
 import com.facebook.swift.codec.ThriftCodec;
-import com.facebook.swift.codec.internal.TProtocolReader;
-import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.facebook.swift.codec.metadata.TypeCoercion;
+import org.apache.thrift.protocol.TProtocol;
 
 import javax.annotation.concurrent.Immutable;
 
@@ -36,7 +35,7 @@ public class CoercionThriftCodec<T> implements ThriftCodec<T>
     }
 
     @Override
-    public T read(TProtocolReader protocol)
+    public T read(TProtocol protocol)
             throws Exception
     {
         Object thriftValue = codec.read(protocol);
@@ -45,7 +44,7 @@ public class CoercionThriftCodec<T> implements ThriftCodec<T>
     }
 
     @Override
-    public void write(T javaValue, TProtocolWriter protocol)
+    public void write(T javaValue, TProtocol protocol)
             throws Exception
     {
         Object thriftValue = typeCoercion.getToThrift().invoke(null, javaValue);

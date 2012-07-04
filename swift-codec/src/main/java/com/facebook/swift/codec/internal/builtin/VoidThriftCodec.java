@@ -4,10 +4,9 @@
 package com.facebook.swift.codec.internal.builtin;
 
 import com.facebook.swift.codec.ThriftCodec;
-import com.facebook.swift.codec.internal.TProtocolReader;
-import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.base.Preconditions;
+import org.apache.thrift.protocol.TProtocol;
 
 import javax.annotation.concurrent.Immutable;
 
@@ -27,7 +26,7 @@ public class VoidThriftCodec implements ThriftCodec<Void>
      * Always returns null without reading anything from the stream.
      */
     @Override
-    public Void read(TProtocolReader protocol)
+    public Void read(TProtocol protocol)
             throws Exception
     {
         Preconditions.checkNotNull(protocol, "protocol is null");
@@ -38,7 +37,7 @@ public class VoidThriftCodec implements ThriftCodec<Void>
      * Always returns without writing to the stream.
      */
     @Override
-    public void write(Void value, TProtocolWriter protocol)
+    public void write(Void value, TProtocol protocol)
             throws Exception
     {
         Preconditions.checkNotNull(protocol, "protocol is null");

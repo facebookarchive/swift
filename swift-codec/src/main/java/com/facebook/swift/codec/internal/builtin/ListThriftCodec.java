@@ -8,6 +8,7 @@ import com.facebook.swift.codec.internal.TProtocolReader;
 import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.base.Preconditions;
+import org.apache.thrift.protocol.TProtocol;
 
 import javax.annotation.concurrent.Immutable;
 import java.util.List;
@@ -34,19 +35,19 @@ public class ListThriftCodec<T> implements ThriftCodec<List<T>>
     }
 
     @Override
-    public List<T> read(TProtocolReader protocol)
+    public List<T> read(TProtocol protocol)
             throws Exception
     {
         Preconditions.checkNotNull(protocol, "protocol is null");
-        return protocol.readList(elementCodec);
+        return new TProtocolReader(protocol).readList(elementCodec);
     }
 
     @Override
-    public void write(List<T> value, TProtocolWriter protocol)
+    public void write(List<T> value, TProtocol protocol)
             throws Exception
     {
         Preconditions.checkNotNull(value, "value is null");
         Preconditions.checkNotNull(protocol, "protocol is null");
-        protocol.writeList(elementCodec, value);
+        new TProtocolWriter(protocol).writeList(elementCodec, value);
     }
 }

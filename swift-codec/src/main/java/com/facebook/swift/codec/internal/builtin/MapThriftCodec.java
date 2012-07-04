@@ -8,6 +8,7 @@ import com.facebook.swift.codec.internal.TProtocolReader;
 import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.base.Preconditions;
+import org.apache.thrift.protocol.TProtocol;
 
 import javax.annotation.concurrent.Immutable;
 import java.util.Map;
@@ -37,19 +38,19 @@ public class MapThriftCodec<K, V> implements ThriftCodec<Map<K, V>>
     }
 
     @Override
-    public Map<K, V> read(TProtocolReader protocol)
+    public Map<K, V> read(TProtocol protocol)
             throws Exception
     {
         Preconditions.checkNotNull(protocol, "protocol is null");
-        return protocol.readMap(keyCodec, valueCodec);
+        return new TProtocolReader(protocol).readMap(keyCodec, valueCodec);
     }
 
     @Override
-    public void write(Map<K, V> value, TProtocolWriter protocol)
+    public void write(Map<K, V> value, TProtocol protocol)
             throws Exception
     {
         Preconditions.checkNotNull(value, "value is null");
         Preconditions.checkNotNull(protocol, "protocol is null");
-        protocol.writeMap(keyCodec, valueCodec, value);
+        new TProtocolWriter(protocol).writeMap(keyCodec, valueCodec, value);
     }
 }

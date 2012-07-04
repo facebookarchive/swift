@@ -3,8 +3,6 @@
  */
 package com.facebook.swift.codec;
 
-import com.facebook.swift.codec.internal.TProtocolReader;
-import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.internal.builtin.BooleanThriftCodec;
 import com.facebook.swift.codec.internal.builtin.SetThriftCodec;
 import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
@@ -211,9 +209,9 @@ public abstract class AbstractThriftCodecManagerTest
 
         TMemoryBuffer transport = new TMemoryBuffer(10 * 1024);
         TCompactProtocol protocol = new TCompactProtocol(transport);
-        codec.write(structInstance, new TProtocolWriter(protocol));
+        codec.write(structInstance, protocol);
 
-        T copy = codec.read(new TProtocolReader(protocol));
+        T copy = codec.read(protocol);
         assertNotNull(copy);
         assertEquals(copy, structInstance);
 

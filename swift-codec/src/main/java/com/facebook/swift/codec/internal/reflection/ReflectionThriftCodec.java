@@ -20,6 +20,7 @@ import com.facebook.swift.codec.metadata.ThriftStructMetadata;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSortedMap;
+import org.apache.thrift.protocol.TProtocol;
 
 import javax.annotation.concurrent.Immutable;
 import java.lang.reflect.InvocationTargetException;
@@ -52,48 +53,51 @@ public class ReflectionThriftCodec<T> implements ThriftCodec<T>
     }
 
     @Override
-    public T read(TProtocolReader protocol)
+    public T read(TProtocol protocol)
             throws Exception
     {
-        protocol.readStructBegin();
+        TProtocolReader reader = new TProtocolReader(protocol);
+        reader.readStructBegin();
 
         Map<Short, Object> data = new HashMap<>(metadata.getFields().size());
-        while (protocol.nextField()) {
-            short fieldId = protocol.getFieldId();
+        while (reader.nextField()) {
+            short fieldId = reader.getFieldId();
 
             // do we have a codec for this field
             ThriftCodec<?> codec = fields.get(fieldId);
             if (codec == null) {
-                protocol.skipFieldData();
+                reader.skipFieldData();
                 continue;
             }
 
             // is this field readable
             ThriftFieldMetadata field = metadata.getField(fieldId);
             if (field.isWriteOnly()) {
-                protocol.skipFieldData();
+                reader.skipFieldData();
                 continue;
             }
 
             // read the value
-            Object value = protocol.readField(codec);
+            Object value = reader.readField(codec);
             if (value == null) {
                 continue;
             }
 
             data.put(fieldId, value);
         }
-        protocol.readStructEnd();
+        reader.readStructEnd();
 
         // build the struct
         return constructStruct(data);
     }
 
     @Override
-    public void write(T instance, TProtocolWriter protocol)
+    public void write(T instance, TProtocol protocol)
             throws Exception
     {
-        protocol.writeStructBegin(metadata.getStructName());
+        TProtocolWriter writer = new TProtocolWriter(protocol);
+        writer.writeStructBegin(metadata.getStructName());
+
         for (ThriftFieldMetadata fieldMetadata : metadata.getFields()) {
             // is the field writable?
             if (fieldMetadata.isReadOnly()) {
@@ -106,10 +110,10 @@ public class ReflectionThriftCodec<T> implements ThriftCodec<T>
             // write the field
             if (fieldValue != null) {
                 ThriftCodec<Object> codec = (ThriftCodec<Object>) fields.get(fieldMetadata.getId());
-                protocol.writeField(fieldMetadata.getName(), fieldMetadata.getId(), codec, fieldValue);
+                writer.writeField(fieldMetadata.getName(), fieldMetadata.getId(), codec, fieldValue);
             }
         }
-        protocol.writeStructEnd();
+        writer.writeStructEnd();
     }
 
     private T constructStruct(Map<Short, Object> data)

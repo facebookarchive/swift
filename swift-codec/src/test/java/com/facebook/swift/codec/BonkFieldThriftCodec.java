@@ -6,6 +6,7 @@ package com.facebook.swift.codec;
 import com.facebook.swift.codec.internal.TProtocolReader;
 import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftType;
+import org.apache.thrift.protocol.TProtocol;
 
 import static com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions.byteBufferToString;
 
@@ -24,27 +25,30 @@ public class BonkFieldThriftCodec implements ThriftCodec<BonkField>
         return type;
     }
 
-    public BonkField read(TProtocolReader protocol)
+    @Override
+    public BonkField read(TProtocol protocol)
             throws Exception
     {
+        TProtocolReader reader = new TProtocolReader(protocol);
+
         String message = null;
         int type = 0;
 
-        protocol.readStructBegin();
+        reader.readStructBegin();
 
-        while (protocol.nextField()) {
-            switch (protocol.getFieldId()) {
+        while (reader.nextField()) {
+            switch (reader.getFieldId()) {
                 case 1:
-                    message = byteBufferToString(protocol.readBinaryField());
+                    message = byteBufferToString(reader.readBinaryField());
                     break;
                 case 2:
-                    type = protocol.readI32Field();
+                    type = reader.readI32Field();
                     break;
                 default:
-                    protocol.skipFieldData();
+                    reader.skipFieldData();
             }
         }
-        protocol.readStructEnd();
+        reader.readStructEnd();
 
         BonkField bonkField = new BonkField();
         if (message != null) {
@@ -55,17 +59,20 @@ public class BonkFieldThriftCodec implements ThriftCodec<BonkField>
         return bonkField;
     }
 
-    public void write(BonkField value, TProtocolWriter protocol)
+    @Override
+    public void write(BonkField value, TProtocol protocol)
             throws Exception
     {
-        protocol.writeStructBegin("bonk");
+        TProtocolWriter writer = new TProtocolWriter(protocol);
+
+        writer.writeStructBegin("bonk");
 
         String message = value.message;
         if (message != null) {
-            protocol.writeStringField("message", (short) 1, message);
+            writer.writeStringField("message", (short) 1, message);
         }
 
-        protocol.writeI32Field("type", (short) 2, value.type);
-        protocol.writeStructEnd();
+        writer.writeI32Field("type", (short) 2, value.type);
+        writer.writeStructEnd();
     }
 }

@@ -4,10 +4,9 @@
 package com.facebook.swift.codec.internal.builtin;
 
 import com.facebook.swift.codec.ThriftCodec;
-import com.facebook.swift.codec.internal.TProtocolReader;
-import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.base.Preconditions;
+import org.apache.thrift.protocol.TProtocol;
 
 import javax.annotation.concurrent.Immutable;
 
@@ -21,7 +20,7 @@ public class LongThriftCodec implements ThriftCodec<Long>
     }
 
     @Override
-    public Long read(TProtocolReader protocol)
+    public Long read(TProtocol protocol)
             throws Exception
     {
         Preconditions.checkNotNull(protocol, "protocol is null");
@@ -29,7 +28,7 @@ public class LongThriftCodec implements ThriftCodec<Long>
     }
 
     @Override
-    public void write(Long value, TProtocolWriter protocol)
+    public void write(Long value, TProtocol protocol)
             throws Exception
     {
         Preconditions.checkNotNull(value, "value is null");

@@ -6,6 +6,7 @@ package com.facebook.swift.codec;
 import com.facebook.swift.codec.internal.TProtocolReader;
 import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftType;
+import org.apache.thrift.protocol.TProtocol;
 
 import java.util.Set;
 
@@ -29,9 +30,12 @@ public class OneOfEverythingThriftCodec implements ThriftCodec<OneOfEverything>
         return type;
     }
 
-    public OneOfEverything read(TProtocolReader protocol)
+    @Override
+    public OneOfEverything read(TProtocol protocol)
             throws Exception
     {
+        TProtocolReader reader = new TProtocolReader(protocol);
+
         boolean aBoolean = false;
         byte aByte = 0;
         short aShort = 0;
@@ -42,42 +46,42 @@ public class OneOfEverythingThriftCodec implements ThriftCodec<OneOfEverything>
         BonkField aStruct = null;
         Set<Boolean> aBooleanSet = null;
 
-        protocol.readStructBegin();
+        reader.readStructBegin();
 
-        while (protocol.nextField()) {
-            switch (protocol.getFieldId()) {
+        while (reader.nextField()) {
+            switch (reader.getFieldId()) {
                 case 1:
-                    aBoolean = protocol.readBoolField();
+                    aBoolean = reader.readBoolField();
                     break;
                 case 2:
-                    aByte = protocol.readByteField();
+                    aByte = reader.readByteField();
                     break;
                 case 3:
-                    aShort = protocol.readI16Field();
+                    aShort = reader.readI16Field();
                     break;
                 case 4:
-                    aInt = protocol.readI32Field();
+                    aInt = reader.readI32Field();
                     break;
                 case 5:
-                    aLong = protocol.readI64Field();
+                    aLong = reader.readI64Field();
                     break;
                 case 6:
-                    aDouble = protocol.readDoubleField();
+                    aDouble = reader.readDoubleField();
                     break;
                 case 7:
-                    aString = protocol.readStringField();
+                    aString = reader.readStringField();
                     break;
                 case 8:
-                    aStruct = protocol.readStructField(aStructCodec);
+                    aStruct = reader.readStructField(aStructCodec);
                     break;
                 case 9:
-                    aBooleanSet = protocol.readSetField(aBooleanSetCodec);
+                    aBooleanSet = reader.readSetField(aBooleanSetCodec);
                     break;
                 default:
-                    protocol.skipFieldData();
+                    reader.skipFieldData();
             }
         }
-        protocol.readStructEnd();
+        reader.readStructEnd();
 
         OneOfEverything oneOfEverything = new OneOfEverything();
         oneOfEverything.aBoolean = aBoolean;
@@ -93,19 +97,22 @@ public class OneOfEverythingThriftCodec implements ThriftCodec<OneOfEverything>
         return oneOfEverything;
     }
 
-    public void write(OneOfEverything oneOfEverything, TProtocolWriter protocol)
+    @Override
+    public void write(OneOfEverything oneOfEverything, TProtocol protocol)
             throws Exception
     {
-        protocol.writeStructBegin("OneOfEverything");
-        protocol.writeBoolField("aBoolean", (short) 1, oneOfEverything.aBoolean);
-        protocol.writeByteField("aByte", (short) 2, oneOfEverything.aByte);
-        protocol.writeI16Field("aShort", (short) 3, oneOfEverything.aShort);
-        protocol.writeI32Field("aInt", (short) 4, oneOfEverything.aInt);
-        protocol.writeI64Field("aLong", (short) 5, oneOfEverything.aLong);
-        protocol.writeDoubleField("aDouble", (short) 6, oneOfEverything.aDouble);
-        protocol.writeStringField("aString", (short) 7, oneOfEverything.aString);
-        protocol.writeStructField("aStruct", (short) 8, aStructCodec, oneOfEverything.aStruct);
-        protocol.writeSetField("aBooleanSet", (short) 9, aBooleanSetCodec, oneOfEverything.aBooleanSet);
-        protocol.writeStructEnd();
+        TProtocolWriter writer = new TProtocolWriter(protocol);
+
+        writer.writeStructBegin("OneOfEverything");
+        writer.writeBoolField("aBoolean", (short) 1, oneOfEverything.aBoolean);
+        writer.writeByteField("aByte", (short) 2, oneOfEverything.aByte);
+        writer.writeI16Field("aShort", (short) 3, oneOfEverything.aShort);
+        writer.writeI32Field("aInt", (short) 4, oneOfEverything.aInt);
+        writer.writeI64Field("aLong", (short) 5, oneOfEverything.aLong);
+        writer.writeDoubleField("aDouble", (short) 6, oneOfEverything.aDouble);
+        writer.writeStringField("aString", (short) 7, oneOfEverything.aString);
+        writer.writeStructField("aStruct", (short) 8, aStructCodec, oneOfEverything.aStruct);
+        writer.writeSetField("aBooleanSet", (short) 9, aBooleanSetCodec, oneOfEverything.aBooleanSet);
+        writer.writeStructEnd();
     }
 }

@@ -4,8 +4,6 @@
 package com.facebook.swift.codec;
 
 import com.facebook.swift.codec.internal.EnumThriftCodec;
-import com.facebook.swift.codec.internal.TProtocolReader;
-import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.internal.ThriftCodecFactory;
 import com.facebook.swift.codec.internal.builtin.BooleanThriftCodec;
 import com.facebook.swift.codec.internal.builtin.ByteBufferThriftCodec;
@@ -186,26 +184,26 @@ public class ThriftCodecManager
     public <T> T read(Class<T> type, TProtocol protocol)
             throws Exception
     {
-        return getCodec(type).read(new TProtocolReader(protocol));
+        return getCodec(type).read(protocol);
     }
 
     public Object read(ThriftType type, TProtocol protocol)
             throws Exception
     {
         ThriftCodec<?> codec = getCodec(type);
-        return codec.read(new TProtocolReader(protocol));
+        return codec.read(protocol);
     }
 
     public <T> void write(Class<T> type, T value, TProtocol protocol)
             throws Exception
     {
-        getCodec(type).write(value, new TProtocolWriter(protocol));
+        getCodec(type).write(value, protocol);
     }
 
     public void write(ThriftType type, Object value, TProtocol protocol)
             throws Exception
     {
         ThriftCodec<Object> codec = (ThriftCodec<Object>) getCodec(type);
-        codec.write(value, new TProtocolWriter(protocol));
+        codec.write(value, protocol);
     }
 }

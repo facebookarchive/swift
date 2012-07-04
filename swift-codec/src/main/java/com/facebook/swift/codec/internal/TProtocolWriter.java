@@ -50,7 +50,7 @@ public class TProtocolWriter
         }
 
         protocol.writeFieldBegin(new TField(name, codec.getType().getProtocolType().getType(), id));
-        codec.write(value, this);
+        codec.write(value, protocol);
         protocol.writeFieldEnd();
     }
 
@@ -133,7 +133,7 @@ public class TProtocolWriter
         }
 
         protocol.writeFieldBegin(new TField(name, TType.STRUCT, id));
-        codec.write(struct, this);
+        codec.write(struct, protocol);
         protocol.writeFieldEnd();
     }
 
@@ -145,7 +145,7 @@ public class TProtocolWriter
         }
 
         protocol.writeFieldBegin(new TField(name, TType.SET, id));
-        codec.write(set, this);
+        codec.write(set, protocol);
         protocol.writeFieldEnd();
     }
 
@@ -157,7 +157,7 @@ public class TProtocolWriter
         }
 
         protocol.writeFieldBegin(new TField(name, TType.LIST, id));
-        codec.write(list, this);
+        codec.write(list, protocol);
         protocol.writeFieldEnd();
     }
 
@@ -169,7 +169,7 @@ public class TProtocolWriter
         }
 
         protocol.writeFieldBegin(new TField(name, TType.MAP, id));
-        codec.write(map, this);
+        codec.write(map, protocol);
         protocol.writeFieldEnd();
     }
 
@@ -182,7 +182,7 @@ public class TProtocolWriter
         }
 
         protocol.writeFieldBegin(new TField(name, TType.I32, id));
-        codec.write(enumValue, this);
+        codec.write(enumValue, protocol);
         protocol.writeFieldEnd();
     }
 
@@ -250,7 +250,7 @@ public class TProtocolWriter
         protocol.writeSetBegin(new TSet(elementCodec.getType().getProtocolType().getType(), set.size()));
 
         for (T element : set) {
-            elementCodec.write(element, this);
+            elementCodec.write(element, protocol);
         }
 
         protocol.writeSetEnd();
@@ -266,7 +266,7 @@ public class TProtocolWriter
         protocol.writeListBegin(new TList(elementCodec.getType().getProtocolType().getType(), list.size()));
 
         for (T element : list) {
-            elementCodec.write(element, this);
+            elementCodec.write(element, protocol);
         }
 
         protocol.writeListEnd();
@@ -283,8 +283,8 @@ public class TProtocolWriter
         protocol.writeMapBegin(new TMap(keyCodec.getType().getProtocolType().getType(), valueCodec.getType().getProtocolType().getType(), map.size()));
 
         for (Map.Entry<K, V> entry : map.entrySet()) {
-            keyCodec.write(entry.getKey(), this);
-            valueCodec.write(entry.getValue(), this);
+            keyCodec.write(entry.getKey(), protocol);
+            valueCodec.write(entry.getValue(), protocol);
         }
 
         protocol.writeMapEnd();
