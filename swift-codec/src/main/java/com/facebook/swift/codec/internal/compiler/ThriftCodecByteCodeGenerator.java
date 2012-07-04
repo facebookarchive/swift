@@ -31,6 +31,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
+import org.apache.thrift.protocol.TProtocol;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.util.CheckClassAdapter;
@@ -244,8 +245,16 @@ public class ThriftCodecByteCodeGenerator<T>
                 a(PUBLIC),
                 "read",
                 structType,
-                arg("protocol", TProtocolReader.class)
+                arg("protocol", TProtocol.class)
         ).addException(Exception.class);
+
+        // TProtocolReader reader = new TProtocolReader(protocol);
+        read.addLocalVariable(type(TProtocolReader.class), "reader");
+        read.newObject(TProtocolReader.class);
+        read.dup();
+        read.loadVariable("protocol");
+        read.invokeConstructor(type(TProtocolReader.class), type(TProtocol.class));
+        read.storeVariable("reader");
 
         // read all of the data in to local variables
         Map<Short, LocalVariableDefinition> structData = readFieldValues(read);
@@ -259,7 +268,7 @@ public class ThriftCodecByteCodeGenerator<T>
      */
     private Map<Short, LocalVariableDefinition> readFieldValues(MethodDefinition read)
     {
-        LocalVariableDefinition protocol = read.getLocalVariable("protocol");
+        LocalVariableDefinition protocol = read.getLocalVariable("reader");
 
         // declare and init local variables here
         Map<Short, LocalVariableDefinition> structData = new TreeMap<>();
@@ -498,11 +507,20 @@ public class ThriftCodecByteCodeGenerator<T>
                 "write",
                 null,
                 arg("struct", structType),
-                arg("protocol", TProtocolWriter.class)
+                arg("protocol", TProtocol.class)
         );
         classDefinition.addMethod(write);
 
-        LocalVariableDefinition protocol = write.getLocalVariable("protocol");
+        // TProtocolReader reader = new TProtocolReader(protocol);
+        write.addLocalVariable(type(TProtocolWriter.class), "writer");
+        write.newObject(TProtocolWriter.class);
+        write.dup();
+        write.loadVariable("protocol");
+        write.invokeConstructor(type(TProtocolWriter.class), type(TProtocol.class));
+        write.storeVariable("writer");
+
+
+        LocalVariableDefinition protocol = write.getLocalVariable("writer");
 
         // protocol.writeStructBegin("bonk");
         write.loadVariable(protocol)
@@ -608,11 +626,11 @@ public class ThriftCodecByteCodeGenerator<T>
     private void defineReadBridgeMethod()
     {
         classDefinition.addMethod(
-                new MethodDefinition(a(PUBLIC, BRIDGE, SYNTHETIC), "read", type(Object.class), arg("protocol", TProtocolReader.class))
+                new MethodDefinition(a(PUBLIC, BRIDGE, SYNTHETIC), "read", type(Object.class), arg("protocol", TProtocol.class))
                         .addException(Exception.class)
                         .loadThis()
                         .loadVariable("protocol")
-                        .invokeVirtual(codecType, "read", structType, type(TProtocolReader.class))
+                        .invokeVirtual(codecType, "read", structType, type(TProtocol.class))
                         .retObject()
         );
     }
@@ -623,7 +641,7 @@ public class ThriftCodecByteCodeGenerator<T>
     private void defineWriteBridgeMethod()
     {
         classDefinition.addMethod(
-                new MethodDefinition(a(PUBLIC, BRIDGE, SYNTHETIC), "write", null, arg("struct", Object.class), arg("protocol", TProtocolWriter.class))
+                new MethodDefinition(a(PUBLIC, BRIDGE, SYNTHETIC), "write", null, arg("struct", Object.class), arg("protocol", TProtocol.class))
                         .addException(Exception.class)
                         .loadThis()
                         .loadVariable("struct", structType)
@@ -633,7 +651,7 @@ public class ThriftCodecByteCodeGenerator<T>
                                 "write",
                                 type(void.class),
                                 structType,
-                                type(TProtocolWriter.class)
+                                type(TProtocol.class)
                         )
                         .ret()
         );

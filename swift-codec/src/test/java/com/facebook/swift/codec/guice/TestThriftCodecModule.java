@@ -5,8 +5,6 @@ package com.facebook.swift.codec.guice;
 
 import com.facebook.swift.codec.BonkConstructor;
 import com.facebook.swift.codec.ThriftCodec;
-import com.facebook.swift.codec.internal.TProtocolReader;
-import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -19,6 +17,7 @@ import com.google.inject.Module;
 import com.google.inject.Stage;
 import com.google.inject.TypeLiteral;
 import org.apache.thrift.protocol.TCompactProtocol;
+import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TMemoryBuffer;
 import org.testng.annotations.Test;
 
@@ -56,14 +55,14 @@ public class TestThriftCodecModule
                             }
 
                             @Override
-                            public ValueClass read(TProtocolReader protocol)
+                            public ValueClass read(TProtocol protocol)
                                     throws Exception
                             {
                                 return new ValueClass(protocol.readString());
                             }
 
                             @Override
-                            public void write(ValueClass value, TProtocolWriter protocol)
+                            public void write(ValueClass value, TProtocol protocol)
                                     throws Exception
                             {
                                 protocol.writeString(value.getValue());
@@ -94,12 +93,10 @@ public class TestThriftCodecModule
         // write value
         TMemoryBuffer transport = new TMemoryBuffer(10 * 1024);
         TCompactProtocol protocol = new TCompactProtocol(transport);
-        TProtocolWriter protocolWriter = new TProtocolWriter(protocol);
-        codec.write(value, protocolWriter);
+        codec.write(value, protocol);
 
         // read value back
-        TProtocolReader protocolReader = new TProtocolReader(protocol);
-        T copy = codec.read(protocolReader);
+        T copy = codec.read(protocol);
         assertNotNull(copy);
 
         // verify they are the same

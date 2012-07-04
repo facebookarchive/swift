@@ -101,7 +101,7 @@ public class TProtocolReader
             return null;
         }
         currentField = null;
-        return codec.read(this);
+        return codec.read(protocol);
     }
 
     public ByteBuffer readBinaryField()
@@ -193,7 +193,7 @@ public class TProtocolReader
             return null;
         }
         currentField = null;
-        return codec.read(this);
+        return codec.read(protocol);
     }
 
     public <E> Set<E> readSetField(ThriftCodec<Set<E>> setCodec)
@@ -203,7 +203,7 @@ public class TProtocolReader
             return null;
         }
         currentField = null;
-        return setCodec.read(this);
+        return setCodec.read(protocol);
     }
 
     public <E> List<E> readListField(ThriftCodec<List<E>> listCodec)
@@ -213,7 +213,7 @@ public class TProtocolReader
             return null;
         }
         currentField = null;
-        return listCodec.read(this);
+        return listCodec.read(protocol);
     }
 
     public <K, V> Map<K, V> readMapField(ThriftCodec<Map<K, V>> mapCodec)
@@ -223,7 +223,7 @@ public class TProtocolReader
             return null;
         }
         currentField = null;
-        return mapCodec.read(this);
+        return mapCodec.read(protocol);
     }
 
     public <T extends Enum<T>> T readEnumField(ThriftCodec<T> enumCodec)
@@ -233,7 +233,7 @@ public class TProtocolReader
             return null;
         }
         currentField = null;
-        return enumCodec.read(this);
+        return enumCodec.read(protocol);
     }
 
     public ByteBuffer readBinary()
@@ -290,7 +290,7 @@ public class TProtocolReader
         TSet tSet = protocol.readSetBegin();
         Set<E> set = new HashSet<>();
         for (int i = 0; i < tSet.size; i++) {
-            E element = elementCodec.read(this);
+            E element = elementCodec.read(protocol);
             set.add(element);
         }
         protocol.readSetEnd();
@@ -303,7 +303,7 @@ public class TProtocolReader
         TList tList = protocol.readListBegin();
         List<E> list = new ArrayList<>();
         for (int i = 0; i < tList.size; i++) {
-            E element = elementCodec.read(this);
+            E element = elementCodec.read(protocol);
             list.add(element);
         }
         protocol.readListEnd();
@@ -318,8 +318,8 @@ public class TProtocolReader
         TMap tMap = protocol.readMapBegin();
         Map<K, V> map = new HashMap<>();
         for (int i = 0; i < tMap.size; i++) {
-            K key = keyCodec.read(this);
-            V value = valueCodec.read(this);
+            K key = keyCodec.read(protocol);
+            V value = valueCodec.read(protocol);
             map.put(key, value);
         }
         protocol.readMapEnd();

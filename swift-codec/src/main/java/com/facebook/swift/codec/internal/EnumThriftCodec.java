@@ -7,6 +7,7 @@ import com.facebook.swift.codec.ThriftCodec;
 import com.facebook.swift.codec.metadata.ThriftEnumMetadata;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.base.Preconditions;
+import org.apache.thrift.protocol.TProtocol;
 
 import javax.annotation.concurrent.Immutable;
 
@@ -33,7 +34,7 @@ public class EnumThriftCodec<T extends Enum<T>> implements ThriftCodec<T>
     }
 
     @Override
-    public T read(TProtocolReader protocol)
+    public T read(TProtocol protocol)
             throws Exception
     {
         int enumValue = protocol.readI32();
@@ -61,7 +62,7 @@ public class EnumThriftCodec<T extends Enum<T>> implements ThriftCodec<T>
     }
 
     @Override
-    public void write(T enumConstant, TProtocolWriter protocol)
+    public void write(T enumConstant, TProtocol protocol)
             throws Exception
     {
         Preconditions.checkNotNull(enumConstant, "enumConstant is null");
