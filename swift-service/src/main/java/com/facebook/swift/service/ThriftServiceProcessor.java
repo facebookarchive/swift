@@ -8,6 +8,7 @@ import com.facebook.swift.service.metadata.ThriftMethodMetadata;
 import com.facebook.swift.service.metadata.ThriftServiceMetadata;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
@@ -19,6 +20,7 @@ import org.apache.thrift.protocol.TProtocolUtil;
 import org.apache.thrift.protocol.TType;
 
 import javax.annotation.concurrent.ThreadSafe;
+import java.util.List;
 import java.util.Map;
 
 import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
@@ -34,25 +36,25 @@ public class ThriftServiceProcessor implements TProcessor
     private final Map<String, ThriftMethodProcessor> methods;
 
     /**
-     * @param service the service to expose; must be thread safe
+     * @param services the services to expose; services must be thread safe
      */
-    public ThriftServiceProcessor(Object service, ThriftCodecManager codecManager)
+    public ThriftServiceProcessor(ThriftCodecManager codecManager, Object... services)
     {
-        this(service, codecManager, new ThriftServiceMetadata(service.getClass(), codecManager.getCatalog()));
+        this(codecManager, ImmutableList.copyOf(services));
     }
 
-    /**
-     * @param service the service to expose; must be thread safe
-     */
-    public ThriftServiceProcessor(Object service, ThriftCodecManager codecManager, ThriftServiceMetadata serviceMetadata)
+    public ThriftServiceProcessor(ThriftCodecManager codecManager, List<Object> services)
     {
-        Preconditions.checkNotNull(service, "service is null");
-        Preconditions.checkNotNull(serviceMetadata, "serviceMetadata is null");
         Preconditions.checkNotNull(codecManager, "codecManager is null");
+        Preconditions.checkNotNull(services, "service is null");
+        Preconditions.checkArgument(!services.isEmpty(), "services is empty");
 
         ImmutableMap.Builder<String, ThriftMethodProcessor> builder = ImmutableMap.builder();
-        for (ThriftMethodMetadata methodMetadata : serviceMetadata.getMethods().values()) {
-            builder.put(methodMetadata.getName(), new ThriftMethodProcessor(service, methodMetadata, codecManager));
+        for (Object service : services) {
+            ThriftServiceMetadata serviceMetadata = new ThriftServiceMetadata(service.getClass(), codecManager.getCatalog());
+            for (ThriftMethodMetadata methodMetadata : serviceMetadata.getMethods().values()) {
+                builder.put(methodMetadata.getName(), new ThriftMethodProcessor(service, methodMetadata, codecManager));
+            }
         }
         methods = builder.build();
     }

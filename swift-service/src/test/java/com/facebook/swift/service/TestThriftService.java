@@ -3,7 +3,6 @@
  */
 package com.facebook.swift.service;
 
-import com.facebook.nifty.core.NiftyBootstrap;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.scribe.LogEntry;
 import com.facebook.swift.service.scribe.ResultCode;
@@ -36,7 +35,7 @@ public class TestThriftService
             throws Exception
     {
         SwiftScribe scribeService = new SwiftScribe();
-        TProcessor processor = new ThriftServiceProcessor(scribeService, new ThriftCodecManager());
+        TProcessor processor = new ThriftServiceProcessor(new ThriftCodecManager(), scribeService);
 
         List<LogEntry> messages = testProcessor(processor);
         assertEquals(scribeService.getMessages(), newArrayList(concat(toSwiftLogEntry(messages), toSwiftLogEntry(messages))));
@@ -56,20 +55,14 @@ public class TestThriftService
     private List<LogEntry> testProcessor(TProcessor processor)
             throws Exception
     {
-
         ImmutableList<LogEntry> messages = ImmutableList.of(
                 new LogEntry("hello", "world"),
                 new LogEntry("bye", "world")
         );
 
-        int port = SwiftServerHelper.getRandomPort();
-        NiftyBootstrap bootstrap = SwiftServerHelper.createNiftyBootstrap(processor, port);
-        try {
-            assertEquals(logThrift(port, messages), ResultCode.OK);
-            assertEquals(logSwift(port, toSwiftLogEntry(messages)), com.facebook.swift.service.ResultCode.OK);
-        }
-        finally {
-            bootstrap.stop();
+        try (ThriftServer server = new ThriftServer(processor).start()) {
+            assertEquals(logThrift(server.getPort(), messages), ResultCode.OK);
+            assertEquals(logSwift(server.getPort(), toSwiftLogEntry(messages)), com.facebook.swift.service.ResultCode.OK);
         }
 
         return messages;

@@ -28,11 +28,14 @@ import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
+import com.google.inject.Inject;
 import org.apache.thrift.protocol.TProtocol;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.lang.reflect.Type;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -49,18 +52,37 @@ public class ThriftCodecManager
     public ThriftCodecManager(ThriftCodec<?>... codecs)
     {
         this(new CompilerThriftCodecFactory(), codecs);
+        for (ThriftCodec<?> codec : codecs) {
+            catalog.addThriftType(codec.getType());
+        }
+    }
+
+    @Inject
+    public ThriftCodecManager(@InternalThriftCodec Set<ThriftCodec<?>> codecs)
+    {
+        this(new CompilerThriftCodecFactory(), codecs);
+        for (ThriftCodec<?> codec : codecs) {
+            catalog.addThriftType(codec.getType());
+        }
     }
 
     public ThriftCodecManager(ThriftCodecFactory factory, ThriftCodec<?>... codecs)
     {
-        this(factory, new ThriftCatalog(), codecs);
+        this(factory, new ThriftCatalog(), ImmutableSet.copyOf(codecs));
+        for (ThriftCodec<?> codec : codecs) {
+            catalog.addThriftType(codec.getType());
+        }
     }
 
-    public ThriftCodecManager(
-            final ThriftCodecFactory factory,
-            final ThriftCatalog catalog,
-            ThriftCodec<?>... codecs
-    )
+    public ThriftCodecManager(ThriftCodecFactory factory, Set<ThriftCodec<?>> codecs)
+    {
+        this(factory, new ThriftCatalog(), codecs);
+        for (ThriftCodec<?> codec : codecs) {
+            catalog.addThriftType(codec.getType());
+        }
+    }
+
+    public ThriftCodecManager(final ThriftCodecFactory factory, final ThriftCatalog catalog, Set<ThriftCodec<?>> codecs)
     {
         Preconditions.checkNotNull(factory, "factory is null");
         Preconditions.checkNotNull(catalog, "catalog is null");
