@@ -282,6 +282,22 @@
                         <autoVersionSubmodules>true</autoVersionSubmodules>
                     </configuration>
                 </plugin>
+
+                <!--
+                  Do a license check by running       : mvn license:check
+                  Update the license check by running : mvn license:format
+                -->
+                <plugin>
+                    <groupId>com.mycila.maven-license-plugin</groupId>
+                    <artifactId>maven-license-plugin</artifactId>
+                    <version>1.9.0</version>
+                    <configuration>
+                        <header>license-header.txt</header>
+                        <excludes>
+                            <exclude>**/README.md</exclude>
+                        </excludes>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
