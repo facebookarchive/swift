@@ -1,9 +1,20 @@
-/*
- * Copyright 2004-present Facebook. All Rights Reserved.
+/**
+ * Copyright 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
  */
 package com.facebook.swift.service;
 
-import com.facebook.nifty.core.NiftyBootstrap;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.scribe.LogEntry;
 import com.facebook.swift.service.scribe.ResultCode;
@@ -36,7 +47,7 @@ public class TestThriftService
             throws Exception
     {
         SwiftScribe scribeService = new SwiftScribe();
-        TProcessor processor = new ThriftServiceProcessor(scribeService, new ThriftCodecManager());
+        TProcessor processor = new ThriftServiceProcessor(new ThriftCodecManager(), scribeService);
 
         List<LogEntry> messages = testProcessor(processor);
         assertEquals(scribeService.getMessages(), newArrayList(concat(toSwiftLogEntry(messages), toSwiftLogEntry(messages))));
@@ -56,20 +67,14 @@ public class TestThriftService
     private List<LogEntry> testProcessor(TProcessor processor)
             throws Exception
     {
-
         ImmutableList<LogEntry> messages = ImmutableList.of(
                 new LogEntry("hello", "world"),
                 new LogEntry("bye", "world")
         );
 
-        int port = SwiftServerHelper.getRandomPort();
-        NiftyBootstrap bootstrap = SwiftServerHelper.createNiftyBootstrap(processor, port);
-        try {
-            assertEquals(logThrift(port, messages), ResultCode.OK);
-            assertEquals(logSwift(port, toSwiftLogEntry(messages)), com.facebook.swift.service.ResultCode.OK);
-        }
-        finally {
-            bootstrap.stop();
+        try (ThriftServer server = new ThriftServer(processor).start()) {
+            assertEquals(logThrift(server.getPort(), messages), ResultCode.OK);
+            assertEquals(logSwift(server.getPort(), toSwiftLogEntry(messages)), com.facebook.swift.service.ResultCode.OK);
         }
 
         return messages;

@@ -1,11 +1,22 @@
-/*
- * Copyright 2004-present Facebook. All Rights Reserved.
+/**
+ * Copyright 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
  */
 package com.facebook.swift.codec;
 
-import com.facebook.swift.codec.internal.TProtocolReader;
-import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftType;
+import org.apache.thrift.protocol.TProtocol;
 
 /**
  * A single type codec for reading and writing in Thrift format.  Each codec is symmetric and
@@ -30,7 +41,7 @@ public interface ThriftCodec<T>
      * @return the value; not null
      * @throws Exception if any problems occurred when reading or coercing  the value
      */
-    public T read(TProtocolReader protocol)
+    public T read(TProtocol protocol)
             throws Exception;
 
     /**
@@ -40,6 +51,6 @@ public interface ThriftCodec<T>
      * @param protocol the protocol to write to
      * @throws Exception if any problems occurred when writing or coercing  the value
      */
-    public void write(T value, TProtocolWriter protocol)
+    public void write(T value, TProtocol protocol)
             throws Exception;
 }

@@ -72,7 +72,7 @@ id or name, simply annotate the parameter as follows:
 As with method parameters, Thrift encodes the response as a struct with field
 zero being a standard return and exceptions be stored in higher number fields.
 If the Java method throws only one exception annotated with @ThriftStruct,
-Swift will assume the result struct field id is 1.  Otherwise you will need to
+Swift will assume the result struct field id is `1`.  Otherwise you will need to
 add the extremely verbose `@ThriftException` annotations as follows:
 
     @ThriftMethod(exception = {
@@ -93,7 +93,7 @@ following code creates a Scribe client:
 
 ## Client Cleanup
 
-Each client opens a socket that should be closed when the client is no longer
+Each client owns a connection that should be closed when the client is no longer
 in use.  Swift automatically, add a `close()` method to every client to allow
 for cleanup of the resources.  This mean if your client interface extend
 AutoClose, you can use Java 7 resource management to clean up the socket.
@@ -110,19 +110,95 @@ AutoClose, you can use Java 7 resource management to clean up the socket.
         return scribe.log(entries);
     }
 
-# Server TProcessor
+# Thrift Server
 
 Swift services can be integrated into existing Thrift server with the
 `ThriftServiceProcessor` class which implements the core Thrift service
 interface `TProcessor`.  The following code creates a Scribe server TProcessor:
 
     SwiftScribe scribeService = new SwiftScribe();
-    TProcessor processor = new ThriftServiceProcessor(scribeService, new ThriftCodecManager());
+    TProcessor processor = new ThriftServiceProcessor(new ThriftCodecManager(), scribeService);
+    
+Additionally, Swift supports mix in style servers where multiple Thrift services can be exported on the same port without having to use Java class inheritance.  The only restriction is that the services must have non-overlaping method names.  For example, to create a `TProcessor` for Scribe and some StatsService, you would write:
 
+    new ThriftServiceProcessor(new ThriftCodecManager(), 
+            scribeService,
+            statsService);
+    
+## Nifty Integration
 
-# Todo
-* Add ability to specify parameter, response and exception ids
-* Verify exception handling logic
-* Generate processor
+Swift includes and integration with Nifty (an Netty NIO based thrift server)
+    
+    ThriftServer server = new ThriftServer(processor, new ThriftServerConfig().setPort(8899));
+    server.start();
 
+For testing, you can use the much simpler try with resources style on a random port:
 
+ThriftServiceProcessor processor = new ThriftServiceProcessor(new ThriftCodecManager(), new SwiftScribe());
+
+    try (
+            ThriftServer server = new ThriftServer(processor).start();
+            ThriftClientManager clientManager = new ThriftClientManager();
+            Scribe scribeClient = clientManager.createClient(
+                    fromParts("localhost", server.getPort()),
+                    Scribe.class)
+    ) {
+        scribeClient.log(entries);
+    }
+
+# Guice Support
+
+Swift includes optional support for binding clients and servers into Guice.  
+
+## Binding Client in Guice
+
+To bind a client, add the `ThriftClientModule` and the `ThriftCodecModule` to the injector and bind the clients with the fluent `ThriftClientBinder` as follows:
+
+    Injector injector = Guice.createInjector(Stage.PRODUCTION,
+            new ConfigurationModule(new ConfigurationFactory(ImmutableMap.<String, String>of())),
+            new ThriftCodecModule(),
+            new ThriftClientModule(),
+            new Module()
+            {
+                @Override
+                public void configure(Binder binder)
+                {
+                    thriftClientBinder(binder).bindThriftClient(Scribe.class);
+                }
+            });
+
+Then, simply add the `ThriftClient` type to any `@Inject` annotated field or method.  Like this:
+
+    public MyClass(ThriftClient<Scribe> scribeClient) 
+    {
+        try (Scribe scribe = scribeClient.open(fromParts("localhost", 8899))) {
+            scribeClient.log(entries);
+        }
+    }
+    
+## Exporting a Service in Guice
+
+Exporting a service is simmilar to binding a client.  Add the `ThriftServerModule` and the `ThriftCodecModule` to the injector and exporting the services with the fluent `ThriftServiceExporter` as follows:
+
+    Injector injector = Guice.createInjector(Stage.PRODUCTION,
+            new ConfigurationModule(new ConfigurationFactory(ImmutableMap.<String, String>of())),
+            new ThriftCodecModule(),
+            new ThriftServerModule(),
+            new Module()
+            {
+                @Override
+                public void configure(Binder binder)
+                {
+                    // bind scribe service implementation
+                    binder.bind(SwiftScribe.class).in(Scopes.SINGLETON);
+
+                    // export scribe service implementation
+                    thriftServerBinder(binder).exportThriftService(SwiftScribe.class);
+                }
+            });
+
+Then simply, start the `ThriftServer` with:
+
+    injector.getInstance(ThriftServer.class).start()    
+    
+You can export as many services as you like as long as the services have unique method names.  If you have overlaping method names, you will need to run two servers (Thrift does not support method namspacing).    

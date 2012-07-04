@@ -1,5 +1,17 @@
-/*
- * Copyright 2004-present Facebook. All Rights Reserved.
+/**
+ * Copyright 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
  */
 package com.facebook.swift.codec.internal.reflection;
 
@@ -20,6 +32,7 @@ import com.facebook.swift.codec.metadata.ThriftStructMetadata;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSortedMap;
+import org.apache.thrift.protocol.TProtocol;
 
 import javax.annotation.concurrent.Immutable;
 import java.lang.reflect.InvocationTargetException;
@@ -52,48 +65,51 @@ public class ReflectionThriftCodec<T> implements ThriftCodec<T>
     }
 
     @Override
-    public T read(TProtocolReader protocol)
+    public T read(TProtocol protocol)
             throws Exception
     {
-        protocol.readStructBegin();
+        TProtocolReader reader = new TProtocolReader(protocol);
+        reader.readStructBegin();
 
         Map<Short, Object> data = new HashMap<>(metadata.getFields().size());
-        while (protocol.nextField()) {
-            short fieldId = protocol.getFieldId();
+        while (reader.nextField()) {
+            short fieldId = reader.getFieldId();
 
             // do we have a codec for this field
             ThriftCodec<?> codec = fields.get(fieldId);
             if (codec == null) {
-                protocol.skipFieldData();
+                reader.skipFieldData();
                 continue;
             }
 
             // is this field readable
             ThriftFieldMetadata field = metadata.getField(fieldId);
             if (field.isWriteOnly()) {
-                protocol.skipFieldData();
+                reader.skipFieldData();
                 continue;
             }
 
             // read the value
-            Object value = protocol.readField(codec);
+            Object value = reader.readField(codec);
             if (value == null) {
                 continue;
             }
 
             data.put(fieldId, value);
         }
-        protocol.readStructEnd();
+        reader.readStructEnd();
 
         // build the struct
         return constructStruct(data);
     }
 
     @Override
-    public void write(T instance, TProtocolWriter protocol)
+    public void write(T instance, TProtocol protocol)
             throws Exception
     {
-        protocol.writeStructBegin(metadata.getStructName());
+        TProtocolWriter writer = new TProtocolWriter(protocol);
+        writer.writeStructBegin(metadata.getStructName());
+
         for (ThriftFieldMetadata fieldMetadata : metadata.getFields()) {
             // is the field writable?
             if (fieldMetadata.isReadOnly()) {
@@ -106,10 +122,10 @@ public class ReflectionThriftCodec<T> implements ThriftCodec<T>
             // write the field
             if (fieldValue != null) {
                 ThriftCodec<Object> codec = (ThriftCodec<Object>) fields.get(fieldMetadata.getId());
-                protocol.writeField(fieldMetadata.getName(), fieldMetadata.getId(), codec, fieldValue);
+                writer.writeField(fieldMetadata.getName(), fieldMetadata.getId(), codec, fieldValue);
             }
         }
-        protocol.writeStructEnd();
+        writer.writeStructEnd();
     }
 
     private T constructStruct(Map<Short, Object> data)
