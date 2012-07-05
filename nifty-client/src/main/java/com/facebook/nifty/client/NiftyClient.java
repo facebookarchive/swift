@@ -114,14 +114,14 @@ public class NiftyClient {
       Thread.currentThread().interrupt();
     }
     if (throwable[0] != null) {
-      throw new TTransportException(throwable[0]);
+      throw new TTransportException(String.format("unable to connect to %s:%d", addr.getHostName(), addr.getPort()), throwable[0]);
     }
     if (channel[0] != null) {
       TNiftyClientTransport transport = new TNiftyClientTransport(channel[0]);
       channel[0].getPipeline().addLast("thrift", transport);
       return transport;
     }
-    throw new TTransportException("unknown connect error");
+    throw new TTransportException(String.format("unknown error connecting to %s:%d", addr.getHostName(), addr.getPort()));
   }
 
   private static class TNiftyFuture
