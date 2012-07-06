@@ -2,6 +2,8 @@ package com.facebook.nifty.client;
 
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.Channel;
@@ -14,32 +16,37 @@ import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
 import org.jboss.netty.handler.codec.frame.LengthFieldPrepender;
 
-import java.io.File;
+import java.io.Closeable;
 import java.net.InetSocketAddress;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-public class NiftyClient {
+public class NiftyClient implements Closeable {
 
+  // 1MB default
   private static final int DEFAULT_MAX_FRAME_SIZE = 1048576;
+
   private final NettyClientConfigBuilder configBuilder;
   private final ExecutorService boss;
   private final ExecutorService worker;
   private final int maxFrameSize;
-  private NioClientSocketChannelFactory channelFactory;
+  private final NioClientSocketChannelFactory channelFactory;
 
+  /**
+   * Creates a new NiftyClient with defaults : frame size 1MB, 30 secs
+   * connect and read timeout and cachedThreadPool for boss and worker.
+   */
   public NiftyClient() {
     this(DEFAULT_MAX_FRAME_SIZE);
   }
 
   public NiftyClient(int maxFrameSize) {
     this(new NettyClientConfigBuilder(),
-      Executors.newCachedThreadPool(),
-      Executors.newCachedThreadPool(),
+      MoreExecutors.getExitingExecutorService(makeThreadPool("netty-boss")),
+      MoreExecutors.getExitingExecutorService(makeThreadPool("netty-worker")),
       maxFrameSize
     );
   }
@@ -75,8 +82,12 @@ public class NiftyClient {
   }
 
   // trying to mirror the synchronous nature of TSocket as much as possible here.
-  public TNiftyClientTransport connectSync(InetSocketAddress addr)
-    throws TTransportException {
+  public TNiftyClientTransport connectSync(InetSocketAddress addr) throws TTransportException, InterruptedException {
+    return connectSync(addr, 2, 2, TimeUnit.SECONDS);
+  }
+
+  public TNiftyClientTransport connectSync(InetSocketAddress addr, long connectTimeout, long readTimeout, TimeUnit unit)
+    throws TTransportException, InterruptedException {
     ClientBootstrap bootstrap = new ClientBootstrap(channelFactory);
     bootstrap.setOptions(configBuilder.getOptions());
     bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
@@ -105,19 +116,15 @@ public class NiftyClient {
         latch.countDown();
       }
     });
-    try {
-      latch.await(
-        f.getChannel().getConfig().getConnectTimeoutMillis(),
-        TimeUnit.MILLISECONDS
-      );
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
+    latch.await(
+      unit.toMillis(connectTimeout),
+      TimeUnit.MILLISECONDS
+    );
     if (throwable[0] != null) {
       throw new TTransportException(String.format("unable to connect to %s:%d", addr.getHostName(), addr.getPort()), throwable[0]);
     }
     if (channel[0] != null) {
-      TNiftyClientTransport transport = new TNiftyClientTransport(channel[0]);
+      TNiftyClientTransport transport = new TNiftyClientTransport(channel[0], readTimeout, unit);
       channel[0].getPipeline().addLast("thrift", transport);
       return transport;
     }
@@ -142,11 +149,18 @@ public class NiftyClient {
     }
   }
 
-  public void shutdown() {
+  @Override
+  public void close() {
     boss.shutdownNow();
     worker.shutdownNow();
   }
 
-
-
+  // just the inline version of Executors.newCachedThreadPool()
+  // to make MoreExecutors happy.
+  private static ThreadPoolExecutor makeThreadPool(String name) {
+    return new ThreadPoolExecutor(0, Integer.MAX_VALUE,
+      60L, TimeUnit.SECONDS,
+      new SynchronousQueue<Runnable>(),
+      new ThreadFactoryBuilder().setNameFormat(name+"-%d").build());
+  }
 }

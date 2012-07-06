@@ -5,6 +5,8 @@ import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Netty Equivalent to a TFrameTransport over a TSocket.
  *
@@ -17,9 +19,13 @@ import org.jboss.netty.channel.Channel;
 public class TNiftyClientTransport extends TNiftyAsyncClientTransport {
 
   private final ChannelBuffer readBuffer;
+  private final long readTimeout;
+  private final TimeUnit unit;
 
-  public TNiftyClientTransport(Channel channel) {
+  public TNiftyClientTransport(Channel channel, long readTimeout, TimeUnit unit) {
     super(channel);
+    this.readTimeout = readTimeout;
+    this.unit = unit;
     this.readBuffer = ChannelBuffers.dynamicBuffer(256);
     setListener(new TNiftyClientListener() {
       @Override
@@ -29,9 +35,18 @@ public class TNiftyClientTransport extends TNiftyAsyncClientTransport {
     });
   }
 
-  // yeah, mimicking sync with async is just horrible
   @Override
   public int read(byte[] bytes, int offset, int length) throws TTransportException {
+    try {
+      return this.read(bytes, offset, length, readTimeout, unit);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new TTransportException(e);
+    }
+  }
+
+  // yeah, mimicking sync with async is just horrible
+  private int read(byte[] bytes, int offset, int length, long timeout, TimeUnit unit) throws InterruptedException {
     while (true) {
       synchronized (readBuffer) {
         int bytesAvailable = readBuffer.readableBytes();
@@ -41,17 +56,13 @@ public class TNiftyClientTransport extends TNiftyAsyncClientTransport {
           int end = readBuffer.readerIndex();
           return end - begin;
         }
-        try {
-          readBuffer.wait();
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-        }
+        readBuffer.wait(unit.toMillis(timeout));
       }
     }
   }
 
   // yeah, mimicking sync with async is just horrible
-  void transferReadBuffer(ChannelBuffer incoming) {
+  private void transferReadBuffer(ChannelBuffer incoming) {
     synchronized (readBuffer) {
       readBuffer.discardReadBytes();
       readBuffer.writeBytes(incoming);
