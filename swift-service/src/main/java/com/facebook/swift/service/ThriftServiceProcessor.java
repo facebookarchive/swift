@@ -61,6 +61,7 @@ public class ThriftServiceProcessor implements TProcessor
         Preconditions.checkNotNull(services, "service is null");
         Preconditions.checkArgument(!services.isEmpty(), "services is empty");
 
+        // NOTE: ImmutableMap enforces that we don't have duplicate method names
         ImmutableMap.Builder<String, ThriftMethodProcessor> builder = ImmutableMap.builder();
         for (Object service : services) {
             ThriftServiceMetadata serviceMetadata = new ThriftServiceMetadata(service.getClass(), codecManager.getCatalog());
