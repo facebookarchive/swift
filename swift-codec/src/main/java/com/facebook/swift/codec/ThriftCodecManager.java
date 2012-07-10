@@ -62,34 +62,22 @@ public class ThriftCodecManager
     public ThriftCodecManager(ThriftCodec<?>... codecs)
     {
         this(new CompilerThriftCodecFactory(), codecs);
-        for (ThriftCodec<?> codec : codecs) {
-            catalog.addThriftType(codec.getType());
-        }
     }
 
     @Inject
     public ThriftCodecManager(@InternalThriftCodec Set<ThriftCodec<?>> codecs)
     {
         this(new CompilerThriftCodecFactory(), codecs);
-        for (ThriftCodec<?> codec : codecs) {
-            catalog.addThriftType(codec.getType());
-        }
     }
 
     public ThriftCodecManager(ThriftCodecFactory factory, ThriftCodec<?>... codecs)
     {
         this(factory, new ThriftCatalog(), ImmutableSet.copyOf(codecs));
-        for (ThriftCodec<?> codec : codecs) {
-            catalog.addThriftType(codec.getType());
-        }
     }
 
     public ThriftCodecManager(ThriftCodecFactory factory, Set<ThriftCodec<?>> codecs)
     {
         this(factory, new ThriftCatalog(), codecs);
-        for (ThriftCodec<?> codec : codecs) {
-            catalog.addThriftType(codec.getType());
-        }
     }
 
     public ThriftCodecManager(final ThriftCodecFactory factory, final ThriftCatalog catalog, Set<ThriftCodec<?>> codecs)
@@ -135,14 +123,14 @@ public class ThriftCodecManager
             }
         });
 
-        addCodec(new BooleanThriftCodec());
-        addCodec(new ByteThriftCodec());
-        addCodec(new ShortThriftCodec());
-        addCodec(new IntegerThriftCodec());
-        addCodec(new LongThriftCodec());
-        addCodec(new DoubleThriftCodec());
-        addCodec(new ByteBufferThriftCodec());
-        addCodec(new VoidThriftCodec());
+        addBuiltinCodec(new BooleanThriftCodec());
+        addBuiltinCodec(new ByteThriftCodec());
+        addBuiltinCodec(new ShortThriftCodec());
+        addBuiltinCodec(new IntegerThriftCodec());
+        addBuiltinCodec(new LongThriftCodec());
+        addBuiltinCodec(new DoubleThriftCodec());
+        addBuiltinCodec(new ByteBufferThriftCodec());
+        addBuiltinCodec(new VoidThriftCodec());
 
         for (ThriftCodec<?> codec : codecs) {
             addCodec(codec);
@@ -184,6 +172,16 @@ public class ThriftCodecManager
      * replace any current users of the existing codec associated with the type.
      */
     public void addCodec(ThriftCodec<?> codec)
+    {
+        catalog.addThriftType(codec.getType());
+        typeCodecs.put(codec.getType(), codec);
+    }
+
+    /**
+     * Adds a ThriftCodec to the codec map, but does not register it with the catalog since builtins
+     * should already be registered
+     */
+    private void addBuiltinCodec(ThriftCodec<?> codec)
     {
         typeCodecs.put(codec.getType(), codec);
     }
