@@ -32,14 +32,14 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static java.util.concurrent.Executors.newCachedThreadPool;
+import static java.util.concurrent.Executors.newFixedThreadPool;
 
 public class ThriftServer implements Closeable
 {
     private final NettyServerTransport transport;
+    private final int acceptorThreads;
     private final int workerThreads;
     private final int port;
 
@@ -69,6 +69,7 @@ public class ThriftServer implements Closeable
                 MoreExecutors.sameThreadExecutor()
         );
 
+        acceptorThreads = config.getAcceptorThreads();
         workerThreads = config.getWorkerThreads();
         transport = new NettyServerTransport(thriftServerDef, new NettyConfigBuilder());
     }
@@ -95,8 +96,8 @@ public class ThriftServer implements Closeable
     @PostConstruct
     public ThriftServer start()
     {
-        bossExecutor = newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("thrift-boss-%s").build());
-        workerExecutor = Executors.newFixedThreadPool(workerThreads, new ThreadFactoryBuilder().setNameFormat("thrift-worker-%s").build());
+        bossExecutor = newFixedThreadPool(acceptorThreads, new ThreadFactoryBuilder().setNameFormat("thrift-acceptor-%s").build());
+        workerExecutor = newFixedThreadPool(workerThreads, new ThreadFactoryBuilder().setNameFormat("thrift-worker-%s").build());
         transport.start(bossExecutor, workerExecutor);
         return this;
     }

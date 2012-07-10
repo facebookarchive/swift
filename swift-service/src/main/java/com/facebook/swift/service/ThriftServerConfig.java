@@ -26,6 +26,7 @@ public class ThriftServerConfig
 {
     private int port;
     private DataSize maxFrameSize = new DataSize(1, MEGABYTE);
+    private int acceptorThreads = Runtime.getRuntime().availableProcessors();
     private int workerThreads = 200;
 
     @Min(0)
@@ -51,6 +52,18 @@ public class ThriftServerConfig
     {
         this.maxFrameSize = maxFrameSize;
         return this;
+    }
+
+    @Min(1)
+    public int getAcceptorThreads()
+    {
+        return acceptorThreads;
+    }
+
+    @Config("thrift.acceptor-threads.max")
+    public void setAcceptorThreads(int acceptorThreads)
+    {
+        this.acceptorThreads = acceptorThreads;
     }
 
     @Min(1)
