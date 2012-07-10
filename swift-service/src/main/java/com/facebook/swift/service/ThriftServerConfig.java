@@ -63,9 +63,10 @@ public class ThriftServerConfig
     }
 
     @Config("thrift.acceptor-threads.max")
-    public void setAcceptorThreads(int acceptorThreads)
+    public ThriftServerConfig setAcceptorThreads(int acceptorThreads)
     {
         this.acceptorThreads = acceptorThreads;
+        return this;
     }
 
     @Min(1)

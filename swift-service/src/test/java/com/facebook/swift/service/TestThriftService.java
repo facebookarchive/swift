@@ -42,7 +42,7 @@ import static org.testng.Assert.assertEquals;
  */
 public class TestThriftService
 {
-    @Test(groups = "fast")
+    @Test
     public void testSwiftService()
             throws Exception
     {
@@ -53,7 +53,7 @@ public class TestThriftService
         assertEquals(scribeService.getMessages(), newArrayList(concat(toSwiftLogEntry(messages), toSwiftLogEntry(messages))));
     }
 
-    @Test(groups = "fast")
+    @Test
     public void testThriftService()
             throws Exception
     {
@@ -64,7 +64,7 @@ public class TestThriftService
         assertEquals(scribeService.getMessages(), newArrayList(concat(messages, messages)));
     }
 
-    @Test(groups = "fast", expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "duplicate key.*")
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "duplicate key.*")
     public void testConflictingServices()
             throws Exception
     {

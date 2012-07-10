@@ -60,7 +60,7 @@ public class TestPuma
             )
     );
 
-    @Test(groups = "fast")
+    @Test
     public void testPumaDirect()
             throws Exception
     {
@@ -70,7 +70,7 @@ public class TestPuma
         verifyPumaResults(results);
     }
 
-    @Test(groups = "fast")
+    @Test
     public void testPumaSwift()
             throws Exception
     {
@@ -90,7 +90,7 @@ public class TestPuma
         }
     }
 
-    @Test(groups = "fast")
+    @Test
     public void testPumaDirectException()
             throws Exception
     {
@@ -107,7 +107,7 @@ public class TestPuma
         }
     }
 
-    @Test(groups = "fast")
+    @Test
     public void testPumaSwiftException()
             throws Exception
     {
