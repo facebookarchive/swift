@@ -27,6 +27,7 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -36,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.Executors.newCachedThreadPool;
 
-public class ThriftServer implements AutoCloseable
+public class ThriftServer implements Closeable
 {
     private final NettyServerTransport transport;
     private final int workerThreads;

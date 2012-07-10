@@ -15,11 +15,15 @@
  */
 package com.facebook.swift.service;
 
+import java.io.Closeable;
 import java.util.List;
 
 @ThriftService("scribe")
-public interface Scribe extends AutoCloseable
+public interface Scribe extends Closeable
 {
     @ThriftMethod("Log")
     ResultCode log(List<LogEntry> messages);
+
+    @Override
+    void close();
 }

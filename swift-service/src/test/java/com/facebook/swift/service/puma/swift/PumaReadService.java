@@ -18,10 +18,11 @@ package com.facebook.swift.service.puma.swift;
 import com.facebook.swift.service.ThriftMethod;
 import com.facebook.swift.service.ThriftService;
 
+import java.io.Closeable;
 import java.util.List;
 
 @ThriftService
-public interface PumaReadService extends AutoCloseable
+public interface PumaReadService extends Closeable
 {
     @ThriftMethod
     List<ReadResultQueryInfo> getResult(List<ReadQueryInfoTimeString> reader)
@@ -44,4 +45,7 @@ public interface PumaReadService extends AutoCloseable
     @ThriftMethod
     List<Long> latestQueryableTimes(String category, String appName, List<Integer> bucketNumbers)
             throws ReadSemanticException;
+
+    @Override
+    void close();
 }

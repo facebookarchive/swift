@@ -29,6 +29,7 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
 import javax.annotation.PreDestroy;
+import java.io.Closeable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -37,7 +38,7 @@ import java.util.Map;
 
 import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
 
-public class ThriftClientManager implements AutoCloseable
+public class ThriftClientManager implements Closeable
 {
     private final ThriftCodecManager codecManager;
     private NiftyClient niftyClient;
@@ -75,7 +76,7 @@ public class ThriftClientManager implements AutoCloseable
 
             return (T) Proxy.newProxyInstance(
                     type.getClassLoader(),
-                    new Class<?>[]{type, AutoCloseable.class},
+                    new Class<?>[]{type, Closeable.class},
                     handler
             );
         }
@@ -106,7 +107,7 @@ public class ThriftClientManager implements AutoCloseable
 
             return (T) Proxy.newProxyInstance(
                     type.getClassLoader(),
-                    new Class<?>[]{type, AutoCloseable.class},
+                    new Class<?>[]{type, Closeable.class},
                     handler
             );
         }
