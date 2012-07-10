@@ -18,6 +18,7 @@ package com.facebook.swift.service;
 import com.google.common.base.Preconditions;
 import com.google.common.net.HostAndPort;
 import com.google.inject.Inject;
+import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
 public class ThriftClient<T>
@@ -39,5 +40,11 @@ public class ThriftClient<T>
             throws TTransportException
     {
         return clientManager.createClient(address, clientInterface);
+    }
+
+    public T open(TTransport transport)
+            throws TTransportException
+    {
+        return clientManager.createClient(transport, clientInterface);
     }
 }
