@@ -46,20 +46,21 @@ public class TestThriftCodecModule
     public void testThriftClientAndServerModules()
             throws Exception
     {
-    Injector injector = Guice.createInjector(Stage.PRODUCTION,
-            new ThriftCodecModule(),
-            new Module()
-            {
-                @Override
-                public void configure(Binder binder)
+        Injector injector = Guice.createInjector(Stage.PRODUCTION,
+                new ThriftCodecModule(),
+                new Module()
                 {
-                    thriftServerBinder(binder).bindThriftCodec(BonkConstructor.class);
+                    @Override
+                    public void configure(Binder binder)
+                    {
+                        thriftServerBinder(binder).bindThriftCodec(BonkConstructor.class);
                         thriftServerBinder(binder).bindListThriftCodec(BonkConstructor.class);
                         thriftServerBinder(binder).bindMapThriftCodec(String.class, BonkConstructor.class);
 
                         thriftServerBinder(binder).bindThriftCodec(new TypeLiteral<Map<Integer, List<String>>>() {});
 
-                        thriftServerBinder(binder).bindThriftCodec(new ThriftCodec<ValueClass>() {
+                        thriftServerBinder(binder).bindThriftCodec(new ThriftCodec<ValueClass>()
+                        {
                             @Override
                             public ThriftType getType()
                             {
