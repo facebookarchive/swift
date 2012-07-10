@@ -1,5 +1,17 @@
-/*
- * Copyright 2004-present Facebook. All Rights Reserved.
+/**
+ * Copyright 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
  */
 package com.facebook.swift.service;
 
@@ -17,6 +29,7 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
 import javax.annotation.PreDestroy;
+import java.io.Closeable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -25,7 +38,7 @@ import java.util.Map;
 
 import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
 
-public class ThriftClientManager implements AutoCloseable
+public class ThriftClientManager implements Closeable
 {
     private final ThriftCodecManager codecManager;
     private NiftyClient niftyClient;
@@ -45,8 +58,7 @@ public class ThriftClientManager implements AutoCloseable
             throws TTransportException
     {
         // build method index
-        ThriftServiceMetadata thriftServiceMetadata = new ThriftServiceMetadata(type, codecManager.getCatalog()
-        );
+        ThriftServiceMetadata thriftServiceMetadata = new ThriftServiceMetadata(type, codecManager.getCatalog());
         ImmutableMap.Builder<Method, ThriftMethodHandler> methods = ImmutableMap.builder();
         for (ThriftMethodMetadata methodMetadata : thriftServiceMetadata.getMethods().values()) {
             ThriftMethodHandler methodHandler = new ThriftMethodHandler(methodMetadata, codecManager);
@@ -64,7 +76,38 @@ public class ThriftClientManager implements AutoCloseable
 
             return (T) Proxy.newProxyInstance(
                     type.getClassLoader(),
-                    new Class<?>[]{type, AutoCloseable.class},
+                    new Class<?>[]{type, Closeable.class},
+                    handler
+            );
+        }
+        catch (RuntimeException | Error e) {
+            transport.close();
+            throw e;
+        }
+    }
+
+    public <T> T createClient(TTransport transport, Class<T> type)
+            throws TTransportException
+    {
+        // build method index
+        ThriftServiceMetadata thriftServiceMetadata = new ThriftServiceMetadata(type, codecManager.getCatalog());
+        ImmutableMap.Builder<Method, ThriftMethodHandler> methods = ImmutableMap.builder();
+        for (ThriftMethodMetadata methodMetadata : thriftServiceMetadata.getMethods().values()) {
+            ThriftMethodHandler methodHandler = new ThriftMethodHandler(methodMetadata, codecManager);
+            methods.put(methodMetadata.getMethod(), methodHandler);
+        }
+
+        try {
+            String clientDescription = thriftServiceMetadata.getName() + " " + transport.toString();
+
+            ThriftInvocationHandler handler = new ThriftInvocationHandler(
+                    clientDescription,
+                    transport,
+                    methods.build());
+
+            return (T) Proxy.newProxyInstance(
+                    type.getClassLoader(),
+                    new Class<?>[]{type, Closeable.class},
                     handler
             );
         }

@@ -1,5 +1,17 @@
-/*
- * Copyright 2004-present Facebook. All Rights Reserved.
+/**
+ * Copyright 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
  */
 package com.facebook.swift.service;
 
@@ -8,6 +20,7 @@ import com.facebook.swift.service.metadata.ThriftMethodMetadata;
 import com.facebook.swift.service.metadata.ThriftServiceMetadata;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
@@ -19,6 +32,7 @@ import org.apache.thrift.protocol.TProtocolUtil;
 import org.apache.thrift.protocol.TType;
 
 import javax.annotation.concurrent.ThreadSafe;
+import java.util.List;
 import java.util.Map;
 
 import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
@@ -34,25 +48,26 @@ public class ThriftServiceProcessor implements TProcessor
     private final Map<String, ThriftMethodProcessor> methods;
 
     /**
-     * @param service the service to expose; must be thread safe
+     * @param services the services to expose; services must be thread safe
      */
-    public ThriftServiceProcessor(Object service, ThriftCodecManager codecManager)
+    public ThriftServiceProcessor(ThriftCodecManager codecManager, Object... services)
     {
-        this(service, codecManager, new ThriftServiceMetadata(service.getClass(), codecManager.getCatalog()));
+        this(codecManager, ImmutableList.copyOf(services));
     }
 
-    /**
-     * @param service the service to expose; must be thread safe
-     */
-    public ThriftServiceProcessor(Object service, ThriftCodecManager codecManager, ThriftServiceMetadata serviceMetadata)
+    public ThriftServiceProcessor(ThriftCodecManager codecManager, List<Object> services)
     {
-        Preconditions.checkNotNull(service, "service is null");
-        Preconditions.checkNotNull(serviceMetadata, "serviceMetadata is null");
         Preconditions.checkNotNull(codecManager, "codecManager is null");
+        Preconditions.checkNotNull(services, "service is null");
+        Preconditions.checkArgument(!services.isEmpty(), "services is empty");
 
+        // NOTE: ImmutableMap enforces that we don't have duplicate method names
         ImmutableMap.Builder<String, ThriftMethodProcessor> builder = ImmutableMap.builder();
-        for (ThriftMethodMetadata methodMetadata : serviceMetadata.getMethods().values()) {
-            builder.put(methodMetadata.getName(), new ThriftMethodProcessor(service, methodMetadata, codecManager));
+        for (Object service : services) {
+            ThriftServiceMetadata serviceMetadata = new ThriftServiceMetadata(service.getClass(), codecManager.getCatalog());
+            for (ThriftMethodMetadata methodMetadata : serviceMetadata.getMethods().values()) {
+                builder.put(methodMetadata.getName(), new ThriftMethodProcessor(service, methodMetadata, codecManager));
+            }
         }
         methods = builder.build();
     }

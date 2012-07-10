@@ -1,10 +1,20 @@
-/*
- * Copyright 2004-present Facebook. All Rights Reserved.
+/**
+ * Copyright 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
  */
 package com.facebook.swift.codec;
 
-import com.facebook.swift.codec.internal.TProtocolReader;
-import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.internal.builtin.BooleanThriftCodec;
 import com.facebook.swift.codec.internal.builtin.SetThriftCodec;
 import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
@@ -85,6 +95,20 @@ public abstract class AbstractThriftCodecManagerTest
     {
         BonkConstructor bonkConstructor = new BonkConstructor("message", 42);
         testRoundTripSerialize(bonkConstructor);
+    }
+
+    @Test
+    public void testMatchByJavaNameWithThriftNameOverride()
+        throws Exception
+    {
+        ThriftCatalog catalog = codecManager.getCatalog();
+        ThriftType thriftType = catalog.getThriftType(BonkConstructorNameOverride.class);
+        ThriftStructMetadata<?> structMetadata = thriftType.getStructMetadata();
+        assertEquals(structMetadata.getField(1).getName(), "myMessage");
+        assertEquals(structMetadata.getField(2).getName(), "myType");
+
+        BonkConstructorNameOverride bonk = new BonkConstructorNameOverride("message", 42);
+        testRoundTripSerialize(bonk);
     }
 
     @Test
@@ -211,9 +235,9 @@ public abstract class AbstractThriftCodecManagerTest
 
         TMemoryBuffer transport = new TMemoryBuffer(10 * 1024);
         TCompactProtocol protocol = new TCompactProtocol(transport);
-        codec.write(structInstance, new TProtocolWriter(protocol));
+        codec.write(structInstance, protocol);
 
-        T copy = codec.read(new TProtocolReader(protocol));
+        T copy = codec.read(protocol);
         assertNotNull(copy);
         assertEquals(copy, structInstance);
 

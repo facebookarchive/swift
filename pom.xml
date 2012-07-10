@@ -82,6 +82,18 @@
             </dependency>
 
             <dependency>
+                <groupId>io.airlift</groupId>
+                <artifactId>configuration</artifactId>
+                <version>0.66-SNAPSHOT</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.airlift</groupId>
+                <artifactId>units</artifactId>
+                <version>0.66-SNAPSHOT</version>
+            </dependency>
+
+            <dependency>
                 <groupId>com.facebook.nifty</groupId>
                 <artifactId>nifty-core-asf</artifactId>
                 <version>0.0.1-SNAPSHOT</version>
@@ -268,6 +280,22 @@
                         <pushChanges>false</pushChanges>
                         <localCheckout>true</localCheckout>
                         <autoVersionSubmodules>true</autoVersionSubmodules>
+                    </configuration>
+                </plugin>
+
+                <!--
+                  Do a license check by running       : mvn license:check
+                  Update the license check by running : mvn license:format
+                -->
+                <plugin>
+                    <groupId>com.mycila.maven-license-plugin</groupId>
+                    <artifactId>maven-license-plugin</artifactId>
+                    <version>1.9.0</version>
+                    <configuration>
+                        <header>license-header.txt</header>
+                        <excludes>
+                            <exclude>**/README.md</exclude>
+                        </excludes>
                     </configuration>
                 </plugin>
             </plugins>

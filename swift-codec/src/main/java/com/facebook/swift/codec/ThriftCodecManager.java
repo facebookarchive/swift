@@ -1,11 +1,21 @@
-/*
- * Copyright 2004-present Facebook. All Rights Reserved.
+/**
+ * Copyright 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
  */
 package com.facebook.swift.codec;
 
 import com.facebook.swift.codec.internal.EnumThriftCodec;
-import com.facebook.swift.codec.internal.TProtocolReader;
-import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.internal.ThriftCodecFactory;
 import com.facebook.swift.codec.internal.builtin.BooleanThriftCodec;
 import com.facebook.swift.codec.internal.builtin.ByteBufferThriftCodec;
@@ -28,11 +38,14 @@ import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
+import com.google.inject.Inject;
 import org.apache.thrift.protocol.TProtocol;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.lang.reflect.Type;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -51,16 +64,23 @@ public class ThriftCodecManager
         this(new CompilerThriftCodecFactory(), codecs);
     }
 
+    @Inject
+    public ThriftCodecManager(@InternalThriftCodec Set<ThriftCodec<?>> codecs)
+    {
+        this(new CompilerThriftCodecFactory(), codecs);
+    }
+
     public ThriftCodecManager(ThriftCodecFactory factory, ThriftCodec<?>... codecs)
+    {
+        this(factory, new ThriftCatalog(), ImmutableSet.copyOf(codecs));
+    }
+
+    public ThriftCodecManager(ThriftCodecFactory factory, Set<ThriftCodec<?>> codecs)
     {
         this(factory, new ThriftCatalog(), codecs);
     }
 
-    public ThriftCodecManager(
-            final ThriftCodecFactory factory,
-            final ThriftCatalog catalog,
-            ThriftCodec<?>... codecs
-    )
+    public ThriftCodecManager(final ThriftCodecFactory factory, final ThriftCatalog catalog, Set<ThriftCodec<?>> codecs)
     {
         Preconditions.checkNotNull(factory, "factory is null");
         Preconditions.checkNotNull(catalog, "catalog is null");
@@ -103,14 +123,14 @@ public class ThriftCodecManager
             }
         });
 
-        addCodec(new BooleanThriftCodec());
-        addCodec(new ByteThriftCodec());
-        addCodec(new ShortThriftCodec());
-        addCodec(new IntegerThriftCodec());
-        addCodec(new LongThriftCodec());
-        addCodec(new DoubleThriftCodec());
-        addCodec(new ByteBufferThriftCodec());
-        addCodec(new VoidThriftCodec());
+        addBuiltinCodec(new BooleanThriftCodec());
+        addBuiltinCodec(new ByteThriftCodec());
+        addBuiltinCodec(new ShortThriftCodec());
+        addBuiltinCodec(new IntegerThriftCodec());
+        addBuiltinCodec(new LongThriftCodec());
+        addBuiltinCodec(new DoubleThriftCodec());
+        addBuiltinCodec(new ByteBufferThriftCodec());
+        addBuiltinCodec(new VoidThriftCodec());
 
         for (ThriftCodec<?> codec : codecs) {
             addCodec(codec);
@@ -153,6 +173,16 @@ public class ThriftCodecManager
      */
     public void addCodec(ThriftCodec<?> codec)
     {
+        catalog.addThriftType(codec.getType());
+        typeCodecs.put(codec.getType(), codec);
+    }
+
+    /**
+     * Adds a ThriftCodec to the codec map, but does not register it with the catalog since builtins
+     * should already be registered
+     */
+    private void addBuiltinCodec(ThriftCodec<?> codec)
+    {
         typeCodecs.put(codec.getType(), codec);
     }
 
@@ -164,26 +194,26 @@ public class ThriftCodecManager
     public <T> T read(Class<T> type, TProtocol protocol)
             throws Exception
     {
-        return getCodec(type).read(new TProtocolReader(protocol));
+        return getCodec(type).read(protocol);
     }
 
     public Object read(ThriftType type, TProtocol protocol)
             throws Exception
     {
         ThriftCodec<?> codec = getCodec(type);
-        return codec.read(new TProtocolReader(protocol));
+        return codec.read(protocol);
     }
 
     public <T> void write(Class<T> type, T value, TProtocol protocol)
             throws Exception
     {
-        getCodec(type).write(value, new TProtocolWriter(protocol));
+        getCodec(type).write(value, protocol);
     }
 
     public void write(ThriftType type, Object value, TProtocol protocol)
             throws Exception
     {
         ThriftCodec<Object> codec = (ThriftCodec<Object>) getCodec(type);
-        codec.write(value, new TProtocolWriter(protocol));
+        codec.write(value, protocol);
     }
 }

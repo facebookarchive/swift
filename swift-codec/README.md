@@ -206,15 +206,27 @@ supply an int value.
         }
     }
 
-# Todo
-* Implement required fields
-* Tests using invalid struct classes
-* Better error messages with tracing for nested structures
+# Guice Support
 
-# Future
-* Generate IDL
-  * Maven Plugin
-  * Ant Plugin 
-* Verify metadata matches IDL
+A `ThriftCodec` can be bound into Guice adding the `ThriftCodecModule` to the injector and bind the codec with the fluent `ThriftCodecBinder` as follows:
 
+    Injector injector = Guice.createInjector(Stage.PRODUCTION,
+            new ThriftCodecModule(),
+            new Module()
+            {
+                @Override
+                public void configure(Binder binder)
+                {
+                    thriftServerBinder(binder).bindThriftCodec(Bonk.class);
+                }
+            });
+      
+Then, simply add the `ThriftCodec` type to any `@Inject` annotated field or method.  Like this:
 
+    @Inject
+    private ThriftCodec<Bonk> bonkCodec;
+    
+    public void write(Bonk bonk, TProtocol protocol) throws Exception
+    {
+        bonkCodec.write(nwq TProtocolWriter(protocol));
+    }

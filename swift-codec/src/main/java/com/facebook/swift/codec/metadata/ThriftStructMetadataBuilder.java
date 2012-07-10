@@ -1,5 +1,17 @@
-/*
- * Copyright 2004-present Facebook. All Rights Reserved.
+/**
+ * Copyright 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
  */
 package com.facebook.swift.codec.metadata;
 
@@ -483,11 +495,24 @@ public class ThriftStructMetadataBuilder<T>
      */
     private Set<String> inferThriftFieldIds()
     {
-        // group fields by explicit name or by name extracted from field, method or property
-        Multimap<String, FieldMetadata> fieldsByName = Multimaps.index(fields, getOrExtractThriftFieldName());
-
-        // for each name group, set the ids on the fields without ids
         Set<String> fieldsWithConflictingIds = new HashSet<>();
+
+        // group fields by explicit name or by name extracted from field, method or property
+        Multimap<String, FieldMetadata> fieldsByExplicitOrExtractedName = Multimaps.index(fields, getOrExtractThriftFieldName());
+        inferThriftFieldIds(fieldsByExplicitOrExtractedName, fieldsWithConflictingIds);
+
+        // group fields by name extracted from field, method or property
+        // this allows thrift name to be set explicitly without having to duplicate the name on getters and setters
+        // todo should this be the only way this works?
+        Multimap<String, FieldMetadata> fieldsByExtractedName = Multimaps.index(fields, extractThriftFieldName());
+        inferThriftFieldIds(fieldsByExtractedName, fieldsWithConflictingIds);
+
+        return fieldsWithConflictingIds;
+    }
+
+    private void inferThriftFieldIds(Multimap<String, FieldMetadata> fieldsByName, Set<String> fieldsWithConflictingIds)
+    {
+        // for each name group, set the ids on the fields without ids
         for (Entry<String, Collection<FieldMetadata>> entry : fieldsByName.asMap().entrySet()) {
             Collection<FieldMetadata> fields = entry.getValue();
 
@@ -501,8 +526,11 @@ public class ThriftStructMetadataBuilder<T>
 
             // multiple conflicting ids
             if (ids.size() > 1) {
-                metadataErrors.addError("ThriftStruct '%s' field '%s' has multiple ids: %s", structName, entry.getKey(), ids);
-                fieldsWithConflictingIds.add(entry.getKey());
+                String fieldName = entry.getKey();
+                if (!fieldsWithConflictingIds.contains(fieldName)) {
+                    metadataErrors.addError("ThriftStruct '%s' field '%s' has multiple ids: %s", structName, fieldName, ids);
+                    fieldsWithConflictingIds.add(fieldName);
+                }
                 continue;
             }
 
@@ -515,7 +543,6 @@ public class ThriftStructMetadataBuilder<T>
                 }
             }
         }
-        return fieldsWithConflictingIds;
     }
 
     private String extractFieldName(short id, Collection<FieldMetadata> fields)
@@ -846,9 +873,6 @@ public class ThriftStructMetadataBuilder<T>
         @Override
         public String extractName()
         {
-            if (getName() != null) {
-                return getName();
-            }
             return field.getName();
         }
 
@@ -856,6 +880,16 @@ public class ThriftStructMetadataBuilder<T>
         public Type getJavaType()
         {
             return field.getGenericType();
+        }
+
+        @Override
+        public String toString()
+        {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("FieldExtractor");
+            sb.append("{field=").append(field);
+            sb.append('}');
+            return sb.toString();
         }
     }
 
@@ -877,9 +911,6 @@ public class ThriftStructMetadataBuilder<T>
         @Override
         public String extractName()
         {
-            if (getName() != null) {
-                return getName();
-            }
             return extractFieldName(method);
         }
 
@@ -887,6 +918,16 @@ public class ThriftStructMetadataBuilder<T>
         public Type getJavaType()
         {
             return method.getGenericReturnType();
+        }
+
+        @Override
+        public String toString()
+        {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("MethodExtractor");
+            sb.append("{method=").append(method);
+            sb.append('}');
+            return sb.toString();
         }
     }
 
@@ -916,9 +957,6 @@ public class ThriftStructMetadataBuilder<T>
         @Override
         public String extractName()
         {
-            if (getName() != null) {
-                return getName();
-            }
             return field.getName();
         }
 
@@ -926,6 +964,16 @@ public class ThriftStructMetadataBuilder<T>
         public Type getJavaType()
         {
             return field.getGenericType();
+        }
+
+        @Override
+        public String toString()
+        {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("FieldInjection");
+            sb.append("{field=").append(field);
+            sb.append('}');
+            return sb.toString();
         }
     }
 
@@ -955,6 +1003,17 @@ public class ThriftStructMetadataBuilder<T>
         {
             return parameters;
         }
+
+        @Override
+        public String toString()
+        {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("ConstructorInjection");
+            sb.append("{constructor=").append(constructor);
+            sb.append(", parameters=").append(parameters);
+            sb.append('}');
+            return sb.toString();
+        }
     }
 
     public class MethodInjection
@@ -976,6 +1035,17 @@ public class ThriftStructMetadataBuilder<T>
         public List<ParameterInjection> getParameters()
         {
             return parameters;
+        }
+
+        @Override
+        public String toString()
+        {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("MethodInjection");
+            sb.append("{method=").append(method);
+            sb.append(", parameters=").append(parameters);
+            sb.append('}');
+            return sb.toString();
         }
     }
 
@@ -1007,9 +1077,6 @@ public class ThriftStructMetadataBuilder<T>
         @Override
         public String extractName()
         {
-            if (getName() != null) {
-                return getName();
-            }
             return extractedName;
         }
 
@@ -1017,6 +1084,18 @@ public class ThriftStructMetadataBuilder<T>
         public Type getJavaType()
         {
             return parameterJavaType;
+        }
+
+        @Override
+        public String toString()
+        {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("ParameterInjection");
+            sb.append("{parameterIndex=").append(parameterIndex);
+            sb.append(", extractedName='").append(extractedName).append('\'');
+            sb.append(", parameterJavaType=").append(parameterJavaType);
+            sb.append('}');
+            return sb.toString();
         }
     }
 }
