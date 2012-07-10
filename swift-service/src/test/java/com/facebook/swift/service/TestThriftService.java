@@ -64,6 +64,13 @@ public class TestThriftService
         assertEquals(scribeService.getMessages(), newArrayList(concat(messages, messages)));
     }
 
+    @Test(groups = "fast", expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "duplicate key.*")
+    public void testConflictingServices()
+            throws Exception
+    {
+        new ThriftServiceProcessor(new ThriftCodecManager(), new SwiftScribe(), new ConflictingLogService());
+    }
+
     private List<LogEntry> testProcessor(TProcessor processor)
             throws Exception
     {
@@ -115,5 +122,14 @@ public class TestThriftService
                 return new com.facebook.swift.service.LogEntry(input.category, input.message);
             }
         });
+    }
+
+    @ThriftService
+    public class ConflictingLogService
+    {
+        @ThriftMethod
+        public void Log(List<String> messages)
+        {
+        }
     }
 }
