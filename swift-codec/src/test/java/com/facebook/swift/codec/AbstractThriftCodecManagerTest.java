@@ -98,6 +98,20 @@ public abstract class AbstractThriftCodecManagerTest
     }
 
     @Test
+    public void testMatchByJavaNameWithThriftNameOverride()
+        throws Exception
+    {
+        ThriftCatalog catalog = codecManager.getCatalog();
+        ThriftType thriftType = catalog.getThriftType(BonkConstructorNameOverride.class);
+        ThriftStructMetadata<?> structMetadata = thriftType.getStructMetadata();
+        assertEquals(structMetadata.getField(1).getName(), "myMessage");
+        assertEquals(structMetadata.getField(2).getName(), "myType");
+
+        BonkConstructorNameOverride bonk = new BonkConstructorNameOverride("message", 42);
+        testRoundTripSerialize(bonk);
+    }
+
+    @Test
     public void testBuilder()
             throws Exception
     {
