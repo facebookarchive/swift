@@ -85,6 +85,37 @@ public class ThriftClientManager implements AutoCloseable
         }
     }
 
+    public <T> T createClient(TTransport transport, Class<T> type)
+            throws TTransportException
+    {
+        // build method index
+        ThriftServiceMetadata thriftServiceMetadata = new ThriftServiceMetadata(type, codecManager.getCatalog());
+        ImmutableMap.Builder<Method, ThriftMethodHandler> methods = ImmutableMap.builder();
+        for (ThriftMethodMetadata methodMetadata : thriftServiceMetadata.getMethods().values()) {
+            ThriftMethodHandler methodHandler = new ThriftMethodHandler(methodMetadata, codecManager);
+            methods.put(methodMetadata.getMethod(), methodHandler);
+        }
+
+        try {
+            String clientDescription = thriftServiceMetadata.getName() + " " + transport.toString();
+
+            ThriftInvocationHandler handler = new ThriftInvocationHandler(
+                    clientDescription,
+                    transport,
+                    methods.build());
+
+            return (T) Proxy.newProxyInstance(
+                    type.getClassLoader(),
+                    new Class<?>[]{type, AutoCloseable.class},
+                    handler
+            );
+        }
+        catch (RuntimeException | Error e) {
+            transport.close();
+            throw e;
+        }
+    }
+
     @PreDestroy
     public void close()
     {
