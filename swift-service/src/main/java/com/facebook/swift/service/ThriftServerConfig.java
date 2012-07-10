@@ -18,6 +18,7 @@ package com.facebook.swift.service;
 import io.airlift.configuration.Config;
 import io.airlift.units.DataSize;
 
+import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 
 import static io.airlift.units.DataSize.Unit.MEGABYTE;
@@ -30,6 +31,7 @@ public class ThriftServerConfig
     private int workerThreads = 200;
 
     @Min(0)
+    @Max(65535)
     public int getPort()
     {
         return port;
