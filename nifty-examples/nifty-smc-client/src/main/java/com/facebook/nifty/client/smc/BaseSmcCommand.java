@@ -42,6 +42,7 @@ public abstract class BaseSmcCommand implements Runnable {
       return;
     } catch (InterruptedException e) {
       e.printStackTrace();
+      return;
     }
     try {
       callback.withSmcClient(new ServiceManager.Client(new TBinaryProtocol(proto)));

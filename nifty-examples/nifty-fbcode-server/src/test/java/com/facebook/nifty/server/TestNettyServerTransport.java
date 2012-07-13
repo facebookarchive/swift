@@ -12,6 +12,7 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransportException;
+import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -59,7 +60,7 @@ public class TestNettyServerTransport {
           )
         )
         .build(),
-      new NettyConfigBuilder()
+      new NettyConfigBuilder(), new DefaultChannelGroup()
     );
     transport.start(Executors.newCachedThreadPool(), Executors.newCachedThreadPool());
   }
