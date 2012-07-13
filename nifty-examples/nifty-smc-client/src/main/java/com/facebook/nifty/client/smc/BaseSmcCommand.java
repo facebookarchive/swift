@@ -40,6 +40,8 @@ public abstract class BaseSmcCommand implements Runnable {
     } catch (TTransportException e) {
       e.printStackTrace();
       return;
+    } catch (InterruptedException e) {
+      e.printStackTrace();
     }
     try {
       callback.withSmcClient(new ServiceManager.Client(new TBinaryProtocol(proto)));
@@ -51,7 +53,7 @@ public abstract class BaseSmcCommand implements Runnable {
       if (proto != null) {
         proto.close();
       }
-      niftyClient.shutdown();
+      niftyClient.close();
     }
   }
 

@@ -101,7 +101,7 @@ public class TestPlainServer {
     return new scribe.Client(tp);
   }
 
-  private scribe.Client makeNiftyClient() throws TTransportException {
+  private scribe.Client makeNiftyClient() throws TTransportException, InterruptedException {
     TBinaryProtocol tp = new TBinaryProtocol((new NiftyClient().connectSync(new InetSocketAddress("localhost", port))));
     return new scribe.Client(tp);
   }

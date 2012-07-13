@@ -18,7 +18,6 @@ import org.jboss.netty.handler.codec.frame.LengthFieldPrepender;
 
 import java.io.Closeable;
 import java.net.InetSocketAddress;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -102,31 +101,18 @@ public class NiftyClient implements Closeable {
       }
     });
     ChannelFuture f = bootstrap.connect(addr);
-    final CountDownLatch latch = new CountDownLatch(1);
-    final Channel channel[] = new Channel[1];
-    final Throwable throwable[] = new Throwable[1];
-    f.addListener(new ChannelFutureListener() {
-      @Override
-      public void operationComplete(ChannelFuture future) throws Exception {
-        if (future.isSuccess()) {
-          channel[0] = future.getChannel();
-        } else {
-          throwable[0] = future.getCause();
-        }
-        latch.countDown();
-      }
-    });
-    latch.await(
+    f.await(
       unit.toMillis(connectTimeout),
       TimeUnit.MILLISECONDS
     );
-    if (throwable[0] != null) {
-      throw new TTransportException(String.format("unable to connect to %s:%d", addr.getHostName(), addr.getPort()), throwable[0]);
-    }
-    if (channel[0] != null) {
-      TNiftyClientTransport transport = new TNiftyClientTransport(channel[0], readTimeout, unit);
-      channel[0].getPipeline().addLast("thrift", transport);
+    Channel channel = f.getChannel();
+    if (channel != null) {
+      TNiftyClientTransport transport = new TNiftyClientTransport(channel, readTimeout, unit);
+      channel.getPipeline().addLast("thrift", transport);
       return transport;
+    }
+    if (f.getCause() != null) {
+      throw new TTransportException(String.format("unable to connect to %s:%d", addr.getHostName(), addr.getPort()), f.getCause());
     }
     throw new TTransportException(String.format("unknown error connecting to %s:%d", addr.getHostName(), addr.getPort()));
   }
