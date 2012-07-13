@@ -10,6 +10,7 @@ import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
+import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
 import org.jboss.netty.handler.codec.frame.LengthFieldPrepender;
@@ -37,7 +38,7 @@ public class NettyServerTransport {
   private final NettyConfigBuilder configBuilder;
 
   @Inject
-  public NettyServerTransport(final ThriftServerDef def, NettyConfigBuilder configBuilder) {
+  public NettyServerTransport(final ThriftServerDef def, NettyConfigBuilder configBuilder, final ChannelGroup allChannels) {
     this.def = def;
     this.configBuilder = configBuilder;
     this.port = def.getServerPort();
@@ -46,7 +47,7 @@ public class NettyServerTransport {
         @Override
         public ChannelPipeline getPipeline() throws Exception {
           ChannelPipeline cp = Channels.pipeline();
-          cp.addLast(ChannelStatistics.NAME, new ChannelStatistics());
+          cp.addLast(ChannelStatistics.NAME, new ChannelStatistics(allChannels));
           // don't strip length when using header transport
           cp.addLast(
             "frameDecoder", new LengthFieldBasedFrameDecoder(def.getMaxFrameSize(), 0, 4, 0, 0)
@@ -67,7 +68,7 @@ public class NettyServerTransport {
         @Override
         public ChannelPipeline getPipeline() throws Exception {
           ChannelPipeline cp = Channels.pipeline();
-          cp.addLast(ChannelStatistics.NAME, new ChannelStatistics());
+          cp.addLast(ChannelStatistics.NAME, new ChannelStatistics(allChannels));
           cp.addLast(
             "frameDecoder", new LengthFieldBasedFrameDecoder(def.getMaxFrameSize(), 0, 4, 0, 4)
           );

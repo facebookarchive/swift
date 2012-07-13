@@ -1,6 +1,7 @@
 package com.facebook.nifty.core;
 
 import com.google.inject.Inject;
+import org.jboss.netty.channel.group.ChannelGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,14 +30,15 @@ public class NiftyBootstrap {
   /**
    * This takes a Set of ThriftServerDef. Use Guice Multibinder to inject.
    *
+   * @param allChannels
    * @param thriftServerDefs
    */
   @Inject
-  public NiftyBootstrap(Set<ThriftServerDef> thriftServerDefs, NettyConfigBuilder configBuilder) {
+  public NiftyBootstrap(Set<ThriftServerDef> thriftServerDefs, NettyConfigBuilder configBuilder, ChannelGroup allChannels) {
     this.thriftServerDefs = thriftServerDefs;
     this.transports = new ArrayList<NettyServerTransport>();
     for (ThriftServerDef thriftServerDef : thriftServerDefs) {
-      transports.add(new NettyServerTransport(thriftServerDef, configBuilder));
+      transports.add(new NettyServerTransport(thriftServerDef, configBuilder, allChannels));
     }
 
   }

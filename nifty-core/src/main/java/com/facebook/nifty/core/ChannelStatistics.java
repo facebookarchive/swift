@@ -8,6 +8,8 @@ import org.jboss.netty.channel.DownstreamMessageEvent;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.channel.UpstreamMessageEvent;
+import org.jboss.netty.channel.group.ChannelGroup;
+import org.jboss.netty.channel.group.DefaultChannelGroup;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -22,8 +24,14 @@ public class ChannelStatistics extends SimpleChannelHandler {
   private static final AtomicInteger channelCount = new AtomicInteger(0);
   private final AtomicLong bytesRead = new AtomicLong(0);
   private final AtomicLong bytesWritten = new AtomicLong(0);
+  private final ChannelGroup allChannels ;
 
   public static final String NAME = ChannelStatistics.class.getSimpleName();
+
+  public ChannelStatistics(ChannelGroup allChannels) {
+    this.allChannels = allChannels;
+  }
+
 
   public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e) throws Exception {
     if (e instanceof ChannelStateEvent) {
@@ -33,9 +41,11 @@ public class ChannelStatistics extends SimpleChannelHandler {
           if (Boolean.TRUE.equals(cse.getValue())) {
             // connect
             channelCount.incrementAndGet();
+            allChannels.add(e.getChannel());
           } else {
             // disconnect
             channelCount.decrementAndGet();
+            allChannels.remove(e.getChannel());
           }
           break;
         case BOUND:

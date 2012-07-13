@@ -11,12 +11,10 @@ import com.google.inject.Guice;
 import com.google.inject.Stage;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.transport.TFramedTransport;
-import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.annotations.AfterTest;
+import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -26,9 +24,9 @@ import java.net.ServerSocket;
 import java.util.Arrays;
 import java.util.List;
 
-public class TestPlainServer {
+public class TestNiftyClient {
 
-  private static final Logger log = LoggerFactory.getLogger(TestPlainServer.class);
+  private static final Logger log = LoggerFactory.getLogger(TestNiftyClient.class);
 
   public static final String VERSION = "1.0";
   private NiftyBootstrap bootstrap;
@@ -45,7 +43,37 @@ public class TestPlainServer {
     } catch (IOException e) {
       port = 8080;
     }
+  }
 
+  @Test(groups = "fast")
+  public void testServerDisconnect() throws Exception {
+    startServer();
+    scribe.Client client = makeNiftyClient();
+    new Thread() {
+      @Override
+      public void run() {
+        try {
+          sleep(1000L);
+          bootstrap.stop();
+        } catch (InterruptedException e) {
+        }
+      }
+    }.start();
+    int max = (int) (Math.random() * 100) + 10;
+    int exceptionCount = 0;
+    for (int i = 0; i < max; i++) {
+      Thread.sleep(100L);
+      try {
+        client.Log(Arrays.asList(new LogEntry("hello", "world " + i)));
+      } catch (TException e) {
+        log.info("caught expected exception "+e.toString());
+        exceptionCount++;
+      }
+    }
+    Assert.assertTrue(exceptionCount > 0);
+  }
+
+  private void startServer() {
     bootstrap = Guice.createInjector
       (
         Stage.PRODUCTION,
@@ -75,30 +103,6 @@ public class TestPlainServer {
       .getInstance(NiftyBootstrap.class);
 
     bootstrap.start();
-
-  }
-
-  @Test(groups = "fast")
-  public void testMethodCalls() throws Exception {
-    scribe.Client client = makeClient();
-    client.Log(Arrays.asList(new LogEntry("hello", "world")));
-  }
-
-  @Test(groups = "fast")
-  public void testMethodCallsWithNiftyClient() throws Exception {
-    scribe.Client client = makeNiftyClient();
-    int max = (int) (Math.random() * 100);
-    for (int i = 0; i < max; i++) {
-      client.Log(Arrays.asList(new LogEntry("hello", "world " + i)));
-    }
-  }
-
-
-  private scribe.Client makeClient() throws TTransportException {
-    TSocket socket = new TSocket("localhost", port);
-    socket.open();
-    TBinaryProtocol tp = new TBinaryProtocol(new TFramedTransport(socket));
-    return new scribe.Client(tp);
   }
 
   private scribe.Client makeNiftyClient() throws TTransportException, InterruptedException {
@@ -106,12 +110,5 @@ public class TestPlainServer {
     return new scribe.Client(tp);
   }
 
-
-  @AfterTest(alwaysRun = true)
-  public void teardown() throws InterruptedException {
-    if (bootstrap != null) {
-      bootstrap.stop();
-    }
-  }
 
 }

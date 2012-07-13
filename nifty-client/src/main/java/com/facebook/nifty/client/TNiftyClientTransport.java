@@ -4,6 +4,7 @@ import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ExceptionEvent;
 
 import java.util.concurrent.TimeUnit;
 
@@ -21,6 +22,8 @@ public class TNiftyClientTransport extends TNiftyAsyncClientTransport {
   private final ChannelBuffer readBuffer;
   private final long readTimeout;
   private final TimeUnit unit;
+  private volatile boolean closed = false;
+  private volatile Throwable exception = null;
 
   public TNiftyClientTransport(Channel channel, long readTimeout, TimeUnit unit) {
     super(channel);
@@ -31,6 +34,22 @@ public class TNiftyClientTransport extends TNiftyAsyncClientTransport {
       @Override
       public void onFrameRead(Channel c, ChannelBuffer buffer) {
         transferReadBuffer(buffer);
+      }
+
+      @Override
+      public void onChannelClosedOrDisconnected(Channel channel) {
+        closed = true;
+        synchronized (readBuffer) {
+          readBuffer.notify();
+        }
+      }
+
+      @Override
+      public void onExceptionEvent(ExceptionEvent e) {
+        exception = e.getCause();
+        synchronized (readBuffer) {
+          readBuffer.notify();
+        }
       }
     });
   }
@@ -46,7 +65,7 @@ public class TNiftyClientTransport extends TNiftyAsyncClientTransport {
   }
 
   // yeah, mimicking sync with async is just horrible
-  private int read(byte[] bytes, int offset, int length, long timeout, TimeUnit unit) throws InterruptedException {
+  private int read(byte[] bytes, int offset, int length, long timeout, TimeUnit unit) throws InterruptedException, TTransportException {
     while (true) {
       synchronized (readBuffer) {
         int bytesAvailable = readBuffer.readableBytes();
@@ -57,9 +76,24 @@ public class TNiftyClientTransport extends TNiftyAsyncClientTransport {
           return end - begin;
         }
         readBuffer.wait(unit.toMillis(timeout));
+        if (closed) {
+          throw new TTransportException("channel closed !");
+        }
+        if (exception != null) {
+          try {
+            throw new TTransportException(exception);
+          } finally {
+            exception = null;
+          }
+        }
+        if (readBuffer.readableBytes() == 0) {
+          throw new TTransportException("read timeout");
+        }
       }
     }
   }
+
+
 
   // yeah, mimicking sync with async is just horrible
   private void transferReadBuffer(ChannelBuffer incoming) {

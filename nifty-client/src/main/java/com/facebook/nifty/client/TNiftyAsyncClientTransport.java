@@ -10,7 +10,9 @@ import org.jboss.netty.channel.ChannelEvent;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.ChannelUpstreamHandler;
+import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 
 import javax.annotation.concurrent.NotThreadSafe;
@@ -89,6 +91,22 @@ public class TNiftyAsyncClientTransport extends TTransport implements ChannelUps
   public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e) throws Exception {
     if (e instanceof MessageEvent) {
       messageReceived(ctx, (MessageEvent) e);
+    } else if (e instanceof ChannelStateEvent) {
+      ChannelStateEvent evt = (ChannelStateEvent) e;
+      switch (evt.getState()) {
+        case OPEN:
+          if (Boolean.FALSE.equals(evt.getValue())) {
+            listener.onChannelClosedOrDisconnected(ctx.getChannel());
+          }
+          break;
+        case CONNECTED:
+          if (evt.getValue() == null) {
+            listener.onChannelClosedOrDisconnected(ctx.getChannel());
+          }
+          break;
+      }
+    } else if (e instanceof ExceptionEvent) {
+      listener.onExceptionEvent((ExceptionEvent)e);
     }
     ctx.sendUpstream(e);
     // for all other stuff we drop it on the floor

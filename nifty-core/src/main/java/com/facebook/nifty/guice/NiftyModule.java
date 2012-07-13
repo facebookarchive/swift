@@ -3,9 +3,13 @@ package com.facebook.nifty.guice;
 import com.facebook.nifty.core.NettyConfigBuilder;
 import com.facebook.nifty.core.ThriftServerDef;
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
 import com.google.inject.multibindings.Multibinder;
+import org.jboss.netty.channel.group.ChannelGroup;
+import org.jboss.netty.channel.group.DefaultChannelGroup;
 
 import javax.inject.Provider;
+import javax.inject.Singleton;
 
 public abstract class NiftyModule extends AbstractModule {
 
@@ -14,6 +18,12 @@ public abstract class NiftyModule extends AbstractModule {
   @Override
   protected void configure() {
     configureNifty();
+  }
+
+  @Provides
+  @Singleton
+  public ChannelGroup getChannelGroup() {
+    return new DefaultChannelGroup();
   }
 
   public NiftyModule withDefaultNettyConfig() {

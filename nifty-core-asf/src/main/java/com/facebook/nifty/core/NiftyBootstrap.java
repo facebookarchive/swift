@@ -1,6 +1,7 @@
 package com.facebook.nifty.core;
 
 import com.google.inject.Inject;
+import org.jboss.netty.channel.group.ChannelGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +23,7 @@ public class NiftyBootstrap {
   private static final Logger log = LoggerFactory.getLogger(NiftyBootstrap.class);
 
   private final Set<ThriftServerDef> thriftServerDefs;
+  private final ChannelGroup allChannels;
   private ArrayList<NettyServerTransport> transports;
   private ExecutorService bossExecutor;
   private ExecutorService workerExecutor;
@@ -32,11 +34,12 @@ public class NiftyBootstrap {
    * @param thriftServerDefs
    */
   @Inject
-  public NiftyBootstrap(Set<ThriftServerDef> thriftServerDefs, NettyConfigBuilder configBuilder) {
+  public NiftyBootstrap(Set<ThriftServerDef> thriftServerDefs, NettyConfigBuilder configBuilder, ChannelGroup allChannels) {
     this.thriftServerDefs = thriftServerDefs;
+    this.allChannels = allChannels;
     this.transports = new ArrayList<NettyServerTransport>();
     for (ThriftServerDef thriftServerDef : thriftServerDefs) {
-      transports.add(new NettyServerTransport(thriftServerDef, configBuilder));
+      transports.add(new NettyServerTransport(thriftServerDef, configBuilder, allChannels));
     }
 
   }
@@ -65,12 +68,19 @@ public class NiftyBootstrap {
       bossExecutor = null;
     }
 
+    // TODO : allow an option here to control if we need to drain connections and wait instead of killing them all
+
+    try {
+      allChannels.close();
+    } catch (Exception e) {
+      log.warn("ignored exception while shutting down channels", e);
+    }
+
     // finally the reader writer
     if (workerExecutor != null) {
       shutdownExecutor(workerExecutor, "workerExecutor");
       workerExecutor = null;
     }
-
   }
 
   // TODO : make wait time configurable ?
