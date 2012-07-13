@@ -9,7 +9,6 @@ import com.facebook.nifty.core.ThriftServerDefBuilder;
 import junit.framework.Assert;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.THeaderProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.THeaderTransport;

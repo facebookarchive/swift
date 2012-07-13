@@ -33,7 +33,7 @@ public class Plain {
               new ThriftServerDefBuilder()
                 .listen(8080)
                 .withProcessor(
-                  new scribe.Processor(
+                  new scribe.Processor<scribe.Iface>(
                     new scribe.Iface() {
                       @Override
                       public ResultCode Log(List<LogEntry> messages) throws TException {
@@ -47,8 +47,9 @@ public class Plain {
                 )
                 .build()
             );
+            withNettyConfig(NettyConfigProvider.class);
           }
-        }.withNettyConfig(NettyConfigProvider.class)
+        }
       )
       .getInstance(NiftyBootstrap.class);
     bootstrap.start();

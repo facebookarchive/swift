@@ -48,8 +48,9 @@ public class Main {
           @Override
           protected void configureNifty() {
             bind().toProvider(ExampleThriftServerProvider.class);
+            withDefaultNettyConfig();
           }
-        }.withDefaultNettyConfig()
+        }
       )
       .getInstance(LifeCycleManager.class)
       .start();
