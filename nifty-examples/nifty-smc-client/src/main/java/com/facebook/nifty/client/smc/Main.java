@@ -42,12 +42,12 @@ public class Main {
     @Override
     public void run() {
       withSmcClient(new SmcClientCallback() {
-        @Override
-        public void withSmcClient(ServiceManager.Client client) throws TException, ServiceException {
-          Tier t = client.getTierByName(tier);
-          System.out.println(toPrettyJson(t));
-        }
-      });
+          @Override
+          public void withSmcClient(ServiceManager.Client client) throws TException, ServiceException {
+            Tier t = client.getTierByName(tier);
+            System.out.println(toPrettyJson(t));
+          }
+        });
     }
   }
 
