@@ -6,6 +6,7 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ExceptionEvent;
 
+import javax.annotation.concurrent.GuardedBy;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -26,6 +27,7 @@ public class TNiftyClientTransport extends TNiftyAsyncClientTransport {
   private final long readTimeout;
   private final TimeUnit unit;
   private final Lock lock = new ReentrantLock();
+  @GuardedBy("lock")
   private final Condition condition = lock.newCondition();
   private boolean closed = false;
   private Throwable exception = null;
@@ -115,6 +117,6 @@ public class TNiftyClientTransport extends TNiftyAsyncClientTransport {
     } finally {
       lock.unlock();
     }
-    throw new TTransportException("read timeout");
+    throw new TTransportException(String.format("read timeout, %d ms has elapsed", unit.toMillis(timeout)));
   }
 }
