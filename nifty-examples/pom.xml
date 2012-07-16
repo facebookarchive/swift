@@ -17,9 +17,7 @@
   <packaging>pom</packaging>
 
   <modules>
-    <module>nifty-fbcode-server</module>
     <module>nifty-asf-server</module>
-    <module>nifty-smc-client</module>
   </modules>
 
 
