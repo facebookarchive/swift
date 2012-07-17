@@ -35,7 +35,7 @@ import static com.google.inject.multibindings.Multibinder.newSetBinder;
 
 public class ThriftCodecBinder
 {
-    public static ThriftCodecBinder thriftServerBinder(Binder binder)
+    public static ThriftCodecBinder thriftCodecBinder(Binder binder)
     {
         return new ThriftCodecBinder(binder);
     }

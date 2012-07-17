@@ -36,7 +36,7 @@ import org.testng.annotations.Test;
 import java.util.List;
 import java.util.Map;
 
-import static com.facebook.swift.codec.guice.ThriftCodecBinder.thriftServerBinder;
+import static com.facebook.swift.codec.guice.ThriftCodecBinder.thriftCodecBinder;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
@@ -53,13 +53,13 @@ public class TestThriftCodecModule
                     @Override
                     public void configure(Binder binder)
                     {
-                        thriftServerBinder(binder).bindThriftCodec(BonkConstructor.class);
-                        thriftServerBinder(binder).bindListThriftCodec(BonkConstructor.class);
-                        thriftServerBinder(binder).bindMapThriftCodec(String.class, BonkConstructor.class);
+                        thriftCodecBinder(binder).bindThriftCodec(BonkConstructor.class);
+                        thriftCodecBinder(binder).bindListThriftCodec(BonkConstructor.class);
+                        thriftCodecBinder(binder).bindMapThriftCodec(String.class, BonkConstructor.class);
 
-                        thriftServerBinder(binder).bindThriftCodec(new TypeLiteral<Map<Integer, List<String>>>() {});
+                        thriftCodecBinder(binder).bindThriftCodec(new TypeLiteral<Map<Integer, List<String>>>() {});
 
-                        thriftServerBinder(binder).bindThriftCodec(new ThriftCodec<ValueClass>()
+                        thriftCodecBinder(binder).bindThriftCodec(new ThriftCodec<ValueClass>()
                         {
                             @Override
                             public ThriftType getType()
