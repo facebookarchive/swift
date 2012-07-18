@@ -45,7 +45,7 @@ public class Socks4HandshakeHandler extends SimpleChannelHandler {
 
       ctx.getChannel().setAttachment(new InetSocketAddress(InetAddress.getByAddress(addr), port));
 
-      if (status == 0x5a) {
+      if (status == SocksProtocols.REQUEST_GRANTED) {
         ctx.getPipeline().remove(Socks4ClientBootstrap.FRAME_DECODER);
         ctx.getPipeline().remove(Socks4ClientBootstrap.HANDSHAKE);
         ChannelPipeline delegatePipeline = delegate.getPipeline();
