@@ -1,5 +1,6 @@
 package com.facebook.nifty.client;
 
+import com.facebook.nifty.client.socks.Socks4ClientBootstrap;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -33,6 +34,7 @@ public class NiftyClient implements Closeable {
   private final ExecutorService worker;
   private final int maxFrameSize;
   private final NioClientSocketChannelFactory channelFactory;
+  private InetSocketAddress socksProxyAddress;
 
   /**
    * Creates a new NiftyClient with defaults : frame size 1MB, 30 secs
@@ -63,8 +65,13 @@ public class NiftyClient implements Closeable {
     this.channelFactory = new NioClientSocketChannelFactory(boss, worker);
   }
 
+  public NiftyClient withSocksProxy(InetSocketAddress addr) {
+    this.socksProxyAddress = addr;
+    return this;
+  }
+
   public ListenableFuture<TNiftyAsyncClientTransport> connectAsync(InetSocketAddress addr) {
-    ClientBootstrap bootstrap = new ClientBootstrap(channelFactory);
+    ClientBootstrap bootstrap = createClientBootstrap();
     bootstrap.setOptions(configBuilder.getOptions());
     bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
       @Override
@@ -87,34 +94,42 @@ public class NiftyClient implements Closeable {
 
   public TNiftyClientTransport connectSync(InetSocketAddress addr, long connectTimeout, long readTimeout, TimeUnit unit)
     throws TTransportException, InterruptedException {
-    ClientBootstrap bootstrap = new ClientBootstrap(channelFactory);
+    ClientBootstrap bootstrap = createClientBootstrap();
     bootstrap.setOptions(configBuilder.getOptions());
-    bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
-      @Override
-      public ChannelPipeline getPipeline() throws Exception {
-        ChannelPipeline cp = Channels.pipeline();
-        cp.addLast("frameEncoder", new LengthFieldPrepender(4));
-        cp.addLast(
-          "frameDecoder", new LengthFieldBasedFrameDecoder(maxFrameSize, 0, 4, 0, 4)
-        );
-        return cp;
-      }
-    });
+    bootstrap.setPipelineFactory(new NiftyClientChannelPipelineFactory(maxFrameSize));
     ChannelFuture f = bootstrap.connect(addr);
     f.await(
       unit.toMillis(connectTimeout),
       TimeUnit.MILLISECONDS
     );
     Channel channel = f.getChannel();
+    if (f.getCause() != null) {
+      throw new TTransportException(String.format(
+        "unable to connect to %s:%d %s",
+        addr.getHostName(), addr.getPort(), socksProxyAddress == null ? "" : "via socks proxy at " + socksProxyAddress
+      ), f.getCause());
+    }
     if (channel != null) {
       TNiftyClientTransport transport = new TNiftyClientTransport(channel, readTimeout, unit);
       channel.getPipeline().addLast("thrift", transport);
       return transport;
     }
-    if (f.getCause() != null) {
-      throw new TTransportException(String.format("unable to connect to %s:%d", addr.getHostName(), addr.getPort()), f.getCause());
-    }
-    throw new TTransportException(String.format("unknown error connecting to %s:%d", addr.getHostName(), addr.getPort()));
+    throw new TTransportException(String.format(
+      "unknown error connecting to %s:%d %s",
+      addr.getHostName(), addr.getPort(), socksProxyAddress == null ? "" : "via socks proxy at " + socksProxyAddress
+    ));
+  }
+
+  @Override
+  public void close() {
+    boss.shutdownNow();
+    worker.shutdownNow();
+  }
+
+  private ClientBootstrap createClientBootstrap() {
+    return this.socksProxyAddress != null ?
+      new Socks4ClientBootstrap(channelFactory, this.socksProxyAddress) :
+      new ClientBootstrap(channelFactory);
   }
 
   private static class TNiftyFuture
@@ -135,18 +150,13 @@ public class NiftyClient implements Closeable {
     }
   }
 
-  @Override
-  public void close() {
-    boss.shutdownNow();
-    worker.shutdownNow();
-  }
-
   // just the inline version of Executors.newCachedThreadPool()
   // to make MoreExecutors happy.
   private static ThreadPoolExecutor makeThreadPool(String name) {
     return new ThreadPoolExecutor(0, Integer.MAX_VALUE,
       60L, TimeUnit.SECONDS,
       new SynchronousQueue<Runnable>(),
-      new ThreadFactoryBuilder().setNameFormat(name+"-%d").build());
+      new ThreadFactoryBuilder().setNameFormat(name + "-%d").build());
   }
+
 }
