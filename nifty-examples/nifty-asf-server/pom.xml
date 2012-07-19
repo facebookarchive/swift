@@ -13,7 +13,7 @@
 
   <groupId>com.facebook.nifty</groupId>
   <artifactId>nifty-asf-server</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>0.0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <dependencies>
