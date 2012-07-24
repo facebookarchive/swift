@@ -17,6 +17,7 @@ import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
 import org.jboss.netty.handler.codec.frame.LengthFieldPrepender;
 
+import javax.annotation.Nullable;
 import java.io.Closeable;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
@@ -34,7 +35,7 @@ public class NiftyClient implements Closeable {
   private final ExecutorService worker;
   private final int maxFrameSize;
   private final NioClientSocketChannelFactory channelFactory;
-  private InetSocketAddress socksProxyAddress;
+  private final InetSocketAddress defaultSocksProxyAddress;
 
   /**
    * Creates a new NiftyClient with defaults : frame size 1MB, 30 secs
@@ -48,7 +49,8 @@ public class NiftyClient implements Closeable {
     this(new NettyClientConfigBuilder(),
       MoreExecutors.getExitingExecutorService(makeThreadPool("netty-boss")),
       MoreExecutors.getExitingExecutorService(makeThreadPool("netty-worker")),
-      maxFrameSize
+      maxFrameSize,
+      null
     );
   }
 
@@ -58,20 +60,26 @@ public class NiftyClient implements Closeable {
     ExecutorService worker,
     int maxFrameSize
   ) {
+    this(configBuilder, boss, worker, maxFrameSize, null);
+  }
+
+  public NiftyClient(
+    NettyClientConfigBuilder configBuilder,
+    ExecutorService boss,
+    ExecutorService worker,
+    int maxFrameSize,
+    InetSocketAddress defaultSocksProxyAddress
+  ) {
     this.configBuilder = configBuilder;
     this.boss = boss;
     this.worker = worker;
     this.maxFrameSize = maxFrameSize;
+    this.defaultSocksProxyAddress = defaultSocksProxyAddress;
     this.channelFactory = new NioClientSocketChannelFactory(boss, worker);
   }
 
-  public NiftyClient withSocksProxy(InetSocketAddress addr) {
-    this.socksProxyAddress = addr;
-    return this;
-  }
-
   public ListenableFuture<TNiftyAsyncClientTransport> connectAsync(InetSocketAddress addr) {
-    ClientBootstrap bootstrap = createClientBootstrap();
+    ClientBootstrap bootstrap = createClientBootstrap(defaultSocksProxyAddress);
     bootstrap.setOptions(configBuilder.getOptions());
     bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
       @Override
@@ -92,9 +100,26 @@ public class NiftyClient implements Closeable {
     return connectSync(addr, 2, 2, TimeUnit.SECONDS);
   }
 
-  public TNiftyClientTransport connectSync(InetSocketAddress addr, long connectTimeout, long readTimeout, TimeUnit unit)
+  public TNiftyClientTransport connectSync(
+    InetSocketAddress addr,
+    long connectTimeout,
+    long readTimeout,
+    TimeUnit unit
+  )
     throws TTransportException, InterruptedException {
-    ClientBootstrap bootstrap = createClientBootstrap();
+    return connectSync(addr, connectTimeout, readTimeout, unit, defaultSocksProxyAddress);
+  }
+
+  public TNiftyClientTransport connectSync(
+    InetSocketAddress addr,
+    long connectTimeout,
+    long readTimeout,
+    TimeUnit unit,
+    @Nullable InetSocketAddress socksProxyAddress
+  )
+    throws TTransportException, InterruptedException {
+
+    ClientBootstrap bootstrap = createClientBootstrap(socksProxyAddress);
     bootstrap.setOptions(configBuilder.getOptions());
     bootstrap.setPipelineFactory(new NiftyClientChannelPipelineFactory(maxFrameSize));
     ChannelFuture f = bootstrap.connect(addr);
@@ -126,10 +151,12 @@ public class NiftyClient implements Closeable {
     worker.shutdownNow();
   }
 
-  private ClientBootstrap createClientBootstrap() {
-    return this.socksProxyAddress != null ?
-      new Socks4ClientBootstrap(channelFactory, this.socksProxyAddress) :
-      new ClientBootstrap(channelFactory);
+  private ClientBootstrap createClientBootstrap(InetSocketAddress socksProxyAddress) {
+    if (socksProxyAddress != null) {
+      return new Socks4ClientBootstrap(channelFactory, socksProxyAddress);
+    } else {
+      return new ClientBootstrap(channelFactory);
+    }
   }
 
   private static class TNiftyFuture
