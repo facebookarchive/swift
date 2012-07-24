@@ -155,10 +155,9 @@ public class ThriftClientManager implements Closeable
         niftyClient.close();
     }
 
-
     public static class ThriftClientMetadata
     {
-        private final Class<?> clientType;
+        private final String clientType;
         private final String clientName;
         private final ThriftServiceMetadata thriftServiceMetadata;
         private final Map<Method, ThriftMethodHandler> methodHandlers;
@@ -169,9 +168,9 @@ public class ThriftClientManager implements Closeable
             Preconditions.checkNotNull(clientName, "clientName is null");
             Preconditions.checkNotNull(codecManager, "codecManager is null");
 
-            this.clientType = clientType;
             this.clientName = clientName;
             thriftServiceMetadata = new ThriftServiceMetadata(clientType, codecManager.getCatalog());
+            this.clientType = thriftServiceMetadata.getName();
             ImmutableMap.Builder<Method, ThriftMethodHandler> methods = ImmutableMap.builder();
             for (ThriftMethodMetadata methodMetadata : thriftServiceMetadata.getMethods().values()) {
                 ThriftMethodHandler methodHandler = new ThriftMethodHandler(methodMetadata, codecManager);
@@ -180,7 +179,7 @@ public class ThriftClientManager implements Closeable
             methodHandlers = methods.build();
         }
 
-        public Class<?> getClientType()
+        public String getClientType()
         {
             return clientType;
         }

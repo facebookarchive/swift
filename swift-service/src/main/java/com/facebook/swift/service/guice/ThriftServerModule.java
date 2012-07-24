@@ -36,6 +36,7 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import java.util.Map;
 
+import static com.facebook.swift.service.metadata.ThriftServiceMetadata.getThriftServiceAnnotation;
 import static com.google.inject.multibindings.Multibinder.newSetBinder;
 import static io.airlift.configuration.ConfigurationModule.bindConfig;
 import static java.lang.String.format;
@@ -60,7 +61,7 @@ public class ThriftServerModule implements Module
                 try {
                     Class<?> serviceClass = methodProcessor.getServiceClass();
                     String name = format("com.facebook.swift.server:type=%s,name=%s",
-                            serviceClass.getSimpleName(),
+                            getServiceName(serviceClass),
                             methodProcessor.getName());
 
                     return new ObjectName(name);
@@ -78,5 +79,14 @@ public class ThriftServerModule implements Module
     {
         // extract method handles into a map so they can be exported individually to JMX
         return thriftServiceProcessor.getMethods();
+    }
+
+    private static String getServiceName(Class<?> serviceClass)
+    {
+        String serviceName = getThriftServiceAnnotation(serviceClass).value();
+        if (!serviceName.isEmpty()) {
+            return serviceName;
+        }
+        return serviceClass.getSimpleName();
     }
 }

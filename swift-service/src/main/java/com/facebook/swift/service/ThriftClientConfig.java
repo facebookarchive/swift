@@ -35,10 +35,11 @@ public class ThriftClientConfig
         return connectTimeout;
     }
 
-    @Config("connect-timeout")
-    public void setConnectTimeout(Duration connectTimeout)
+    @Config("thrift.client.connect-timeout")
+    public ThriftClientConfig setConnectTimeout(Duration connectTimeout)
     {
         this.connectTimeout = connectTimeout;
+        return this;
     }
 
     @MinDuration("10ms")
@@ -47,9 +48,10 @@ public class ThriftClientConfig
         return readTimeout;
     }
 
-    @Config("read-timeout")
-    public void setReadTimeout(Duration readTimeout)
+    @Config("thrift.client.read-timeout")
+    public ThriftClientConfig setReadTimeout(Duration readTimeout)
     {
         this.readTimeout = readTimeout;
+        return this;
     }
 }

@@ -66,9 +66,8 @@ public class ThriftClientModule implements Module
             for (ThriftClientProviderProvider<?> clientProvider : clientProviders) {
                 ThriftClientMetadata clientMetadata = clientProvider.getClientMetadata();
                 for (ThriftMethodHandler methodHandler : clientMetadata.getMethodHandlers().values()) {
-                    Class<?> clientType = clientMetadata.getClientType();
                     String name = format("com.facebook.swift.client:type=%s,clientName=%s,name=%s",
-                            clientType.getSimpleName(),
+                            clientMetadata.getClientType(),
                             clientMetadata.getClientName(),
                             methodHandler.getName());
                     builder.put(ObjectName.getInstance(name), methodHandler);

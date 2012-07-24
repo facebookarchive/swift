@@ -27,14 +27,19 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Provider;
+import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import org.weakref.jmx.guice.ExportBinder;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.UUID;
 
 import static com.facebook.swift.service.ThriftClientManager.DEFAULT_NAME;
+import static com.facebook.swift.service.metadata.ThriftServiceMetadata.getThriftServiceAnnotation;
 import static io.airlift.configuration.ConfigurationModule.bindConfig;
 import static java.lang.String.format;
 
@@ -56,22 +61,23 @@ public class ThriftClientBinder
     {
         Preconditions.checkNotNull(clientInterface, "clientInterface is null");
 
+        Named thriftClientConfigKey = Names.named(UUID.randomUUID().toString());
         TypeLiteral<ThriftClient<T>> typeLiteral = toThriftClientTypeLiteral(clientInterface);
-        ThriftClientProviderProvider<T> provider = new ThriftClientProviderProvider<>(clientInterface, DEFAULT_NAME, Key.get(ThriftClientConfig.class));
-        binder.bind(typeLiteral).toProvider(provider);
+        ThriftClientProviderProvider<T> provider = new ThriftClientProviderProvider<>(clientInterface, DEFAULT_NAME, Key.get(ThriftClientConfig.class, thriftClientConfigKey));
+        binder.bind(typeLiteral).toProvider(provider).in(Scopes.SINGLETON);
 
         // export client to jmx
+        String typeName = getServiceName(clientInterface);
         ExportBinder.newExporter(binder)
                 .export(Key.get(typeLiteral))
                 .as(format("com.facebook.swift.client:type=%s,clientName=%s",
-                        clientInterface.getSimpleName(),
+                        typeName,
                         DEFAULT_NAME));
 
         // bind provider to set so later we can export the metadata to JMX
         Multibinder.newSetBinder(binder, ThriftClientProviderProvider.class).addBinding().toInstance(provider);
 
-        String prefix = String.format("thrift.client.%s.%s", clientInterface.getName(), DEFAULT_NAME);
-        bindConfig(binder).prefixedWith(prefix).to(ThriftClientConfig.class);
+        bindConfig(binder).annotatedWith(thriftClientConfigKey).prefixedWith(typeName).to(ThriftClientConfig.class);
     }
 
     public <T> void bindThriftClient(Class<T> clientInterface, Class<? extends Annotation> annotationType)
@@ -80,23 +86,34 @@ public class ThriftClientBinder
         TypeLiteral<ThriftClient<T>> typeLiteral = toThriftClientTypeLiteral(clientInterface);
 
         String name = annotationType.getSimpleName();
+        Named thriftClientConfigKey = Names.named(UUID.randomUUID().toString());
         ThriftClientProviderProvider<T> provider = new ThriftClientProviderProvider<>(clientInterface,
                 name,
-                Key.get(ThriftClientConfig.class, annotationType));
-        binder.bind(Key.get(typeLiteral, annotationType)).toProvider(provider);
+                Key.get(ThriftClientConfig.class, thriftClientConfigKey));
+        binder.bind(Key.get(typeLiteral, annotationType)).toProvider(provider).in(Scopes.SINGLETON);
 
                 // export client to jmx
+        String typeName = getServiceName(clientInterface);
         ExportBinder.newExporter(binder)
                 .export(Key.get(typeLiteral))
                 .as(format("com.facebook.swift.client:type=%s,clientName=%s",
-                        clientInterface.getSimpleName(),
+                        typeName,
                         name));
 
         // bind provider to set so later we can export the metadata to JMX
         Multibinder.newSetBinder(binder, ThriftClientProviderProvider.class).addBinding().toInstance(provider);
 
-        String prefix = String.format("thrift.client.%s.%s", clientInterface.getName(), name);
-        bindConfig(binder).annotatedWith(annotationType).prefixedWith(prefix).to(ThriftClientConfig.class);
+        String prefix = String.format("%s.%s", typeName, name);
+        bindConfig(binder).annotatedWith(thriftClientConfigKey).prefixedWith(prefix).to(ThriftClientConfig.class);
+    }
+
+    private static String getServiceName(Class<?> clientInterface)
+    {
+        String serviceName = getThriftServiceAnnotation(clientInterface).value();
+        if (!serviceName.isEmpty()) {
+            return serviceName;
+        }
+        return clientInterface.getSimpleName();
     }
 
     /**
