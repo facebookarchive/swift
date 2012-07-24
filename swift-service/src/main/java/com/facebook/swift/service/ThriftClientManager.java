@@ -50,6 +50,7 @@ import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
 public class ThriftClientManager implements Closeable
 {
     public static final String DEFAULT_NAME = "default";
+    private static final int SOCKS_DEFAULT_PORT = 1080;
 
     private final ThriftCodecManager codecManager;
     private final NiftyClient niftyClient;
@@ -78,10 +79,10 @@ public class ThriftClientManager implements Closeable
     public <T> T createClient(HostAndPort address, Class<T> type)
             throws TTransportException
     {
-        return createClient(address, type, DEFAULT_CONNECT_TIMEOUT, DEFAULT_READ_TIMEOUT, DEFAULT_NAME);
+        return createClient(address, type, DEFAULT_CONNECT_TIMEOUT, DEFAULT_READ_TIMEOUT, DEFAULT_NAME, null);
     }
 
-    public <T> T createClient(HostAndPort address, Class<T> type, Duration connectTimeout, Duration readTimeout, String clientName)
+    public <T> T createClient(HostAndPort address, Class<T> type, Duration connectTimeout, Duration readTimeout, String clientName, HostAndPort socksProxy)
             throws TTransportException
     {
         ThriftClientMetadata clientMetadata = clientMetadataCache.getUnchecked(new TypeAndName(type, clientName));
@@ -91,7 +92,8 @@ public class ThriftClientManager implements Closeable
             transport = niftyClient.connectSync(new InetSocketAddress(address.getHostText(), address.getPort()),
                     (long) connectTimeout.toMillis(),
                     (long) readTimeout.toMillis(),
-                    TimeUnit.MILLISECONDS);
+                    TimeUnit.MILLISECONDS,
+                    toSocksProxyAddress(socksProxy));
         }
         catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -117,6 +119,14 @@ public class ThriftClientManager implements Closeable
             transport.close();
             throw e;
         }
+    }
+
+    private InetSocketAddress toSocksProxyAddress(HostAndPort socksProxy)
+    {
+        if (socksProxy == null) {
+            return null;
+        }
+        return new InetSocketAddress(socksProxy.getHostText(), socksProxy.getPortOrDefault(SOCKS_DEFAULT_PORT));
     }
 
     public <T> T createClient(TTransport transport, Class<T> type, Duration connectTimeout, Duration readTimeout, String clientName)

@@ -15,6 +15,7 @@
  */
 package com.facebook.swift.service;
 
+import com.google.common.net.HostAndPort;
 import io.airlift.configuration.Config;
 import io.airlift.units.Duration;
 import io.airlift.units.MinDuration;
@@ -28,6 +29,7 @@ public class ThriftClientConfig
 
     private Duration connectTimeout = DEFAULT_CONNECT_TIMEOUT;
     private Duration readTimeout = DEFAULT_READ_TIMEOUT;
+    private HostAndPort socksProxy;
 
     @MinDuration("10ms")
     public Duration getConnectTimeout()
@@ -52,6 +54,18 @@ public class ThriftClientConfig
     public ThriftClientConfig setReadTimeout(Duration readTimeout)
     {
         this.readTimeout = readTimeout;
+        return this;
+    }
+
+    public HostAndPort getSocksProxy()
+    {
+        return socksProxy;
+    }
+
+    @Config("thrift.client.socks-proxy")
+    public ThriftClientConfig setSocksProxy(HostAndPort socksProxy)
+    {
+        this.socksProxy = socksProxy;
         return this;
     }
 }
