@@ -15,17 +15,30 @@
  */
 package com.facebook.swift.service.guice;
 
+import com.facebook.swift.service.ThriftMethodProcessor;
 import com.facebook.swift.service.ThriftServer;
 import com.facebook.swift.service.ThriftServerConfig;
+import com.facebook.swift.service.ThriftServiceProcessor;
 import com.facebook.swift.service.guice.ThriftServiceExporter.ThriftServiceExport;
 import com.facebook.swift.service.guice.ThriftServiceExporter.ThriftServiceProcessorProvider;
+import com.google.common.base.Throwables;
 import com.google.inject.Binder;
+import com.google.inject.Key;
 import com.google.inject.Module;
+import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import org.apache.thrift.TProcessor;
+import org.weakref.jmx.guice.ExportBinder;
+import org.weakref.jmx.guice.ObjectNameFunction;
+
+import javax.inject.Singleton;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+import java.util.Map;
 
 import static com.google.inject.multibindings.Multibinder.newSetBinder;
 import static io.airlift.configuration.ConfigurationModule.bindConfig;
+import static java.lang.String.format;
 
 public class ThriftServerModule implements Module
 {
@@ -33,9 +46,37 @@ public class ThriftServerModule implements Module
     public void configure(Binder binder)
     {
         newSetBinder(binder, ThriftServiceExport.class).permitDuplicates();
-        binder.bind(TProcessor.class).toProvider(ThriftServiceProcessorProvider.class);
+        binder.bind(ThriftServiceProcessor.class).toProvider(ThriftServiceProcessorProvider.class).in(Scopes.SINGLETON);
+        binder.bind(TProcessor.class).to(Key.get(ThriftServiceProcessor.class)).in(Scopes.SINGLETON);
 
         bindConfig(binder).to(ThriftServerConfig.class);
         binder.bind(ThriftServer.class).in(Scopes.SINGLETON);
+
+        // export methods from processors to JMX
+        ExportBinder.newExporter(binder).exportMap(ThriftMethodProcessor.class).withGeneratedName(new ObjectNameFunction<ThriftMethodProcessor>() {
+            @Override
+            public ObjectName name(ThriftMethodProcessor methodProcessor)
+            {
+                try {
+                    Class<?> serviceClass = methodProcessor.getServiceClass();
+                    String name = format("com.facebook.swift.server:type=%s,name=%s",
+                            serviceClass.getSimpleName(),
+                            methodProcessor.getName());
+
+                    return new ObjectName(name);
+                }
+                catch (MalformedObjectNameException e) {
+                    throw Throwables.propagate(e);
+                }
+            }
+        });
+    }
+
+    @Provides
+    @Singleton
+    public Map<String, ThriftMethodProcessor> getMethodProcessors(ThriftServiceProcessor thriftServiceProcessor)
+    {
+        // extract method handles into a map so they can be exported individually to JMX
+        return thriftServiceProcessor.getMethods();
     }
 }

@@ -16,9 +16,26 @@
 package com.facebook.swift.service.guice;
 
 import com.facebook.swift.service.ThriftClientManager;
+import com.facebook.swift.service.ThriftClientManager.ThriftClientMetadata;
+import com.facebook.swift.service.ThriftMethodHandler;
+import com.facebook.swift.service.guice.ThriftClientBinder.ThriftClientProviderProvider;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Binder;
 import com.google.inject.Module;
+import com.google.inject.Provides;
 import com.google.inject.Scopes;
+import org.weakref.jmx.guice.ExportBinder;
+import org.weakref.jmx.guice.MapObjectNameFunction;
+
+import javax.inject.Singleton;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+import java.util.Map;
+import java.util.Set;
+
+import static com.google.inject.multibindings.Multibinder.newSetBinder;
+import static java.lang.String.format;
 
 public class ThriftClientModule implements Module
 {
@@ -26,5 +43,41 @@ public class ThriftClientModule implements Module
     public void configure(Binder binder)
     {
         binder.bind(ThriftClientManager.class).in(Scopes.SINGLETON);
+
+        // bind providers to set so we can export the metadata to JMX below
+        newSetBinder(binder, ThriftClientProviderProvider.class).permitDuplicates();
+        ExportBinder.newExporter(binder).exportMap(ObjectName.class, ThriftMethodHandler.class).withGeneratedName(new MapObjectNameFunction<ObjectName, ThriftMethodHandler>()
+        {
+            @Override
+            public ObjectName name(ObjectName key, ThriftMethodHandler value)
+            {
+                return key;
+            }
+        });
+    }
+
+    @Provides
+    @Singleton
+    public Map<ObjectName, ThriftMethodHandler> getMethodProcessors(Set<ThriftClientProviderProvider> clientProviders)
+    {
+        try {
+            // extract method handles into a map so they can be exported individually into jmx
+            ImmutableMap.Builder<ObjectName, ThriftMethodHandler> builder = ImmutableMap.builder();
+            for (ThriftClientProviderProvider<?> clientProvider : clientProviders) {
+                ThriftClientMetadata clientMetadata = clientProvider.getClientMetadata();
+                for (ThriftMethodHandler methodHandler : clientMetadata.getMethodHandlers().values()) {
+                    Class<?> clientType = clientMetadata.getClientType();
+                    String name = format("com.facebook.swift.client:type=%s,clientName=%s,name=%s",
+                            clientType.getSimpleName(),
+                            clientMetadata.getClientName(),
+                            methodHandler.getName());
+                    builder.put(ObjectName.getInstance(name), methodHandler);
+                }
+            }
+            return builder.build();
+        }
+        catch (MalformedObjectNameException e) {
+            throw Throwables.propagate(e);
+        }
     }
 }

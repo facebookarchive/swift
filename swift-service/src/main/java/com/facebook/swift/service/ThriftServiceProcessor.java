@@ -22,6 +22,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
@@ -46,6 +48,7 @@ import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
 public class ThriftServiceProcessor implements TProcessor
 {
     private final Map<String, ThriftMethodProcessor> methods;
+    private final Multimap<String, ThriftMethodStats> serviceStats;
 
     /**
      * @param services the services to expose; services must be thread safe
@@ -62,14 +65,28 @@ public class ThriftServiceProcessor implements TProcessor
         Preconditions.checkArgument(!services.isEmpty(), "services is empty");
 
         // NOTE: ImmutableMap enforces that we don't have duplicate method names
-        ImmutableMap.Builder<String, ThriftMethodProcessor> builder = ImmutableMap.builder();
+        ImmutableMap.Builder<String, ThriftMethodProcessor> processorBuilder = ImmutableMap.builder();
+        ImmutableMultimap.Builder<String, ThriftMethodStats> statsBuilder = ImmutableMultimap.builder();
         for (Object service : services) {
             ThriftServiceMetadata serviceMetadata = new ThriftServiceMetadata(service.getClass(), codecManager.getCatalog());
             for (ThriftMethodMetadata methodMetadata : serviceMetadata.getMethods().values()) {
-                builder.put(methodMetadata.getName(), new ThriftMethodProcessor(service, methodMetadata, codecManager));
+                ThriftMethodProcessor methodProcessor = new ThriftMethodProcessor(service, methodMetadata, codecManager);
+                processorBuilder.put(methodMetadata.getName(), methodProcessor);
+                statsBuilder.put(serviceMetadata.getName(), methodProcessor.getStats());
             }
         }
-        methods = builder.build();
+        methods = processorBuilder.build();
+        serviceStats = statsBuilder.build();
+    }
+
+    public Map<String, ThriftMethodProcessor> getMethods()
+    {
+        return methods;
+    }
+
+    public Multimap<String, ThriftMethodStats> getServiceStats()
+    {
+        return serviceStats;
     }
 
     @Override

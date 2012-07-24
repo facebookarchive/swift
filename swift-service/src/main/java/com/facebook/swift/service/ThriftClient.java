@@ -24,27 +24,35 @@ import org.apache.thrift.transport.TTransportException;
 public class ThriftClient<T>
 {
     private final ThriftClientManager clientManager;
-    private final Class<T> clientInterface;
+    private final Class<T> clientType;
+    private final String clientName;
 
     @Inject
-    public ThriftClient(ThriftClientManager clientManager, Class<T> clientInterface)
+    public ThriftClient(ThriftClientManager clientManager, Class<T> clientType)
+    {
+        this(clientManager, clientType, ThriftClientManager.DEFAULT_NAME);
+    }
+
+    public ThriftClient(ThriftClientManager clientManager, Class<T> clientType, String clientName)
     {
         Preconditions.checkNotNull(clientManager, "clientManager is null");
-        Preconditions.checkNotNull(clientInterface, "clientInterface is null");
+        Preconditions.checkNotNull(clientType, "clientInterface is null");
+        Preconditions.checkNotNull(clientName, "clientName is null");
 
         this.clientManager = clientManager;
-        this.clientInterface = clientInterface;
+        this.clientType = clientType;
+        this.clientName = clientName;
     }
 
     public T open(HostAndPort address)
             throws TTransportException
     {
-        return clientManager.createClient(address, clientInterface);
+        return clientManager.createClient(address, clientType, clientName);
     }
 
     public T open(TTransport transport)
             throws TTransportException
     {
-        return clientManager.createClient(transport, clientInterface);
+        return clientManager.createClient(transport, clientType, clientName);
     }
 }

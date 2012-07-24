@@ -89,6 +89,12 @@
 
             <dependency>
                 <groupId>io.airlift</groupId>
+                <artifactId>stats</artifactId>
+                <version>0.66-SNAPSHOT</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.airlift</groupId>
                 <artifactId>units</artifactId>
                 <version>0.66-SNAPSHOT</version>
             </dependency>
@@ -103,6 +109,12 @@
                 <groupId>io.netty</groupId>
                 <artifactId>netty</artifactId>
                 <version>3.4.0.Final</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.weakref</groupId>
+                <artifactId>jmxutils</artifactId>
+                <version>1.13-SNAPSHOT</version>
             </dependency>
 
             <dependency>

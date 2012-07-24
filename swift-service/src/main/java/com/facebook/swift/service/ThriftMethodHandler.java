@@ -26,13 +26,17 @@ import com.facebook.swift.service.metadata.ThriftMethodMetadata;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.thrift.TApplicationException;
+import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TMessage;
 import org.apache.thrift.protocol.TProtocol;
+import org.weakref.jmx.Flatten;
+import org.weakref.jmx.Managed;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.util.List;
 import java.util.Map;
 
+import static io.airlift.units.Duration.nanosSince;
 import static org.apache.thrift.TApplicationException.BAD_SEQUENCE_ID;
 import static org.apache.thrift.protocol.TMessageType.CALL;
 import static org.apache.thrift.protocol.TMessageType.EXCEPTION;
@@ -44,6 +48,8 @@ public class ThriftMethodHandler
     private final List<ParameterHandler> parameterCodecs;
     private final ThriftCodec<Object> successCodec;
     private final Map<Short, ThriftCodec<Object>> exceptionCodecs;
+
+    private final ThriftMethodStats stats = new ThriftMethodStats();
 
     private int sequenceId;
 
@@ -76,38 +82,48 @@ public class ThriftMethodHandler
         successCodec = (ThriftCodec<Object>) codecManager.getCodec(methodMetadata.getReturnType());
     }
 
-    public Object invoke(TProtocol in, TProtocol out, Object... args)
-            throws Throwable
+    @Managed
+    public String getName()
     {
-        // write request
-        int sequenceId = this.sequenceId++;
-        out.writeMessageBegin(new TMessage(name, CALL, sequenceId));
+        return name;
+    }
 
-        // write the parameters
-        TProtocolWriter writer = new TProtocolWriter(out);
-        writer.writeStructBegin(name + "_args");
-        for (int i = 0; i < args.length; i++) {
-            Object value = args[i];
-            ParameterHandler parameter = parameterCodecs.get(i);
-            writer.writeField(parameter.getName(), parameter.getId(), parameter.getCodec(), value);
+    @Managed
+    @Flatten
+    public ThriftMethodStats getStats()
+    {
+        return stats;
+    }
+
+    public Object invoke(TProtocol in, TProtocol out, Object... args)
+            throws Exception
+    {
+        long start = System.nanoTime();
+
+        try {
+            // write request
+            int sequenceId = writeArguments(out, args);
+
+            // wait for response message
+            waitForResponse(in, out, sequenceId);
+
+            // read results
+            Object results = readResponse(out);
+            stats.addSuccessTime(nanosSince(start));
+            return results;
         }
-        writer.writeStructEnd();
-
-        out.writeMessageEnd();
-        out.getTransport().flush();
-
-        // check response message
-        TMessage message = out.readMessageBegin();
-        if (message.type == EXCEPTION) {
-            TApplicationException exception = TApplicationException.read(in);
-            in.readMessageEnd();
-            throw exception;
-        }
-        if (message.seqid != sequenceId) {
-            throw new TApplicationException(BAD_SEQUENCE_ID, name + " failed: out of sequence response");
+        catch (Exception e) {
+            stats.addErrorTime(nanosSince(start));
+            throw e;
         }
 
-        // read results
+    }
+
+    private Object readResponse(TProtocol out)
+            throws Exception
+    {
+        long start = System.nanoTime();
+
         TProtocolReader reader = new TProtocolReader(out);
         reader.readStructBegin();
         Object results = null;
@@ -128,16 +144,61 @@ public class ThriftMethodHandler
         }
         reader.readStructEnd();
         out.readMessageEnd();
+
+        stats.addReadTime(nanosSince(start));
+
         if (exception != null) {
             throw exception;
         }
         if (results == null) {
             // todo how is void handled?
-            throw new TApplicationException(TApplicationException.MISSING_RESULT, name + " failed: unknown result"
-            );
+            throw new TApplicationException(TApplicationException.MISSING_RESULT, name + " failed: unknown result");
         }
         return results;
+    }
 
+    private int writeArguments(TProtocol out, Object[] args)
+            throws Exception
+    {
+        long start = System.nanoTime();
+
+        int sequenceId = this.sequenceId++;
+        out.writeMessageBegin(new TMessage(name, CALL, sequenceId));
+
+        // write the parameters
+        TProtocolWriter writer = new TProtocolWriter(out);
+        writer.writeStructBegin(name + "_args");
+        for (int i = 0; i < args.length; i++) {
+            Object value = args[i];
+            ParameterHandler parameter = parameterCodecs.get(i);
+            writer.writeField(parameter.getName(), parameter.getId(), parameter.getCodec(), value);
+        }
+        writer.writeStructEnd();
+
+        out.writeMessageEnd();
+        out.getTransport().flush();
+
+        stats.addWriteTime(nanosSince(start));
+
+        return sequenceId;
+    }
+
+    private void waitForResponse(TProtocol in, TProtocol out, int sequenceId)
+            throws TException
+    {
+        long start = System.nanoTime();
+
+        TMessage message = out.readMessageBegin();
+        if (message.type == EXCEPTION) {
+            TApplicationException exception = TApplicationException.read(in);
+            in.readMessageEnd();
+            throw exception;
+        }
+        if (message.seqid != sequenceId) {
+            throw new TApplicationException(BAD_SEQUENCE_ID, name + " failed: out of sequence response");
+        }
+
+        stats.addInvokeTime(nanosSince(start));
     }
 
     private static final class ParameterHandler
