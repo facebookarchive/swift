@@ -24,6 +24,7 @@ import com.google.inject.Inject;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.TProcessorFactory;
 import org.apache.thrift.protocol.TBinaryProtocol;
+import org.jboss.netty.channel.group.DefaultChannelGroup;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -71,7 +72,7 @@ public class ThriftServer implements Closeable
 
         acceptorThreads = config.getAcceptorThreads();
         workerThreads = config.getWorkerThreads();
-        transport = new NettyServerTransport(thriftServerDef, new NettyConfigBuilder());
+        transport = new NettyServerTransport(thriftServerDef, new NettyConfigBuilder(), new DefaultChannelGroup());
     }
 
     private int getSpecifiedOrRandomPort(ThriftServerConfig config)

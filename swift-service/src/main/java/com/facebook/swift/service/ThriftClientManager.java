@@ -21,11 +21,13 @@ import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.metadata.ThriftMethodMetadata;
 import com.facebook.swift.service.metadata.ThriftServiceMetadata;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
+import io.airlift.units.Duration;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -39,7 +41,10 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
+import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_CONNECT_TIMEOUT;
+import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_READ_TIMEOUT;
 import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
 
 public class ThriftClientManager implements Closeable
@@ -73,16 +78,28 @@ public class ThriftClientManager implements Closeable
     public <T> T createClient(HostAndPort address, Class<T> type)
             throws TTransportException
     {
-        return createClient(address, type, DEFAULT_NAME);
+        return createClient(address, type, DEFAULT_CONNECT_TIMEOUT, DEFAULT_READ_TIMEOUT, DEFAULT_NAME);
     }
 
-    public <T> T createClient(HostAndPort address, Class<T> type, String name)
+    public <T> T createClient(HostAndPort address, Class<T> type, Duration connectTimeout, Duration readTimeout, String clientName)
             throws TTransportException
     {
-        ThriftClientMetadata clientMetadata = clientMetadataCache.getUnchecked(new TypeAndName(type, name));
+        ThriftClientMetadata clientMetadata = clientMetadataCache.getUnchecked(new TypeAndName(type, clientName));
 
-        TNiftyClientTransport transport = niftyClient.connectSync(new InetSocketAddress(address.getHostText(), address.getPort()));
+        TNiftyClientTransport transport;
         try {
+            transport = niftyClient.connectSync(new InetSocketAddress(address.getHostText(), address.getPort()),
+                    (long) connectTimeout.toMillis(),
+                    (long) readTimeout.toMillis(),
+                    TimeUnit.MILLISECONDS);
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw Throwables.propagate(e);
+        }
+
+        try {
+
             String clientDescription = clientMetadata.getName() + " " + address;
 
             ThriftInvocationHandler handler = new ThriftInvocationHandler(
@@ -102,7 +119,7 @@ public class ThriftClientManager implements Closeable
         }
     }
 
-    public <T> T createClient(TTransport transport, Class<T> type)
+    public <T> T createClient(TTransport transport, Class<T> type, Duration connectTimeout, Duration readTimeout, String clientName)
             throws TTransportException
     {
         return createClient(transport, type, DEFAULT_NAME);
@@ -135,7 +152,7 @@ public class ThriftClientManager implements Closeable
     @PreDestroy
     public void close()
     {
-        niftyClient.shutdown();
+        niftyClient.close();
     }
 
 

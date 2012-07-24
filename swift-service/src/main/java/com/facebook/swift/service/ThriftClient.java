@@ -18,22 +18,26 @@ package com.facebook.swift.service;
 import com.google.common.base.Preconditions;
 import com.google.common.net.HostAndPort;
 import com.google.inject.Inject;
+import io.airlift.units.Duration;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
+import org.weakref.jmx.Managed;
 
 public class ThriftClient<T>
 {
     private final ThriftClientManager clientManager;
     private final Class<T> clientType;
     private final String clientName;
+    private final Duration connectTimeout;
+    private final Duration readTimeout;
 
     @Inject
     public ThriftClient(ThriftClientManager clientManager, Class<T> clientType)
     {
-        this(clientManager, clientType, ThriftClientManager.DEFAULT_NAME);
+        this(clientManager, clientType, new ThriftClientConfig(), ThriftClientManager.DEFAULT_NAME);
     }
 
-    public ThriftClient(ThriftClientManager clientManager, Class<T> clientType, String clientName)
+    public ThriftClient(ThriftClientManager clientManager, Class<T> clientType, ThriftClientConfig clientConfig, String clientName)
     {
         Preconditions.checkNotNull(clientManager, "clientManager is null");
         Preconditions.checkNotNull(clientType, "clientInterface is null");
@@ -42,17 +46,43 @@ public class ThriftClient<T>
         this.clientManager = clientManager;
         this.clientType = clientType;
         this.clientName = clientName;
+        connectTimeout = clientConfig.getConnectTimeout();
+        readTimeout = clientConfig.getReadTimeout();
+    }
+
+    @Managed
+    public String getClientType()
+    {
+        return clientType.getName();
+    }
+
+    @Managed
+    public String getClientName()
+    {
+        return clientName;
+    }
+
+    @Managed
+    public String getConnectTimeout()
+    {
+        return connectTimeout.toString();
+    }
+
+    @Managed
+    public String getReadTimeout()
+    {
+        return readTimeout.toString();
     }
 
     public T open(HostAndPort address)
             throws TTransportException
     {
-        return clientManager.createClient(address, clientType, clientName);
+        return clientManager.createClient(address, clientType, connectTimeout, readTimeout, clientName);
     }
 
     public T open(TTransport transport)
             throws TTransportException
     {
-        return clientManager.createClient(transport, clientType, clientName);
+        return clientManager.createClient(transport, clientType, connectTimeout, readTimeout, clientName);
     }
 }
