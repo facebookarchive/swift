@@ -42,18 +42,21 @@ public class ThriftClientModule implements Module
     @Override
     public void configure(Binder binder)
     {
+        // Bind single shared ThriftClientManager
         binder.bind(ThriftClientManager.class).in(Scopes.SINGLETON);
 
-        // bind providers to set so we can export the metadata to JMX below
+        // We bind the ThriftClientProviderProviders in a Set so below we can export the thrift methods to JMX
         newSetBinder(binder, ThriftClientProviderProvider.class).permitDuplicates();
-        ExportBinder.newExporter(binder).exportMap(ObjectName.class, ThriftMethodHandler.class).withGeneratedName(new MapObjectNameFunction<ObjectName, ThriftMethodHandler>()
-        {
-            @Override
-            public ObjectName name(ObjectName key, ThriftMethodHandler value)
-            {
-                return key;
-            }
-        });
+        ExportBinder.newExporter(binder)
+                .exportMap(ObjectName.class, ThriftMethodHandler.class)
+                .withGeneratedName(new MapObjectNameFunction<ObjectName, ThriftMethodHandler>()
+                {
+                    @Override
+                    public ObjectName name(ObjectName key, ThriftMethodHandler value)
+                    {
+                        return key;
+                    }
+                });
     }
 
     @Provides

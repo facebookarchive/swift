@@ -89,7 +89,7 @@ public class ThriftServiceMetadata
         Set<ThriftService> serviceAnnotations = getAllClassAnnotations(serviceClass, ThriftService.class);
         Preconditions.checkArgument(!serviceAnnotations.isEmpty(), "Service class %s is not annotated with @ThriftService", serviceClass.getName());
         Preconditions.checkArgument(serviceAnnotations.size() == 1,
-                "Service class %s is has multiple conflicting @ThriftService annotations: %s",
+                "Service class %s has multiple conflicting @ThriftService annotations: %s",
                 serviceClass.getName(),
                 serviceAnnotations
         );

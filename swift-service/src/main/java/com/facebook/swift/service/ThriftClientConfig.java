@@ -31,7 +31,7 @@ public class ThriftClientConfig
     private Duration readTimeout = DEFAULT_READ_TIMEOUT;
     private HostAndPort socksProxy;
 
-    @MinDuration("10ms")
+    @MinDuration("1ms")
     public Duration getConnectTimeout()
     {
         return connectTimeout;
@@ -44,7 +44,7 @@ public class ThriftClientConfig
         return this;
     }
 
-    @MinDuration("10ms")
+    @MinDuration("1ms")
     public Duration getReadTimeout()
     {
         return readTimeout;

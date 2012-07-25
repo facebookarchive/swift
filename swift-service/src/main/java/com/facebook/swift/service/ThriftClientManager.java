@@ -35,6 +35,7 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
 import javax.annotation.PreDestroy;
+import javax.annotation.concurrent.Immutable;
 import java.io.Closeable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -165,6 +166,7 @@ public class ThriftClientManager implements Closeable
         niftyClient.close();
     }
 
+    @Immutable
     public static class ThriftClientMetadata
     {
         private final String clientType;
@@ -268,6 +270,7 @@ public class ThriftClientManager implements Closeable
         }
     }
 
+    @Immutable
     private static class TypeAndName
     {
         private final Class<?> type;
