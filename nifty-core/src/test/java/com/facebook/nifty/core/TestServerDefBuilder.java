@@ -5,26 +5,30 @@ import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-public class TestServerDefBuilder {
-
-  @Test(groups = "fast")
-  public void testServerDefBuilderWithoutProcesser() {
-    try {
-      new ThriftServerDefBuilder().build();
-    } catch (Exception e) {
-      return;
+public class TestServerDefBuilder
+{
+    @Test
+    public void testServerDefBuilderWithoutProcessor()
+    {
+        try {
+            new ThriftServerDefBuilder().build();
+        }
+        catch (Exception e) {
+            return;
+        }
+        Assert.fail();
     }
-    Assert.fail();
-  }
 
-  @Test(groups = "fast")
-  public void testServerDefBuilder() {
-    try {
-      new ThriftServerDefBuilder()
-        .withProcessor(EasyMock.createMock(TProcessor.class))
-        .build();
-    } catch (Exception e) {
-      Assert.fail();
+    @Test
+    public void testServerDefBuilder()
+    {
+        try {
+            new ThriftServerDefBuilder()
+                    .withProcessor(EasyMock.createMock(TProcessor.class))
+                    .build();
+        }
+        catch (Exception e) {
+            Assert.fail();
+        }
     }
-  }
 }

@@ -25,165 +25,184 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-public class NiftyClient implements Closeable {
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-  // 1MB default
-  private static final int DEFAULT_MAX_FRAME_SIZE = 1048576;
+public class NiftyClient implements Closeable
+{
+    // 1MB default
+    private static final int DEFAULT_MAX_FRAME_SIZE = 1048576;
 
-  private final NettyClientConfigBuilder configBuilder;
-  private final ExecutorService boss;
-  private final ExecutorService worker;
-  private final int maxFrameSize;
-  private final NioClientSocketChannelFactory channelFactory;
-  private final InetSocketAddress defaultSocksProxyAddress;
+    private final NettyClientConfigBuilder configBuilder;
+    private final ExecutorService boss;
+    private final ExecutorService worker;
+    private final int maxFrameSize;
+    private final NioClientSocketChannelFactory channelFactory;
+    private final InetSocketAddress defaultSocksProxyAddress;
 
-  /**
-   * Creates a new NiftyClient with defaults : frame size 1MB, 30 secs
-   * connect and read timeout and cachedThreadPool for boss and worker.
-   */
-  public NiftyClient() {
-    this(DEFAULT_MAX_FRAME_SIZE);
-  }
-
-  public NiftyClient(int maxFrameSize) {
-    this(new NettyClientConfigBuilder(),
-      MoreExecutors.getExitingExecutorService(makeThreadPool("netty-boss")),
-      MoreExecutors.getExitingExecutorService(makeThreadPool("netty-worker")),
-      maxFrameSize,
-      null
-    );
-  }
-
-  public NiftyClient(
-    NettyClientConfigBuilder configBuilder,
-    ExecutorService boss,
-    ExecutorService worker,
-    int maxFrameSize
-  ) {
-    this(configBuilder, boss, worker, maxFrameSize, null);
-  }
-
-  public NiftyClient(
-    NettyClientConfigBuilder configBuilder,
-    ExecutorService boss,
-    ExecutorService worker,
-    int maxFrameSize,
-    InetSocketAddress defaultSocksProxyAddress
-  ) {
-    this.configBuilder = configBuilder;
-    this.boss = boss;
-    this.worker = worker;
-    this.maxFrameSize = maxFrameSize;
-    this.defaultSocksProxyAddress = defaultSocksProxyAddress;
-    this.channelFactory = new NioClientSocketChannelFactory(boss, worker);
-  }
-
-  public ListenableFuture<TNiftyAsyncClientTransport> connectAsync(InetSocketAddress addr) {
-    ClientBootstrap bootstrap = createClientBootstrap(defaultSocksProxyAddress);
-    bootstrap.setOptions(configBuilder.getOptions());
-    bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
-      @Override
-      public ChannelPipeline getPipeline() throws Exception {
-        ChannelPipeline cp = Channels.pipeline();
-        cp.addLast("frameEncoder", new LengthFieldPrepender(4));
-        cp.addLast(
-          "frameDecoder", new LengthFieldBasedFrameDecoder(maxFrameSize, 0, 4, 0, 4)
-        );
-        return cp;
-      }
-    });
-    return new TNiftyFuture(bootstrap.connect(addr));
-  }
-
-  // trying to mirror the synchronous nature of TSocket as much as possible here.
-  public TNiftyClientTransport connectSync(InetSocketAddress addr) throws TTransportException, InterruptedException {
-    return connectSync(addr, 2, 2, TimeUnit.SECONDS);
-  }
-
-  public TNiftyClientTransport connectSync(
-    InetSocketAddress addr,
-    long connectTimeout,
-    long readTimeout,
-    TimeUnit unit
-  )
-    throws TTransportException, InterruptedException {
-    return connectSync(addr, connectTimeout, readTimeout, unit, defaultSocksProxyAddress);
-  }
-
-  public TNiftyClientTransport connectSync(
-    InetSocketAddress addr,
-    long connectTimeout,
-    long readTimeout,
-    TimeUnit unit,
-    @Nullable InetSocketAddress socksProxyAddress
-  )
-    throws TTransportException, InterruptedException {
-
-    ClientBootstrap bootstrap = createClientBootstrap(socksProxyAddress);
-    bootstrap.setOptions(configBuilder.getOptions());
-    bootstrap.setPipelineFactory(new NiftyClientChannelPipelineFactory(maxFrameSize));
-    ChannelFuture f = bootstrap.connect(addr);
-    f.await(
-      unit.toMillis(connectTimeout),
-      TimeUnit.MILLISECONDS
-    );
-    Channel channel = f.getChannel();
-    if (f.getCause() != null) {
-      throw new TTransportException(String.format(
-        "unable to connect to %s:%d %s",
-        addr.getHostName(), addr.getPort(), socksProxyAddress == null ? "" : "via socks proxy at " + socksProxyAddress
-      ), f.getCause());
+    /**
+     * Creates a new NiftyClient with defaults : frame size 1MB, 30 secs
+     * connect and read timeout and cachedThreadPool for boss and worker.
+     */
+    public NiftyClient()
+    {
+        this(DEFAULT_MAX_FRAME_SIZE);
     }
-    if (channel != null) {
-      TNiftyClientTransport transport = new TNiftyClientTransport(channel, readTimeout, unit);
-      channel.getPipeline().addLast("thrift", transport);
-      return transport;
+
+    public NiftyClient(int maxFrameSize)
+    {
+        this(new NettyClientConfigBuilder(),
+                MoreExecutors.getExitingExecutorService(makeThreadPool("netty-boss")),
+                MoreExecutors.getExitingExecutorService(makeThreadPool("netty-worker")),
+                maxFrameSize,
+                null);
     }
-    throw new TTransportException(String.format(
-      "unknown error connecting to %s:%d %s",
-      addr.getHostName(), addr.getPort(), socksProxyAddress == null ? "" : "via socks proxy at " + socksProxyAddress
-    ));
-  }
 
-  @Override
-  public void close() {
-    boss.shutdownNow();
-    worker.shutdownNow();
-  }
-
-  private ClientBootstrap createClientBootstrap(InetSocketAddress socksProxyAddress) {
-    if (socksProxyAddress != null) {
-      return new Socks4ClientBootstrap(channelFactory, socksProxyAddress);
-    } else {
-      return new ClientBootstrap(channelFactory);
+    public NiftyClient(NettyClientConfigBuilder configBuilder,
+            ExecutorService boss,
+            ExecutorService worker,
+            int maxFrameSize)
+    {
+        this(configBuilder, boss, worker, maxFrameSize, null);
     }
-  }
 
-  private static class TNiftyFuture
-    extends AbstractFuture<TNiftyAsyncClientTransport> {
-    private TNiftyFuture(ChannelFuture channelFuture) {
-      channelFuture.addListener(new ChannelFutureListener() {
-        @Override
-        public void operationComplete(ChannelFuture future) throws Exception {
-          if (future.isSuccess()) {
-            set(new TNiftyAsyncClientTransport(future.getChannel()));
-          } else if (future.isCancelled()) {
-            cancel(true);
-          } else {
-            setException(future.getCause());
-          }
+    public NiftyClient(
+            NettyClientConfigBuilder configBuilder,
+            ExecutorService boss,
+            ExecutorService worker,
+            int maxFrameSize,
+            @Nullable InetSocketAddress defaultSocksProxyAddress)
+    {
+        this.configBuilder = configBuilder;
+        this.boss = boss;
+        this.worker = worker;
+        this.maxFrameSize = maxFrameSize;
+        this.defaultSocksProxyAddress = defaultSocksProxyAddress;
+        this.channelFactory = new NioClientSocketChannelFactory(boss, worker);
+    }
+
+    public ListenableFuture<TNiftyAsyncClientTransport> connectAsync(InetSocketAddress addr)
+    {
+        ClientBootstrap bootstrap = createClientBootstrap(defaultSocksProxyAddress);
+        bootstrap.setOptions(configBuilder.getOptions());
+        bootstrap.setPipelineFactory(new ChannelPipelineFactory()
+        {
+            @Override
+            public ChannelPipeline getPipeline()
+                    throws Exception
+            {
+                ChannelPipeline cp = Channels.pipeline();
+                cp.addLast("frameEncoder", new LengthFieldPrepender(4));
+                cp.addLast("frameDecoder", new LengthFieldBasedFrameDecoder(maxFrameSize, 0, 4, 0, 4));
+                return cp;
+            }
+        });
+        return new TNiftyFuture(bootstrap.connect(addr));
+    }
+
+    // trying to mirror the synchronous nature of TSocket as much as possible here.
+    public TNiftyClientTransport connectSync(InetSocketAddress addr)
+            throws TTransportException, InterruptedException
+    {
+        return connectSync(addr, 2, 2, TimeUnit.SECONDS);
+    }
+
+    public TNiftyClientTransport connectSync(
+            InetSocketAddress addr,
+            long connectTimeout,
+            long readTimeout,
+            TimeUnit unit)
+            throws TTransportException, InterruptedException
+    {
+        return connectSync(addr, connectTimeout, readTimeout, unit, defaultSocksProxyAddress);
+    }
+
+    public TNiftyClientTransport connectSync(
+            InetSocketAddress addr,
+            long connectTimeout,
+            long readTimeout,
+            TimeUnit unit,
+            @Nullable InetSocketAddress socksProxyAddress)
+            throws TTransportException, InterruptedException
+    {
+
+        ClientBootstrap bootstrap = createClientBootstrap(socksProxyAddress);
+        bootstrap.setOptions(configBuilder.getOptions());
+        bootstrap.setPipelineFactory(new NiftyClientChannelPipelineFactory(maxFrameSize));
+        ChannelFuture f = bootstrap.connect(addr);
+        f.await(unit.toMillis(connectTimeout), MILLISECONDS);
+        Channel channel = f.getChannel();
+        if (f.getCause() != null) {
+            String message = String.format("unable to connect to %s:%d %s",
+                    addr.getHostName(),
+                    addr.getPort(),
+                    socksProxyAddress == null ? "" : "via socks proxy at " + socksProxyAddress);
+            throw new TTransportException(message, f.getCause());
         }
-      });
+
+        if (channel != null) {
+            TNiftyClientTransport transport = new TNiftyClientTransport(channel, readTimeout, unit);
+            channel.getPipeline().addLast("thrift", transport);
+            return transport;
+        }
+
+        throw new TTransportException(String.format(
+                "unknown error connecting to %s:%d %s",
+                addr.getHostName(),
+                addr.getPort(),
+                socksProxyAddress == null ? "" : "via socks proxy at " + socksProxyAddress
+        ));
     }
-  }
 
-  // just the inline version of Executors.newCachedThreadPool()
-  // to make MoreExecutors happy.
-  private static ThreadPoolExecutor makeThreadPool(String name) {
-    return new ThreadPoolExecutor(0, Integer.MAX_VALUE,
-      60L, TimeUnit.SECONDS,
-      new SynchronousQueue<Runnable>(),
-      new ThreadFactoryBuilder().setNameFormat(name + "-%d").build());
-  }
+    @Override
+    public void close()
+    {
+        boss.shutdownNow();
+        worker.shutdownNow();
+    }
 
+    private ClientBootstrap createClientBootstrap(InetSocketAddress socksProxyAddress)
+    {
+        if (socksProxyAddress != null) {
+            return new Socks4ClientBootstrap(channelFactory, socksProxyAddress);
+        }
+        else {
+            return new ClientBootstrap(channelFactory);
+        }
+    }
+
+    private static class TNiftyFuture
+            extends AbstractFuture<TNiftyAsyncClientTransport>
+    {
+        private TNiftyFuture(ChannelFuture channelFuture)
+        {
+            channelFuture.addListener(new ChannelFutureListener()
+            {
+                @Override
+                public void operationComplete(ChannelFuture future)
+                        throws Exception
+                {
+                    if (future.isSuccess()) {
+                        set(new TNiftyAsyncClientTransport(future.getChannel()));
+                    }
+                    else if (future.isCancelled()) {
+                        cancel(true);
+                    }
+                    else {
+                        setException(future.getCause());
+                    }
+                }
+            });
+        }
+    }
+
+    // just the inline version of Executors.newCachedThreadPool()
+    // to make MoreExecutors happy.
+    private static ThreadPoolExecutor makeThreadPool(String name)
+    {
+        return new ThreadPoolExecutor(
+                0, Integer.MAX_VALUE,
+                60L, TimeUnit.SECONDS,
+                new SynchronousQueue<Runnable>(),
+                new ThreadFactoryBuilder().setNameFormat(name + "-%d").build());
+    }
 }

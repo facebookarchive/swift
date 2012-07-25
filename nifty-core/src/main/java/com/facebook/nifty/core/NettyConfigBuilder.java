@@ -7,33 +7,33 @@ import org.jboss.netty.channel.socket.nio.NioSocketChannelConfig;
 import java.lang.reflect.Proxy;
 
 /*
-* Hooks for configuring various parts of Netty.
-*/
-public class NettyConfigBuilder extends NettyConfigBuilderBase {
+ * Hooks for configuring various parts of Netty.
+ */
+public class NettyConfigBuilder extends NettyConfigBuilderBase
+{
 
-  private final NioSocketChannelConfig socketChannelConfig = (NioSocketChannelConfig)
-    Proxy.newProxyInstance(
-      getClass().getClassLoader(),
-      new Class<?>[]{NioSocketChannelConfig.class},
-      new Magic("child.")
+    private final NioSocketChannelConfig socketChannelConfig = (NioSocketChannelConfig) Proxy.newProxyInstance(
+            getClass().getClassLoader(),
+            new Class<?>[]{NioSocketChannelConfig.class},
+            new Magic("child.")
     );
-  private final ServerSocketChannelConfig serverSocketChannelConfig = (ServerSocketChannelConfig)
-    Proxy.newProxyInstance(
-      getClass().getClassLoader(),
-      new Class<?>[]{ServerSocketChannelConfig.class},
-      new Magic("")
-    );
+    private final ServerSocketChannelConfig serverSocketChannelConfig = (ServerSocketChannelConfig) Proxy.newProxyInstance(
+            getClass().getClassLoader(),
+            new Class<?>[]{ServerSocketChannelConfig.class},
+            new Magic(""));
 
-  @Inject
-  public NettyConfigBuilder() {
-  }
+    @Inject
+    public NettyConfigBuilder()
+    {
+    }
 
+    public NioSocketChannelConfig getSocketChannelConfig()
+    {
+        return socketChannelConfig;
+    }
 
-  public NioSocketChannelConfig getSocketChannelConfig() {
-    return socketChannelConfig;
-  }
-
-  public ServerSocketChannelConfig getServerSocketChannelConfig() {
-    return serverSocketChannelConfig;
-  }
+    public ServerSocketChannelConfig getServerSocketChannelConfig()
+    {
+        return serverSocketChannelConfig;
+    }
 }

@@ -24,91 +24,98 @@ import java.net.ServerSocket;
 import java.util.Arrays;
 import java.util.List;
 
-public class TestNiftyClient {
+public class TestNiftyClient
+{
+    private static final Logger log = LoggerFactory.getLogger(TestNiftyClient.class);
 
-  private static final Logger log = LoggerFactory.getLogger(TestNiftyClient.class);
+    private NiftyBootstrap bootstrap;
+    private int port;
 
-  public static final String VERSION = "1.0";
-  private NiftyBootstrap bootstrap;
-  private int port;
-
-  @BeforeTest(alwaysRun = true)
-  public void setup() {
-
-    try {
-      ServerSocket s = new ServerSocket();
-      s.bind(new InetSocketAddress(0));
-      port = s.getLocalPort();
-      s.close();
-    } catch (IOException e) {
-      port = 8080;
-    }
-  }
-
-  @Test(groups = "fast")
-  public void testServerDisconnect() throws Exception {
-    startServer();
-    scribe.Client client = makeNiftyClient();
-    new Thread() {
-      @Override
-      public void run() {
+    @BeforeTest(alwaysRun = true)
+    public void setup()
+    {
         try {
-          sleep(1000L);
-          bootstrap.stop();
-        } catch (InterruptedException e) {
+            ServerSocket s = new ServerSocket();
+            s.bind(new InetSocketAddress(0));
+            port = s.getLocalPort();
+            s.close();
         }
-      }
-    }.start();
-    int max = (int) (Math.random() * 100) + 10;
-    int exceptionCount = 0;
-    for (int i = 0; i < max; i++) {
-      Thread.sleep(100L);
-      try {
-        client.Log(Arrays.asList(new LogEntry("hello", "world " + i)));
-      } catch (TException e) {
-        log.info("caught expected exception "+e.toString());
-        exceptionCount++;
-      }
+        catch (IOException e) {
+            port = 8080;
+        }
     }
-    Assert.assertTrue(exceptionCount > 0);
-  }
 
-  private void startServer() {
-    bootstrap = Guice.createInjector
-      (
-        Stage.PRODUCTION,
-        new NiftyModule() {
-          @Override
-          protected void configureNifty() {
-            bind().toInstance(
-              new ThriftServerDefBuilder()
-                .listen(port)
-                .withProcessor(
-                  new scribe.Processor(
-                    new scribe.Iface() {
-                      @Override
-                      public ResultCode Log(List<LogEntry> messages) throws TException {
-                        for (LogEntry message : messages) {
-                          log.info("{}: {}", message.getCategory(), message.getMessage());
-                        }
-                        return ResultCode.OK;
-                      }
-                    }
-                  )
-                ).build()
-            );
-          }
+    @Test
+    public void testServerDisconnect()
+            throws Exception
+    {
+        startServer();
+        scribe.Client client = makeNiftyClient();
+        new Thread()
+        {
+            @Override
+            public void run()
+            {
+                try {
+                    sleep(1000L);
+                    bootstrap.stop();
+                }
+                catch (InterruptedException e) {
+                }
+            }
+        }.start();
+
+        int max = (int) (Math.random() * 100) + 10;
+        int exceptionCount = 0;
+        for (int i = 0; i < max; i++) {
+            Thread.sleep(100L);
+            try {
+                client.Log(Arrays.asList(new LogEntry("hello", "world " + i)));
+            }
+            catch (TException e) {
+                log.info("caught expected exception " + e.toString());
+                exceptionCount++;
+            }
         }
-      )
-      .getInstance(NiftyBootstrap.class);
+        Assert.assertTrue(exceptionCount > 0);
+    }
 
-    bootstrap.start();
-  }
+    private void startServer()
+    {
+        bootstrap = Guice.createInjector(
+                Stage.PRODUCTION,
+                new NiftyModule()
+                {
+                    @Override
+                    protected void configureNifty()
+                    {
+                        bind().toInstance(new ThriftServerDefBuilder()
+                                .listen(port)
+                                .withProcessor(new scribe.Processor(new scribe.Iface()
+                                {
+                                    @Override
+                                    public ResultCode Log(List<LogEntry> messages)
+                                            throws TException
+                                    {
+                                        for (LogEntry message : messages) {
+                                            log.info("{}: {}", message.getCategory(), message.getMessage());
+                                        }
+                                        return ResultCode.OK;
+                                    }
+                                }))
+                                .build());
+                    }
+                }
+        ).getInstance(NiftyBootstrap.class);
 
-  private scribe.Client makeNiftyClient() throws TTransportException, InterruptedException {
-    TBinaryProtocol tp = new TBinaryProtocol((new NiftyClient().connectSync(new InetSocketAddress("localhost", port))));
-    return new scribe.Client(tp);
-  }
+        bootstrap.start();
+    }
 
-
+    private scribe.Client makeNiftyClient()
+            throws TTransportException, InterruptedException
+    {
+        InetSocketAddress address = new InetSocketAddress("localhost", port);
+        TBinaryProtocol tp = new TBinaryProtocol(new NiftyClient().connectSync(address));
+        return new scribe.Client(tp);
+    }
 }

@@ -7,22 +7,23 @@ import org.jboss.netty.channel.socket.nio.NioSocketChannelConfig;
 import java.lang.reflect.Proxy;
 
 /*
-* Hooks for configuring various parts of Netty.
-*/
-public class NettyClientConfigBuilder extends NettyConfigBuilderBase {
-
-  private final NioSocketChannelConfig socketChannelConfig = (NioSocketChannelConfig)
-    Proxy.newProxyInstance(
-      getClass().getClassLoader(),
-      new Class<?>[]{NioSocketChannelConfig.class},
-      new Magic("")
+ * Hooks for configuring various parts of Netty.
+ */
+public class NettyClientConfigBuilder extends NettyConfigBuilderBase
+{
+    private final NioSocketChannelConfig socketChannelConfig = (NioSocketChannelConfig) Proxy.newProxyInstance(
+            getClass().getClassLoader(),
+            new Class<?>[]{NioSocketChannelConfig.class},
+            new Magic("")
     );
 
-  @Inject
-  public NettyClientConfigBuilder() {
-  }
+    @Inject
+    public NettyClientConfigBuilder()
+    {
+    }
 
-  public NioSocketChannelConfig getSocketChannelConfig() {
-    return socketChannelConfig;
-  }
+    public NioSocketChannelConfig getSocketChannelConfig()
+    {
+        return socketChannelConfig;
+    }
 }

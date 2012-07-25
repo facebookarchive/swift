@@ -16,61 +16,68 @@ import java.util.concurrent.Executor;
 
 /**
  * Dispatch TNiftyTransport to the TProcessor and write output back.
- *
  */
-public class NiftyDispatcher extends SimpleChannelUpstreamHandler {
+public class NiftyDispatcher extends SimpleChannelUpstreamHandler
+{
 
-  private static final Logger log = LoggerFactory.getLogger(NiftyDispatcher.class);
+    private static final Logger log = LoggerFactory.getLogger(NiftyDispatcher.class);
 
-  private final TProcessorFactory processorFactory;
-  private final TProtocolFactory inProtocolFactory;
-  private final TProtocolFactory outProtocolFactory;
-  private final Executor exe;
+    private final TProcessorFactory processorFactory;
+    private final TProtocolFactory inProtocolFactory;
+    private final TProtocolFactory outProtocolFactory;
+    private final Executor exe;
 
-  public NiftyDispatcher(ThriftServerDef def) {
-    this.processorFactory = def.getProcessorFactory();
-    this.inProtocolFactory = def.getInProtocolFactory();
-    this.outProtocolFactory = def.getOutProtocolFactory();
-    this.exe = def.getExecutor();
-  }
+    public NiftyDispatcher(ThriftServerDef def)
+    {
+        this.processorFactory = def.getProcessorFactory();
+        this.inProtocolFactory = def.getInProtocolFactory();
+        this.outProtocolFactory = def.getOutProtocolFactory();
+        this.exe = def.getExecutor();
+    }
 
-  @Override
-  public void messageReceived(final ChannelHandlerContext ctx, final MessageEvent e)
-    throws Exception {
-    if (e.getMessage() instanceof TTransport) {
-      exe.execute(
-        new Runnable() {
-          @Override
-          public void run() {
-            TTransport t = (TTransport) e.getMessage();
-            TProtocol inProtocol = inProtocolFactory.getProtocol(t);
-            TProtocol outProtocol = outProtocolFactory.getProtocol(t);
-            try {
-              processorFactory.getProcessor(t).process(
-                inProtocol,
-                outProtocol
-              );
-            } catch (TException e1) {
-              log.error("Exception while invoking!", e1);
-              closeChannel(ctx);
-            }
-          }
+    @Override
+    public void messageReceived(final ChannelHandlerContext ctx, final MessageEvent e)
+            throws Exception
+    {
+        if (e.getMessage() instanceof TTransport) {
+            exe.execute(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    TTransport t = (TTransport) e.getMessage();
+                    TProtocol inProtocol = inProtocolFactory.getProtocol(t);
+                    TProtocol outProtocol = outProtocolFactory.getProtocol(t);
+                    try {
+                        processorFactory.getProcessor(t).process(
+                                inProtocol,
+                                outProtocol
+                        );
+                    }
+                    catch (TException e1) {
+                        log.error("Exception while invoking!", e1);
+                        closeChannel(ctx);
+                    }
+                }
+            });
         }
-      );
-    } else {
-      ctx.sendUpstream(e);
+        else {
+            ctx.sendUpstream(e);
+        }
     }
-  }
 
-  @Override
-  public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-    // Any out of band exception are caught here and we tear down the socket
-    closeChannel(ctx);
-  }
-
-  private void closeChannel(ChannelHandlerContext ctx) {
-    if (ctx.getChannel().isOpen()) {
-      ctx.getChannel().close();
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
+            throws Exception
+    {
+        // Any out of band exception are caught here and we tear down the socket
+        closeChannel(ctx);
     }
-  }
+
+    private void closeChannel(ChannelHandlerContext ctx)
+    {
+        if (ctx.getChannel().isOpen()) {
+            ctx.getChannel().close();
+        }
+    }
 }

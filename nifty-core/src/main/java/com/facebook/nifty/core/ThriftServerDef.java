@@ -7,67 +7,77 @@ import java.util.concurrent.Executor;
 
 /**
  * Descriptor for a Thrift Server. This defines a listener port that Nifty need to start a Thrift endpoint.
- *
  */
-public class ThriftServerDef {
-  private final int serverPort;
-  private final int maxFrameSize;
-  private final TProcessorFactory processorFactory;
-  private final TProtocolFactory inProtocolFact;
-  private final TProtocolFactory outProtocolFact;
-  private final boolean headerTransport;
-  private final Executor executor;
-  private final String name;
+public class ThriftServerDef
+{
+    private final int serverPort;
+    private final int maxFrameSize;
+    private final TProcessorFactory processorFactory;
+    private final TProtocolFactory inProtocolFact;
+    private final TProtocolFactory outProtocolFact;
+    private final boolean headerTransport;
+    private final Executor executor;
+    private final String name;
 
-  public ThriftServerDef(
-    String name,
-    int serverPort,
-    int maxFrameSize,
-    TProcessorFactory factory,
-    TProtocolFactory inProtoalFact,
-    TProtocolFactory outProtoalFact,
-    boolean useHeaderTransport,
-    Executor executor
-  ) {
-    this.name = name;
-    this.serverPort = serverPort;
-    this.maxFrameSize = maxFrameSize;
-    this.processorFactory = factory;
-    this.inProtocolFact = inProtoalFact;
-    this.outProtocolFact = outProtoalFact;
-    this.headerTransport = useHeaderTransport;
-    this.executor = executor;
-  }
 
-  public int getServerPort() {
-    return serverPort;
-  }
 
-  public int getMaxFrameSize() {
-    return maxFrameSize;
-  }
+    public ThriftServerDef(
+            String name,
+            int serverPort,
+            int maxFrameSize,
+            TProcessorFactory factory,
+            TProtocolFactory inProtocolFact,
+            TProtocolFactory outProtocolFact,
+            boolean useHeaderTransport,
+            Executor executor)
+    {
+        this.name = name;
+        this.serverPort = serverPort;
+        this.maxFrameSize = maxFrameSize;
+        this.processorFactory = factory;
+        this.inProtocolFact = inProtocolFact;
+        this.outProtocolFact = outProtocolFact;
+        this.headerTransport = useHeaderTransport;
+        this.executor = executor;
+    }
 
-  public TProcessorFactory getProcessorFactory() {
-    return processorFactory;
-  }
+    public int getServerPort()
+    {
+        return serverPort;
+    }
 
-  public TProtocolFactory getInProtocolFactory() {
-    return inProtocolFact;
-  }
+    public int getMaxFrameSize()
+    {
+        return maxFrameSize;
+    }
 
-  public TProtocolFactory getOutProtocolFactory() {
-    return outProtocolFact;
-  }
+    public TProcessorFactory getProcessorFactory()
+    {
+        return processorFactory;
+    }
 
-  public boolean isHeaderTransport() {
-    return headerTransport;
-  }
+    public TProtocolFactory getInProtocolFactory()
+    {
+        return inProtocolFact;
+    }
 
-  public Executor getExecutor() {
-    return executor;
-  }
+    public TProtocolFactory getOutProtocolFactory()
+    {
+        return outProtocolFact;
+    }
 
-  public String getName() {
-    return name;
-  }
+    public boolean isHeaderTransport()
+    {
+        return headerTransport;
+    }
+
+    public Executor getExecutor()
+    {
+        return executor;
+    }
+
+    public String getName()
+    {
+        return name;
+    }
 }

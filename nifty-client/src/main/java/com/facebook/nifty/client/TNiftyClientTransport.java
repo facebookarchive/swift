@@ -21,102 +21,118 @@ import java.util.concurrent.locks.ReentrantLock;
  * <p/>
  * This already has a built in TFramedTransport. No need to wrap.
  */
-public class TNiftyClientTransport extends TNiftyAsyncClientTransport {
+public class TNiftyClientTransport extends TNiftyAsyncClientTransport
+{
 
-  private final ChannelBuffer readBuffer;
-  private final long readTimeout;
-  private final TimeUnit unit;
-  private final Lock lock = new ReentrantLock();
-  @GuardedBy("lock")
-  private final Condition condition = lock.newCondition();
-  private boolean closed = false;
-  private Throwable exception = null;
+    private final ChannelBuffer readBuffer;
+    private final long readTimeout;
+    private final TimeUnit unit;
+    private final Lock lock = new ReentrantLock();
+    @GuardedBy("lock")
+    private final Condition condition = lock.newCondition();
+    private boolean closed;
+    private Throwable exception;
 
-  public TNiftyClientTransport(Channel channel, long readTimeout, TimeUnit unit) {
-    super(channel);
-    this.readTimeout = readTimeout;
-    this.unit = unit;
-    this.readBuffer = ChannelBuffers.dynamicBuffer(256);
-    setListener(new TNiftyClientListener() {
-      @Override
-      public void onFrameRead(Channel c, ChannelBuffer buffer) {
-        lock.lock();
-        try {
-          readBuffer.discardReadBytes();
-          readBuffer.writeBytes(buffer);
-          condition.signal();
-        } finally {
-          lock.unlock();
-        }
-      }
+    public TNiftyClientTransport(Channel channel, long readTimeout, TimeUnit unit)
+    {
+        super(channel);
+        this.readTimeout = readTimeout;
+        this.unit = unit;
+        this.readBuffer = ChannelBuffers.dynamicBuffer(256);
+        setListener(new TNiftyClientListener()
+        {
+            @Override
+            public void onFrameRead(Channel c, ChannelBuffer buffer)
+            {
+                lock.lock();
+                try {
+                    readBuffer.discardReadBytes();
+                    readBuffer.writeBytes(buffer);
+                    condition.signal();
+                }
+                finally {
+                    lock.unlock();
+                }
+            }
 
-      @Override
-      public void onChannelClosedOrDisconnected(Channel channel) {
-        lock.lock();
-        try {
-          closed = true;
-          condition.signal();
-        } finally {
-          lock.unlock();
-        }
-      }
+            @Override
+            public void onChannelClosedOrDisconnected(Channel channel)
+            {
+                lock.lock();
+                try {
+                    closed = true;
+                    condition.signal();
+                }
+                finally {
+                    lock.unlock();
+                }
+            }
 
-      @Override
-      public void onExceptionEvent(ExceptionEvent e) {
-        lock.lock();
-        try {
-          exception = e.getCause();
-          condition.signal();
-        } finally {
-          lock.unlock();
-        }
-      }
-    });
-  }
-
-  @Override
-  public int read(byte[] bytes, int offset, int length) throws TTransportException {
-    try {
-      return this.read(bytes, offset, length, readTimeout, unit);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new TTransportException(e);
+            @Override
+            public void onExceptionEvent(ExceptionEvent e)
+            {
+                lock.lock();
+                try {
+                    exception = e.getCause();
+                    condition.signal();
+                }
+                finally {
+                    lock.unlock();
+                }
+            }
+        });
     }
-  }
 
-  // yeah, mimicking sync with async is just horrible
-  private int read(byte[] bytes, int offset, int length, long timeout, TimeUnit unit) throws InterruptedException, TTransportException {
-    long timeRemaining = unit.toNanos(timeout);
-    lock.lock();
-    try {
-      while (true) {
-        int bytesAvailable = readBuffer.readableBytes();
-        if (bytesAvailable > 0) {
-          int begin = readBuffer.readerIndex();
-          readBuffer.readBytes(bytes, offset, Math.min(bytesAvailable, length));
-          int end = readBuffer.readerIndex();
-          return end - begin;
+    @Override
+    public int read(byte[] bytes, int offset, int length)
+            throws TTransportException
+    {
+        try {
+            return this.read(bytes, offset, length, readTimeout, unit);
         }
-        if (timeRemaining <= 0) {
-          break;
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new TTransportException(e);
         }
-        timeRemaining = condition.awaitNanos(timeRemaining);
-        if (closed) {
-          throw new TTransportException("channel closed !");
-        }
-        if (exception != null) {
-          try {
-            throw new TTransportException(exception);
-          } finally {
-            exception = null;
-            closed = true;
-            close();
-          }
-        }
-      }
-    } finally {
-      lock.unlock();
     }
-    throw new TTransportException(String.format("read timeout, %d ms has elapsed", unit.toMillis(timeout)));
-  }
+
+    // yeah, mimicking sync with async is just horrible
+    private int read(byte[] bytes, int offset, int length, long timeout, TimeUnit unit)
+            throws InterruptedException, TTransportException
+    {
+        long timeRemaining = unit.toNanos(timeout);
+        lock.lock();
+        try {
+            while (true) {
+                int bytesAvailable = readBuffer.readableBytes();
+                if (bytesAvailable > 0) {
+                    int begin = readBuffer.readerIndex();
+                    readBuffer.readBytes(bytes, offset, Math.min(bytesAvailable, length));
+                    int end = readBuffer.readerIndex();
+                    return end - begin;
+                }
+                if (timeRemaining <= 0) {
+                    break;
+                }
+                timeRemaining = condition.awaitNanos(timeRemaining);
+                if (closed) {
+                    throw new TTransportException("channel closed !");
+                }
+                if (exception != null) {
+                    try {
+                        throw new TTransportException(exception);
+                    }
+                    finally {
+                        exception = null;
+                        closed = true;
+                        close();
+                    }
+                }
+            }
+        }
+        finally {
+            lock.unlock();
+        }
+        throw new TTransportException(String.format("read timeout, %d ms has elapsed", unit.toMillis(timeout)));
+    }
 }

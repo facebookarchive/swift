@@ -17,99 +17,110 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A lifecycle object that manages starting up and shutting down multiple core channels.
- *
  */
-public class NiftyBootstrap {
-  private static final Logger log = LoggerFactory.getLogger(NiftyBootstrap.class);
+public class NiftyBootstrap
+{
+    private static final Logger log = LoggerFactory.getLogger(NiftyBootstrap.class);
 
-  private final Set<ThriftServerDef> thriftServerDefs;
-  private final ChannelGroup allChannels;
-  private ArrayList<NettyServerTransport> transports;
-  private ExecutorService bossExecutor;
-  private ExecutorService workerExecutor;
+    private final Set<ThriftServerDef> thriftServerDefs;
+    private final ChannelGroup allChannels;
+    private ArrayList<NettyServerTransport> transports;
+    private ExecutorService bossExecutor;
+    private ExecutorService workerExecutor;
 
-  /**
-   * This takes a Set of ThriftServerDef. Use Guice Multibinder to inject.
-   *
-   * @param thriftServerDefs
-   */
-  @Inject
-  public NiftyBootstrap(Set<ThriftServerDef> thriftServerDefs, NettyConfigBuilder configBuilder, ChannelGroup allChannels) {
-    this.thriftServerDefs = thriftServerDefs;
-    this.allChannels = allChannels;
-    this.transports = new ArrayList<NettyServerTransport>();
-    for (ThriftServerDef thriftServerDef : thriftServerDefs) {
-      transports.add(new NettyServerTransport(thriftServerDef, configBuilder, allChannels));
+    /**
+     * This takes a Set of ThriftServerDef. Use Guice Multibinder to inject.
+     */
+    @Inject
+    public NiftyBootstrap(
+            Set<ThriftServerDef> thriftServerDefs,
+            NettyConfigBuilder configBuilder,
+            ChannelGroup allChannels)
+    {
+        this.thriftServerDefs = thriftServerDefs;
+        this.allChannels = allChannels;
+        this.transports = new ArrayList<NettyServerTransport>();
+        for (ThriftServerDef thriftServerDef : thriftServerDefs) {
+            transports.add(new NettyServerTransport(thriftServerDef, configBuilder, allChannels));
+        }
+
     }
 
-  }
-
-  @PostConstruct
-  public void start() {
-    bossExecutor = Executors.newCachedThreadPool(new NamedThreadFactory("nifty-boss"));
-    workerExecutor = Executors.newCachedThreadPool(new NamedThreadFactory("nifty-worker"));
-    for (NettyServerTransport transport : transports) {
-      transport.start(bossExecutor, workerExecutor);
-    }
-  }
-
-  @PreDestroy
-  public void stop() {
-    for (NettyServerTransport transport : transports) {
-      try {
-        transport.stop();
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
-    }
-    // stop bosses
-    if (bossExecutor != null) {
-      shutdownExecutor(bossExecutor, "bossExecutor");
-      bossExecutor = null;
+    @PostConstruct
+    public void start()
+    {
+        bossExecutor = Executors.newCachedThreadPool(new NamedThreadFactory("nifty-boss"));
+        workerExecutor = Executors.newCachedThreadPool(new NamedThreadFactory("nifty-worker"));
+        for (NettyServerTransport transport : transports) {
+            transport.start(bossExecutor, workerExecutor);
+        }
     }
 
-    // TODO : allow an option here to control if we need to drain connections and wait instead of killing them all
+    @PreDestroy
+    public void stop()
+    {
+        for (NettyServerTransport transport : transports) {
+            try {
+                transport.stop();
+            }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        // stop bosses
+        if (bossExecutor != null) {
+            shutdownExecutor(bossExecutor, "bossExecutor");
+            bossExecutor = null;
+        }
 
-    try {
-      allChannels.close();
-    } catch (Exception e) {
-      log.warn("ignored exception while shutting down channels", e);
+        // TODO : allow an option here to control if we need to drain connections and wait instead of killing them all
+
+        try {
+            allChannels.close();
+        }
+        catch (Exception e) {
+            log.warn("ignored exception while shutting down channels", e);
+        }
+
+        // finally the reader writer
+        if (workerExecutor != null) {
+            shutdownExecutor(workerExecutor, "workerExecutor");
+            workerExecutor = null;
+        }
     }
 
-    // finally the reader writer
-    if (workerExecutor != null) {
-      shutdownExecutor(workerExecutor, "workerExecutor");
-      workerExecutor = null;
+    // TODO : make wait time configurable ?
+    static void shutdownExecutor(ExecutorService executor, final String name)
+    {
+        executor.shutdown();
+        try {
+            log.info("waiting for {} to shutdown", name);
+            executor.awaitTermination(5, TimeUnit.SECONDS);
+        }
+        catch (InterruptedException e) {
+            //ignored
+            Thread.currentThread().interrupt();
+        }
     }
-  }
 
-  // TODO : make wait time configurable ?
-  static void shutdownExecutor(ExecutorService executor, final String name) {
-    executor.shutdown();
-    try {
-      log.info("waiting for {} to shutdown", name);
-      executor.awaitTermination(5, TimeUnit.SECONDS);
-    } catch (InterruptedException e) {
-      //ignored
-      Thread.currentThread().interrupt();
-    }
-  }
+    public static class NamedThreadFactory implements ThreadFactory
+    {
+        private final String baseName;
+        private final AtomicInteger threadNum = new AtomicInteger(0);
 
-  public static class NamedThreadFactory implements ThreadFactory {
-      private final String baseName;
-      private final AtomicInteger threadNum = new AtomicInteger(0);
+        public NamedThreadFactory(String baseName)
+        {
+            this.baseName = baseName;
+        }
 
-      public NamedThreadFactory(String baseName) {
-        this.baseName = baseName;
-      }
+        @Override
+        public synchronized Thread newThread(Runnable r)
+        {
+            Thread t = Executors.defaultThreadFactory().newThread(r);
 
-      @Override
-      public synchronized Thread newThread(Runnable r) {
-        Thread t = Executors.defaultThreadFactory().newThread(r);
+            t.setName(baseName + "-" + threadNum.getAndIncrement());
 
-        t.setName(baseName + "-" + threadNum.getAndIncrement());
-
-        return t;
-      }
+            return t;
+        }
     }
 }
