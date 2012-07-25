@@ -306,7 +306,9 @@
                     <configuration>
                         <header>license-header.txt</header>
                         <excludes>
-                            <exclude>**/README.md</exclude>
+                            <exclude>**/*.md</exclude>
+                            <exclude>.*/**</exclude>
+                            <exclude>license.txt</exclude>
                         </excludes>
                     </configuration>
                 </plugin>
