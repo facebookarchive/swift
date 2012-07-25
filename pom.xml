@@ -11,7 +11,6 @@
 
     <modules>
         <module>nifty-core</module>
-        <module>nifty-core-asf</module>
         <module>nifty-client</module>
         <module>nifty-examples</module>
     </modules>
