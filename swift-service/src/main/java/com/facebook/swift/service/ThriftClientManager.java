@@ -20,8 +20,14 @@ import com.facebook.nifty.client.TNiftyClientTransport;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.metadata.ThriftMethodMetadata;
 import com.facebook.swift.service.metadata.ThriftServiceMetadata;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
+import io.airlift.units.Duration;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -29,19 +35,36 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
 import javax.annotation.PreDestroy;
+import javax.annotation.concurrent.Immutable;
 import java.io.Closeable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
+import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_CONNECT_TIMEOUT;
+import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_READ_TIMEOUT;
 import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
 
 public class ThriftClientManager implements Closeable
 {
+    public static final String DEFAULT_NAME = "default";
+    private static final int SOCKS_DEFAULT_PORT = 1080;
+
     private final ThriftCodecManager codecManager;
-    private NiftyClient niftyClient;
+    private final NiftyClient niftyClient;
+    private final LoadingCache<TypeAndName, ThriftClientMetadata> clientMetadataCache = CacheBuilder.newBuilder()
+            .build(new CacheLoader<TypeAndName, ThriftClientMetadata>()
+            {
+                @Override
+                public ThriftClientMetadata load(TypeAndName typeAndName)
+                        throws Exception
+                {
+                    return new ThriftClientMetadata(typeAndName.getType(), typeAndName.getName(), codecManager);
+                }
+            });
 
     public ThriftClientManager()
     {
@@ -57,22 +80,35 @@ public class ThriftClientManager implements Closeable
     public <T> T createClient(HostAndPort address, Class<T> type)
             throws TTransportException
     {
-        // build method index
-        ThriftServiceMetadata thriftServiceMetadata = new ThriftServiceMetadata(type, codecManager.getCatalog());
-        ImmutableMap.Builder<Method, ThriftMethodHandler> methods = ImmutableMap.builder();
-        for (ThriftMethodMetadata methodMetadata : thriftServiceMetadata.getMethods().values()) {
-            ThriftMethodHandler methodHandler = new ThriftMethodHandler(methodMetadata, codecManager);
-            methods.put(methodMetadata.getMethod(), methodHandler);
+        return createClient(address, type, DEFAULT_CONNECT_TIMEOUT, DEFAULT_READ_TIMEOUT, DEFAULT_NAME, null);
+    }
+
+    public <T> T createClient(HostAndPort address, Class<T> type, Duration connectTimeout, Duration readTimeout, String clientName, HostAndPort socksProxy)
+            throws TTransportException
+    {
+        ThriftClientMetadata clientMetadata = clientMetadataCache.getUnchecked(new TypeAndName(type, clientName));
+
+        TNiftyClientTransport transport;
+        try {
+            transport = niftyClient.connectSync(new InetSocketAddress(address.getHostText(), address.getPort()),
+                    (long) connectTimeout.toMillis(),
+                    (long) readTimeout.toMillis(),
+                    TimeUnit.MILLISECONDS,
+                    toSocksProxyAddress(socksProxy));
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw Throwables.propagate(e);
         }
 
-        TNiftyClientTransport transport = niftyClient.connectSync(new InetSocketAddress(address.getHostText(), address.getPort()));
         try {
-            String clientDescription = thriftServiceMetadata.getName() + " " + address;
+
+            String clientDescription = clientMetadata.getName() + " " + address;
 
             ThriftInvocationHandler handler = new ThriftInvocationHandler(
                     clientDescription,
                     transport,
-                    methods.build());
+                    clientMetadata.getMethodHandlers());
 
             return (T) Proxy.newProxyInstance(
                     type.getClassLoader(),
@@ -86,41 +122,94 @@ public class ThriftClientManager implements Closeable
         }
     }
 
-    public <T> T createClient(TTransport transport, Class<T> type)
+    private InetSocketAddress toSocksProxyAddress(HostAndPort socksProxy)
+    {
+        if (socksProxy == null) {
+            return null;
+        }
+        return new InetSocketAddress(socksProxy.getHostText(), socksProxy.getPortOrDefault(SOCKS_DEFAULT_PORT));
+    }
+
+    public <T> T createClient(TTransport transport, Class<T> type, Duration connectTimeout, Duration readTimeout, String clientName)
             throws TTransportException
     {
-        // build method index
-        ThriftServiceMetadata thriftServiceMetadata = new ThriftServiceMetadata(type, codecManager.getCatalog());
-        ImmutableMap.Builder<Method, ThriftMethodHandler> methods = ImmutableMap.builder();
-        for (ThriftMethodMetadata methodMetadata : thriftServiceMetadata.getMethods().values()) {
-            ThriftMethodHandler methodHandler = new ThriftMethodHandler(methodMetadata, codecManager);
-            methods.put(methodMetadata.getMethod(), methodHandler);
-        }
+        return createClient(transport, type, DEFAULT_NAME);
+    }
 
-        try {
-            String clientDescription = thriftServiceMetadata.getName() + " " + transport.toString();
+    public <T> T createClient(TTransport transport, Class<T> type, String name)
+            throws TTransportException
+    {
+        ThriftClientMetadata clientMetadata = clientMetadataCache.getUnchecked(new TypeAndName(type, name));
 
-            ThriftInvocationHandler handler = new ThriftInvocationHandler(
-                    clientDescription,
-                    transport,
-                    methods.build());
+        String clientDescription = clientMetadata.getName() + " " + transport.toString();
 
-            return (T) Proxy.newProxyInstance(
-                    type.getClassLoader(),
-                    new Class<?>[]{type, Closeable.class},
-                    handler
-            );
-        }
-        catch (RuntimeException | Error e) {
-            transport.close();
-            throw e;
-        }
+        ThriftInvocationHandler handler = new ThriftInvocationHandler(
+                clientDescription,
+                transport,
+                clientMetadata.getMethodHandlers());
+
+        return (T) Proxy.newProxyInstance(
+                type.getClassLoader(),
+                new Class<?>[]{type, Closeable.class},
+                handler
+        );
+    }
+
+    public ThriftClientMetadata getClientMetadata(Class<?> type, String name)
+    {
+        return clientMetadataCache.getUnchecked(new TypeAndName(type, name));
     }
 
     @PreDestroy
     public void close()
     {
-        niftyClient.shutdown();
+        niftyClient.close();
+    }
+
+    @Immutable
+    public static class ThriftClientMetadata
+    {
+        private final String clientType;
+        private final String clientName;
+        private final ThriftServiceMetadata thriftServiceMetadata;
+        private final Map<Method, ThriftMethodHandler> methodHandlers;
+
+        private ThriftClientMetadata(Class<?> clientType, String clientName, ThriftCodecManager codecManager)
+        {
+            Preconditions.checkNotNull(clientType, "clientType is null");
+            Preconditions.checkNotNull(clientName, "clientName is null");
+            Preconditions.checkNotNull(codecManager, "codecManager is null");
+
+            this.clientName = clientName;
+            thriftServiceMetadata = new ThriftServiceMetadata(clientType, codecManager.getCatalog());
+            this.clientType = thriftServiceMetadata.getName();
+            ImmutableMap.Builder<Method, ThriftMethodHandler> methods = ImmutableMap.builder();
+            for (ThriftMethodMetadata methodMetadata : thriftServiceMetadata.getMethods().values()) {
+                ThriftMethodHandler methodHandler = new ThriftMethodHandler(methodMetadata, codecManager);
+                methods.put(methodMetadata.getMethod(), methodHandler);
+            }
+            methodHandlers = methods.build();
+        }
+
+        public String getClientType()
+        {
+            return clientType;
+        }
+
+        public String getClientName()
+        {
+            return clientName;
+        }
+
+        public String getName()
+        {
+            return thriftServiceMetadata.getName();
+        }
+
+        public Map<Method, ThriftMethodHandler> getMethodHandlers()
+        {
+            return methodHandlers;
+        }
     }
 
     private static class ThriftInvocationHandler implements InvocationHandler
@@ -178,6 +267,72 @@ public class ThriftClientManager implements Closeable
                 throw new TApplicationException(UNKNOWN_METHOD, "Unknown method : '" + method + "'");
             }
             return methodHandler.invoke(in, out, args);
+        }
+    }
+
+    @Immutable
+    private static class TypeAndName
+    {
+        private final Class<?> type;
+        private final String name;
+
+        public TypeAndName(Class<?> type, String name)
+        {
+            Preconditions.checkNotNull(type, "type is null");
+            Preconditions.checkNotNull(name, "name is null");
+            this.type = type;
+            this.name = name;
+        }
+
+        public Class<?> getType()
+        {
+            return type;
+        }
+
+        public String getName()
+        {
+            return name;
+        }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            TypeAndName that = (TypeAndName) o;
+
+            if (!name.equals(that.name)) {
+                return false;
+            }
+            if (!type.equals(that.type)) {
+                return false;
+            }
+
+            return true;
+        }
+
+        @Override
+        public int hashCode()
+        {
+            int result = type.hashCode();
+            result = 31 * result + name.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString()
+        {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("TypeAndName");
+            sb.append("{type=").append(type);
+            sb.append(", name='").append(name).append('\'');
+            sb.append('}');
+            return sb.toString();
         }
     }
 }

@@ -39,7 +39,9 @@ import com.google.inject.Stage;
 import com.google.inject.TypeLiteral;
 import io.airlift.configuration.ConfigurationFactory;
 import io.airlift.configuration.ConfigurationModule;
+import io.airlift.jmx.JmxModule;
 import org.testng.annotations.Test;
+import org.weakref.jmx.guice.MBeanModule;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
@@ -73,6 +75,8 @@ public class TestThriftClientAndServerModules
                 new ThriftCodecModule(),
                 new ThriftClientModule(),
                 new ThriftServerModule(),
+                new JmxModule(),
+                new MBeanModule(),
                 new Module()
                 {
                     @Override

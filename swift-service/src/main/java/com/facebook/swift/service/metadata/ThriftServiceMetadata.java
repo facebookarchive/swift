@@ -39,18 +39,10 @@ public class ThriftServiceMetadata
     public ThriftServiceMetadata(Class<?> serviceClass, ThriftCatalog catalog)
     {
         Preconditions.checkNotNull(serviceClass, "serviceClass is null");
-        Set<ThriftService> serviceAnnotations = getAllClassAnnotations(serviceClass, ThriftService.class);
-        Preconditions.checkArgument(!serviceAnnotations.isEmpty(), "Service class %s is not annotated with @ThriftService", serviceClass.getName());
-        Preconditions.checkArgument(serviceAnnotations.size() == 1,
-                "Service class %s is has multiple conflicting @ThriftService annotations: %s",
-                serviceClass.getName(),
-                serviceAnnotations
-        );
-
-        ThriftService thriftService = Iterables.getOnlyElement(serviceAnnotations);
+        ThriftService thriftService = getThriftServiceAnnotation(serviceClass);
 
         if (thriftService.value().length() == 0) {
-            name = serviceClass.getName();
+            name = serviceClass.getSimpleName();
         }
         else {
             name = thriftService.value();
@@ -90,5 +82,18 @@ public class ThriftServiceMetadata
     public Map<String, ThriftMethodMetadata> getMethods()
     {
         return methods;
+    }
+
+    public static ThriftService getThriftServiceAnnotation(Class<?> serviceClass)
+    {
+        Set<ThriftService> serviceAnnotations = getAllClassAnnotations(serviceClass, ThriftService.class);
+        Preconditions.checkArgument(!serviceAnnotations.isEmpty(), "Service class %s is not annotated with @ThriftService", serviceClass.getName());
+        Preconditions.checkArgument(serviceAnnotations.size() == 1,
+                "Service class %s has multiple conflicting @ThriftService annotations: %s",
+                serviceClass.getName(),
+                serviceAnnotations
+        );
+
+        return Iterables.getOnlyElement(serviceAnnotations);
     }
 }
