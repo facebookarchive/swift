@@ -23,7 +23,18 @@
             <name>Jax Law</name>
             <email>jaxlaw@fb.com</email>
         </developer>
+        <developer>
+            <id>andrewcox</id>
+            <name>Andrew Cox</name>
+            <email>andrewcox@fb.com</email>
+        </developer>
     </developers>
+
+    <scm>
+        <connection>scm:git:git@github.com:$(user.name}/nifty.git</connection>
+        <developerConnection>scm:git:git@github.com:$(user.name}/nifty.git</developerConnection>
+        <url>https://github.com/facebook/nifty</url>
+    </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
