@@ -18,13 +18,14 @@ package com.facebook.swift.service;
 import com.facebook.nifty.core.NettyConfigBuilder;
 import com.facebook.nifty.core.NettyServerTransport;
 import com.facebook.nifty.core.ThriftServerDef;
-import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.TProcessorFactory;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
+import org.weakref.jmx.Managed;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -35,17 +36,26 @@ import java.net.ServerSocket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.Executors.newCachedThreadPool;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 
 public class ThriftServer implements Closeable
 {
+    private enum State {
+        NOT_STARTED,
+        RUNNING,
+        CLOSED,
+    }
+
     private final NettyServerTransport transport;
-    private final int acceptorThreads;
     private final int workerThreads;
     private final int port;
 
-    private ExecutorService bossExecutor;
-    private ExecutorService workerExecutor;
+    private final ExecutorService acceptorExecutor;
+    private final ExecutorService ioExecutor;
+    private final ExecutorService workerExecutor;
+
+    private State state = State.NOT_STARTED;
 
     public ThriftServer(TProcessor processor)
     {
@@ -59,6 +69,12 @@ public class ThriftServer implements Closeable
 
         port = getSpecifiedOrRandomPort(config);
 
+        workerThreads = config.getWorkerThreads();
+
+        workerExecutor = newFixedThreadPool(workerThreads, new ThreadFactoryBuilder().setNameFormat("thrift-worker-%s").build());
+        acceptorExecutor = newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("thrift-acceptor-%s").build());
+        ioExecutor = newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("thrift-io-%s").build());
+
         ThriftServerDef thriftServerDef = new ThriftServerDef(
                 "thrift",
                 port,
@@ -67,11 +83,9 @@ public class ThriftServer implements Closeable
                 new TBinaryProtocol.Factory(),
                 new TBinaryProtocol.Factory(),
                 false,
-                MoreExecutors.sameThreadExecutor()
+                workerExecutor
         );
 
-        acceptorThreads = config.getAcceptorThreads();
-        workerThreads = config.getWorkerThreads();
         transport = new NettyServerTransport(thriftServerDef, new NettyConfigBuilder(), new DefaultChannelGroup());
     }
 
@@ -89,42 +103,66 @@ public class ThriftServer implements Closeable
         }
     }
 
+    @Managed
     public int getPort()
     {
         return port;
     }
 
-    @PostConstruct
-    public ThriftServer start()
+    @Managed
+    public int getWorkerThreads()
     {
-        bossExecutor = newFixedThreadPool(acceptorThreads, new ThreadFactoryBuilder().setNameFormat("thrift-acceptor-%s").build());
-        workerExecutor = newFixedThreadPool(workerThreads, new ThreadFactoryBuilder().setNameFormat("thrift-worker-%s").build());
-        transport.start(bossExecutor, workerExecutor);
+        return workerThreads;
+    }
+
+    public synchronized boolean isRunning() {
+        return state == State.RUNNING;
+    }
+
+    @PostConstruct
+    public synchronized ThriftServer start()
+    {
+        Preconditions.checkState(state != State.CLOSED, "Thrift server is closed");
+        if (state == State.NOT_STARTED) {
+            transport.start(acceptorExecutor, ioExecutor);
+            state = State.RUNNING;
+        }
         return this;
     }
 
     @PreDestroy
     @Override
-    public void close()
+    public synchronized void close()
     {
-        try {
-            transport.stop();
+        if (state == State.CLOSED) {
+            return;
         }
-        catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+
+        if (state == State.RUNNING) {
+            try {
+                transport.stop();
+            }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
 
         // stop bosses
-        if (bossExecutor != null) {
-            shutdownExecutor(bossExecutor);
-            bossExecutor = null;
+        if (acceptorExecutor != null) {
+            shutdownExecutor(acceptorExecutor);
+        }
+
+        // stop worker
+        if (workerExecutor != null) {
+            shutdownExecutor(workerExecutor);
         }
 
         // finally the reader writer
-        if (workerExecutor != null) {
-            shutdownExecutor(workerExecutor);
-            workerExecutor = null;
+        if (ioExecutor != null) {
+            shutdownExecutor(ioExecutor);
         }
+
+        state = State.CLOSED;
     }
 
     private static void shutdownExecutor(ExecutorService executor)
