@@ -1,12 +1,9 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-                      http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.facebook.nifty</groupId>
     <artifactId>nifty-parent</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.2-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -23,7 +20,18 @@
             <name>Jax Law</name>
             <email>jaxlaw@fb.com</email>
         </developer>
+        <developer>
+            <id>andrewcox</id>
+            <name>Andrew Cox</name>
+            <email>andrewcox@fb.com</email>
+        </developer>
     </developers>
+
+    <scm>
+        <connection>scm:git:git@github.com:$(user.name}/nifty.git</connection>
+        <developerConnection>scm:git:git@github.com:$(user.name}/nifty.git</developerConnection>
+        <url>https://github.com/facebook/nifty</url>
+    </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
