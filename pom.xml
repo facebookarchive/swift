@@ -305,10 +305,14 @@
                     <version>1.9.0</version>
                     <configuration>
                         <header>license-header.txt</header>
+                        <strictCheck>true</strictCheck>
+                        <useDefaultExcludes>true</useDefaultExcludes>
                         <excludes>
                             <exclude>**/*.md</exclude>
                             <exclude>.*/**</exclude>
                             <exclude>license.txt</exclude>
+                            <exclude>**/*.thrift</exclude>
+                            <exclude>**/*.g</exclude>
                         </excludes>
                     </configuration>
                 </plugin>
