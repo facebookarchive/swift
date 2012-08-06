@@ -16,6 +16,7 @@
 
     <modules>
         <module>swift-codec</module>
+        <module>swift-idl-parser</module>
         <module>swift-service</module>
     </modules>
 
