@@ -50,6 +50,7 @@ public class ThriftServer implements Closeable
     private final NettyServerTransport transport;
     private final int workerThreads;
     private final int port;
+    private final DefaultChannelGroup allChannels = new DefaultChannelGroup();
 
     private final ExecutorService acceptorExecutor;
     private final ExecutorService ioExecutor;
@@ -86,7 +87,7 @@ public class ThriftServer implements Closeable
                 workerExecutor
         );
 
-        transport = new NettyServerTransport(thriftServerDef, new NettyConfigBuilder(), new DefaultChannelGroup());
+        transport = new NettyServerTransport(thriftServerDef, new NettyConfigBuilder(), allChannels);
     }
 
     private int getSpecifiedOrRandomPort(ThriftServerConfig config)
@@ -156,6 +157,9 @@ public class ThriftServer implements Closeable
         if (workerExecutor != null) {
             shutdownExecutor(workerExecutor);
         }
+
+        // TODO: allow an option here to control if we need to drain connections and wait instead of killing them all
+        allChannels.close();
 
         // finally the reader writer
         if (ioExecutor != null) {
