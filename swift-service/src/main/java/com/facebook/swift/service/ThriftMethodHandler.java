@@ -48,6 +48,7 @@ public class ThriftMethodHandler
     private final List<ParameterHandler> parameterCodecs;
     private final ThriftCodec<Object> successCodec;
     private final Map<Short, ThriftCodec<Object>> exceptionCodecs;
+    private final boolean oneway;
 
     private final ThriftMethodStats stats = new ThriftMethodStats();
 
@@ -56,6 +57,8 @@ public class ThriftMethodHandler
     public ThriftMethodHandler(ThriftMethodMetadata methodMetadata, ThriftCodecManager codecManager)
     {
         name = methodMetadata.getName();
+
+        oneway = methodMetadata.getOneway();
 
         // get the thrift codecs for the parameters
         ParameterHandler[] parameters = new ParameterHandler[methodMetadata.getParameters().size()];
@@ -101,14 +104,19 @@ public class ThriftMethodHandler
         long start = System.nanoTime();
 
         try {
+            Object results = null;
+
             // write request
             int sequenceId = writeArguments(out, args);
 
-            // wait for response message
-            waitForResponse(in, out, sequenceId);
+            if (!this.oneway) {
+                // wait for response message
+                waitForResponse(in, out, sequenceId);
 
-            // read results
-            Object results = readResponse(out);
+                // read results
+                results = readResponse(out);
+            }
+
             stats.addSuccessTime(nanosSince(start));
             return results;
         }
@@ -150,8 +158,13 @@ public class ThriftMethodHandler
         if (exception != null) {
             throw exception;
         }
+
+        if (successCodec.getType() == ThriftType.VOID) {
+            // TODO: check for non-null return from a void function?
+            return null;
+        }
+
         if (results == null) {
-            // todo how is void handled?
             throw new TApplicationException(TApplicationException.MISSING_RESULT, name + " failed: unknown result");
         }
         return results;
