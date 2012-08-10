@@ -43,6 +43,7 @@ import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_CONNECT_TIMEOUT;
 import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_READ_TIMEOUT;
@@ -86,8 +87,6 @@ public class ThriftClientManager implements Closeable
     public <T> T createClient(HostAndPort address, Class<T> type, Duration connectTimeout, Duration readTimeout, String clientName, HostAndPort socksProxy)
             throws TTransportException
     {
-        ThriftClientMetadata clientMetadata = clientMetadataCache.getUnchecked(new TypeAndName(type, clientName));
-
         TNiftyClientTransport transport;
         try {
             transport = niftyClient.connectSync(new InetSocketAddress(address.getHostText(), address.getPort()),
@@ -102,19 +101,7 @@ public class ThriftClientManager implements Closeable
         }
 
         try {
-
-            String clientDescription = clientMetadata.getName() + " " + address;
-
-            ThriftInvocationHandler handler = new ThriftInvocationHandler(
-                    clientDescription,
-                    transport,
-                    clientMetadata.getMethodHandlers());
-
-            return (T) Proxy.newProxyInstance(
-                    type.getClassLoader(),
-                    new Class<?>[]{type, Closeable.class},
-                    handler
-            );
+            return createClient(transport, type, address.toString());
         }
         catch (RuntimeException | Error e) {
             transport.close();
@@ -136,6 +123,7 @@ public class ThriftClientManager implements Closeable
         return createClient(transport, type, DEFAULT_NAME);
     }
 
+    @SuppressWarnings("unchecked")
     public <T> T createClient(TTransport transport, Class<T> type, String name)
             throws TTransportException
     {
@@ -220,6 +208,7 @@ public class ThriftClientManager implements Closeable
         private final TProtocol in;
         private final TProtocol out;
         private final Map<Method, ThriftMethodHandler> methods;
+        private final AtomicInteger sequenceId = new AtomicInteger(1);
 
         private ThriftInvocationHandler(
                 String clientDescription,
@@ -266,7 +255,7 @@ public class ThriftClientManager implements Closeable
             if (methodHandler == null) {
                 throw new TApplicationException(UNKNOWN_METHOD, "Unknown method : '" + method + "'");
             }
-            return methodHandler.invoke(in, out, args);
+            return methodHandler.invoke(in, out, sequenceId.getAndIncrement(), args);
         }
     }
 
