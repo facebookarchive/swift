@@ -48,6 +48,7 @@ public class ThriftMethodProcessor
     private final Object service;
     private final Method method;
     private final String resultStructName;
+    private final boolean oneway;
     private final Map<Short, ThriftCodec<?>> parameterCodecs;
     private final ThriftCodec<Object> successCodec;
     private final Map<Class<?>, ExceptionProcessor> exceptionCodecs;
@@ -66,6 +67,7 @@ public class ThriftMethodProcessor
         resultStructName = name + "_result";
 
         method = methodMetadata.getMethod();
+        oneway = methodMetadata.getOneway();
 
         ImmutableMap.Builder<Short, ThriftCodec<?>> builder = ImmutableMap.builder();
         for (ThriftFieldMetadata fieldMetadata : methodMetadata.getParameters()) {
@@ -126,29 +128,33 @@ public class ThriftMethodProcessor
             stats.addSuccessTime(nanosSince(start));
         }
         catch (Exception e) {
-            ExceptionProcessor exceptionCodec = exceptionCodecs.get(e.getClass());
-            if (exceptionCodec != null) {
-                // write expected exception response
-                writeResponse(out,
-                              sequenceId,
-                              TMessageType.REPLY,
-                              "exception",
-                              exceptionCodec.getId(),
-                              exceptionCodec.getCodec(),
-                              e);
-                stats.addErrorTime(nanosSince(start));
-            } else {
-                // unexpected exception
-                TApplicationException applicationException = new TApplicationException(INTERNAL_ERROR, "Internal error processing " + method.getName());
-                applicationException.initCause(e);
+            if (!oneway) {
+                ExceptionProcessor exceptionCodec = exceptionCodecs.get(e.getClass());
+                if (exceptionCodec != null) {
+                    // write expected exception response
+                    writeResponse(out,
+                                  sequenceId,
+                                  TMessageType.REPLY,
+                                  "exception",
+                                  exceptionCodec.getId(),
+                                  exceptionCodec.getCodec(),
+                                  e);
+                    stats.addErrorTime(nanosSince(start));
+                } else {
+                    // unexpected exception
+                    TApplicationException applicationException =
+                      new TApplicationException(INTERNAL_ERROR,
+                                                "Internal error processing " + method.getName());
+                    applicationException.initCause(e);
 
-                // Application exceptions are sent to client, and the connection can be reused
-                out.writeMessageBegin(new TMessage(name, TMessageType.EXCEPTION, sequenceId));
-                applicationException.write(out);
-                out.writeMessageEnd();
-                out.getTransport().flush();
+                    // Application exceptions are sent to client, and the connection can be reused
+                    out.writeMessageBegin(new TMessage(name, TMessageType.EXCEPTION, sequenceId));
+                    applicationException.write(out);
+                    out.writeMessageEnd();
+                    out.getTransport().flush();
 
-                stats.addErrorTime(nanosSince(start));
+                    stats.addErrorTime(nanosSince(start));
+                }
             }
         }
     }

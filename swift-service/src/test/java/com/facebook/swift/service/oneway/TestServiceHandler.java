@@ -13,26 +13,23 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package com.facebook.swift.service;
+package com.facebook.swift.service.oneway;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import org.apache.thrift.TException;
 
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+public class TestServiceHandler implements TestService {
+    @Override
+    public void verifyConnectionState() throws TException {
+        // do nothing, used only to verify two-way communication still works
+    }
 
-/**
- * Marks a method to be exported in a Thrift service.
- */
-@Documented
-@Retention(RUNTIME)
-@Target(METHOD)
-public @interface ThriftMethod
-{
-    String value() default "";
+    @Override
+    public void onewayMethod() throws TException {
+        return;
+    }
 
-    boolean oneway() default false;
-
-    ThriftException[] exception() default {};
+    @Override
+    public void onewayThrow() throws TException, OneWayException {
+        throw new OneWayException();
+    }
 }
