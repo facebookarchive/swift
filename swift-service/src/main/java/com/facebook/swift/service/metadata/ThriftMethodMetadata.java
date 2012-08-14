@@ -47,6 +47,7 @@ public class ThriftMethodMetadata
     private final List<ThriftFieldMetadata> parameters;
     private final Method method;
     private final ImmutableMap<Short, ThriftType> exceptions;
+    private final boolean oneway;
 
     public ThriftMethodMetadata(Method method, ThriftCatalog catalog)
     {
@@ -114,6 +115,8 @@ public class ThriftMethodMetadata
         parameters = builder.build();
 
         exceptions = buildExceptionMap(catalog, thriftMethod);
+
+        this.oneway = thriftMethod.oneway();
     }
 
     public String getName()
@@ -144,6 +147,10 @@ public class ThriftMethodMetadata
     public Method getMethod()
     {
         return method;
+    }
+
+    public boolean getOneway() {
+        return oneway;
     }
 
     private ImmutableMap<Short, ThriftType> buildExceptionMap(ThriftCatalog catalog,

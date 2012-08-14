@@ -13,26 +13,9 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package com.facebook.swift.service;
+package com.facebook.swift.service.oneway;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
-
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
-/**
- * Marks a method to be exported in a Thrift service.
- */
-@Documented
-@Retention(RUNTIME)
-@Target(METHOD)
-public @interface ThriftMethod
-{
-    String value() default "";
-
-    boolean oneway() default false;
-
-    ThriftException[] exception() default {};
+public interface TestServiceClient extends TestService, AutoCloseable {
+    @Override
+    public void close();
 }
