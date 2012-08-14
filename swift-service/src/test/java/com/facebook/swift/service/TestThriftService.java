@@ -128,7 +128,7 @@ public class TestThriftService
     public class ConflictingLogService
     {
         @ThriftMethod
-        public void Log(List<String> messages)
+        public void Log(List<String> messages) throws TException
         {
         }
     }

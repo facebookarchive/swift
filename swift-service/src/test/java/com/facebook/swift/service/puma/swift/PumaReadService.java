@@ -15,8 +15,10 @@
  */
 package com.facebook.swift.service.puma.swift;
 
+import com.facebook.swift.service.ThriftException;
 import com.facebook.swift.service.ThriftMethod;
 import com.facebook.swift.service.ThriftService;
+import org.apache.thrift.TException;
 
 import java.io.Closeable;
 import java.util.List;
@@ -26,25 +28,25 @@ public interface PumaReadService extends Closeable
 {
     @ThriftMethod
     List<ReadResultQueryInfo> getResult(List<ReadQueryInfoTimeString> reader)
-            throws ReadSemanticException;
+            throws TException, ReadSemanticException;
 
     @ThriftMethod
     List<ReadResultQueryInfoTimeString> getResultTimeString(List<ReadQueryInfoTimeString> reader)
-            throws ReadSemanticException;
+            throws TException, ReadSemanticException;
 
     @ThriftMethod
     List<ReadResultQueryInfo> mergeQueryAggregation(
             MergeAggregationQueryInfo mergeAggregationQueryInfo
     )
-            throws ReadSemanticException;
+            throws TException, ReadSemanticException;
 
     @ThriftMethod
     long latestQueryableTime(String category, String appName, List<Integer> bucketNumbers)
-            throws ReadSemanticException;
+            throws TException, ReadSemanticException;
 
     @ThriftMethod
     List<Long> latestQueryableTimes(String category, String appName, List<Integer> bucketNumbers)
-            throws ReadSemanticException;
+            throws TException, ReadSemanticException;
 
     @Override
     void close();

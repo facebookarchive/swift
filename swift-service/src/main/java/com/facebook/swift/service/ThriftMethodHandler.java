@@ -112,6 +112,7 @@ public class ThriftMethodHandler
 
             // read results
             Object results = readResponse(in);
+
             stats.addSuccessTime(nanosSince(start));
             return results;
         }
