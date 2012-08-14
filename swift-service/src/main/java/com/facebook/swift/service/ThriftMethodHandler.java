@@ -105,10 +105,11 @@ public class ThriftMethodHandler
             int sequenceId = writeArguments(out, args);
 
             // wait for response message
-            waitForResponse(in, out, sequenceId);
+            waitForResponse(in, sequenceId);
 
             // read results
-            Object results = readResponse(out);
+            Object results = readResponse(in);
+
             stats.addSuccessTime(nanosSince(start));
             return results;
         }
@@ -183,12 +184,12 @@ public class ThriftMethodHandler
         return sequenceId;
     }
 
-    private void waitForResponse(TProtocol in, TProtocol out, int sequenceId)
+    private void waitForResponse(TProtocol in, int sequenceId)
             throws TException
     {
         long start = System.nanoTime();
 
-        TMessage message = out.readMessageBegin();
+        TMessage message = in.readMessageBegin();
         if (message.type == EXCEPTION) {
             TApplicationException exception = TApplicationException.read(in);
             in.readMessageEnd();
