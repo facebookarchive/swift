@@ -27,6 +27,7 @@ import com.facebook.swift.service.ThriftMethod;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import org.apache.thrift.TException;
 
 import javax.annotation.concurrent.Immutable;
 import java.lang.annotation.Annotation;
@@ -46,6 +47,7 @@ public class ThriftMethodMetadata
     private final List<ThriftFieldMetadata> parameters;
     private final Method method;
     private final ImmutableMap<Short, ThriftType> exceptions;
+    private final boolean oneway;
 
     public ThriftMethodMetadata(Method method, ThriftCatalog catalog)
     {
@@ -112,19 +114,9 @@ public class ThriftMethodMetadata
         }
         parameters = builder.build();
 
-        ImmutableMap.Builder<Short, ThriftType> exceptions = ImmutableMap.builder();
-        if (thriftMethod.exception().length > 0) {
-            for (ThriftException thriftException : thriftMethod.exception()) {
-                exceptions.put(thriftException.id(), catalog.getThriftType(thriftException.type()));
-            }
-        }
-        else if (method.getExceptionTypes().length == 1) {
-            Class<?> exceptionClass = method.getExceptionTypes()[0];
-            if (exceptionClass.isAnnotationPresent(ThriftStruct.class)) {
-                exceptions.put((short) 1, catalog.getThriftType(exceptionClass));
-            }
-        }
-        this.exceptions = exceptions.build();
+        exceptions = buildExceptionMap(catalog, thriftMethod);
+
+        this.oneway = thriftMethod.oneway();
     }
 
     public String getName()
@@ -155,5 +147,45 @@ public class ThriftMethodMetadata
     public Method getMethod()
     {
         return method;
+    }
+
+    public boolean getOneway() {
+        return oneway;
+    }
+
+    private ImmutableMap<Short, ThriftType> buildExceptionMap(ThriftCatalog catalog,
+                                                              ThriftMethod thriftMethod) {
+        ImmutableMap.Builder<Short, ThriftType> exceptions = ImmutableMap.builder();
+
+        Preconditions.checkArgument(throwsTException(method),
+                                    "Thrift method %s must declare TException as throwable",
+                                    method.toGenericString());
+
+        if (thriftMethod.exception().length > 0) {
+            for (ThriftException thriftException : thriftMethod.exception()) {
+                exceptions.put(thriftException.id(), catalog.getThriftType(thriftException.type()));
+            }
+        } else if (method.getExceptionTypes().length == 2) {
+            // Catch the case where the method declares exactly TWO thrown types: one must
+            // be the generic TException or an ancestor, so if the other is annotated as a
+            // @ThriftStruct then we infer a thrift declaration for that remaining exception
+            // type
+            for (Class<?> exceptionClass : method.getExceptionTypes()) {
+                if (exceptionClass.isAnnotationPresent(ThriftStruct.class)) {
+                    exceptions.put((short) 1, catalog.getThriftType(exceptionClass));
+                }
+            }
+        }
+
+        return exceptions.build();
+    }
+
+    private static boolean throwsTException(Method method) {
+        for (Class<?> exceptionClass : method.getExceptionTypes()) {
+            if (exceptionClass.isAssignableFrom(TException.class)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

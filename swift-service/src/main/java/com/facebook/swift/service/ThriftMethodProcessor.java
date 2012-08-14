@@ -48,6 +48,7 @@ public class ThriftMethodProcessor
     private final Object service;
     private final Method method;
     private final String resultStructName;
+    private final boolean oneway;
     private final Map<Short, ThriftCodec<?>> parameterCodecs;
     private final ThriftCodec<Object> successCodec;
     private final Map<Class<?>, ExceptionProcessor> exceptionCodecs;
@@ -66,6 +67,7 @@ public class ThriftMethodProcessor
         resultStructName = name + "_result";
 
         method = methodMetadata.getMethod();
+        oneway = methodMetadata.getOneway();
 
         ImmutableMap.Builder<Short, ThriftCodec<?>> builder = ImmutableMap.builder();
         for (ThriftFieldMetadata fieldMetadata : methodMetadata.getParameters()) {
@@ -113,24 +115,46 @@ public class ThriftMethodProcessor
         Object result;
         try {
             result = invokeMethod(args);
+
             // write success reply
-            writeResponse(out, sequenceId, "success", 0, successCodec, result);
+            writeResponse(out,
+                          sequenceId,
+                          TMessageType.REPLY,
+                          "success",
+                          (short) 0,
+                          successCodec,
+                          result);
 
             stats.addSuccessTime(nanosSince(start));
         }
         catch (Exception e) {
-            ExceptionProcessor exceptionCodec = exceptionCodecs.get(e.getClass());
-            if (exceptionCodec != null) {
-                // write application exception response
-                writeResponse(out, sequenceId, "exception", exceptionCodec.getId(), exceptionCodec.getCodec(), e);
-                stats.addErrorTime(nanosSince(start));
-            }
-            else {
-                // unexpected exception
-                TApplicationException applicationException = new TApplicationException(INTERNAL_ERROR, "Internal error processing " + method.getName());
-                applicationException.initCause(e);
-                stats.addErrorTime(nanosSince(start));
-                throw applicationException;
+            if (!oneway) {
+                ExceptionProcessor exceptionCodec = exceptionCodecs.get(e.getClass());
+                if (exceptionCodec != null) {
+                    // write expected exception response
+                    writeResponse(out,
+                                  sequenceId,
+                                  TMessageType.REPLY,
+                                  "exception",
+                                  exceptionCodec.getId(),
+                                  exceptionCodec.getCodec(),
+                                  e);
+                    stats.addErrorTime(nanosSince(start));
+                } else {
+                    // unexpected exception
+                    TApplicationException applicationException =
+                      new TApplicationException(INTERNAL_ERROR,
+                                                "Internal error processing " + method.getName());
+                    applicationException.initCause(e);
+
+                    // Application exceptions are sent to client, and the connection can be reused
+                    out.writeMessageBegin(new TMessage(name, TMessageType.EXCEPTION, sequenceId));
+                    applicationException.write(out);
+                    out.writeMessageEnd();
+                    out.getTransport().flush();
+
+                    stats.addErrorTime(nanosSince(start));
+                }
             }
         }
     }
@@ -195,12 +219,16 @@ public class ThriftMethodProcessor
         }
     }
 
-    private <T> void writeResponse(TProtocol out, int sequenceId, String responseFieldName, int responseFieldId, ThriftCodec<T> responseCodec, T result)
-            throws Exception
-    {
+    private <T> void writeResponse(TProtocol out,
+                                   int sequenceId,
+                                   byte responseType,
+                                   String responseFieldName,
+                                   short responseFieldId,
+                                   ThriftCodec<T> responseCodec,
+                                   T result) throws Exception {
         long start = System.nanoTime();
 
-        out.writeMessageBegin(new TMessage(name, TMessageType.REPLY, sequenceId));
+        out.writeMessageBegin(new TMessage(name, responseType, sequenceId));
 
         TProtocolWriter writer = new TProtocolWriter(out);
         writer.writeStructBegin(resultStructName);

@@ -32,5 +32,7 @@ public @interface ThriftMethod
 {
     String value() default "";
 
+    boolean oneway() default false;
+
     ThriftException[] exception() default {};
 }
