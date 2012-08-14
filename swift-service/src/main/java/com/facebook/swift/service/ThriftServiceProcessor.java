@@ -110,14 +110,6 @@ public class ThriftServiceProcessor implements TProcessor
 
             return true;
         }
-        catch (TApplicationException e) {
-            // Application exceptions are sent to client, and the connection can be reused
-            out.writeMessageBegin(new TMessage(methodName, TMessageType.EXCEPTION, sequenceId));
-            e.write(out);
-            out.writeMessageEnd();
-            out.getTransport().flush();
-            return true;
-        }
         catch (Exception e) {
             // Other exceptions are not recoverable. The input or output streams may be corrupt.
             Throwables.propagateIfInstanceOf(e, TException.class);

@@ -13,19 +13,23 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package com.facebook.swift.service;
+package com.facebook.swift.service.oneway;
 
 import org.apache.thrift.TException;
 
-import java.io.Closeable;
-import java.util.List;
-
-@ThriftService("scribe")
-public interface Scribe extends Closeable
-{
-    @ThriftMethod("Log")
-    ResultCode log(List<LogEntry> messages) throws TException;
+public class TestServiceHandler implements TestService {
+    @Override
+    public void verifyConnectionState() throws TException {
+        // do nothing, used only to verify two-way communication still works
+    }
 
     @Override
-    void close();
+    public void onewayMethod() throws TException {
+        return;
+    }
+
+    @Override
+    public void onewayThrow() throws TException, OneWayException {
+        throw new OneWayException();
+    }
 }

@@ -13,19 +13,10 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package com.facebook.swift.service;
+package com.facebook.swift.service.exceptions;
 
-import org.apache.thrift.TException;
+import com.facebook.swift.codec.ThriftStruct;
 
-import java.io.Closeable;
-import java.util.List;
-
-@ThriftService("scribe")
-public interface Scribe extends Closeable
-{
-    @ThriftMethod("Log")
-    ResultCode log(List<LogEntry> messages) throws TException;
-
-    @Override
-    void close();
+@ThriftStruct
+public class ThriftUncheckedException extends RuntimeException {
 }
