@@ -40,6 +40,7 @@ import static io.airlift.units.Duration.nanosSince;
 import static org.apache.thrift.TApplicationException.BAD_SEQUENCE_ID;
 import static org.apache.thrift.protocol.TMessageType.CALL;
 import static org.apache.thrift.protocol.TMessageType.EXCEPTION;
+import static org.apache.thrift.protocol.TMessageType.ONEWAY;
 
 @ThreadSafe
 public class ThriftMethodHandler
@@ -51,8 +52,6 @@ public class ThriftMethodHandler
     private final boolean oneway;
 
     private final ThriftMethodStats stats = new ThriftMethodStats();
-
-    private int sequenceId;
 
     public ThriftMethodHandler(ThriftMethodMetadata methodMetadata, ThriftCodecManager codecManager)
     {
@@ -178,7 +177,11 @@ public class ThriftMethodHandler
     {
         long start = System.nanoTime();
 
-        out.writeMessageBegin(new TMessage(name, CALL, sequenceId));
+        // Note that though setting message type to ONEWAY can be helpful when looking at packet
+        // captures, some clients always send CALL and so servers are forced to rely on the "oneway"
+        // attribute on thrift method in the interface definition, rather than checking the message
+        // type.
+        out.writeMessageBegin(new TMessage(name, oneway ? ONEWAY : CALL, sequenceId));
 
         // write the parameters
         TProtocolWriter writer = new TProtocolWriter(out);

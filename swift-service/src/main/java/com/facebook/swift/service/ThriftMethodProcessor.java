@@ -116,14 +116,16 @@ public class ThriftMethodProcessor
         try {
             result = invokeMethod(args);
 
-            // write success reply
-            writeResponse(out,
-                          sequenceId,
-                          TMessageType.REPLY,
-                          "success",
-                          (short) 0,
-                          successCodec,
-                          result);
+            if (!oneway) {
+                // write success reply
+                writeResponse(out,
+                              sequenceId,
+                              TMessageType.REPLY,
+                              "success",
+                              (short) 0,
+                              successCodec,
+                              result);
+            }
 
             stats.addSuccessTime(nanosSince(start));
         }
@@ -155,6 +157,8 @@ public class ThriftMethodProcessor
 
                     stats.addErrorTime(nanosSince(start));
                 }
+            } else {
+                stats.addErrorTime(nanosSince(start));
             }
         }
     }
