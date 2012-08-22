@@ -38,9 +38,12 @@ import java.util.Map;
 
 import static io.airlift.units.Duration.nanosSince;
 import static org.apache.thrift.TApplicationException.BAD_SEQUENCE_ID;
+import static org.apache.thrift.TApplicationException.INVALID_MESSAGE_TYPE;
+import static org.apache.thrift.TApplicationException.WRONG_METHOD_NAME;
 import static org.apache.thrift.protocol.TMessageType.CALL;
 import static org.apache.thrift.protocol.TMessageType.EXCEPTION;
 import static org.apache.thrift.protocol.TMessageType.ONEWAY;
+import static org.apache.thrift.protocol.TMessageType.REPLY;
 
 @ThreadSafe
 public class ThriftMethodHandler
@@ -209,6 +212,14 @@ public class ThriftMethodHandler
             TApplicationException exception = TApplicationException.read(in);
             in.readMessageEnd();
             throw exception;
+        }
+        if (message.type != REPLY) {
+            throw new TApplicationException(INVALID_MESSAGE_TYPE,
+                                            "Received invalid message type " + message.type + " from server");
+        }
+        if (!message.name.equals(this.name)) {
+            throw new TApplicationException(WRONG_METHOD_NAME,
+                                            "Wrong method name in reply: expected " + this.name + " but received " + message.name);
         }
         if (message.seqid != sequenceId) {
             throw new TApplicationException(BAD_SEQUENCE_ID, name + " failed: out of sequence response");
