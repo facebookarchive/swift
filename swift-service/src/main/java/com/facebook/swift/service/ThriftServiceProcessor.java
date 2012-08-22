@@ -37,6 +37,7 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.util.List;
 import java.util.Map;
 
+import static org.apache.thrift.TApplicationException.INVALID_MESSAGE_TYPE;
 import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
 
 /**
@@ -103,6 +104,21 @@ public class ThriftServiceProcessor implements TProcessor
             if (method == null) {
                 TProtocolUtil.skip(in, TType.STRUCT);
                 throw new TApplicationException(UNKNOWN_METHOD, "Invalid method name: '" + methodName + "'");
+            }
+
+            switch (message.type) {
+                case TMessageType.CALL:
+                case TMessageType.ONEWAY:
+                    // Ideally we'd check the message type here to make the presence/absence of
+                    // the "oneway" keyword annotating the method matches the message type.
+                    // Unfortunately most clients send both one-way and two-way messages as CALL
+                    // message type instead of using ONEWAY message type, and servers ignore the
+                    // difference.
+                    break;
+
+                default:
+                    throw new TApplicationException(INVALID_MESSAGE_TYPE,
+                                                    "Received invalid message type " + message.type + " from client");
             }
 
             // invoke method
