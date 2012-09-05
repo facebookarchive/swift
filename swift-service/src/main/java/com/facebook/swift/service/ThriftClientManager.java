@@ -29,8 +29,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import io.airlift.units.Duration;
 import org.apache.thrift.TApplicationException;
+import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.protocol.TProtocolException;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
@@ -252,10 +254,36 @@ public class ThriftClientManager implements Closeable
             }
 
             ThriftMethodHandler methodHandler = methods.get(method);
-            if (methodHandler == null) {
-                throw new TApplicationException(UNKNOWN_METHOD, "Unknown method : '" + method + "'");
+
+            try {
+                if (methodHandler == null) {
+                    throw new TApplicationException(UNKNOWN_METHOD, "Unknown method : '" + method + "'");
+                }
+                return methodHandler.invoke(in, out, sequenceId.getAndIncrement(), args);
             }
-            return methodHandler.invoke(in, out, sequenceId.getAndIncrement(), args);
+            catch (TException e) {
+                Class<? extends TException> thrownType = e.getClass();
+
+                for (Class<?> exceptionType : method.getExceptionTypes()) {
+                    if (exceptionType.isAssignableFrom(thrownType)) {
+                        throw e;
+                    }
+                }
+
+                //noinspection InstanceofCatchParameter
+                if (e instanceof TApplicationException) {
+                    throw new RuntimeTApplicationException(e.getMessage(), (TApplicationException) e);
+                }
+                //noinspection InstanceofCatchParameter
+                if (e instanceof TProtocolException) {
+                    throw new RuntimeTProtocolException(e.getMessage(), (TProtocolException) e);
+                }
+                //noinspection InstanceofCatchParameter
+                if (e instanceof TTransportException) {
+                    throw new RuntimeTTransportException(e.getMessage(), (TTransportException) e);
+                }
+                throw new RuntimeTException(e.getMessage(), e);
+            }
         }
     }
 

@@ -157,10 +157,6 @@ public class ThriftMethodMetadata
                                                               ThriftMethod thriftMethod) {
         ImmutableMap.Builder<Short, ThriftType> exceptions = ImmutableMap.builder();
 
-        Preconditions.checkArgument(throwsTException(method),
-                                    "Thrift method %s must declare TException as throwable",
-                                    method.toGenericString());
-
         if (thriftMethod.exception().length > 0) {
             for (ThriftException thriftException : thriftMethod.exception()) {
                 exceptions.put(thriftException.id(), catalog.getThriftType(thriftException.type()));
@@ -178,14 +174,5 @@ public class ThriftMethodMetadata
         }
 
         return exceptions.build();
-    }
-
-    private static boolean throwsTException(Method method) {
-        for (Class<?> exceptionClass : method.getExceptionTypes()) {
-            if (exceptionClass.isAssignableFrom(TException.class)) {
-                return true;
-            }
-        }
-        return false;
     }
 }
