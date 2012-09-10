@@ -83,6 +83,7 @@ public class TNiftyTransport extends TTransport
     public void flush()
             throws TTransportException
     {
-        channel.write(out);
+        // Flush is a no-op: NiftyDispatcher will write the response to the Channel, in order to
+        // guarantee ordering of responses when required.
     }
 }

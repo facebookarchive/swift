@@ -27,6 +27,7 @@ public class ThriftServerDef
 {
     private final int serverPort;
     private final int maxFrameSize;
+    private final int queuedResponseLimit;
     private final TProcessorFactory processorFactory;
     private final TProtocolFactory inProtocolFact;
     private final TProtocolFactory outProtocolFact;
@@ -34,12 +35,11 @@ public class ThriftServerDef
     private final Executor executor;
     private final String name;
 
-
-
     public ThriftServerDef(
             String name,
             int serverPort,
             int maxFrameSize,
+            int queuedResponseLimit,
             TProcessorFactory factory,
             TProtocolFactory inProtocolFact,
             TProtocolFactory outProtocolFact,
@@ -49,6 +49,7 @@ public class ThriftServerDef
         this.name = name;
         this.serverPort = serverPort;
         this.maxFrameSize = maxFrameSize;
+        this.queuedResponseLimit = queuedResponseLimit;
         this.processorFactory = factory;
         this.inProtocolFact = inProtocolFact;
         this.outProtocolFact = outProtocolFact;
@@ -64,6 +65,11 @@ public class ThriftServerDef
     public int getMaxFrameSize()
     {
         return maxFrameSize;
+    }
+
+    public int getQueuedResponseLimit()
+    {
+        return queuedResponseLimit;
     }
 
     public TProcessorFactory getProcessorFactory()

@@ -43,6 +43,7 @@ public class ThriftServerDefBuilder
     private static final AtomicInteger ID = new AtomicInteger(1);
     private int serverPort;
     private int maxFrameSize;
+    private int queuedResponseLimit;
     private TProcessorFactory processorFactory;
     private TProtocolFactory inProtocolFact;
     private TProtocolFactory outProtocolFact;
@@ -57,6 +58,7 @@ public class ThriftServerDefBuilder
     {
         this.serverPort = 8080;
         this.maxFrameSize = 1048576;
+        this.queuedResponseLimit = 16;
         this.inProtocolFact = new TBinaryProtocol.Factory();
         this.outProtocolFact = new TBinaryProtocol.Factory();
         this.executor = new Executor()
@@ -117,6 +119,16 @@ public class ThriftServerDefBuilder
     }
 
     /**
+     * Limit number of queued responses per connection, before pausing reads
+     * to catch up.
+     */
+    public ThriftServerDefBuilder limitQueuedResponsesPerConnection(int queuedResponseLimit)
+    {
+        this.queuedResponseLimit = queuedResponseLimit;
+        return this;
+    }
+
+    /**
      * Anohter way to specify the TProcessor.
      */
     public ThriftServerDefBuilder withProcessorFactory(TProcessorFactory processorFactory)
@@ -172,6 +184,7 @@ public class ThriftServerDefBuilder
                 name,
                 serverPort,
                 maxFrameSize,
+                queuedResponseLimit,
                 processorFactory,
                 inProtocolFact,
                 outProtocolFact,
