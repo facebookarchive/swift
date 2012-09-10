@@ -10,6 +10,7 @@
         <module>nifty-core</module>
         <module>nifty-client</module>
         <module>nifty-examples</module>
+        <module>nifty-load-tester</module>
     </modules>
 
     <inceptionYear>2012</inceptionYear>

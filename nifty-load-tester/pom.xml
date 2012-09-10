@@ -1,0 +1,83 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                      http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.facebook.nifty</groupId>
+    <artifactId>nifty-parent</artifactId>
+    <version>0.0.2-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <groupId>com.facebook.nifty</groupId>
+  <artifactId>nifty-load-tester</artifactId>
+  <version>0.0.2-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.facebook.nifty</groupId>
+      <artifactId>nifty-core</artifactId>
+      <version>0.0.2-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>com.proofpoint.platform</groupId>
+      <artifactId>bootstrap</artifactId>
+      <version>0.51</version>
+    </dependency>
+    <dependency>
+      <groupId>com.proofpoint.platform</groupId>
+      <artifactId>configuration</artifactId>
+      <version>0.51</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.thrift</groupId>
+      <artifactId>libthrift</artifactId>
+      <version>0.8.0</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>1.7</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+	    </goals>
+	    <configuration>
+	      <filters>
+		<filter>
+		  <!-- exclude old org.jboss.netty classes in favor of io.netty -->
+		  <artifact>org.jboss.netty:netty</artifact>
+		  <excludes>
+		    <exclude>org/jboss/netty/**</exclude>
+		  </excludes>
+		</filter>
+	      </filters>
+	      <transformers>
+		<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+		  <mainClass>com.facebook.nifty.perf.NiftyLoadTester</mainClass>
+		</transformer>
+	      </transformers>
+	    </configuration>
+	  </execution>
+	</executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>onejar-maven-plugin.googlecode.com</id>
+      <url>http://onejar-maven-plugin.googlecode.com/svn/mavenrepo</url>
+    </pluginRepository>
+  </pluginRepositories>
+
+</project>
