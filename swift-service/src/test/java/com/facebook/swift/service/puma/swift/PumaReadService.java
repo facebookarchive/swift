@@ -28,25 +28,25 @@ public interface PumaReadService extends Closeable
 {
     @ThriftMethod
     List<ReadResultQueryInfo> getResult(List<ReadQueryInfoTimeString> reader)
-            throws TException, ReadSemanticException;
+            throws ReadSemanticException;
 
     @ThriftMethod
     List<ReadResultQueryInfoTimeString> getResultTimeString(List<ReadQueryInfoTimeString> reader)
-            throws TException, ReadSemanticException;
+            throws ReadSemanticException;
 
     @ThriftMethod
     List<ReadResultQueryInfo> mergeQueryAggregation(
             MergeAggregationQueryInfo mergeAggregationQueryInfo
     )
-            throws TException, ReadSemanticException;
+            throws ReadSemanticException;
 
     @ThriftMethod
     long latestQueryableTime(String category, String appName, List<Integer> bucketNumbers)
-            throws TException, ReadSemanticException;
+            throws ReadSemanticException;
 
     @ThriftMethod
     List<Long> latestQueryableTimes(String category, String appName, List<Integer> bucketNumbers)
-            throws TException, ReadSemanticException;
+            throws ReadSemanticException;
 
     @Override
     void close();

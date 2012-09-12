@@ -34,10 +34,13 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.facebook.swift.codec.metadata.ReflectionHelper.extractParameterNames;
+import static com.google.common.base.Preconditions.checkState;
 
 @Immutable
 public class ThriftMethodMetadata
@@ -156,18 +159,29 @@ public class ThriftMethodMetadata
     private ImmutableMap<Short, ThriftType> buildExceptionMap(ThriftCatalog catalog,
                                                               ThriftMethod thriftMethod) {
         ImmutableMap.Builder<Short, ThriftType> exceptions = ImmutableMap.builder();
+        Set<Type> exceptionTypes = new HashSet<>();
+        int customExceptionCount = 0;
 
         if (thriftMethod.exception().length > 0) {
             for (ThriftException thriftException : thriftMethod.exception()) {
                 exceptions.put(thriftException.id(), catalog.getThriftType(thriftException.type()));
+                checkState(exceptionTypes.add(thriftException.type()), "ThriftMethod.exception contains more than one value for %s", thriftException.type());
             }
-        } else if (method.getExceptionTypes().length == 2) {
-            // Catch the case where the method declares exactly TWO thrown types: one must
-            // be the generic TException or an ancestor, so if the other is annotated as a
-            // @ThriftStruct then we infer a thrift declaration for that remaining exception
-            // type
-            for (Class<?> exceptionClass : method.getExceptionTypes()) {
-                if (exceptionClass.isAnnotationPresent(ThriftStruct.class)) {
+        }
+
+        for (Class<?> exceptionClass : method.getExceptionTypes()) {
+            if (exceptionClass.isAssignableFrom(TException.class)) {
+                // the built-in exception types don't need special treatment
+                continue;
+            }
+
+            if (exceptionClass.isAnnotationPresent(ThriftStruct.class)) {
+                ++customExceptionCount;
+
+                if (!exceptionTypes.contains(exceptionClass)) {
+                    // there is no rhyme or reason to the order exception types are given to us,
+                    // so we can only infer the id once
+                    checkState(customExceptionCount <= 1, "ThriftMethod.exception annotation value must be specified when more than one custom exception is thrown.");
                     exceptions.put((short) 1, catalog.getThriftType(exceptionClass));
                 }
             }
