@@ -50,12 +50,6 @@
 
         <dependency>
             <groupId>io.airlift</groupId>
-            <artifactId>jmx</artifactId>
-            <version>0.66</version>
-        </dependency>
-
-        <dependency>
-            <groupId>io.airlift</groupId>
             <artifactId>configuration</artifactId>
         </dependency>
 
@@ -84,6 +78,12 @@
         <dependency>
             <groupId>org.weakref</groupId>
             <artifactId>jmxutils</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.airlift</groupId>
+            <artifactId>jmx</artifactId>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
