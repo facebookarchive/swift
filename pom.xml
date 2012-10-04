@@ -31,6 +31,7 @@
   </distributionManagement>
 
   <modules>
+    <module>swift-annotator</module>
     <module>swift-codec</module>
     <module>swift-idl-parser</module>
     <module>swift-service</module>
