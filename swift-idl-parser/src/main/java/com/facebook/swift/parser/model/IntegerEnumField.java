@@ -18,6 +18,8 @@ package com.facebook.swift.parser.model;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 
+import javax.annotation.Nullable;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class IntegerEnumField
@@ -25,10 +27,17 @@ public class IntegerEnumField
     private final String name;
     private final Optional<Long> value;
 
-    public IntegerEnumField(String name, Long value)
+    private final long implicitValue;
+
+    public IntegerEnumField(String name, Long explicitValue, Long defaultValue)
     {
         this.name = checkNotNull(name, "name");
-        this.value = Optional.fromNullable(value);
+        this.value = Optional.fromNullable(explicitValue);
+        if (this.value.isPresent()) {
+            this.implicitValue = this.value.get();
+        } else {
+            this.implicitValue = defaultValue;
+        }
     }
 
     public String getName()
@@ -36,9 +45,14 @@ public class IntegerEnumField
         return name;
     }
 
-    public Optional<Long> getValue()
+    public Optional<Long> getExplicitValue()
     {
         return value;
+    }
+
+    public long getValue()
+    {
+        return implicitValue;
     }
 
     @Override

@@ -95,7 +95,7 @@ enum Operation {
 
 /**
  * Structs are the basic complex data structures. They are comprised of fields
- * which each have an integer identifier, a type, a symbolic name, and an
+ * which each have an integer explicitIdentifiier, a type, a symbolic name, and an
  * optional default value.
  *
  * Fields can be declared "optional", which ensures they will not be included

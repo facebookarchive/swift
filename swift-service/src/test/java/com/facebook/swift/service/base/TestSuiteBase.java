@@ -26,16 +26,16 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 
-public class TestSuiteBase<ServiceInterface> {
+public class TestSuiteBase<ServiceInterface, ClientInterface> {
     private ThriftCodecManager codecManager = new ThriftCodecManager();
     private ThriftClientManager clientManager;
-    private Class<? extends ServiceInterface> clientClass;
+    private Class<? extends ClientInterface> clientClass;
     private Class<? extends ServiceInterface> handlerClass;
-    private ServiceInterface client;
+    private ClientInterface client;
     private ThriftServer server;
 
-    public TestSuiteBase(Class<? extends ServiceInterface> handlerClass, Class<? extends ServiceInterface>
-      clientClass) {
+    public TestSuiteBase(Class<? extends ServiceInterface> handlerClass,
+                         Class<? extends ClientInterface> clientClass) {
         this.clientClass = clientClass;
         this.handlerClass = handlerClass;
     }
@@ -69,13 +69,13 @@ public class TestSuiteBase<ServiceInterface> {
         return new ThriftServer(processor);
     }
 
-    private ServiceInterface createClient(ThriftClientManager clientManager) throws
+    private ClientInterface createClient(ThriftClientManager clientManager) throws
       TTransportException {
         HostAndPort address = HostAndPort.fromParts("localhost", server.getPort());
         return clientManager.createClient(address, clientClass);
     }
 
-    protected ServiceInterface getClient() {
+    protected ClientInterface getClient() {
         return client;
     }
 }
