@@ -15,8 +15,14 @@
  */
 package com.facebook.swift.parser.model;
 
+import com.google.common.reflect.TypeToken;
+
 public abstract class ThriftType
 {
     @Override
     public abstract String toString();
+
+    public TypeToken getJavaTypeToken() {
+        return new TypeToken<Long>() {};
+    }
 }

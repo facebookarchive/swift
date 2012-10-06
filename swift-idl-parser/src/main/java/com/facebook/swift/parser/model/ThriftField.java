@@ -24,29 +24,35 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class ThriftField
 {
+
+
     public static enum Required
     {
-        REQUIRED, OPTIONAL, NONE
+        REQUIRED, OPTIONAL, NONE;
     }
-
     private final String name;
+
     private final ThriftType type;
-    private final Optional<Long> identifier;
+    private final Optional<Long> explicitIdentifiier;
+
+    private final long identifier;
+
     private final Required required;
     private final Optional<ConstValue> value;
     private final List<TypeAnnotation> annotations;
-
     public ThriftField(
             String name,
             ThriftType type,
-            Long identifier,
+            Long explicitIdentifiier,
+            long defaultIdentifier,
             Required required,
             ConstValue value,
             List<TypeAnnotation> annotations)
     {
         this.name = checkNotNull(name, "name");
         this.type = checkNotNull(type, "type");
-        this.identifier = Optional.fromNullable(identifier);
+        this.explicitIdentifiier = Optional.fromNullable(explicitIdentifiier);
+        this.identifier = (explicitIdentifiier == null) ? defaultIdentifier : explicitIdentifiier;
         this.required = checkNotNull(required, "required");
         this.value = Optional.fromNullable(value);
         this.annotations = checkNotNull(annotations, "annotations");
@@ -62,9 +68,14 @@ public class ThriftField
         return type;
     }
 
-    public Optional<Long> getIdentifier()
+    public long getIdentifier()
     {
         return identifier;
+    }
+
+    public Optional<Long> getExplicitIdentifiier()
+    {
+        return explicitIdentifiier;
     }
 
     public Required getRequired()
@@ -88,7 +99,7 @@ public class ThriftField
         return Objects.toStringHelper(this)
                 .add("name", name)
                 .add("type", type)
-                .add("identifier", identifier)
+                .add("explicitIdentifiier", explicitIdentifiier)
                 .add("required", required)
                 .add("value", value)
                 .add("annotations", annotations)

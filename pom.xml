@@ -18,6 +18,7 @@
         <module>swift-codec</module>
         <module>swift-idl-parser</module>
         <module>swift-service</module>
+        <module>swift-java-generator</module>
     </modules>
 
     <inceptionYear>2012</inceptionYear>

@@ -26,6 +26,7 @@ options {
     package com.facebook.swift.parser.antlr;
 
     import com.facebook.swift.parser.model.*;
+    import com.facebook.swift.parser.util.*;
 
     import java.util.ArrayList;
     import java.util.HashMap;
@@ -133,26 +134,31 @@ const_map returns [Map<ConstValue, ConstValue> value = new HashMap<>()]
     : ^(MAP ( ^(ENTRY k=const_value v=const_value) { $value.put($k.value, $v.value); } )*)
     ;
 
-enum_fields returns [List<IntegerEnumField> value = new ArrayList<>()]
-    : ( ^(k=IDENTIFIER v=integer?) { $value.add(new IntegerEnumField($k.text, $v.value)); } )*
+enum_fields returns [IntegerEnumFieldList value = new IntegerEnumFieldList()]
+    : ( enum_field[$value] { $value.add($enum_field.value); } )*
+    ;
+
+enum_field[IntegerEnumFieldList fieldList] returns [IntegerEnumField value]
+    : ^(k=IDENTIFIER v=integer?) {
+         $value = new IntegerEnumField($k.text, $v.value, $fieldList.getNextImplicitEnumerationValue());
+    }
     ;
 
 senum_values returns [List<String> value = new ArrayList<>()]
     : ( v=LITERAL { $value.add($v.text); } )*
     ;
 
-fields returns [List<ThriftField> value = new ArrayList<>()]
-    : ( field { $value.add($field.value); } )*
+fields returns [ThriftFieldList value = new ThriftFieldList()]
+    : ( field[$value] { $value.add($field.value); } )*
     ;
 
 functions returns [List<ThriftMethod> value = new ArrayList<>()]
     : (function { $value.add($function.value); } )*
     ;
 
-
-field returns [ThriftField value]
+field[ThriftFieldList container] returns [ThriftField value]
     : ^(FIELD k=IDENTIFIER t=field_type i=integer? r=field_req c=const_value? a=type_annotations)
-        { $value = new ThriftField($k.text, $t.value, $i.value, $r.value, $c.value, $a.value); }
+        { $value = new ThriftField($k.text, $t.value, $i.value, $container.getNextImplicitFieldId(), $r.value, $c.value, $a.value); }
     ;
 
 field_req returns [ThriftField.Required value]
@@ -182,7 +188,7 @@ function_type returns [ThriftType value]
     | VOID       { $value = new VoidType(); }
     ;
 
-throws_list returns [List<ThriftField> value = new ArrayList<>()]
+throws_list returns [ThriftFieldList value = new ThriftFieldList()]
     : ( ^(THROWS fields) { $value = $fields.value; } )?
     ;
 
@@ -236,7 +242,7 @@ cpp_type returns [String value]
     ;
 
 
-integer returns [long value]
+integer returns [Long value]
     : i=INTEGER     { $value = Long.parseLong($i.text); }
     | h=HEX_INTEGER { $value = Long.decode($h.text); }
     ;
