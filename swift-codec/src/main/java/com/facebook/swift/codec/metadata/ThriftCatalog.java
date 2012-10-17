@@ -15,6 +15,34 @@
  */
 package com.facebook.swift.codec.metadata;
 
+import com.facebook.swift.codec.ThriftStruct;
+import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
+import com.facebook.swift.codec.internal.coercion.FromThrift;
+import com.facebook.swift.codec.internal.coercion.ToThrift;
+import com.facebook.swift.codec.metadata.MetadataErrors.Monitor;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
+import com.google.common.reflect.TypeToken;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.ThreadSafe;
+
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getIterableType;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getMapKeyType;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getMapValueType;
@@ -35,35 +63,6 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Iterables.transform;
 import static java.lang.reflect.Modifier.isStatic;
-
-import java.lang.reflect.Method;
-import java.lang.reflect.Type;
-import java.nio.ByteBuffer;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
-import javax.annotation.Nullable;
-import javax.annotation.concurrent.ThreadSafe;
-
-import com.facebook.swift.codec.ThriftStruct;
-import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
-import com.facebook.swift.codec.internal.coercion.FromThrift;
-import com.facebook.swift.codec.internal.coercion.ToThrift;
-import com.facebook.swift.codec.metadata.MetadataErrors.Monitor;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Sets;
-import com.google.common.reflect.TypeToken;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * ThriftCatalog contains the metadata for all known structs, enums and type coercions.  Since,

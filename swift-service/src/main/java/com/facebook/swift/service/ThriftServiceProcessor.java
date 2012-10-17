@@ -15,23 +15,6 @@
  */
 package com.facebook.swift.service;
 
-import static org.apache.thrift.TApplicationException.INVALID_MESSAGE_TYPE;
-import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
-
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.concurrent.ThreadSafe;
-
-import org.apache.thrift.TApplicationException;
-import org.apache.thrift.TException;
-import org.apache.thrift.TProcessor;
-import org.apache.thrift.protocol.TMessage;
-import org.apache.thrift.protocol.TMessageType;
-import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.protocol.TProtocolUtil;
-import org.apache.thrift.protocol.TType;
-
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.metadata.ThriftMethodMetadata;
 import com.facebook.swift.service.metadata.ThriftServiceMetadata;
@@ -41,6 +24,22 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import org.apache.thrift.TApplicationException;
+import org.apache.thrift.TException;
+import org.apache.thrift.TProcessor;
+import org.apache.thrift.protocol.TMessage;
+import org.apache.thrift.protocol.TMessageType;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.protocol.TProtocolUtil;
+import org.apache.thrift.protocol.TType;
+
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.concurrent.ThreadSafe;
+
+import static org.apache.thrift.TApplicationException.INVALID_MESSAGE_TYPE;
+import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
 
 /**
  * Example TProcessor that wraps a Thrift service.  This should only be considered an example, and

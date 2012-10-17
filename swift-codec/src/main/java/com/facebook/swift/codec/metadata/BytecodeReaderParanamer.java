@@ -31,6 +31,11 @@
 
 package com.facebook.swift.codec.metadata;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Closeables;
+import com.thoughtworks.paranamer.ParameterNamesNotFoundException;
+import com.thoughtworks.paranamer.Paranamer;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.AccessibleObject;
@@ -38,11 +43,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Map;
-
-import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Closeables;
-import com.thoughtworks.paranamer.ParameterNamesNotFoundException;
-import com.thoughtworks.paranamer.Paranamer;
 
 
 /**

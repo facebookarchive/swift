@@ -15,7 +15,10 @@
  */
 package com.facebook.swift.codec.metadata;
 
-import static java.lang.String.format;
+import com.facebook.swift.codec.ThriftEnumValue;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -24,11 +27,7 @@ import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
 
-import com.facebook.swift.codec.ThriftEnumValue;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import static java.lang.String.format;
 
 @Immutable
 public class ThriftEnumMetadata<T extends Enum<T>>

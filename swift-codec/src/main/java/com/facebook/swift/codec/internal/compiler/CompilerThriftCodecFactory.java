@@ -15,15 +15,15 @@
  */
 package com.facebook.swift.codec.internal.compiler;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-
-import javax.annotation.concurrent.Immutable;
-
 import com.facebook.swift.codec.ThriftCodec;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.codec.internal.ThriftCodecFactory;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
+
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+
+import javax.annotation.concurrent.Immutable;
 
 /**
  * Creates Thrift codecs directly in byte code.

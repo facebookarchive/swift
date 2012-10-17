@@ -15,46 +15,6 @@
  */
 package com.facebook.swift.codec.internal.compiler;
 
-import static com.facebook.swift.codec.ThriftProtocolType.BOOL;
-import static com.facebook.swift.codec.ThriftProtocolType.BYTE;
-import static com.facebook.swift.codec.ThriftProtocolType.DOUBLE;
-import static com.facebook.swift.codec.ThriftProtocolType.ENUM;
-import static com.facebook.swift.codec.ThriftProtocolType.I16;
-import static com.facebook.swift.codec.ThriftProtocolType.I32;
-import static com.facebook.swift.codec.ThriftProtocolType.I64;
-import static com.facebook.swift.codec.ThriftProtocolType.LIST;
-import static com.facebook.swift.codec.ThriftProtocolType.MAP;
-import static com.facebook.swift.codec.ThriftProtocolType.SET;
-import static com.facebook.swift.codec.ThriftProtocolType.STRING;
-import static com.facebook.swift.codec.ThriftProtocolType.STRUCT;
-import static com.facebook.swift.codec.internal.compiler.byteCode.Access.BRIDGE;
-import static com.facebook.swift.codec.internal.compiler.byteCode.Access.FINAL;
-import static com.facebook.swift.codec.internal.compiler.byteCode.Access.PRIVATE;
-import static com.facebook.swift.codec.internal.compiler.byteCode.Access.PUBLIC;
-import static com.facebook.swift.codec.internal.compiler.byteCode.Access.SUPER;
-import static com.facebook.swift.codec.internal.compiler.byteCode.Access.SYNTHETIC;
-import static com.facebook.swift.codec.internal.compiler.byteCode.Access.a;
-import static com.facebook.swift.codec.internal.compiler.byteCode.CaseStatement.caseStatement;
-import static com.facebook.swift.codec.internal.compiler.byteCode.NamedParameterDefinition.arg;
-import static com.facebook.swift.codec.internal.compiler.byteCode.ParameterizedType.type;
-
-import java.io.PrintWriter;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-
-import javax.annotation.concurrent.NotThreadSafe;
-
-import org.apache.thrift.protocol.TProtocol;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.util.CheckClassAdapter;
-
 import com.facebook.swift.codec.ThriftCodec;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.codec.ThriftProtocolType;
@@ -83,8 +43,46 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
-
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.apache.thrift.protocol.TProtocol;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.util.CheckClassAdapter;
+
+import java.io.PrintWriter;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+
+import javax.annotation.concurrent.NotThreadSafe;
+
+import static com.facebook.swift.codec.ThriftProtocolType.BOOL;
+import static com.facebook.swift.codec.ThriftProtocolType.BYTE;
+import static com.facebook.swift.codec.ThriftProtocolType.DOUBLE;
+import static com.facebook.swift.codec.ThriftProtocolType.ENUM;
+import static com.facebook.swift.codec.ThriftProtocolType.I16;
+import static com.facebook.swift.codec.ThriftProtocolType.I32;
+import static com.facebook.swift.codec.ThriftProtocolType.I64;
+import static com.facebook.swift.codec.ThriftProtocolType.LIST;
+import static com.facebook.swift.codec.ThriftProtocolType.MAP;
+import static com.facebook.swift.codec.ThriftProtocolType.SET;
+import static com.facebook.swift.codec.ThriftProtocolType.STRING;
+import static com.facebook.swift.codec.ThriftProtocolType.STRUCT;
+import static com.facebook.swift.codec.internal.compiler.byteCode.Access.BRIDGE;
+import static com.facebook.swift.codec.internal.compiler.byteCode.Access.FINAL;
+import static com.facebook.swift.codec.internal.compiler.byteCode.Access.PRIVATE;
+import static com.facebook.swift.codec.internal.compiler.byteCode.Access.PUBLIC;
+import static com.facebook.swift.codec.internal.compiler.byteCode.Access.SUPER;
+import static com.facebook.swift.codec.internal.compiler.byteCode.Access.SYNTHETIC;
+import static com.facebook.swift.codec.internal.compiler.byteCode.Access.a;
+import static com.facebook.swift.codec.internal.compiler.byteCode.CaseStatement.caseStatement;
+import static com.facebook.swift.codec.internal.compiler.byteCode.NamedParameterDefinition.arg;
+import static com.facebook.swift.codec.internal.compiler.byteCode.ParameterizedType.type;
 
 @NotThreadSafe
 public class ThriftCodecByteCodeGenerator<T>
