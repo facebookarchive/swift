@@ -25,6 +25,7 @@
   </scm>
 
   <modules>
+    <module>swift-parent</module>
     <module>swift-codec</module>
     <module>swift-idl-parser</module>
     <module>swift-service</module>
@@ -79,6 +80,18 @@
       </dependency>
 
       <dependency>
+        <groupId>javax.inject</groupId>
+        <artifactId>javax.inject</artifactId>
+        <version>1</version>
+      </dependency>
+
+      <dependency>
+        <groupId>javax.validation</groupId>
+        <artifactId>validation-api</artifactId>
+        <version>1.0.0.GA</version>
+      </dependency>
+
+      <dependency>
         <groupId>org.apache.thrift</groupId>
         <artifactId>libthrift</artifactId>
         <version>0.8.0</version>
@@ -113,6 +126,17 @@
         <groupId>io.airlift</groupId>
         <artifactId>jmx</artifactId>
         <version>${dep.airlift.version}</version>
+        <!-- airlift tries to pull in 4.2-beta1 -->
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
@@ -136,7 +160,7 @@
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty</artifactId>
-        <version>3.4.0.Final</version>
+        <version>3.5.2.Final</version>
       </dependency>
 
       <dependency>
@@ -166,7 +190,19 @@
       <dependency>
         <groupId>log4j</groupId>
         <artifactId>log4j</artifactId>
-        <version>1.2.13</version>
+        <version>1.2.16</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpclient</artifactId>
+        <version>4.1.2</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpcore</artifactId>
+        <version>4.1.4</version>
       </dependency>
 
       <dependency>

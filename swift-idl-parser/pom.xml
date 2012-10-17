@@ -28,6 +28,11 @@
     </dependency>
 
     <dependency>
+      <groupId>com.nesscomputing.testing</groupId>
+      <artifactId>findbugs-annotations</artifactId>
+    </dependency>
+    
+    <dependency>
       <groupId>org.antlr</groupId>
       <artifactId>antlr-runtime</artifactId>
     </dependency>
@@ -51,6 +56,14 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <excludedGroups>sample</excludedGroups>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>findbugs-maven-plugin</artifactId>
+        <configuration>
+          <onlyAnalyze>com.facebook.swift.parser.model.*,com.facebook.swift.parser.ThriftIdParser</onlyAnalyze>
         </configuration>
       </plugin>
     </plugins>

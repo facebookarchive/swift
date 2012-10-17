@@ -15,15 +15,14 @@
  */
 package com.facebook.swift.service;
 
-import com.facebook.swift.codec.ThriftCodecManager;
-import com.facebook.swift.service.metadata.ThriftMethodMetadata;
-import com.facebook.swift.service.metadata.ThriftServiceMetadata;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Multimap;
+import static org.apache.thrift.TApplicationException.INVALID_MESSAGE_TYPE;
+import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
+
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.concurrent.ThreadSafe;
+
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
@@ -33,12 +32,15 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolUtil;
 import org.apache.thrift.protocol.TType;
 
-import javax.annotation.concurrent.ThreadSafe;
-import java.util.List;
-import java.util.Map;
-
-import static org.apache.thrift.TApplicationException.INVALID_MESSAGE_TYPE;
-import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
+import com.facebook.swift.codec.ThriftCodecManager;
+import com.facebook.swift.service.metadata.ThriftMethodMetadata;
+import com.facebook.swift.service.metadata.ThriftServiceMetadata;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
 
 /**
  * Example TProcessor that wraps a Thrift service.  This should only be considered an example, and
@@ -91,6 +93,7 @@ public class ThriftServiceProcessor implements TProcessor
     }
 
     @Override
+    @SuppressWarnings("PMD.EmptyCatchBlock")
     public boolean process(TProtocol in, TProtocol out)
             throws TException
     {

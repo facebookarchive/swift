@@ -24,6 +24,8 @@ import org.apache.thrift.TException;
  */
 public class RuntimeTException extends RuntimeException
 {
+    private static final long serialVersionUID = 1L;
+
     public RuntimeTException(String message, TException cause)
     {
         super(message, cause);

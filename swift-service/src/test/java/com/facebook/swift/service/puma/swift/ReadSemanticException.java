@@ -22,6 +22,8 @@ import com.facebook.swift.codec.ThriftStruct;
 @ThriftStruct
 public class ReadSemanticException extends Exception
 {
+    private static final long serialVersionUID = 1L;
+
     @ThriftConstructor
     public ReadSemanticException(String message)
     {

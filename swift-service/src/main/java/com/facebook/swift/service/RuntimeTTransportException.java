@@ -25,6 +25,8 @@ import org.apache.thrift.transport.TTransportException;
  */
 public class RuntimeTTransportException extends RuntimeTException
 {
+    private static final long serialVersionUID = 1L;
+
     public RuntimeTTransportException(String message, TTransportException cause)
     {
         super(message, cause);
