@@ -80,6 +80,9 @@ public class NamedParameterDefinition
             @Override
             public ParameterizedType apply(@Nullable NamedParameterDefinition input)
             {
+                if (input == null) {
+                    return null;
+                }
                 return input.getType();
             }
         };

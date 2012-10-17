@@ -19,4 +19,5 @@ import com.facebook.swift.codec.ThriftStruct;
 
 @ThriftStruct
 public class OneWayException extends Exception {
+    private static final long serialVersionUID = 1L;
 }

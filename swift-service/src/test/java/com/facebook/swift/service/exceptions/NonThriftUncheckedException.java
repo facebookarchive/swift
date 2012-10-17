@@ -16,4 +16,5 @@
 package com.facebook.swift.service.exceptions;
 
 class NonThriftUncheckedException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
 }

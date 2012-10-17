@@ -25,6 +25,8 @@ import org.apache.thrift.protocol.TProtocolException;
  */
 public class RuntimeTProtocolException extends RuntimeTException
 {
+    private static final long serialVersionUID = 1L;
+
     public RuntimeTProtocolException(String message, TProtocolException cause)
     {
         super(message, cause);

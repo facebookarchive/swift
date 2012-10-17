@@ -285,6 +285,8 @@ public class scribe
             java.io.Serializable,
             Cloneable
     {
+        private static final long serialVersionUID = 1L;
+
         private static final TStruct STRUCT_DESC = new TStruct(
                 "Log_args"
         );
@@ -807,6 +809,8 @@ public class scribe
             java.io.Serializable,
             Cloneable
     {
+        private static final long serialVersionUID = 1L;
+
         private static final TStruct STRUCT_DESC = new TStruct(
                 "Log_result"
         );

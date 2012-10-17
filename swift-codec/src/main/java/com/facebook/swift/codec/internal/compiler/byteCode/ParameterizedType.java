@@ -212,6 +212,9 @@ public class ParameterizedType
             @Override
             public boolean apply(ParameterizedType input)
             {
+                if (input == null) {
+                    return false;
+                }
                 return input.isGeneric();
             }
         };
@@ -224,6 +227,9 @@ public class ParameterizedType
             @Override
             public String apply(ParameterizedType input)
             {
+                if (input == null) {
+                    return null;
+                }
                 return input.getType();
             }
         };
@@ -236,6 +242,9 @@ public class ParameterizedType
             @Override
             public ParameterizedType apply(@Nullable Class<?> input)
             {
+                if (input == null) {
+                    return null;
+                }
                 return new ParameterizedType(input);
             }
         };

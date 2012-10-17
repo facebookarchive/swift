@@ -43,12 +43,12 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.thrift.protocol.TProtocol;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.util.CheckClassAdapter;
 
-import javax.annotation.concurrent.NotThreadSafe;
 import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -58,6 +58,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+
+import javax.annotation.concurrent.NotThreadSafe;
 
 import static com.facebook.swift.codec.ThriftProtocolType.BOOL;
 import static com.facebook.swift.codec.ThriftProtocolType.BYTE;
@@ -104,6 +106,7 @@ public class ThriftCodecByteCodeGenerator<T>
 
     private final ThriftCodec<T> thriftCodec;
 
+    @SuppressFBWarnings("DM_DEFAULT_ENCODING")
     public ThriftCodecByteCodeGenerator(
             ThriftCodecManager codecManager,
             ThriftStructMetadata<T> metadata,

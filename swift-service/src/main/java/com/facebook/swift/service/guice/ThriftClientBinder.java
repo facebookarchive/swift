@@ -133,6 +133,7 @@ public class ThriftClientBinder
     private static <T> TypeLiteral<ThriftClient<T>> toThriftClientTypeLiteral(Class<T> clientInterface)
     {
         // build a TypeLiteral<ThriftClientProvider<T>> where T is bound to the actual clientInterface class
+        @SuppressWarnings("serial")
         Type javaType = new TypeToken<ThriftClient<T>>() {}
                 .where(new TypeParameter<T>() {}, TypeToken.of(clientInterface))
                 .getType();

@@ -57,6 +57,7 @@ public class ThriftType
         checkNotNull(keyType, "keyType is null");
         checkNotNull(valueType, "valueType is null");
 
+        @SuppressWarnings("serial")
         Type javaType = new TypeToken<Map<K, V>>(){}
                 .where(new TypeParameter<K>(){}, (TypeToken<K>) TypeToken.of(keyType.getJavaType()))
                 .where(new TypeParameter<V>(){}, (TypeToken<V>) TypeToken.of(valueType.getJavaType()))
@@ -68,6 +69,7 @@ public class ThriftType
     {
         Preconditions.checkNotNull(valueType, "valueType is null");
 
+        @SuppressWarnings("serial")
         Type javaType = new TypeToken<Set<E>>(){}
                 .where(new TypeParameter<E>(){}, (TypeToken<E>) TypeToken.of(valueType.getJavaType()))
                 .getType();
@@ -78,6 +80,7 @@ public class ThriftType
     {
         checkNotNull(valueType, "valueType is null");
 
+        @SuppressWarnings("serial")
         Type javaType = new TypeToken<List<E>>(){}
                 .where(new TypeParameter<E>(){}, (TypeToken<E>) TypeToken.of(valueType.getJavaType()))
                 .getType();

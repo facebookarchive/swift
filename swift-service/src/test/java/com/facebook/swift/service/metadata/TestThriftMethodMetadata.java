@@ -128,10 +128,12 @@ public class TestThriftMethodMetadata
     @ThriftStruct
     public static class ExceptionA extends Exception
     {
+        private static final long serialVersionUID = 1L;
     }
 
     @ThriftStruct
     public static class ExceptionB extends Exception
     {
+        private static final long serialVersionUID = 1L;
     }
 }

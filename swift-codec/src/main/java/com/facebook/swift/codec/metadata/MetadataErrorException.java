@@ -17,6 +17,8 @@ package com.facebook.swift.codec.metadata;
 
 public class MetadataErrorException extends RuntimeException
 {
+    private static final long serialVersionUID = 1L;
+
     public MetadataErrorException(String formatString, Object... args)
     {
         super("Error: " + String.format(formatString, args));

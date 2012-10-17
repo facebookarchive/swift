@@ -20,6 +20,9 @@ import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.codec.internal.ThriftCodecFactory;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+
 import javax.annotation.concurrent.Immutable;
 
 /**
@@ -38,7 +41,7 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory
 
     public CompilerThriftCodecFactory(boolean debug)
     {
-        this(debug, new DynamicClassLoader());
+        this(debug, getPriviledgedClassLoader());
     }
 
     public CompilerThriftCodecFactory(boolean debug, DynamicClassLoader classLoader)
@@ -57,5 +60,14 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory
                 debug
         );
         return generator.getThriftCodec();
+    }
+
+    private static DynamicClassLoader getPriviledgedClassLoader()
+    {
+        return AccessController.doPrivileged(new PrivilegedAction<DynamicClassLoader>() {
+            public DynamicClassLoader run() {
+                return new DynamicClassLoader();
+            }
+        });
     }
 }

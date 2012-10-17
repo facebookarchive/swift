@@ -3,117 +3,120 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-    <modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>com.facebook.swift</groupId>
-        <artifactId>swift-root</artifactId>
-        <version>0.1-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
-    </parent>
-
+  <parent>
     <groupId>com.facebook.swift</groupId>
-    <artifactId>swift-service</artifactId>
+    <artifactId>swift-root</artifactId>
     <version>0.1-SNAPSHOT</version>
-    <packaging>jar</packaging>
+  </parent>
 
-    <name>${project.artifactId}</name>
+  <artifactId>swift-service</artifactId>
+  <packaging>jar</packaging>
+  <name>${project.artifactId}</name>
+  <description>Annotation based encoder and decoder for Thrift</description>
 
-    <description>Annotation based encoder and decoder for Thrift</description>
+  <dependencies>
+    <dependency>
+      <groupId>com.facebook.swift</groupId>
+      <artifactId>swift-codec</artifactId>
+    </dependency>
 
-    <dependencies>
-        <dependency>
-            <groupId>com.facebook.swift</groupId>
-            <artifactId>swift-codec</artifactId>
-            <version>0.1-SNAPSHOT</version>
-        </dependency>
+    <dependency>
+      <groupId>org.apache.thrift</groupId>
+      <artifactId>libthrift</artifactId>
+    </dependency>
 
-        <dependency>
-            <groupId>org.apache.thrift</groupId>
-            <artifactId>libthrift</artifactId>
-        </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
 
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-        </dependency>
+    <dependency>
+      <groupId>com.facebook.nifty</groupId>
+      <artifactId>nifty-client</artifactId>
+    </dependency>
 
-        <dependency>
-            <groupId>com.facebook.nifty</groupId>
-            <artifactId>nifty-client</artifactId>
-        </dependency>
+    <dependency>
+      <groupId>com.facebook.nifty</groupId>
+      <artifactId>nifty-core</artifactId>
+    </dependency>
 
-        <dependency>
-            <groupId>com.facebook.nifty</groupId>
-            <artifactId>nifty-core</artifactId>
-        </dependency>
+    <dependency>
+      <groupId>io.airlift</groupId>
+      <artifactId>jmx</artifactId>
+    </dependency>
 
-        <dependency>
-            <groupId>io.airlift</groupId>
-            <artifactId>jmx</artifactId>
-            <version>0.66</version>
-        </dependency>
+    <dependency>
+      <groupId>io.airlift</groupId>
+      <artifactId>configuration</artifactId>
+    </dependency>
 
-        <dependency>
-            <groupId>io.airlift</groupId>
-            <artifactId>configuration</artifactId>
-        </dependency>
+    <dependency>
+      <groupId>io.airlift</groupId>
+      <artifactId>stats</artifactId>
+    </dependency>
 
-        <dependency>
-            <groupId>io.airlift</groupId>
-            <artifactId>stats</artifactId>
-        </dependency>
+    <dependency>
+      <groupId>io.airlift</groupId>
+      <artifactId>units</artifactId>
+    </dependency>
 
-        <dependency>
-            <groupId>io.airlift</groupId>
-            <artifactId>units</artifactId>
-        </dependency>
+    <dependency>
+      <groupId>com.google.inject</groupId>
+      <artifactId>guice</artifactId>
+      <optional>true</optional>
+    </dependency>
 
-        <dependency>
-            <groupId>com.google.inject</groupId>
-            <artifactId>guice</artifactId>
-            <optional>true</optional>
-        </dependency>
+    <dependency>
+      <groupId>com.google.inject.extensions</groupId>
+      <artifactId>guice-multibindings</artifactId>
+      <optional>true</optional>
+    </dependency>
 
-        <dependency>
-            <groupId>com.google.inject.extensions</groupId>
-            <artifactId>guice-multibindings</artifactId>
-            <optional>true</optional>
-        </dependency>
+    <dependency>
+      <groupId>javax.inject</groupId>
+      <artifactId>javax.inject</artifactId>
+      <optional>true</optional>
+    </dependency>
 
-        <dependency>
-            <groupId>org.weakref</groupId>
-            <artifactId>jmxutils</artifactId>
-        </dependency>
+    <dependency>
+      <groupId>javax.validation</groupId>
+      <artifactId>validation-api</artifactId>
+      <optional>true</optional>
+    </dependency>
 
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <scope>test</scope>
-        </dependency>
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
+    </dependency>
 
-        <dependency>
-            <groupId>org.easytesting</groupId>
-            <artifactId>fest-assert</artifactId>
-            <scope>test</scope>
-        </dependency>
+    <dependency>
+      <groupId>org.weakref</groupId>
+      <artifactId>jmxutils</artifactId>
+    </dependency>
 
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <scope>test</scope>
-        </dependency>
+    <dependency>
+      <groupId>org.testng</groupId>
+      <artifactId>testng</artifactId>
+      <scope>test</scope>
+    </dependency>
 
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <scope>test</scope>
-        </dependency>
+    <dependency>
+      <groupId>org.easytesting</groupId>
+      <artifactId>fest-assert</artifactId>
+      <scope>test</scope>
+    </dependency>
 
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 </project>
