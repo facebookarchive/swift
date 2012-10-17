@@ -61,6 +61,9 @@ public class ThriftStructMetadata<T>
             @Override
             public Short apply(@Nullable ThriftFieldMetadata input)
             {
+                if (input == null) {
+                    return null;
+                }
                 return input.getId();
             }
         }));

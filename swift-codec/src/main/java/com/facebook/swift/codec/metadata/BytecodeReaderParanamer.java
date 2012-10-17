@@ -31,17 +31,18 @@
 
 package com.facebook.swift.codec.metadata;
 
-import com.thoughtworks.paranamer.ParameterNamesNotFoundException;
-import com.thoughtworks.paranamer.Paranamer;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.HashMap;
 import java.util.Map;
+
+import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Closeables;
+import com.thoughtworks.paranamer.ParameterNamesNotFoundException;
+import com.thoughtworks.paranamer.Paranamer;
 
 
 /**
@@ -58,18 +59,20 @@ import java.util.Map;
  */
 class BytecodeReadingParanamer implements Paranamer {
 
-    private static final Map<String, String> primitives = new HashMap<String, String>() {
-        {
-            put("int","I");
-            put("boolean","Z");
-            put("char","C");
-            put("byte","B"); // fix PARANAMER-22
-            put("short","S"); // fix PARANAMER-22
-            put("float","F");
-            put("long","J");
-            put("double","D");
-        }
-    };
+    private static final Map<String, String> primitives;
+
+    static {
+        final ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+        builder.put("int","I");
+        builder.put("boolean","Z");
+        builder.put("char","C");
+        builder.put("byte","B"); // fix PARANAMER-22
+        builder.put("short","S"); // fix PARANAMER-22
+        builder.put("float","F");
+        builder.put("long","J");
+        builder.put("double","D");
+        primitives = builder.build();
+    }
 
     public String[] lookupParameterNames(AccessibleObject methodOrConstructor) {
         return lookupParameterNames(methodOrConstructor, true);
@@ -85,11 +88,14 @@ class BytecodeReadingParanamer implements Paranamer {
             types = method.getParameterTypes();
             name = method.getName();
             declaringClass = method.getDeclaringClass();
-        } else {
+        } else if (methodOrCtor instanceof Constructor<?>) {
             Constructor<?> constructor = (Constructor<?>) methodOrCtor;
             types = constructor.getParameterTypes();
             declaringClass = constructor.getDeclaringClass();
             name = "<init>";
+        }
+        else {
+            throw new IllegalStateException(String.format("%s is neither method nor c'tor!", methodOrCtor.getClass().getSimpleName()));
         }
 
         if (types.length == 0) {
@@ -108,10 +114,7 @@ class BytecodeReadingParanamer implements Paranamer {
             TypeCollector visitor = new TypeCollector(name, types, throwExceptionIfMissing);
             reader.accept(visitor);
             String[] parameterNamesForMethod = visitor.getParameterNamesForMethod();
-            try {
-                byteCodeStream.close();
-            } catch (IOException e) {
-            }
+            Closeables.closeQuietly(byteCodeStream);
             return parameterNamesForMethod;
         } catch (IOException e) {
             if (throwExceptionIfMissing) {
@@ -223,14 +226,14 @@ class BytecodeReadingParanamer implements Paranamer {
         private String correctTypeName(Type[] argumentTypes, int i) {
             String s = argumentTypes[i].getClassName();
             // array notation needs cleanup.
-            String braces = "";
+            StringBuilder braces = new StringBuilder();
             while (s.endsWith("[]")) {
-                braces = braces + "[";
+                braces.append("[");
                 s = s.substring(0, s.length() - 2);
             }
-            if (!braces.equals("")) {
+            if (braces.length() != 0) {
                 if (primitives.containsKey(s)) {
-                    s = braces + primitives.get(s);
+                    s = braces.toString() + primitives.get(s);
                 } else {
                 s = braces + "L" + s + ";";
                 }
@@ -511,36 +514,32 @@ class BytecodeReadingParanamer implements Paranamer {
                 throw new IOException("Class not found");
             }
             try {
-		          byte[] b = new byte[is.available()];
-		          int len = 0;
-		          while (true) {
-		              int n = is.read(b, len, b.length - len);
-		              if (n == -1) {
-		                  if (len < b.length) {
-		                      byte[] c = new byte[len];
-		                      System.arraycopy(b, 0, c, 0, len);
-		                      b = c;
-		                  }
-		                  return b;
-		              }
-		              len += n;
-		              if (len == b.length) {
-		                  int last = is.read();
-		                  if (last < 0) {
-		                      return b;
-		                  }
-		                  byte[] c = new byte[b.length + 1000];
-		                  System.arraycopy(b, 0, c, 0, len);
-		                  c[len++] = (byte) last;
-		                  b = c;
-		              }
-		          }
+                  byte[] b = new byte[is.available()];
+                  int len = 0;
+                  while (true) {
+                      int n = is.read(b, len, b.length - len);
+                      if (n == -1) {
+                          if (len < b.length) {
+                              byte[] c = new byte[len];
+                              System.arraycopy(b, 0, c, 0, len);
+                              b = c;
+                          }
+                          return b;
+                      }
+                      len += n;
+                      if (len == b.length) {
+                          int last = is.read();
+                          if (last < 0) {
+                              return b;
+                          }
+                          byte[] c = new byte[b.length + 1000];
+                          System.arraycopy(b, 0, c, 0, len);
+                          c[len++] = (byte) last;
+                          b = c;
+                      }
+                  }
             } finally {
-            	try {
-            		is.close ();
-            	} catch (IOException ex) {
-            		//ignore
-            	}
+                Closeables.closeQuietly(is);
             }
         }
 
@@ -649,8 +648,7 @@ class BytecodeReadingParanamer implements Paranamer {
                 u += attrSize;
             }
             // reads declared exceptions
-            if (w == 0) {
-            } else {
+            if (w != 0) {
                 w += 2;
                 for (j = 0; j < readUnsignedShort(w); ++j) {
                     w += 2;
@@ -804,6 +802,8 @@ class BytecodeReadingParanamer implements Paranamer {
                         cc = (char) ((cc << 6) | (c & 0x3F));
                         st = 1;
                         break;
+                    default:
+                        break;
                 }
             }
             return new String(buf, 0, strLen);
@@ -908,55 +908,55 @@ class BytecodeReadingParanamer implements Paranamer {
         /**
          * The <tt>void</tt> type.
          */
-        private final static Type VOID_TYPE = new Type(VOID, null, ('V' << 24) 
+        private final static Type VOID_TYPE = new Type(VOID, null, ('V' << 24)
             | (5 << 16) | (0 << 8) | 0, 1);
 
         /**
          * The <tt>boolean</tt> type.
          */
-        private final static Type BOOLEAN_TYPE = new Type(BOOLEAN, null, ('Z' << 24) 
+        private final static Type BOOLEAN_TYPE = new Type(BOOLEAN, null, ('Z' << 24)
             | (0 << 16) | (5 << 8) | 1, 1);
 
         /**
          * The <tt>char</tt> type.
          */
-        private final static Type CHAR_TYPE = new Type(CHAR, null, ('C' << 24) 
+        private final static Type CHAR_TYPE = new Type(CHAR, null, ('C' << 24)
             | (0 << 16) | (6 << 8) | 1, 1);
 
         /**
          * The <tt>byte</tt> type.
          */
-        private final static Type BYTE_TYPE = new Type(BYTE, null, ('B' << 24) 
+        private final static Type BYTE_TYPE = new Type(BYTE, null, ('B' << 24)
             | (0 << 16) | (5 << 8) | 1, 1);
 
         /**
          * The <tt>short</tt> type.
          */
-        private final static Type SHORT_TYPE = new Type(SHORT, null, ('S' << 24) 
+        private final static Type SHORT_TYPE = new Type(SHORT, null, ('S' << 24)
             | (0 << 16) | (7 << 8) | 1, 1);
 
         /**
          * The <tt>int</tt> type.
          */
-        private final static Type INT_TYPE = new Type(INT, null, ('I' << 24) 
+        private final static Type INT_TYPE = new Type(INT, null, ('I' << 24)
             | (0 << 16) | (0 << 8) | 1, 1);
 
         /**
          * The <tt>float</tt> type.
          */
-        private final static Type FLOAT_TYPE = new Type(FLOAT, null, ('F' << 24) 
+        private final static Type FLOAT_TYPE = new Type(FLOAT, null, ('F' << 24)
             | (2 << 16) | (2 << 8) | 1, 1);
 
         /**
          * The <tt>long</tt> type.
          */
-        private final static Type LONG_TYPE = new Type(LONG, null, ('J' << 24) 
+        private final static Type LONG_TYPE = new Type(LONG, null, ('J' << 24)
             | (1 << 16) | (1 << 8) | 2, 1);
 
         /**
          * The <tt>double</tt> type.
          */
-        private final static Type DOUBLE_TYPE = new Type(DOUBLE, null, ('D' << 24) 
+        private final static Type DOUBLE_TYPE = new Type(DOUBLE, null, ('D' << 24)
             | (3 << 16) | (3 << 8) | 2, 1);
 
         // ------------------------------------------------------------------------
@@ -1025,6 +1025,7 @@ class BytecodeReadingParanamer implements Paranamer {
          * @return the Java types corresponding to the argument types of the given
          *         method descriptor.
          */
+        @SuppressWarnings("PMD.EmptyWhileStmt")
         private static Type[] getArgumentTypes(final String methodDescriptor) {
             char[] buf = methodDescriptor.toCharArray();
             int off = 1;

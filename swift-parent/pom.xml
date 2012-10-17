@@ -487,7 +487,6 @@
               <ruleset>/rulesets/basic.xml</ruleset>
               <ruleset>/rulesets/clone.xml</ruleset>
               <ruleset>/rulesets/finalizers.xml</ruleset>
-              <ruleset>/rulesets/imports.xml</ruleset>
               <ruleset>/rulesets/logging-java.xml</ruleset>
             </rulesets>
           </configuration>

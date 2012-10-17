@@ -176,6 +176,12 @@
       </dependency>
 
       <dependency>
+        <groupId>com.nesscomputing.testing</groupId>
+        <artifactId>findbugs-annotations</artifactId>
+        <version>2.0.0</version>
+      </dependency>
+
+      <dependency>
         <groupId>org.antlr</groupId>
         <artifactId>antlr-runtime</artifactId>
         <version>3.4</version>

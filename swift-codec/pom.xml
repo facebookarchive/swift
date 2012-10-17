@@ -43,6 +43,11 @@
     </dependency>
 
     <dependency>
+      <groupId>com.nesscomputing.testing</groupId>
+      <artifactId>findbugs-annotations</artifactId>
+    </dependency>
+    
+    <dependency>
       <groupId>com.google.inject</groupId>
       <artifactId>guice</artifactId>
       <optional>true</optional>

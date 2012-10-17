@@ -154,6 +154,7 @@ public final class ReflectionHelper
         return result;
     }
 
+    @SuppressWarnings("PMD.EmptyCatchBlock")
     public static Method findAnnotatedMethod(Class<?> configClass, Class<? extends Annotation> annotation, String methodName, Class<?>... paramTypes)
     {
         try {

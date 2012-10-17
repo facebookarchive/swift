@@ -15,16 +15,20 @@
  */
 package com.facebook.swift.codec.metadata;
 
-import com.facebook.swift.codec.ThriftEnumValue;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
+import static java.lang.String.format;
 
-import javax.annotation.concurrent.Immutable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Map;
 
-import static java.lang.String.format;
+import javax.annotation.Nonnull;
+import javax.annotation.concurrent.Immutable;
+
+import com.facebook.swift.codec.ThriftEnumValue;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @Immutable
 public class ThriftEnumMetadata<T extends Enum<T>>
@@ -33,7 +37,8 @@ public class ThriftEnumMetadata<T extends Enum<T>>
     private final Map<Integer, T> byEnumValue;
     private final Map<T, Integer> byEnumConstant;
 
-    public ThriftEnumMetadata(Class<T> enumClass)
+    @SuppressFBWarnings("NP_NULL_PARAM_DEREF")
+    public ThriftEnumMetadata(@Nonnull Class<T> enumClass)
             throws RuntimeException
     {
         this.enumClass = enumClass;
@@ -83,6 +88,7 @@ public class ThriftEnumMetadata<T extends Enum<T>>
                         enumClass.getName(),
                         enumConstant
                 );
+
                 byEnumValue.put(value, enumConstant);
                 byEnumConstant.put(enumConstant, value);
             }

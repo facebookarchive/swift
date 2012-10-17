@@ -209,7 +209,7 @@ public class ThriftStructMetadataBuilder<T>
                 }
                 constructorInjections.add(new ConstructorInjection(constructor));
             }
-            catch (Exception e) {
+            catch (NoSuchMethodException e) {
                 metadataErrors.addError("Struct class [%s] does not have a public no-arg constructor", clazz.getName());
             }
         }
