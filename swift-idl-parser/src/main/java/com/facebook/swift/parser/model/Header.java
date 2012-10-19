@@ -17,21 +17,23 @@ package com.facebook.swift.parser.model;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 import java.util.List;
+import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Header
 {
     private final List<String> includes;
-    private final List<Namespace> namespaces;
+    private final Map<String, String> namespaces;
     private final List<String> cppIncludes;
 
-    public Header(List<String> includes, List<Namespace> namespaces, List<String> cppIncludes)
+    public Header(List<String> includes, Map<String, String> namespaces, List<String> cppIncludes)
     {
         this.includes = ImmutableList.copyOf(checkNotNull(includes, "includes"));
-        this.namespaces = ImmutableList.copyOf(checkNotNull(namespaces, "namespaces"));
+        this.namespaces = ImmutableMap.copyOf(checkNotNull(namespaces, "namespaces"));
         this.cppIncludes = ImmutableList.copyOf(checkNotNull(cppIncludes, "cppIncludes"));
     }
 
@@ -40,7 +42,12 @@ public class Header
         return includes;
     }
 
-    public List<Namespace> getNamespaces()
+    public String getNamespace(final String nameSpaceName)
+    {
+        return namespaces.get(nameSpaceName);
+    }
+
+    public Map<String, String> getNamespaces()
     {
         return namespaces;
     }

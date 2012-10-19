@@ -18,7 +18,9 @@ package com.facebook.swift.parser.model;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
@@ -56,7 +58,7 @@ public class Document
     public static Document emptyDocument()
     {
         List<String> includes = emptyList();
-        List<Namespace> namespaces = emptyList();
+        Map<String, String> namespaces = Collections.emptyMap();
         List<String> cppIncludes = emptyList();
         Header header = new Header(includes, namespaces, cppIncludes);
         List<Definition> definitions = emptyList();
