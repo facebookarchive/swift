@@ -59,7 +59,7 @@ public class ThriftStructMetadata<T>
         this.fields = ImmutableSortedMap.copyOf(uniqueIndex(checkNotNull(fields, "fields is null"), new Function<ThriftFieldMetadata, Short>()
         {
             @Override
-            public Short apply(@Nullable ThriftFieldMetadata input)
+            public Short apply(ThriftFieldMetadata input)
             {
                 return input.getId();
             }

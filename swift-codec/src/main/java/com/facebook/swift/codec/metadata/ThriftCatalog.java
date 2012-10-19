@@ -28,8 +28,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 
-import javax.annotation.Nullable;
-import javax.annotation.concurrent.ThreadSafe;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
@@ -40,6 +38,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import javax.annotation.concurrent.ThreadSafe;
 
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getIterableType;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getMapKeyType;
@@ -115,6 +115,7 @@ public class ThriftCatalog
      */
     public void addDefaultCoercions(Class<?> coercionsClass)
     {
+        Preconditions.checkNotNull(coercionsClass, "coercionsClass is null");
         Map<ThriftType, Method> toThriftCoercions = new HashMap<>();
         Map<ThriftType, Method> fromThriftCoercions = new HashMap<>();
         for (Method method : coercionsClass.getDeclaredMethods()) {
@@ -360,7 +361,7 @@ public class ThriftCatalog
             String path = Joiner.on("->").join(transform(concat(stack, ImmutableList.of(structClass)), new Function<Class<?>, Object>()
             {
                 @Override
-                public Object apply(@Nullable Class<?> input)
+                public Object apply(Class<?> input)
                 {
                     return input.getName();
                 }

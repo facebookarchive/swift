@@ -17,6 +17,8 @@ package com.facebook.swift.codec.metadata;
 
 public class MetadataWarningException extends RuntimeException
 {
+    private static final long serialVersionUID = 1L;
+
     public MetadataWarningException(String formatString, Object... args)
     {
         super("Warning: " + String.format(formatString, args));

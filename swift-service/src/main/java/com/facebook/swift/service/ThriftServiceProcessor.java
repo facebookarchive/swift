@@ -33,9 +33,10 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolUtil;
 import org.apache.thrift.protocol.TType;
 
-import javax.annotation.concurrent.ThreadSafe;
 import java.util.List;
 import java.util.Map;
+
+import javax.annotation.concurrent.ThreadSafe;
 
 import static org.apache.thrift.TApplicationException.INVALID_MESSAGE_TYPE;
 import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
@@ -91,6 +92,7 @@ public class ThriftServiceProcessor implements TProcessor
     }
 
     @Override
+    @SuppressWarnings("PMD.EmptyCatchBlock")
     public boolean process(TProtocol in, TProtocol out)
             throws TException
     {

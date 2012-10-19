@@ -19,10 +19,11 @@ import com.facebook.swift.codec.ThriftEnumValue;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
-import javax.annotation.concurrent.Immutable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Map;
+
+import javax.annotation.concurrent.Immutable;
 
 import static java.lang.String.format;
 
@@ -36,6 +37,7 @@ public class ThriftEnumMetadata<T extends Enum<T>>
     public ThriftEnumMetadata(Class<T> enumClass)
             throws RuntimeException
     {
+        Preconditions.checkNotNull(enumClass, "enumClass must not be null");
         this.enumClass = enumClass;
 
         Method enumValueMethod = null;
@@ -83,6 +85,7 @@ public class ThriftEnumMetadata<T extends Enum<T>>
                         enumClass.getName(),
                         enumConstant
                 );
+
                 byEnumValue.put(value, enumConstant);
                 byEnumConstant.put(enumConstant, value);
             }

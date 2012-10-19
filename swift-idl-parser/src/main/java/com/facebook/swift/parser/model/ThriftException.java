@@ -15,8 +15,11 @@
  */
 package com.facebook.swift.parser.model;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.util.List;
 
+@SuppressFBWarnings("NM_CLASS_NOT_EXCEPTION")
 public class ThriftException
         extends AbstractStruct
 {
