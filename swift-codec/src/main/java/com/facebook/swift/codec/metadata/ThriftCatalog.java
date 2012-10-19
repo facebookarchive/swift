@@ -27,7 +27,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -40,7 +39,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getIterableType;
@@ -115,9 +113,9 @@ public class ThriftCatalog
      * coercions must be symmetrical, so ever @ToThrift method must have a corresponding @FromThrift
      * method.
      */
-    @SuppressFBWarnings("NP_NULL_PARAM_DEREF")
     public void addDefaultCoercions(Class<?> coercionsClass)
     {
+        Preconditions.checkNotNull(coercionsClass, "coercionsClass is null");
         Map<ThriftType, Method> toThriftCoercions = new HashMap<>();
         Map<ThriftType, Method> fromThriftCoercions = new HashMap<>();
         for (Method method : coercionsClass.getDeclaredMethods()) {
@@ -363,11 +361,8 @@ public class ThriftCatalog
             String path = Joiner.on("->").join(transform(concat(stack, ImmutableList.of(structClass)), new Function<Class<?>, Object>()
             {
                 @Override
-                public Object apply(@Nullable Class<?> input)
+                public Object apply(Class<?> input)
                 {
-                    if (input == null) {
-                        return null;
-                    }
                     return input.getName();
                 }
             }));

@@ -16,8 +16,9 @@
 package com.facebook.swift.codec.internal.compiler.byteCode;
 
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
 
 @Immutable
@@ -78,11 +79,9 @@ public class NamedParameterDefinition
         return new Function<NamedParameterDefinition, ParameterizedType>()
         {
             @Override
-            public ParameterizedType apply(@Nullable NamedParameterDefinition input)
+            public ParameterizedType apply(NamedParameterDefinition input)
             {
-                if (input == null) {
-                    return null;
-                }
+                Preconditions.checkNotNull(input);
                 return input.getType();
             }
         };

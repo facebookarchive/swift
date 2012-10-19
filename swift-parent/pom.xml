@@ -453,7 +453,7 @@
           <configuration>
             <skip>${fb.skip.check-build}</skip>
             <jvmargs>-Xmx${fb.build.jvmsize}</jvmargs>
-            <failOnError>true</failOnError>
+            <failOnError>false</failOnError>
           </configuration>
           <executions>
             <execution>
