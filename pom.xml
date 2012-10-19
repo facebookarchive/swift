@@ -29,6 +29,7 @@
     <module>swift-codec</module>
     <module>swift-idl-parser</module>
     <module>swift-service</module>
+    <module>swift-generator</module>
   </modules>
 
   <inceptionYear>2012</inceptionYear>
@@ -68,6 +69,12 @@
       </dependency>
 
       <dependency>
+        <groupId>com.facebook.swift</groupId>
+        <artifactId>swift-generator</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
         <groupId>com.google.inject</groupId>
         <artifactId>guice</artifactId>
         <version>${dep.guice.version}</version>
@@ -100,9 +107,14 @@
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>12.0</version>
+        <version>13.0.1</version>
       </dependency>
 
+      <dependency>
+	<groupId>org.apache.commons</groupId>
+	<artifactId>commons-lang3</artifactId>
+	<version>3.0.1</version>
+      </dependency>
 
       <dependency>
         <groupId>org.ow2.asm</groupId>
@@ -221,6 +233,12 @@
         <groupId>org.antlr</groupId>
         <artifactId>antlr-runtime</artifactId>
         <version>3.4</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.antlr</groupId>
+        <artifactId>stringtemplate</artifactId>
+        <version>3.2.1</version>
       </dependency>
 
       <dependency>
