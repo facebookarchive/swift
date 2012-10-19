@@ -63,15 +63,15 @@ class BytecodeReadingParanamer implements Paranamer {
 
     static {
         final ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-        builder.put("int","I");
-        builder.put("boolean","Z");
-        builder.put("char","C");
-        builder.put("byte","B"); // fix PARANAMER-22
-        builder.put("short","S"); // fix PARANAMER-22
-        builder.put("float","F");
-        builder.put("long","J");
-        builder.put("double","D");
-        primitives = builder.build();
+        primitives = builder.put("int","I")
+                            .put("boolean","Z")
+                            .put("char","C")
+                            .put("byte","B") // fix PARANAMER-22
+                            .put("short","S") // fix PARANAMER-22
+                            .put("float","F")
+                            .put("long","J")
+                            .put("double","D")
+                            .build();
     }
 
     public String[] lookupParameterNames(AccessibleObject methodOrConstructor) {

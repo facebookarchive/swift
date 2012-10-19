@@ -18,13 +18,11 @@ package com.facebook.swift.codec.metadata;
 import com.facebook.swift.codec.ThriftEnumValue;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Map;
 
-import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
 
 import static java.lang.String.format;
@@ -36,10 +34,10 @@ public class ThriftEnumMetadata<T extends Enum<T>>
     private final Map<Integer, T> byEnumValue;
     private final Map<T, Integer> byEnumConstant;
 
-    @SuppressFBWarnings("NP_NULL_PARAM_DEREF")
-    public ThriftEnumMetadata(@Nonnull Class<T> enumClass)
+    public ThriftEnumMetadata(Class<T> enumClass)
             throws RuntimeException
     {
+        Preconditions.checkNotNull(enumClass, "enumClass must not be null");
         this.enumClass = enumClass;
 
         Method enumValueMethod = null;

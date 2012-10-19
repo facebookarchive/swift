@@ -29,8 +29,6 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.reflect.TypeToken;
 
-import javax.annotation.Nullable;
-import javax.annotation.concurrent.NotThreadSafe;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -42,6 +40,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.NotThreadSafe;
 
 import static com.facebook.swift.codec.metadata.ReflectionHelper.extractParameterNames;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.findAnnotatedMethods;
