@@ -15,12 +15,14 @@
  */
 package com.facebook.swift.parser.model;
 
+import com.facebook.swift.parser.visitor.DocumentVisitor;
+import com.facebook.swift.parser.visitor.Visitable;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class TypeAnnotation
+public class TypeAnnotation implements Visitable
 {
     private final String name;
     private final String value;
@@ -48,5 +50,11 @@ public class TypeAnnotation
                 .add("name", name)
                 .add("value", value)
                 .toString();
+    }
+
+    @Override
+    public void visit(final DocumentVisitor visitor)
+    {
+        visitor.visit(this);
     }
 }

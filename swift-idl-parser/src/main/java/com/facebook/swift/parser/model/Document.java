@@ -15,7 +15,9 @@
  */
 package com.facebook.swift.parser.model;
 
+import com.facebook.swift.parser.visitor.DocumentVisitor;
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Collections;
@@ -45,6 +47,18 @@ public class Document
     {
         return definitions;
     }
+
+    public void visit(final DocumentVisitor visitor)
+    {
+        Preconditions.checkNotNull(visitor, "the visitor must not be null!");
+
+        for (Definition definition : definitions) {
+            if (visitor.accept(definition)) {
+                definition.visit(visitor);
+            }
+        }
+    }
+
 
     @Override
     public String toString()

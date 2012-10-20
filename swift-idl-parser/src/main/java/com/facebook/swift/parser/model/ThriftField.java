@@ -15,6 +15,8 @@
  */
 package com.facebook.swift.parser.model;
 
+import com.facebook.swift.parser.visitor.DocumentVisitor;
+import com.facebook.swift.parser.visitor.Visitable;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 
@@ -22,7 +24,7 @@ import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class ThriftField
+public class ThriftField implements Visitable
 {
     public static enum Required
     {
@@ -93,5 +95,11 @@ public class ThriftField
                 .add("value", value)
                 .add("annotations", annotations)
                 .toString();
+    }
+
+    @Override
+    public void visit(final DocumentVisitor visitor)
+    {
+        visitor.visit(this);
     }
 }

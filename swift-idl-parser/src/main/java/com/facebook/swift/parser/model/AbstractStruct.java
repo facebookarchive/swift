@@ -15,6 +15,8 @@
  */
 package com.facebook.swift.parser.model;
 
+import com.facebook.swift.parser.visitor.DocumentVisitor;
+import com.facebook.swift.parser.visitor.Visitable;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 
@@ -36,6 +38,7 @@ public abstract class AbstractStruct
         this.annotations = ImmutableList.copyOf(checkNotNull(annotations, "annotations"));
     }
 
+    @Override
     public String getName()
     {
         return name;
@@ -49,6 +52,15 @@ public abstract class AbstractStruct
     public List<TypeAnnotation> getAnnotations()
     {
         return annotations;
+    }
+
+    @Override
+    public void visit(final DocumentVisitor visitor)
+    {
+        super.visit(visitor);
+
+        Visitable.Utils.visitAll(visitor, getFields());
+        Visitable.Utils.visitAll(visitor, getAnnotations());
     }
 
     @Override

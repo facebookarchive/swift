@@ -34,6 +34,7 @@ public class StringEnum
         this.values = ImmutableList.copyOf(checkNotNull(values, "values"));
     }
 
+    @Override
     public String getName()
     {
         return name;

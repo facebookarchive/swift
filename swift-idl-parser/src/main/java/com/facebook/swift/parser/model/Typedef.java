@@ -32,6 +32,7 @@ public class Typedef
         this.type = Preconditions.checkNotNull(type, "type");
     }
 
+    @Override
     public String getName()
     {
         return name;

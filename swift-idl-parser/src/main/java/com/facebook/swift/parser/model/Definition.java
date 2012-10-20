@@ -15,8 +15,21 @@
  */
 package com.facebook.swift.parser.model;
 
-public abstract class Definition
+import com.facebook.swift.parser.visitor.DocumentVisitor;
+import com.facebook.swift.parser.visitor.Nameable;
+import com.facebook.swift.parser.visitor.Visitable;
+
+public abstract class Definition implements Visitable, Nameable
 {
+    @Override
+    public void visit(final DocumentVisitor visitor)
+    {
+        Visitable.Utils.visit(visitor, this);
+    }
+
+    @Override
+    public abstract String getName();
+
     @Override
     public abstract String toString();
 }

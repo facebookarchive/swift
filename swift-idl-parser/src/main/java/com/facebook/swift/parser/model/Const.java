@@ -33,6 +33,7 @@ public class Const
         this.value = checkNotNull(value, "value");
     }
 
+    @Override
     public String getName()
     {
         return name;
