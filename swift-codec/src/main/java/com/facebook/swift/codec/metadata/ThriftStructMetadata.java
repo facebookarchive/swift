@@ -19,11 +19,11 @@ import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedMap;
 
-import javax.annotation.Nullable;
-import javax.annotation.concurrent.Immutable;
 import java.util.Collection;
 import java.util.List;
 import java.util.SortedMap;
+
+import javax.annotation.concurrent.Immutable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Maps.uniqueIndex;
