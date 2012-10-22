@@ -29,10 +29,4 @@ public class TypeVisitor implements DocumentVisitor
         final Nameable type = Nameable.class.cast(visitable);
         typeRegistry.add(new SwiftJavaType(typeRegistry.getDefaultThriftNamespace(), type.getName(), javaNamespace));
     }
-
-    @Override
-    public String getName()
-    {
-        return "type";
-    }
 }
