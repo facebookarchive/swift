@@ -2,7 +2,9 @@ package com.facebook.swift.generator;
 
 import com.facebook.swift.generator.util.TemplateLoader;
 import com.facebook.swift.generator.visitors.ExceptionVisitor;
+import com.facebook.swift.generator.visitors.IntegerEnumVisitor;
 import com.facebook.swift.generator.visitors.ServiceVisitor;
+import com.facebook.swift.generator.visitors.StringEnumVisitor;
 import com.facebook.swift.generator.visitors.StructVisitor;
 import com.facebook.swift.generator.visitors.TypeVisitor;
 import com.facebook.swift.parser.ThriftIdlParser;
@@ -105,6 +107,8 @@ public class SwiftGenerator
         visitors.add(new ServiceVisitor(templateLoader, typeRegistry, outputFolder));
         visitors.add(new StructVisitor(templateLoader, typeRegistry, outputFolder));
         visitors.add(new ExceptionVisitor(templateLoader, typeRegistry, outputFolder));
+        visitors.add(new IntegerEnumVisitor(templateLoader, typeRegistry, outputFolder));
+        visitors.add(new StringEnumVisitor(templateLoader, typeRegistry, outputFolder));
 
         for (DocumentVisitor visitor : visitors) {
             document.visit(visitor);
