@@ -43,6 +43,7 @@
   </developers>
 
   <properties>
+    <dep.fb.nifty.version>0.0.2-SNAPSHOT</dep.fb.nifty.version>
     <dep.guice.version>3.0</dep.guice.version>
     <dep.airlift.version>0.66</dep.airlift.version>
     <dep.slf4j.version>1.6.4</dep.slf4j.version>
@@ -125,13 +126,13 @@
       <dependency>
         <groupId>com.facebook.nifty</groupId>
         <artifactId>nifty-core</artifactId>
-        <version>0.0.1</version>
+        <version>${dep.fb.nifty.version}</version>
       </dependency>
 
       <dependency>
         <groupId>com.facebook.nifty</groupId>
         <artifactId>nifty-client</artifactId>
-        <version>0.0.1</version>
+        <version>${dep.fb.nifty.version}</version>
       </dependency>
 
       <dependency>
