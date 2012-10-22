@@ -19,10 +19,12 @@ import com.facebook.swift.parser.visitor.DocumentVisitor;
 import com.facebook.swift.parser.visitor.Nameable;
 import com.facebook.swift.parser.visitor.Visitable;
 
+import java.io.IOException;
+
 public abstract class Definition implements Visitable, Nameable
 {
     @Override
-    public void visit(final DocumentVisitor visitor)
+    public void visit(final DocumentVisitor visitor) throws IOException
     {
         Visitable.Utils.visit(visitor, this);
     }

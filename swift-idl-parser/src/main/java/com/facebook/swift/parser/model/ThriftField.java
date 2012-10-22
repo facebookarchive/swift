@@ -20,6 +20,7 @@ import com.facebook.swift.parser.visitor.Visitable;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 
+import java.io.IOException;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -99,6 +100,7 @@ public class ThriftField implements Visitable
 
     @Override
     public void visit(final DocumentVisitor visitor)
+        throws IOException
     {
         visitor.visit(this);
     }

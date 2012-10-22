@@ -20,6 +20,8 @@ import com.facebook.swift.parser.visitor.Visitable;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 
+import java.io.IOException;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class TypeAnnotation implements Visitable
@@ -53,7 +55,7 @@ public class TypeAnnotation implements Visitable
     }
 
     @Override
-    public void visit(final DocumentVisitor visitor)
+    public void visit(final DocumentVisitor visitor) throws IOException
     {
         visitor.visit(this);
     }

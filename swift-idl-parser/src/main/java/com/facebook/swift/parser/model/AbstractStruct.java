@@ -20,6 +20,7 @@ import com.facebook.swift.parser.visitor.Visitable;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 
+import java.io.IOException;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -55,7 +56,7 @@ public abstract class AbstractStruct
     }
 
     @Override
-    public void visit(final DocumentVisitor visitor)
+    public void visit(final DocumentVisitor visitor) throws IOException
     {
         super.visit(visitor);
 

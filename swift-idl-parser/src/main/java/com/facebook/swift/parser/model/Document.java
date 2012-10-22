@@ -20,6 +20,7 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +49,7 @@ public class Document
         return definitions;
     }
 
-    public void visit(final DocumentVisitor visitor)
+    public void visit(final DocumentVisitor visitor) throws IOException
     {
         Preconditions.checkNotNull(visitor, "the visitor must not be null!");
 

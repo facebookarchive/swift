@@ -21,6 +21,7 @@ import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 
+import java.io.IOException;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -56,7 +57,7 @@ public class Service
     }
 
     @Override
-    public void visit(final DocumentVisitor visitor)
+    public void visit(final DocumentVisitor visitor) throws IOException
     {
         super.visit(visitor);
         Visitable.Utils.visitAll(visitor, getMethods());
