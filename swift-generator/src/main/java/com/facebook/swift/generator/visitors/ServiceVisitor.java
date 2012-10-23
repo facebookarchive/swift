@@ -61,7 +61,7 @@ public class ServiceVisitor implements DocumentVisitor
         final StringTemplate serviceTemplate = templateLoader.load("service");
         serviceTemplate.setAttribute("service", serviceContext);
 
-        final File serviceFile = new File(outputFolder, service.getName() + ".java");
+        final File serviceFile = new File(outputFolder, serviceContext.getJavaName() + ".java");
 
         try (OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(serviceFile), Charsets.UTF_8)) {
             serviceTemplate.write(new NoIndentWriter(osw));

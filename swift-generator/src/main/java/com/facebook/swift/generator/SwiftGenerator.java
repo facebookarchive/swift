@@ -16,8 +16,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,13 +27,13 @@ import java.util.List;
 public class SwiftGenerator
 {
     private static final String THRIFT_FOLDER = System.getProperty("user.home") + "/fb/src/swift/swift-idl-parser/src/test/resources";
-    private static final String OUTPUT_FOLDER = "/tmp/output";
-
-    private static final Logger LOG = LoggerFactory.getLogger(SwiftGenerator.class);
+    private static final String OUTPUT_FOLDER = System.getProperty("user.home") + "/fb/workspace/default/Demo/src/org/apache/hadoop/hive/metastore/api";
+//    private static final String OUTPUT_FOLDER = System.getProperty("user.home") + "/fb/workspace/default/Demo/src/com/facebook/fb303";
 
     public static void main(final String ... args) throws Exception
     {
         final SwiftGenerator generator = new SwiftGenerator(THRIFT_FOLDER, "hive/metastore.thrift", OUTPUT_FOLDER);
+//        final SwiftGenerator generator = new SwiftGenerator(THRIFT_FOLDER, "fb303.thrift", OUTPUT_FOLDER);
         generator.parse();
         generator.generate();
     }

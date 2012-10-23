@@ -51,7 +51,7 @@ public class StructVisitor implements DocumentVisitor
         final StringTemplate structTemplate = templateLoader.load("struct");
         structTemplate.setAttribute("struct", structContext);
 
-        final File serviceFile = new File(outputFolder, struct.getName() + ".java");
+        final File serviceFile = new File(outputFolder, structContext.getJavaName() + ".java");
 
         try (OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(serviceFile), Charsets.UTF_8)) {
             structTemplate.write(new NoIndentWriter(osw));

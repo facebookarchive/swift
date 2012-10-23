@@ -8,7 +8,7 @@ import com.facebook.swift.service.*;
 import java.util.*;
 
 @ThriftService("<service.name>")
-public interface <service.javaName> <if(service.parent)>extends <service.javaParent><endif>
+public interface <service.javaName> <if(service.javaParent)>extends <service.javaParent><endif>
 {
     <service.methods : { method |<method(method)>}; separator="\n\n">
 }

@@ -33,9 +33,14 @@ public class TypeToJavaConverter
 
     public String convertType(final ThriftType thriftType)
     {
+        return convert(thriftType, true);
+    }
+
+    public String convert(final ThriftType thriftType, boolean primitive)
+    {
         for (Converter converter : converters) {
             if (converter.accept(thriftType)) {
-                return converter.convert(thriftType);
+                return converter.convert(thriftType, primitive);
             }
         }
         throw new IllegalArgumentException("Thrift type %s is unknown!");
@@ -45,7 +50,7 @@ public class TypeToJavaConverter
     {
         boolean accept(ThriftType type);
 
-        String convert(ThriftType type);
+        String convert(ThriftType type, boolean primitive);
     }
 
     private static class VoidConverter implements Converter
@@ -55,24 +60,36 @@ public class TypeToJavaConverter
             return type.getClass() == VoidType.class;
         }
 
-        public String convert(final ThriftType type)
+        public String convert(final ThriftType type, boolean primitive)
         {
-            return "void";
+            return primitive ? "void" : "VOID";
         }
     }
 
     private static class BaseConverter implements Converter
     {
+        private static final EnumMap<BaseType.Type, String> JAVA_PRIMITIVES_MAP;
         private static final EnumMap<BaseType.Type, String> JAVA_TYPE_MAP;
 
         static {
+            final EnumMap<BaseType.Type, String> javaPrimitivesMap = Maps.newEnumMap(BaseType.Type.class);
+            javaPrimitivesMap.put(BaseType.Type.BOOL, "boolean");
+            javaPrimitivesMap.put(BaseType.Type.BYTE, "byte");
+            javaPrimitivesMap.put(BaseType.Type.I16, "short");
+            javaPrimitivesMap.put(BaseType.Type.I32, "int");
+            javaPrimitivesMap.put(BaseType.Type.I64, "long");
+            javaPrimitivesMap.put(BaseType.Type.DOUBLE, "double");
+            javaPrimitivesMap.put(BaseType.Type.STRING, "String");
+            javaPrimitivesMap.put(BaseType.Type.BINARY, "byte []");
+            JAVA_PRIMITIVES_MAP = javaPrimitivesMap;
+
             final EnumMap<BaseType.Type, String> javaTypeMap = Maps.newEnumMap(BaseType.Type.class);
-            javaTypeMap.put(BaseType.Type.BOOL, "boolean");
-            javaTypeMap.put(BaseType.Type.BYTE, "byte");
-            javaTypeMap.put(BaseType.Type.I16, "short");
-            javaTypeMap.put(BaseType.Type.I32, "int");
-            javaTypeMap.put(BaseType.Type.I64, "long");
-            javaTypeMap.put(BaseType.Type.DOUBLE, "double");
+            javaTypeMap.put(BaseType.Type.BOOL, "Boolean");
+            javaTypeMap.put(BaseType.Type.BYTE, "Byte");
+            javaTypeMap.put(BaseType.Type.I16, "Short");
+            javaTypeMap.put(BaseType.Type.I32, "Integer");
+            javaTypeMap.put(BaseType.Type.I64, "Long");
+            javaTypeMap.put(BaseType.Type.DOUBLE, "Double");
             javaTypeMap.put(BaseType.Type.STRING, "String");
             javaTypeMap.put(BaseType.Type.BINARY, "byte []");
             JAVA_TYPE_MAP = javaTypeMap;
@@ -83,10 +100,10 @@ public class TypeToJavaConverter
             return type.getClass() == BaseType.class;
         }
 
-        public String convert(final ThriftType type)
+        public String convert(final ThriftType type, boolean primitive)
         {
             final BaseType.Type baseType = ((BaseType) type).getType();
-            return JAVA_TYPE_MAP.get(baseType);
+            return primitive ? JAVA_PRIMITIVES_MAP.get(baseType) : JAVA_TYPE_MAP.get(baseType);
         }
     }
 
@@ -97,7 +114,7 @@ public class TypeToJavaConverter
             return type.getClass() == IdentifierType.class;
         }
 
-        public String convert(final ThriftType type)
+        public String convert(final ThriftType type, final boolean ignored)
         {
             final String name = ((IdentifierType) type).getName();
             if (name.indexOf('.') == -1) {
@@ -116,14 +133,14 @@ public class TypeToJavaConverter
             return type.getClass() == SetType.class;
         }
 
-        public String convert(final ThriftType type)
+        public String convert(final ThriftType type, final boolean ignored)
         {
-        final SetType setType = SetType.class.cast(type);
+            final SetType setType = SetType.class.cast(type);
 
-        final String actualType = convertType(setType.getType());
+            final String actualType = TypeToJavaConverter.this.convert(setType.getType(), false);
 
-        return "Set<" + actualType + ">";
-    }
+            return "Set<" + actualType + ">";
+        }
     }
 
     private class ListConverter implements Converter
@@ -133,14 +150,14 @@ public class TypeToJavaConverter
             return type.getClass() == ListType.class;
         }
 
-        public String convert(final ThriftType type)
+        public String convert(final ThriftType type, final boolean ignored)
         {
-        final ListType listType = ListType.class.cast(type);
+            final ListType listType = ListType.class.cast(type);
 
-        final String actualType = convertType(listType.getType());
+            final String actualType = TypeToJavaConverter.this.convert(listType.getType(), false);
 
-        return "List<" + actualType + ">";
-    }
+            return "List<" + actualType + ">";
+        }
     }
 
     private class MapConverter implements Converter
@@ -150,15 +167,14 @@ public class TypeToJavaConverter
             return type.getClass() == MapType.class;
         }
 
-        public String convert(final ThriftType type)
+        public String convert(final ThriftType type, final boolean ignored)
         {
-        final MapType mapType = MapType.class.cast(type);
+            final MapType mapType = MapType.class.cast(type);
 
-        final String actualKeyType = convertType(mapType.getKeyType());
-        final String actualValueType = convertType(mapType.getValueType());
+            final String actualKeyType = TypeToJavaConverter.this.convert(mapType.getKeyType(), false);
+            final String actualValueType = TypeToJavaConverter.this.convert(mapType.getValueType(), false);
 
-        return String.format("Map<%s, %s>", actualKeyType, actualValueType);
-    }
+            return String.format("Map<%s, %s>", actualKeyType, actualValueType);
+        }
     }
 }
-

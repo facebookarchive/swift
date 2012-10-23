@@ -51,7 +51,7 @@ public class IntegerEnumVisitor implements DocumentVisitor
         final StringTemplate enumTemplate = templateLoader.load("intEnum");
         enumTemplate.setAttribute("enum", enumContext);
 
-        final File serviceFile = new File(outputFolder, integerEnum.getName() + ".java");
+        final File serviceFile = new File(outputFolder, enumContext.getJavaName() + ".java");
 
         try (OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(serviceFile), Charsets.UTF_8)) {
             enumTemplate.write(new NoIndentWriter(osw));

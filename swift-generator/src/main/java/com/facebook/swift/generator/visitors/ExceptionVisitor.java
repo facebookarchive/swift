@@ -51,7 +51,7 @@ public class ExceptionVisitor implements DocumentVisitor
         final StringTemplate exceptionTemplate = templateLoader.load("exception");
         exceptionTemplate.setAttribute("exception", exceptionContext);
 
-        final File serviceFile = new File(outputFolder, exception.getName() + ".java");
+        final File serviceFile = new File(outputFolder, exceptionContext.getJavaName() + ".java");
 
         try (OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(serviceFile), Charsets.UTF_8)) {
             exceptionTemplate.write(new NoIndentWriter(osw));

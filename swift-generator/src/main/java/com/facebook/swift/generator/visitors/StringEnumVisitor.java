@@ -50,7 +50,7 @@ public class StringEnumVisitor implements DocumentVisitor
         final StringTemplate enumTemplate = templateLoader.load("stringEnum");
         enumTemplate.setAttribute("enum", enumContext);
 
-        final File serviceFile = new File(outputFolder, stringEnum.getName() + ".java");
+        final File serviceFile = new File(outputFolder, enumContext.getJavaName() + ".java");
 
         try (OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(serviceFile), Charsets.UTF_8)) {
             enumTemplate.write(new NoIndentWriter(osw));
