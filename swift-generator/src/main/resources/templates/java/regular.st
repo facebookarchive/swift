@@ -1,69 +1,69 @@
 group java;
 
-service(service) ::= <<
-package <service.namespace>;
+service(context) ::= <<
+package <context.javaPackage>;
 
 import com.facebook.swift.codec.*;
 import com.facebook.swift.service.*;
 import java.util.*;
 
-@ThriftService("<service.name>")
-public interface <service.javaName> <if(service.javaParent)>extends <service.javaParent><endif>
+@ThriftService("<context.name>")
+public interface <context.javaName> <if(context.javaParent)>extends <context.javaParent><endif>
 {
-    <service.methods : { method |<method(method)>}; separator="\n\n">
+    <context.methods : { method |<method(method)>}; separator="\n\n">
 }
 >>
 
-struct(struct) ::= <<
-package <struct.namespace>;
+struct(context) ::= <<
+package <context.javaPackage>;
 
 import com.facebook.swift.codec.*;
 import java.util.*;
 
-@ThriftStruct("<struct.name>")
-public class <struct.javaName>
+@ThriftStruct("<context.name>")
+public class <context.javaName>
 {
-    <struct.fields : { field |<field(field)>}; separator="\n\n">
+    <context.fields : { field |<field(field)>}; separator="\n\n">
 }
 >>
 
-exception(exception) ::= <<
-package <exception.namespace>;
+exception(context) ::= <<
+package <context.javaPackage>;
 
 import com.facebook.swift.codec.*;
 import java.util.*;
 
-public class <exception.javaName> extends Exception
+public class <context.javaName> extends Exception
 {
     private static final long serialVersionUID = 1L;
 
-    <exception.fields : { field |<field(field)>}; separator="\n\n">
+    <context.fields : { field |<field(field)>}; separator="\n\n">
 }
 >>
 
-stringEnum(enum) ::= <<
-package <enum.namespace>;
+stringEnum(context) ::= <<
+package <context.javaPackage>;
 
 import com.facebook.swift.codec.*;
 
-public enum <enum.javaName>
+public enum <context.javaName>
 {
-  <enum.fields : { field|<enumField(field)>}; separator=", ">;
+  <context.fields : { field|<enumField(field)>}; separator=", ">;
 }
 >>
 
-intEnum(enum) ::= <<
-package <enum.namespace>;
+intEnum(context) ::= <<
+package <context.javaPackage>;
 
 import com.facebook.swift.codec.*;
 
-public enum <enum.javaName>
+public enum <context.javaName>
 {
-  <enum.fields : { field|<enumField(field)>}; separator=", ">;
+  <context.fields : { field|<enumField(field)>}; separator=", ">;
 
   private final int value;
 
-  <enum.javaName>(int value)
+  <context.javaName>(int value)
   {
     this.value = value;
   }

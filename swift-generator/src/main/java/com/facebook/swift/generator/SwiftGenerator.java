@@ -27,8 +27,7 @@ import java.util.List;
 public class SwiftGenerator
 {
     private static final String THRIFT_FOLDER = System.getProperty("user.home") + "/fb/src/swift/swift-idl-parser/src/test/resources";
-    private static final String OUTPUT_FOLDER = System.getProperty("user.home") + "/fb/workspace/default/Demo/src/org/apache/hadoop/hive/metastore/api";
-//    private static final String OUTPUT_FOLDER = System.getProperty("user.home") + "/fb/workspace/default/Demo/src/com/facebook/fb303";
+    private static final String OUTPUT_FOLDER = System.getProperty("user.home") + "/fb/workspace/default/Demo/src/";
 
     public static void main(final String ... args) throws Exception
     {

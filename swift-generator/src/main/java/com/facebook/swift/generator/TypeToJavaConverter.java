@@ -1,5 +1,9 @@
 package com.facebook.swift.generator;
 
+import java.util.EnumMap;
+import java.util.List;
+
+import com.facebook.swift.generator.template.ContextGenerator;
 import com.facebook.swift.parser.model.BaseType;
 import com.facebook.swift.parser.model.IdentifierType;
 import com.facebook.swift.parser.model.ListType;
@@ -9,9 +13,6 @@ import com.facebook.swift.parser.model.ThriftType;
 import com.facebook.swift.parser.model.VoidType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
-
-import java.util.EnumMap;
-import java.util.List;
 
 public class TypeToJavaConverter
 {
@@ -118,7 +119,7 @@ public class TypeToJavaConverter
         {
             final String name = ((IdentifierType) type).getName();
             if (name.indexOf('.') == -1) {
-                return typeRegistry.findType(typeRegistry.getDefaultThriftNamespace(), name).getSimpleName();
+                return typeRegistry.findType(typeRegistry.getDefaultThriftNamespace(), ContextGenerator.mangleTypeName(name)).getSimpleName();
             }
             else {
                 return typeRegistry.findType(name).getClassName();

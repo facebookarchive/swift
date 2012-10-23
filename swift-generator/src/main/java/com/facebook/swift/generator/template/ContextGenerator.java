@@ -1,5 +1,7 @@
 package com.facebook.swift.generator.template;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.facebook.swift.generator.SwiftJavaType;
 import com.facebook.swift.generator.TypeRegistry;
 import com.facebook.swift.generator.TypeToJavaConverter;
@@ -11,7 +13,6 @@ import com.facebook.swift.parser.model.StringEnum;
 import com.facebook.swift.parser.model.ThriftField;
 import com.facebook.swift.parser.model.ThriftMethod;
 import com.google.common.base.Preconditions;
-import org.apache.commons.lang3.StringUtils;
 
 public class ContextGenerator
 {
@@ -26,10 +27,11 @@ public class ContextGenerator
 
     public ServiceContext serviceFromThrift(final Service service)
     {
-        final SwiftJavaType javaType = typeRegistry.findType(typeRegistry.getDefaultThriftNamespace(), service.getName());
+        final String name = mangleTypeName(service.getName());
+        final SwiftJavaType javaType = typeRegistry.findType(typeRegistry.getDefaultThriftNamespace(), name);
         final SwiftJavaType parentType = typeRegistry.findType(service.getParent().orNull());
 
-        return new ServiceContext(service.getName(),
+        return new ServiceContext(name,
                                   javaType.getPackage(),
                                   javaType.getSimpleName(),
                                   parentType == null ? null : parentType.getClassName());
@@ -37,9 +39,10 @@ public class ContextGenerator
 
     public StructContext structFromThrift(final AbstractStruct struct)
     {
-        final SwiftJavaType javaType = typeRegistry.findType(typeRegistry.getDefaultThriftNamespace(), struct.getName());
+        final String name = mangleTypeName(struct.getName());
+        final SwiftJavaType javaType = typeRegistry.findType(typeRegistry.getDefaultThriftNamespace(), name);
 
-        return new StructContext(struct.getName(),
+        return new StructContext(name,
                                  javaType.getPackage(),
                                  javaType.getSimpleName());
     }
@@ -48,7 +51,7 @@ public class ContextGenerator
     {
         return new MethodContext(method.getName(),
                                  method.isOneway(),
-                                 mangleJavaMethodName(method.getName()),
+                                 mangleMethodName(method.getName()),
                                  typeConverter.convertType(method.getReturnType()));
     }
 
@@ -59,7 +62,7 @@ public class ContextGenerator
         return new FieldContext(field.getName(),
                                 field.getIdentifier().get().shortValue(),
                                 typeConverter.convertType(field.getType()),
-                                mangleJavaMethodName(field.getName()),
+                                mangleMethodName(field.getName()),
                                 getterName(field),
                                 setterName(field));
     }
@@ -72,13 +75,15 @@ public class ContextGenerator
 
     public EnumContext enumFromThrift(final IntegerEnum integerEnum)
     {
-        final SwiftJavaType javaType = typeRegistry.findType(typeRegistry.getDefaultThriftNamespace(), integerEnum.getName());
+        final String name = mangleTypeName(integerEnum.getName());
+        final SwiftJavaType javaType = typeRegistry.findType(typeRegistry.getDefaultThriftNamespace(), name);
         return new EnumContext(javaType.getPackage(), javaType.getSimpleName());
     }
 
     public EnumContext enumFromThrift(final StringEnum stringEnum)
     {
-        final SwiftJavaType javaType = typeRegistry.findType(typeRegistry.getDefaultThriftNamespace(), stringEnum.getName());
+        final String name = mangleTypeName(stringEnum.getName());
+        final SwiftJavaType javaType = typeRegistry.findType(typeRegistry.getDefaultThriftNamespace(), name);
         return new EnumContext(javaType.getPackage(), javaType.getSimpleName());
     }
 
@@ -93,11 +98,20 @@ public class ContextGenerator
         return new EnumFieldContext(mangleJavaConstantName(value), null);
     }
 
-    private String mangleJavaMethodName(final String src)
+    public static final String mangleMethodName(final String src)
+    {
+        return mangleJavaName(src, false);
+    }
+    public static final String mangleTypeName(final String src)
+    {
+        return mangleJavaName(src, true);
+    }
+
+    private static final String mangleJavaName(final String src, boolean capitalize)
     {
         final StringBuilder sb = new StringBuilder();
         if (!StringUtils.isBlank(src)) {
-            boolean upCase = false;
+            boolean upCase = capitalize;
             for (int i = 0; i < src.length(); i++) {
                 if (src.charAt(i) == '_') {
                     upCase = true;
@@ -112,7 +126,7 @@ public class ContextGenerator
         return sb.toString();
     }
 
-    private String mangleJavaConstantName(final String src)
+    public static final String mangleJavaConstantName(final String src)
     {
         final StringBuilder sb = new StringBuilder();
         if (!StringUtils.isBlank(src)) {
@@ -137,11 +151,11 @@ public class ContextGenerator
     private String getterName(final ThriftField field)
     {
         final String type = typeConverter.convertType(field.getType());
-        return ("boolean".equals(type) ? "is" : "get") + StringUtils.capitalize(mangleJavaMethodName(field.getName()));
+        return ("boolean".equals(type) ? "is" : "get") + mangleTypeName(field.getName());
     }
 
     private String setterName(final ThriftField field)
     {
-        return "set" + StringUtils.capitalize(mangleJavaMethodName(field.getName()));
+        return "set" + mangleTypeName(field.getName());
     }
 }

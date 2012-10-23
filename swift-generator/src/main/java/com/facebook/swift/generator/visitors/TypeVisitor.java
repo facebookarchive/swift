@@ -2,6 +2,7 @@ package com.facebook.swift.generator.visitors;
 
 import com.facebook.swift.generator.SwiftJavaType;
 import com.facebook.swift.generator.TypeRegistry;
+import com.facebook.swift.generator.template.ContextGenerator;
 import com.facebook.swift.parser.visitor.DocumentVisitor;
 import com.facebook.swift.parser.visitor.Nameable;
 import com.facebook.swift.parser.visitor.Visitable;
@@ -27,6 +28,6 @@ public class TypeVisitor implements DocumentVisitor
     public void visit(final Visitable visitable)
     {
         final Nameable type = Nameable.class.cast(visitable);
-        typeRegistry.add(new SwiftJavaType(typeRegistry.getDefaultThriftNamespace(), type.getName(), javaNamespace));
+        typeRegistry.add(new SwiftJavaType(typeRegistry.getDefaultThriftNamespace(), ContextGenerator.mangleTypeName(type.getName()), javaNamespace));
     }
 }

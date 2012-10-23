@@ -1,19 +1,19 @@
 package com.facebook.swift.generator.template;
 
-import com.google.common.collect.Lists;
-
 import java.util.List;
 
-public class EnumContext
+import com.google.common.collect.Lists;
+
+public class EnumContext implements JavaContext
 {
-    private final String namespace;
+    private final String javaPackage;
     private final String javaName;
 
     private final List<EnumFieldContext> fields = Lists.newArrayList();
 
-    EnumContext(String namespace, String javaName)
+    EnumContext(String javaPackage, String javaName)
     {
-        this.namespace = namespace;
+        this.javaPackage = javaPackage;
         this.javaName = javaName;
     }
 
@@ -27,11 +27,13 @@ public class EnumContext
         return fields;
     }
 
-    public String getNamespace()
+    @Override
+    public String getJavaPackage()
     {
-        return namespace;
+        return javaPackage;
     }
 
+    @Override
     public String getJavaName()
     {
         return javaName;
@@ -44,7 +46,7 @@ public class EnumContext
         int result = 1;
         result = prime * result + ((fields == null) ? 0 : fields.hashCode());
         result = prime * result + ((javaName == null) ? 0 : javaName.hashCode());
-        result = prime * result + ((namespace == null) ? 0 : namespace.hashCode());
+        result = prime * result + ((javaPackage == null) ? 0 : javaPackage.hashCode());
         return result;
     }
 
@@ -70,11 +72,11 @@ public class EnumContext
         }
         else if (!javaName.equals(other.javaName))
             return false;
-        if (namespace == null) {
-            if (other.namespace != null)
+        if (javaPackage == null) {
+            if (other.javaPackage != null)
                 return false;
         }
-        else if (!namespace.equals(other.namespace))
+        else if (!javaPackage.equals(other.javaPackage))
             return false;
         return true;
     }
@@ -82,6 +84,6 @@ public class EnumContext
     @Override
     public String toString()
     {
-        return "EnumContext [namespace=" + namespace + ", javaName=" + javaName + ", fields=" + fields + "]";
+        return "EnumContext [javaPackage=" + javaPackage + ", javaName=" + javaName + ", fields=" + fields + "]";
     }
 }

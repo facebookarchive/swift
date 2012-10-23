@@ -1,34 +1,20 @@
 package com.facebook.swift.generator.visitors;
 
+import java.io.File;
+import java.io.IOException;
+
 import com.facebook.swift.generator.TypeRegistry;
-import com.facebook.swift.generator.template.ContextGenerator;
 import com.facebook.swift.generator.template.EnumContext;
 import com.facebook.swift.generator.util.TemplateLoader;
 import com.facebook.swift.parser.model.IntegerEnum;
 import com.facebook.swift.parser.model.IntegerEnumField;
-import com.facebook.swift.parser.visitor.DocumentVisitor;
 import com.facebook.swift.parser.visitor.Visitable;
-import com.google.common.base.Charsets;
-import org.antlr.stringtemplate.NoIndentWriter;
-import org.antlr.stringtemplate.StringTemplate;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-
-public class IntegerEnumVisitor implements DocumentVisitor
+public class IntegerEnumVisitor extends AbstractTemplateVisitor
 {
-    private final TemplateLoader templateLoader;
-    private final ContextGenerator contextGenerator;
-
-    private final File outputFolder;
-
     public IntegerEnumVisitor(final TemplateLoader templateLoader, final TypeRegistry typeRegistry, final File outputFolder)
     {
-        this.templateLoader = templateLoader;
-        this.contextGenerator = new ContextGenerator(typeRegistry);
-        this.outputFolder = outputFolder;
+        super(templateLoader, typeRegistry, outputFolder);
     }
 
     @Override
@@ -48,14 +34,6 @@ public class IntegerEnumVisitor implements DocumentVisitor
             enumContext.addField(contextGenerator.fieldFromThrift(field));
         }
 
-        final StringTemplate enumTemplate = templateLoader.load("intEnum");
-        enumTemplate.setAttribute("enum", enumContext);
-
-        final File serviceFile = new File(outputFolder, enumContext.getJavaName() + ".java");
-
-        try (OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(serviceFile), Charsets.UTF_8)) {
-            enumTemplate.write(new NoIndentWriter(osw));
-            osw.flush();
-        }
+        render(enumContext, "intEnum");
     }
 }
