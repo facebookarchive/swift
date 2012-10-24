@@ -18,6 +18,11 @@
 
   <dependencies>
     <dependency>
+      <groupId>com.facebook.swift</groupId>
+      <artifactId>swift-generator</artifactId>
+    </dependency>
+    
+    <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
     </dependency>
@@ -56,7 +61,6 @@
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-project</artifactId>
-      <scope>runtime</scope>
     </dependency>
   </dependencies>
 

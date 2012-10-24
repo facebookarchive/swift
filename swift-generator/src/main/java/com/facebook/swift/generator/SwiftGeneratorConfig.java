@@ -1,36 +1,38 @@
 package com.facebook.swift.generator;
 
+import java.io.File;
+
 public class SwiftGeneratorConfig
 {
-    private final String inputFolderName;
-    private final String [] inputFiles;
-    private final String outputFolderName;
+    private final File inputFolder;
+    private final File [] inputFiles;
+    private final File outputFolder;
     private final String defaultPackage;
 
-    public SwiftGeneratorConfig(final String inputFolderName,
-                final String [] inputFiles,
-                final String outputFolderName,
-                final String defaultPackage)
+    public SwiftGeneratorConfig(final File inputFolder,
+                                final File [] inputFiles,
+                                final File outputFolder,
+                                final String defaultPackage)
     {
-        this.inputFolderName = inputFolderName;
+        this.inputFolder = inputFolder;
         this.inputFiles = inputFiles;
-        this.outputFolderName = outputFolderName;
+        this.outputFolder = outputFolder;
         this.defaultPackage = defaultPackage;
     }
 
-    public String getInputFolderName()
+    public File getInputFolder()
     {
-        return inputFolderName;
+        return inputFolder;
     }
 
-    public String[] getInputFiles()
+    public File[] getInputFiles()
     {
         return inputFiles;
     }
 
-    public String getOutputFolderName()
+    public File getOutputFolder()
     {
-        return outputFolderName;
+        return outputFolder;
     }
 
     public String getDefaultPackage()

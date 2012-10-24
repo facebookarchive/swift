@@ -1,5 +1,11 @@
 package com.facebook.swift.generator;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+
 import com.facebook.swift.generator.util.TemplateLoader;
 import com.facebook.swift.generator.visitors.ExceptionVisitor;
 import com.facebook.swift.generator.visitors.IntegerEnumVisitor;
@@ -13,11 +19,6 @@ import com.facebook.swift.parser.visitor.DocumentVisitor;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import org.apache.commons.lang3.StringUtils;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
 
 /**
  * Parses a Thrift IDL file and writes out initial annotated java classes.
@@ -29,9 +30,10 @@ public class SwiftGenerator
 
     public static void main(final String ... args) throws Exception
     {
-        final SwiftGeneratorConfig config = new SwiftGeneratorConfig(THRIFT_FOLDER,
-                                                                     new String [] { "hive/metastore.thrift", "fb303.thrift" },
-                                                                     OUTPUT_FOLDER,
+        final SwiftGeneratorConfig config = new SwiftGeneratorConfig(new File(THRIFT_FOLDER),
+                                                                     new File [] { new File(THRIFT_FOLDER, "hive/metastore.thrift"),
+                                                                                   new File(THRIFT_FOLDER, "fb303.thrift") },
+                                                                     new File(OUTPUT_FOLDER),
                                                                      "com.fb.test");
         final SwiftGenerator generator = new SwiftGenerator(config);
         generator.parse();
@@ -46,13 +48,9 @@ public class SwiftGenerator
     {
         this.swiftGeneratorConfig = swiftGeneratorConfig;
 
-        final String outputFolderName = swiftGeneratorConfig.getOutputFolderName();
-        if (outputFolderName != null) {
-            this.outputFolder = new File(outputFolderName);
+        this.outputFolder = swiftGeneratorConfig.getOutputFolder();
+        if (outputFolder != null) {
             outputFolder.mkdirs();
-        }
-        else {
-            outputFolder = null;
         }
 
         this.templateLoader = new TemplateLoader("java/regular.st");
@@ -61,8 +59,8 @@ public class SwiftGenerator
     public void parse() throws Exception
     {
         final List<SwiftDocumentContext> contexts = Lists.newArrayList();
-        for (final String fileName : swiftGeneratorConfig.getInputFiles()) {
-            contexts.add(parseDocument(fileName, new TypeRegistry()));
+        for (final File file : swiftGeneratorConfig.getInputFiles()) {
+            contexts.add(parseDocument(file, new TypeRegistry()));
         }
 
         for (final SwiftDocumentContext context : contexts) {
@@ -70,13 +68,12 @@ public class SwiftGenerator
         }
     }
 
-    public SwiftDocumentContext parseDocument(final String fileName,
-                                              final TypeRegistry typeRegistry) throws IOException
+    private SwiftDocumentContext parseDocument(final File thriftFile,
+                                               final TypeRegistry typeRegistry) throws IOException
     {
-        final String thriftName = new File(fileName).getName();
+        final String thriftName = thriftFile.getName();
         final int idx = thriftName.lastIndexOf('.');
         final String thriftNamespace = (idx == -1) ? thriftName : thriftName.substring(0, idx);
-        final File thriftFile = new File(swiftGeneratorConfig.getInputFolderName(), fileName);
 
         Preconditions.checkState(thriftFile.exists(), "The file %s does not exist!", thriftFile.getAbsolutePath());
         Preconditions.checkState(thriftFile.canRead(), "The file %s can not be read!", thriftFile.getAbsolutePath());
@@ -89,7 +86,7 @@ public class SwiftGenerator
         Preconditions.checkState(!StringUtils.isEmpty(javaNamespace), "thrift file %s does not declare a java namespace!", thriftFile.getAbsolutePath());
 
         for (final String include : header.getIncludes()) {
-            parseDocument(include, typeRegistry);
+            parseDocument(new File(swiftGeneratorConfig.getInputFolder(), include), typeRegistry);
         }
 
         document.visit(new TypeVisitor(javaNamespace, context));
@@ -97,7 +94,7 @@ public class SwiftGenerator
         return context;
     }
 
-    public void generateFiles(final SwiftDocumentContext context) throws IOException
+    private void generateFiles(final SwiftDocumentContext context) throws IOException
     {
         Preconditions.checkState(outputFolder != null, "The output folder was not set!");
         Preconditions.checkState(outputFolder.isDirectory() && outputFolder.canWrite() && outputFolder.canExecute(), "output folder '%s' is not valid!", outputFolder.getAbsolutePath());
