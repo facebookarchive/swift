@@ -10,6 +10,7 @@ import com.facebook.swift.generator.visitors.TypeVisitor;
 import com.facebook.swift.parser.model.Document;
 import com.facebook.swift.parser.model.Header;
 import com.facebook.swift.parser.visitor.DocumentVisitor;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
@@ -30,7 +31,8 @@ public class SwiftGenerator
     {
         final SwiftGeneratorConfig config = new SwiftGeneratorConfig(THRIFT_FOLDER,
                                                                      new String [] { "hive/metastore.thrift", "fb303.thrift" },
-                                                                     OUTPUT_FOLDER);
+                                                                     OUTPUT_FOLDER,
+                                                                     "com.fb.test");
         final SwiftGenerator generator = new SwiftGenerator(config);
         generator.parse();
     }
@@ -83,7 +85,7 @@ public class SwiftGenerator
 
         final Document document = context.getDocument();
         final Header header = document.getHeader();
-        final String javaNamespace = header.getNamespace("java");
+        final String javaNamespace = Objects.firstNonNull(swiftGeneratorConfig.getDefaultPackage(), header.getNamespace("java"));
         Preconditions.checkState(!StringUtils.isEmpty(javaNamespace), "thrift file %s does not declare a java namespace!", thriftFile.getAbsolutePath());
 
         for (final String include : header.getIncludes()) {
