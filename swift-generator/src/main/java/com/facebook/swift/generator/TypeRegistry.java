@@ -13,18 +13,6 @@ public class TypeRegistry implements Iterable<SwiftJavaType>
 {
     private final Map<String, SwiftJavaType> registry = Maps.newHashMap();
 
-    private final String defaultThriftNamespace;
-
-    public TypeRegistry(final String defaultThriftNamespace)
-    {
-        this.defaultThriftNamespace = defaultThriftNamespace;
-    }
-
-    public String getDefaultThriftNamespace()
-    {
-        return defaultThriftNamespace;
-    }
-
     public void addAll(final TypeRegistry otherRegistry)
     {
         for (SwiftJavaType type : otherRegistry) {

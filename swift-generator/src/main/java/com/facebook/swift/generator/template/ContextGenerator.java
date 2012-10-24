@@ -1,7 +1,6 @@
 package com.facebook.swift.generator.template;
 
-import org.apache.commons.lang3.StringUtils;
-
+import com.facebook.swift.generator.SwiftDocumentContext;
 import com.facebook.swift.generator.SwiftJavaType;
 import com.facebook.swift.generator.TypeRegistry;
 import com.facebook.swift.generator.TypeToJavaConverter;
@@ -13,22 +12,25 @@ import com.facebook.swift.parser.model.StringEnum;
 import com.facebook.swift.parser.model.ThriftField;
 import com.facebook.swift.parser.model.ThriftMethod;
 import com.google.common.base.Preconditions;
+import org.apache.commons.lang3.StringUtils;
 
 public class ContextGenerator
 {
     private final TypeRegistry typeRegistry;
     private final TypeToJavaConverter typeConverter;
+    private final String defaultNamespace;
 
-    public ContextGenerator(final TypeRegistry typeRegistry)
+    public ContextGenerator(final SwiftDocumentContext context)
     {
-        this.typeRegistry = typeRegistry;
-        this.typeConverter = new TypeToJavaConverter(typeRegistry);
+        this.typeRegistry = context.getTypeRegistry();
+        this.defaultNamespace = context.getNamespace();
+        this.typeConverter = new TypeToJavaConverter(typeRegistry, defaultNamespace);
     }
 
     public ServiceContext serviceFromThrift(final Service service)
     {
         final String name = mangleTypeName(service.getName());
-        final SwiftJavaType javaType = typeRegistry.findType(typeRegistry.getDefaultThriftNamespace(), name);
+        final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, name);
         final SwiftJavaType parentType = typeRegistry.findType(service.getParent().orNull());
 
         return new ServiceContext(name,
@@ -40,7 +42,7 @@ public class ContextGenerator
     public StructContext structFromThrift(final AbstractStruct struct)
     {
         final String name = mangleTypeName(struct.getName());
-        final SwiftJavaType javaType = typeRegistry.findType(typeRegistry.getDefaultThriftNamespace(), name);
+        final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, name);
 
         return new StructContext(name,
                                  javaType.getPackage(),
@@ -76,14 +78,14 @@ public class ContextGenerator
     public EnumContext enumFromThrift(final IntegerEnum integerEnum)
     {
         final String name = mangleTypeName(integerEnum.getName());
-        final SwiftJavaType javaType = typeRegistry.findType(typeRegistry.getDefaultThriftNamespace(), name);
+        final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, name);
         return new EnumContext(javaType.getPackage(), javaType.getSimpleName());
     }
 
     public EnumContext enumFromThrift(final StringEnum stringEnum)
     {
         final String name = mangleTypeName(stringEnum.getName());
-        final SwiftJavaType javaType = typeRegistry.findType(typeRegistry.getDefaultThriftNamespace(), name);
+        final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, name);
         return new EnumContext(javaType.getPackage(), javaType.getSimpleName());
     }
 

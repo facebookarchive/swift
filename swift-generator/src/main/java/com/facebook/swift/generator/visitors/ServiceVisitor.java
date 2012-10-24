@@ -1,9 +1,6 @@
 package com.facebook.swift.generator.visitors;
 
-import java.io.File;
-import java.io.IOException;
-
-import com.facebook.swift.generator.TypeRegistry;
+import com.facebook.swift.generator.SwiftDocumentContext;
 import com.facebook.swift.generator.template.MethodContext;
 import com.facebook.swift.generator.template.ServiceContext;
 import com.facebook.swift.generator.util.TemplateLoader;
@@ -12,11 +9,16 @@ import com.facebook.swift.parser.model.ThriftField;
 import com.facebook.swift.parser.model.ThriftMethod;
 import com.facebook.swift.parser.visitor.Visitable;
 
+import java.io.File;
+import java.io.IOException;
+
 public class ServiceVisitor extends AbstractTemplateVisitor
 {
-    public ServiceVisitor(final TemplateLoader templateLoader, final TypeRegistry typeRegistry, final File outputFolder)
+    public ServiceVisitor(final TemplateLoader templateLoader,
+                          final SwiftDocumentContext context,
+                          final File outputFolder)
     {
-        super(templateLoader, typeRegistry, outputFolder);
+        super(templateLoader, context, outputFolder);
     }
 
     @Override
@@ -26,8 +28,7 @@ public class ServiceVisitor extends AbstractTemplateVisitor
     }
 
     @Override
-    public void visit(final Visitable visitable)
-        throws IOException
+    public void visit(final Visitable visitable) throws IOException
     {
         final Service service = Service.class.cast(visitable);
         final ServiceContext serviceContext = contextGenerator.serviceFromThrift(service);

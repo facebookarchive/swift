@@ -7,14 +7,11 @@ import com.facebook.swift.generator.visitors.ServiceVisitor;
 import com.facebook.swift.generator.visitors.StringEnumVisitor;
 import com.facebook.swift.generator.visitors.StructVisitor;
 import com.facebook.swift.generator.visitors.TypeVisitor;
-import com.facebook.swift.parser.ThriftIdlParser;
 import com.facebook.swift.parser.model.Document;
 import com.facebook.swift.parser.model.Header;
 import com.facebook.swift.parser.visitor.DocumentVisitor;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import com.google.common.io.Files;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -31,32 +28,23 @@ public class SwiftGenerator
 
     public static void main(final String ... args) throws Exception
     {
-        final SwiftGenerator generator = new SwiftGenerator(THRIFT_FOLDER, "hive/metastore.thrift", OUTPUT_FOLDER);
-//        final SwiftGenerator generator = new SwiftGenerator(THRIFT_FOLDER, "fb303.thrift", OUTPUT_FOLDER);
+        final SwiftGeneratorConfig config = new SwiftGeneratorConfig(THRIFT_FOLDER,
+                                                                     new String [] { "hive/metastore.thrift", "fb303.thrift" },
+                                                                     OUTPUT_FOLDER);
+        final SwiftGenerator generator = new SwiftGenerator(config);
         generator.parse();
-        generator.generate();
     }
 
-    private final TypeRegistry typeRegistry;
-
-    private final String thriftFolderName;
-    private final String thriftNamespace;
-    private final File thriftFile;
-
     private final File outputFolder;
+    private final SwiftGeneratorConfig swiftGeneratorConfig;
 
     private final TemplateLoader templateLoader;
-    private final Document document;
 
-    public SwiftGenerator(final String thriftFolderName, final String thriftFileName, final String outputFolderName)
-        throws IOException
+    public SwiftGenerator(final SwiftGeneratorConfig swiftGeneratorConfig)
     {
-        this.thriftFolderName = thriftFolderName;
-        final String thriftName = new File(thriftFileName).getName();
-        final int idx = thriftName.lastIndexOf('.');
-        this.thriftNamespace = (idx == -1) ? thriftName : thriftName.substring(0, idx);
-        this.thriftFile = new File(thriftFolderName, thriftFileName);
+        this.swiftGeneratorConfig = swiftGeneratorConfig;
 
+        final String outputFolderName = swiftGeneratorConfig.getOutputFolderName();
         if (outputFolderName != null) {
             this.outputFolder = new File(outputFolderName);
             outputFolder.mkdirs();
@@ -65,55 +53,62 @@ public class SwiftGenerator
             outputFolder = null;
         }
 
-        Preconditions.checkState(thriftFile.exists(), "The file %s does not exist!", thriftFile.getAbsolutePath());
-        Preconditions.checkState(thriftFile.canRead(), "The file %s can not be read!", thriftFile.getAbsolutePath());
-        Preconditions.checkState(!StringUtils.isEmpty(thriftNamespace), "The file %s can not be translated to a namespace", thriftFile.getAbsolutePath());
-
-        typeRegistry = new TypeRegistry(thriftNamespace);
-
         this.templateLoader = new TemplateLoader("java/regular.st");
-        this.document = ThriftIdlParser.parseThriftIdl(Files.newReaderSupplier(thriftFile, Charsets.UTF_8));
-
     }
 
     public void parse() throws Exception
     {
+        final List<SwiftDocumentContext> contexts = Lists.newArrayList();
+        for (final String fileName : swiftGeneratorConfig.getInputFiles()) {
+            contexts.add(parseDocument(fileName, new TypeRegistry()));
+        }
+
+        for (final SwiftDocumentContext context : contexts) {
+            generateFiles(context);
+        }
+    }
+
+    public SwiftDocumentContext parseDocument(final String fileName,
+                                              final TypeRegistry typeRegistry) throws IOException
+    {
+        final String thriftName = new File(fileName).getName();
+        final int idx = thriftName.lastIndexOf('.');
+        final String thriftNamespace = (idx == -1) ? thriftName : thriftName.substring(0, idx);
+        final File thriftFile = new File(swiftGeneratorConfig.getInputFolderName(), fileName);
+
+        Preconditions.checkState(thriftFile.exists(), "The file %s does not exist!", thriftFile.getAbsolutePath());
+        Preconditions.checkState(thriftFile.canRead(), "The file %s can not be read!", thriftFile.getAbsolutePath());
+        Preconditions.checkState(!StringUtils.isEmpty(thriftNamespace), "The file %s can not be translated to a namespace", thriftFile.getAbsolutePath());
+        final SwiftDocumentContext context = new SwiftDocumentContext(thriftFile, thriftNamespace, typeRegistry);
+
+        final Document document = context.getDocument();
         final Header header = document.getHeader();
         final String javaNamespace = header.getNamespace("java");
         Preconditions.checkState(!StringUtils.isEmpty(javaNamespace), "thrift file %s does not declare a java namespace!", thriftFile.getAbsolutePath());
 
         for (final String include : header.getIncludes()) {
-            final SwiftGenerator includeGen = new SwiftGenerator(thriftFolderName, include, null);
-            includeGen.parse();
-            typeRegistry.addAll(includeGen.getTypeRegistry());
+            parseDocument(include, typeRegistry);
         }
 
-        final List<DocumentVisitor> visitors = Lists.newArrayList();
-        visitors.add(new TypeVisitor(javaNamespace, typeRegistry));
-        for (DocumentVisitor visitor : visitors) {
-            document.visit(visitor);
-        }
+        document.visit(new TypeVisitor(javaNamespace, context));
+
+        return context;
     }
 
-    public void generate() throws IOException
+    public void generateFiles(final SwiftDocumentContext context) throws IOException
     {
         Preconditions.checkState(outputFolder != null, "The output folder was not set!");
         Preconditions.checkState(outputFolder.isDirectory() && outputFolder.canWrite() && outputFolder.canExecute(), "output folder '%s' is not valid!", outputFolder.getAbsolutePath());
 
         final List<DocumentVisitor> visitors = Lists.newArrayList();
-        visitors.add(new ServiceVisitor(templateLoader, typeRegistry, outputFolder));
-        visitors.add(new StructVisitor(templateLoader, typeRegistry, outputFolder));
-        visitors.add(new ExceptionVisitor(templateLoader, typeRegistry, outputFolder));
-        visitors.add(new IntegerEnumVisitor(templateLoader, typeRegistry, outputFolder));
-        visitors.add(new StringEnumVisitor(templateLoader, typeRegistry, outputFolder));
+        visitors.add(new ServiceVisitor(templateLoader, context, outputFolder));
+        visitors.add(new StructVisitor(templateLoader, context, outputFolder));
+        visitors.add(new ExceptionVisitor(templateLoader, context, outputFolder));
+        visitors.add(new IntegerEnumVisitor(templateLoader, context, outputFolder));
+        visitors.add(new StringEnumVisitor(templateLoader, context, outputFolder));
 
         for (DocumentVisitor visitor : visitors) {
-            document.visit(visitor);
+            context.getDocument().visit(visitor);
         }
-    }
-
-    private TypeRegistry getTypeRegistry()
-    {
-        return typeRegistry;
     }
 }

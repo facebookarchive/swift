@@ -17,11 +17,15 @@ import com.google.common.collect.Maps;
 public class TypeToJavaConverter
 {
     private final TypeRegistry typeRegistry;
+    private final String defaultNamespace;
+
     private final List<Converter> converters;
 
-    public TypeToJavaConverter(final TypeRegistry typeRegistry)
+    public TypeToJavaConverter(final TypeRegistry typeRegistry, final String defaultNamespace)
     {
         this.typeRegistry = typeRegistry;
+        this.defaultNamespace = defaultNamespace;
+
         final ImmutableList.Builder<Converter> builder = ImmutableList.builder();
         builder.add(new VoidConverter());
         builder.add(new BaseConverter());
@@ -119,7 +123,7 @@ public class TypeToJavaConverter
         {
             final String name = ((IdentifierType) type).getName();
             if (name.indexOf('.') == -1) {
-                return typeRegistry.findType(typeRegistry.getDefaultThriftNamespace(), ContextGenerator.mangleTypeName(name)).getSimpleName();
+                return typeRegistry.findType(defaultNamespace, ContextGenerator.mangleTypeName(name)).getSimpleName();
             }
             else {
                 return typeRegistry.findType(name).getClassName();

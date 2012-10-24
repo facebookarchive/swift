@@ -1,20 +1,19 @@
 package com.facebook.swift.generator.visitors;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-
-import org.antlr.stringtemplate.NoIndentWriter;
-import org.antlr.stringtemplate.StringTemplate;
-import org.apache.commons.lang3.StringUtils;
-
-import com.facebook.swift.generator.TypeRegistry;
+import com.facebook.swift.generator.SwiftDocumentContext;
 import com.facebook.swift.generator.template.ContextGenerator;
 import com.facebook.swift.generator.template.JavaContext;
 import com.facebook.swift.generator.util.TemplateLoader;
 import com.facebook.swift.parser.visitor.DocumentVisitor;
 import com.google.common.base.Charsets;
+import org.antlr.stringtemplate.NoIndentWriter;
+import org.antlr.stringtemplate.StringTemplate;
+import org.apache.commons.lang3.StringUtils;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 
 public abstract class AbstractTemplateVisitor implements DocumentVisitor
 {
@@ -22,11 +21,13 @@ public abstract class AbstractTemplateVisitor implements DocumentVisitor
     private final TemplateLoader templateLoader;
     protected final ContextGenerator contextGenerator;
 
-    protected AbstractTemplateVisitor(final TemplateLoader templateLoader, final TypeRegistry typeRegistry, final File outputFolder)
+    protected AbstractTemplateVisitor(final TemplateLoader templateLoader,
+                                      final SwiftDocumentContext context,
+                                      final File outputFolder)
     {
         this.outputFolder = outputFolder;
         this.templateLoader = templateLoader;
-        this.contextGenerator = new ContextGenerator(typeRegistry);
+        this.contextGenerator = new ContextGenerator(context);
     }
 
     protected void render(final JavaContext context, final String templateName)
