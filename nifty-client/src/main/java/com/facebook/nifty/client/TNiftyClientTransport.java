@@ -15,6 +15,7 @@
  */
 package com.facebook.nifty.client;
 
+import io.airlift.units.Duration;
 import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -28,7 +29,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Netty Equivalent to a TFrameTransport over a TSocket.
+ * Netty Equivalent to a {@link org.apache.thrift.transport.TFramedTransport} over a TSocket.
  * <p/>
  * This is just for a proof-of-concept to show that it can be done.
  * <p/>
@@ -40,19 +41,17 @@ public class TNiftyClientTransport extends TNiftyAsyncClientTransport
 {
 
     private final ChannelBuffer readBuffer;
-    private final long readTimeout;
-    private final TimeUnit unit;
+    private final Duration readTimeout;
     private final Lock lock = new ReentrantLock();
     @GuardedBy("lock")
     private final Condition condition = lock.newCondition();
     private boolean closed;
     private Throwable exception;
 
-    public TNiftyClientTransport(Channel channel, long readTimeout, TimeUnit unit)
+    public TNiftyClientTransport(Channel channel, Duration readTimeout)
     {
         super(channel);
         this.readTimeout = readTimeout;
-        this.unit = unit;
         this.readBuffer = ChannelBuffers.dynamicBuffer(256);
         setListener(new TNiftyClientListener()
         {
@@ -103,7 +102,7 @@ public class TNiftyClientTransport extends TNiftyAsyncClientTransport
             throws TTransportException
     {
         try {
-            return this.read(bytes, offset, length, readTimeout, unit);
+            return this.read(bytes, offset, length, readTimeout);
         }
         catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -112,10 +111,10 @@ public class TNiftyClientTransport extends TNiftyAsyncClientTransport
     }
 
     // yeah, mimicking sync with async is just horrible
-    private int read(byte[] bytes, int offset, int length, long timeout, TimeUnit unit)
+    private int read(byte[] bytes, int offset, int length, Duration timeout)
             throws InterruptedException, TTransportException
     {
-        long timeRemaining = unit.toNanos(timeout);
+        long timeRemaining = (long)timeout.convertTo(TimeUnit.NANOSECONDS);
         lock.lock();
         try {
             while (true) {
@@ -148,6 +147,7 @@ public class TNiftyClientTransport extends TNiftyAsyncClientTransport
         finally {
             lock.unlock();
         }
-        throw new TTransportException(String.format("read timeout, %d ms has elapsed", unit.toMillis(timeout)));
+        throw new TTransportException(String.format("read timeout, %d ms has elapsed",
+                                                    (long)timeout.toMillis()));
     }
 }

@@ -42,5 +42,11 @@
             <artifactId>testng</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>io.airlift</groupId>
+            <artifactId>units</artifactId>
+            <version>0.66</version>
+        </dependency>
     </dependencies>
 </project>

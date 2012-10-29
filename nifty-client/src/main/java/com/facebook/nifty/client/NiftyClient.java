@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import io.airlift.units.Duration;
 import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.Channel;
@@ -46,6 +47,8 @@ public class NiftyClient implements Closeable
 {
     // 1MB default
     private static final int DEFAULT_MAX_FRAME_SIZE = 1048576;
+    public static final Duration DEFAULT_CONNECT_TIMEOUT = new Duration(2, TimeUnit.SECONDS);
+    public static final Duration DEFAULT_READ_TIMEOUT = new Duration(2, TimeUnit.SECONDS);
 
     private final NettyClientConfigBuilder configBuilder;
     private final ExecutorService boss;
@@ -118,24 +121,22 @@ public class NiftyClient implements Closeable
     public TNiftyClientTransport connectSync(InetSocketAddress addr)
             throws TTransportException, InterruptedException
     {
-        return connectSync(addr, 2, 2, TimeUnit.SECONDS);
+        return connectSync(addr, DEFAULT_CONNECT_TIMEOUT, DEFAULT_READ_TIMEOUT);
     }
 
     public TNiftyClientTransport connectSync(
             InetSocketAddress addr,
-            long connectTimeout,
-            long readTimeout,
-            TimeUnit unit)
+            Duration connectTimeout,
+            Duration readTimeout)
             throws TTransportException, InterruptedException
     {
-        return connectSync(addr, connectTimeout, readTimeout, unit, defaultSocksProxyAddress);
+        return connectSync(addr, connectTimeout, readTimeout, defaultSocksProxyAddress);
     }
 
     public TNiftyClientTransport connectSync(
             InetSocketAddress addr,
-            long connectTimeout,
-            long readTimeout,
-            TimeUnit unit,
+            Duration connectTimeout,
+            Duration readTimeout,
             @Nullable InetSocketAddress socksProxyAddress)
             throws TTransportException, InterruptedException
     {
@@ -144,7 +145,7 @@ public class NiftyClient implements Closeable
         bootstrap.setOptions(configBuilder.getOptions());
         bootstrap.setPipelineFactory(new NiftyClientChannelPipelineFactory(maxFrameSize));
         ChannelFuture f = bootstrap.connect(addr);
-        f.await(unit.toMillis(connectTimeout), MILLISECONDS);
+        f.await((long) connectTimeout.convertTo(MILLISECONDS));
         Channel channel = f.getChannel();
         if (f.getCause() != null) {
             String message = String.format("unable to connect to %s:%d %s",
@@ -154,8 +155,8 @@ public class NiftyClient implements Closeable
             throw new TTransportException(message, f.getCause());
         }
 
-        if (channel != null) {
-            TNiftyClientTransport transport = new TNiftyClientTransport(channel, readTimeout, unit);
+        if (f.isSuccess() && (channel != null)) {
+            TNiftyClientTransport transport = new TNiftyClientTransport(channel, readTimeout);
             channel.getPipeline().addLast("thrift", transport);
             return transport;
         }
