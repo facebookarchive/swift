@@ -22,22 +22,31 @@ import com.facebook.nifty.guice.NiftyModule;
 import com.facebook.nifty.test.LogEntry;
 import com.facebook.nifty.test.ResultCode;
 import com.facebook.nifty.test.scribe;
+import com.google.common.base.Throwables;
 import com.google.inject.Guice;
 import com.google.inject.Stage;
+import io.airlift.units.Duration;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.fail;
 
 public class TestNiftyClient
 {
@@ -57,6 +66,15 @@ public class TestNiftyClient
         }
         catch (IOException e) {
             port = 8080;
+        }
+    }
+
+    @AfterTest(alwaysRun = true)
+    public void tearDown()
+    {
+        if (bootstrap != null)
+        {
+            bootstrap.stop();
         }
     }
 
@@ -93,6 +111,38 @@ public class TestNiftyClient
             }
         }
         Assert.assertTrue(exceptionCount > 0);
+    }
+
+    @Test(timeOut = 2000)
+    public void testSyncConnectTimeout() throws ConnectException, IOException
+    {
+        ServerSocket serverSocket = createFloodedServerSocket();
+        int port = serverSocket.getLocalPort();
+
+        try {
+            TTransport transport = new NiftyClient().connectSync(new InetSocketAddress(port),
+                                                                 new Duration(500, TimeUnit.MILLISECONDS),
+                                                                 new Duration(500, TimeUnit.MILLISECONDS));
+        }
+        catch (Throwable throwable) {
+            if (isTimeoutException(throwable)) {
+                return;
+            }
+            Throwables.propagate(throwable);
+        }
+        finally {
+            serverSocket.close();
+        }
+
+        // Should never get here
+        fail("Connection succeeded but failure was expected");
+    }
+
+    private boolean isTimeoutException(Throwable throwable) {
+        Throwable rootCause = Throwables.getRootCause(throwable);
+        // Look for a java.net.ConnectException, with the message "connection timed out"
+        return (rootCause instanceof ConnectException &&
+                rootCause.getMessage().compareTo("connection timed out") == 0);
     }
 
     private void startServer()
@@ -132,5 +182,20 @@ public class TestNiftyClient
         InetSocketAddress address = new InetSocketAddress("localhost", port);
         TBinaryProtocol tp = new TBinaryProtocol(new NiftyClient().connectSync(address));
         return new scribe.Client(tp);
+    }
+
+    private ServerSocket createFloodedServerSocket() throws IOException {
+        // Setup a server socket that with a backlog of only one connection. NOTE: behavior
+        // of java's ServerSocket backlog is declared to be implementation specific according to
+        // JDK docs, but this is the only way I've found so far to simulate a connect timeout that
+        // works regardless of the presence/absence of an internet connection.
+        ServerSocket serverSocket = new ServerSocket(0, 1);
+
+        // Connect a client to the socket. Since we don't call accept(), this should fill
+        // the backlog, making further connect attempts timeout.
+        Socket client = new Socket();
+        client.connect(new InetSocketAddress(serverSocket.getLocalPort()));
+
+        return serverSocket;
     }
 }
