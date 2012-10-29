@@ -143,9 +143,10 @@ public class NiftyClient implements Closeable
 
         ClientBootstrap bootstrap = createClientBootstrap(socksProxyAddress);
         bootstrap.setOptions(configBuilder.getOptions());
+        bootstrap.setOption("connectTimeoutMillis", (long)connectTimeout.toMillis());
         bootstrap.setPipelineFactory(new NiftyClientChannelPipelineFactory(maxFrameSize));
         ChannelFuture f = bootstrap.connect(addr);
-        f.await((long) connectTimeout.convertTo(MILLISECONDS));
+        f.await();
         Channel channel = f.getChannel();
         if (f.getCause() != null) {
             String message = String.format("unable to connect to %s:%d %s",
