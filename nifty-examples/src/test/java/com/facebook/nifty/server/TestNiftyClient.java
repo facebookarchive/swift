@@ -15,7 +15,9 @@
  */
 package com.facebook.nifty.server;
 
+import com.facebook.nifty.client.FramedClientChannel;
 import com.facebook.nifty.client.NiftyClient;
+import com.facebook.nifty.client.NiftyClientChannel;
 import com.facebook.nifty.core.NiftyBootstrap;
 import com.facebook.nifty.core.ThriftServerDefBuilder;
 import com.facebook.nifty.guice.NiftyModule;
@@ -23,6 +25,7 @@ import com.facebook.nifty.test.LogEntry;
 import com.facebook.nifty.test.ResultCode;
 import com.facebook.nifty.test.scribe;
 import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Guice;
 import com.google.inject.Stage;
 import io.airlift.units.Duration;
@@ -45,6 +48,7 @@ import java.net.Socket;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
@@ -54,6 +58,9 @@ public class TestNiftyClient
 
     private NiftyBootstrap bootstrap;
     private int port;
+    private static final Duration TEST_CONNECT_TIMEOUT = new Duration(500, TimeUnit.MILLISECONDS);
+    private static final Duration TEST_READ_TIMEOUT = new Duration(500, TimeUnit.MILLISECONDS);
+    private static final Duration TEST_WRITE_TIMEOUT = new Duration(500, TimeUnit.MILLISECONDS);
 
     @BeforeTest(alwaysRun = true)
     public void setup()
@@ -121,8 +128,39 @@ public class TestNiftyClient
 
         try {
             TTransport transport = new NiftyClient().connectSync(new InetSocketAddress(port),
-                                                                 new Duration(500, TimeUnit.MILLISECONDS),
-                                                                 new Duration(500, TimeUnit.MILLISECONDS));
+                                                                 TEST_CONNECT_TIMEOUT,
+                                                                 TEST_READ_TIMEOUT,
+                                                                 TEST_WRITE_TIMEOUT);
+        }
+        catch (Throwable throwable) {
+            if (isTimeoutException(throwable)) {
+                return;
+            }
+            Throwables.propagate(throwable);
+        }
+        finally {
+            serverSocket.close();
+        }
+
+        // Should never get here
+        fail("Connection succeeded but failure was expected");
+    }
+
+    @Test(timeOut = 2000)
+    public void testAsyncConnectTimeout() throws IOException
+    {
+        ServerSocket serverSocket = createFloodedServerSocket();
+        int port = serverSocket.getLocalPort();
+
+        try {
+            ListenableFuture<FramedClientChannel> future =
+                    new NiftyClient().connectAsync(new FramedClientChannel.Factory(),
+                                                   new InetSocketAddress(port),
+                                                   TEST_CONNECT_TIMEOUT,
+                                                   TEST_READ_TIMEOUT,
+                                                   TEST_WRITE_TIMEOUT);
+            // Wait while NiftyClient attempts to connect the channel
+            NiftyClientChannel channel = future.get();
         }
         catch (Throwable throwable) {
             if (isTimeoutException(throwable)) {
