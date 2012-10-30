@@ -41,6 +41,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Map;
+import java.util.concurrent.Future;
 
 import static io.airlift.units.Duration.nanosSince;
 import static org.apache.thrift.TApplicationException.INTERNAL_ERROR;
@@ -186,6 +187,12 @@ public class ThriftMethodProcessor
         try {
             Object response = method.invoke(service, args);
             stats.addInvokeTime(nanosSince(start));
+            if (response instanceof Future)
+            {
+                // Server-side async isn't implemented yet, so if the server method returns
+                // a future, we have to wait for it.
+                return ((Future<?>)response).get();
+            }
             return response;
         }
         catch (Throwable e) {
