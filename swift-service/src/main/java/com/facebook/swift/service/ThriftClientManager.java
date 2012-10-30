@@ -103,10 +103,9 @@ public class ThriftClientManager implements Closeable
         TNiftyClientTransport transport;
         try {
             transport = niftyClient.connectSync(new InetSocketAddress(address.getHostText(), address.getPort()),
-                    (long) connectTimeout.toMillis(),
-                    (long) readTimeout.toMillis(),
-                    TimeUnit.MILLISECONDS,
-                    toSocksProxyAddress(socksProxy));
+                                                connectTimeout,
+                                                readTimeout,
+                                                toSocksProxyAddress(socksProxy));
         }
         catch (InterruptedException e) {
             Thread.currentThread().interrupt();
