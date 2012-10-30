@@ -30,6 +30,7 @@ public class ThriftClient<T>
     private final String clientName;
     private final Duration connectTimeout;
     private final Duration readTimeout;
+    private final Duration writeTimeout;
     private final HostAndPort socksProxy;
 
     @Inject
@@ -49,6 +50,7 @@ public class ThriftClient<T>
         this.clientName = clientName;
         connectTimeout = clientConfig.getConnectTimeout();
         readTimeout = clientConfig.getReadTimeout();
+        writeTimeout = clientConfig.getWriteTimeout();
         socksProxy = clientConfig.getSocksProxy();
     }
 
@@ -77,6 +79,12 @@ public class ThriftClient<T>
     }
 
     @Managed
+    public String getWriteTimeout()
+    {
+        return writeTimeout.toString();
+    }
+
+    @Managed
     public String getSocksProxy()
     {
         if (socksProxy == null) {
@@ -88,12 +96,12 @@ public class ThriftClient<T>
     public T open(HostAndPort address)
             throws TTransportException
     {
-        return clientManager.createClient(address, clientType, connectTimeout, readTimeout, clientName, socksProxy);
+        return clientManager.createClient(address, clientType, connectTimeout, readTimeout, writeTimeout, clientName, socksProxy);
     }
 
     public T open(TTransport transport)
             throws TTransportException
     {
-        return clientManager.createClient(transport, clientType, connectTimeout, readTimeout, clientName);
+        return clientManager.createClient(transport, clientType, clientName);
     }
 }

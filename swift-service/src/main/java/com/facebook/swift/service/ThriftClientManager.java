@@ -49,6 +49,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_CONNECT_TIMEOUT;
 import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_READ_TIMEOUT;
+import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_WRITE_TIMEOUT;
 import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
 
 public class ThriftClientManager implements Closeable
@@ -94,10 +95,10 @@ public class ThriftClientManager implements Closeable
     public <T> T createClient(HostAndPort address, Class<T> type)
             throws TTransportException
     {
-        return createClient(address, type, DEFAULT_CONNECT_TIMEOUT, DEFAULT_READ_TIMEOUT, DEFAULT_NAME, null);
+        return createClient(address, type, DEFAULT_CONNECT_TIMEOUT, DEFAULT_READ_TIMEOUT, DEFAULT_WRITE_TIMEOUT, DEFAULT_NAME, null);
     }
 
-    public <T> T createClient(HostAndPort address, Class<T> type, Duration connectTimeout, Duration readTimeout, String clientName, HostAndPort socksProxy)
+    public <T> T createClient(HostAndPort address, Class<T> type, Duration connectTimeout, Duration readTimeout, Duration writeTimeout, String clientName, HostAndPort socksProxy)
             throws TTransportException
     {
         TNiftyClientTransport transport;
@@ -129,7 +130,7 @@ public class ThriftClientManager implements Closeable
         return new InetSocketAddress(socksProxy.getHostText(), socksProxy.getPortOrDefault(SOCKS_DEFAULT_PORT));
     }
 
-    public <T> T createClient(TTransport transport, Class<T> type, Duration connectTimeout, Duration readTimeout, String clientName)
+    public <T> T createClient(TTransport transport, Class<T> type)
             throws TTransportException
     {
         return createClient(transport, type, DEFAULT_NAME);
