@@ -20,9 +20,8 @@ import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
 import org.testng.annotations.Test;
 
-public class TestSuite extends TestSuiteBase<TestService, TestService> {
-
-    public TestSuite() {
+public class ExceptionTestSuite extends TestSuiteBase<TestService, TestService> {
+    public ExceptionTestSuite() {
         super(TestServiceHandler.class, TestServiceClient.class);
     }
 

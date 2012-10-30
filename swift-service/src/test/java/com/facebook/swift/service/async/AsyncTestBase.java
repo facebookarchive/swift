@@ -23,7 +23,7 @@ public class AsyncTestBase
     protected ThriftCodecManager codecManager;
     protected ThriftClientManager clientManager;
 
-    protected <T> T createClient(Class<T> clientClass, ThriftServer server)
+    protected <T> ListenableFuture<T> createClient(Class<T> clientClass, ThriftServer server)
             throws TTransportException, InterruptedException, ExecutionException
     {
         HostAndPort address = HostAndPort.fromParts("localhost", server.getPort());

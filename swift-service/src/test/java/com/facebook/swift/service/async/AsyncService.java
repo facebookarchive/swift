@@ -27,7 +27,7 @@ public class AsyncService extends AsyncTestBase
     public void testAsyncService()
             throws Exception
     {
-        try (DelayedMap.Client client = createClient(DelayedMap.Client.class, asyncServer)) {
+        try (DelayedMap.Client client = createClient(DelayedMap.Client.class, asyncServer).get()) {
             List<String> keys = Lists.newArrayList("testKey");
             List<String> values = client.getMultipleValues(0, TimeUnit.SECONDS, keys);
             assertEquals(values, Lists.newArrayList("default"));

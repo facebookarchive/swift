@@ -102,14 +102,14 @@ public class TestThriftClientAndServerModules
 
             // test scribe
             ThriftClient<Scribe> scribeClient = injector.getInstance(Key.get(new TypeLiteral<ThriftClient<Scribe>>() {}));
-            try (Scribe scribe = scribeClient.open(fromParts("localhost", server.getPort()))) {
+            try (Scribe scribe = scribeClient.open(fromParts("localhost", server.getPort())).get()) {
                 assertEquals(scribe.log(MESSAGES), ResultCode.OK);
                 assertEquals(injector.getInstance(SwiftScribe.class).getMessages(), newArrayList(MESSAGES));
             }
 
             // test puma
             ThriftClient<PumaReadService> pumaClient = injector.getInstance(Key.get(new TypeLiteral<ThriftClient<PumaReadService>>() {}));
-            try (PumaReadService puma = pumaClient.open(fromParts("localhost", server.getPort()))) {
+            try (PumaReadService puma = pumaClient.open(fromParts("localhost", server.getPort())).get()) {
                 List<ReadResultQueryInfoTimeString> results = puma.getResultTimeString(TestPuma.PUMA_REQUEST);
                 verifyPumaResults(results);
             }
@@ -149,14 +149,14 @@ public class TestThriftClientAndServerModules
         try (ThriftServer server = injector.getInstance(ThriftServer.class).start()) {
             // test scribe
             ThriftClient<Scribe> scribeClient = injector.getInstance(Key.get(new TypeLiteral<ThriftClient<Scribe>>() {}, TestAnnotation.class));
-            try (Scribe scribe = scribeClient.open(fromParts("localhost", server.getPort()))) {
+            try (Scribe scribe = scribeClient.open(fromParts("localhost", server.getPort())).get()) {
                 assertEquals(scribe.log(MESSAGES), ResultCode.OK);
                 assertEquals(injector.getInstance(Key.get(SwiftScribe.class, TestAnnotation.class)).getMessages(), newArrayList(MESSAGES));
             }
 
             // test puma
             ThriftClient<PumaReadService> pumaClient = injector.getInstance(Key.get(new TypeLiteral<ThriftClient<PumaReadService>>() {}, TestAnnotation.class));
-            try (PumaReadService puma = pumaClient.open(fromParts("localhost", server.getPort()))) {
+            try (PumaReadService puma = pumaClient.open(fromParts("localhost", server.getPort())).get()) {
                 List<ReadResultQueryInfoTimeString> results = puma.getResultTimeString(TestPuma.PUMA_REQUEST);
                 verifyPumaResults(results);
             }
@@ -196,14 +196,14 @@ public class TestThriftClientAndServerModules
         try (ThriftServer server = injector.getInstance(ThriftServer.class).start()) {
             // test scribe
             ThriftClient<Scribe> scribeClient = injector.getInstance(Key.get(new TypeLiteral<ThriftClient<Scribe>>() {}));
-            try (Scribe scribe = scribeClient.open(fromParts("localhost", server.getPort()))) {
+            try (Scribe scribe = scribeClient.open(fromParts("localhost", server.getPort())).get()) {
                 assertEquals(scribe.log(MESSAGES), ResultCode.OK);
                 assertEquals(injector.getInstance(Key.get(SwiftScribe.class, TestAnnotation.class)).getMessages(), newArrayList(MESSAGES));
             }
 
             // test puma
             ThriftClient<PumaReadService> pumaClient = injector.getInstance(Key.get(new TypeLiteral<ThriftClient<PumaReadService>>() {}));
-            try (PumaReadService puma = pumaClient.open(fromParts("localhost", server.getPort()))) {
+            try (PumaReadService puma = pumaClient.open(fromParts("localhost", server.getPort())).get()) {
                 List<ReadResultQueryInfoTimeString> results = puma.getResultTimeString(TestPuma.PUMA_REQUEST);
                 verifyPumaResults(results);
             }
