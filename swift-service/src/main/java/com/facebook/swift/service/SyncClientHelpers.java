@@ -53,19 +53,19 @@ class SyncClientHelpers
         channel.sendAsynchronousRequest(request, false, new NiftyClientChannel.Listener()
         {
             @Override
-            public void requestSent()
+            public void onRequestSent()
             {
             }
 
             @Override
-            public void responseReceived(ChannelBuffer response)
+            public void onResponseReceived(ChannelBuffer response)
             {
                 responseHolder[0] = response;
                 latch.countDown();
             }
 
             @Override
-            public void channelError(TException e)
+            public void onChannelError(TException e)
             {
                 exceptionHolder[0] = e;
                 latch.countDown();
@@ -106,18 +106,18 @@ class SyncClientHelpers
         channel.sendAsynchronousRequest(request, true, new NiftyClientChannel.Listener()
         {
             @Override
-            public void requestSent()
+            public void onRequestSent()
             {
                 latch.countDown();
             }
 
             @Override
-            public void responseReceived(ChannelBuffer response)
+            public void onResponseReceived(ChannelBuffer response)
             {
             }
 
             @Override
-            public void channelError(TException e)
+            public void onChannelError(TException e)
             {
                 exceptionHolder[0] = e;
                 latch.countDown();

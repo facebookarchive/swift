@@ -197,10 +197,10 @@ public class ThriftMethodHandler
             // send message and setup listener to handle the response
             channel.sendAsynchronousRequest(outTransport.getOutputBuffer(), false, new NiftyClientChannel.Listener() {
                 @Override
-                public void requestSent() {}
+                public void onRequestSent() {}
 
                 @Override
-                public void responseReceived(ChannelBuffer message) {
+                public void onResponseReceived(ChannelBuffer message) {
                     try {
                         TTransport inputTransport = new TChannelBufferInputTransport(message);
                         TProtocol inputProtocol = in.getProtocol(inputTransport);
@@ -214,7 +214,7 @@ public class ThriftMethodHandler
                 }
 
                 @Override
-                public void channelError(TException e) {
+                public void onChannelError(TException e) {
                     onException(e);
                 }
 
