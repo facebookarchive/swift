@@ -26,6 +26,9 @@ import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
 import org.jboss.netty.handler.codec.frame.LengthFieldPrepender;
 import org.jboss.netty.util.Timer;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
+@NotThreadSafe
 public class FramedClientChannel extends AbstractClientChannel {
     public FramedClientChannel(Channel channel, Timer timer) {
         super(channel, timer);

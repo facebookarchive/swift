@@ -20,10 +20,13 @@ import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
 /**
  * Implementation of {@link TTransport} that buffers the output of a single message,
  * so that an async client can grab the buffer and send it using a {@link NiftyClientChannel}.
  */
+@NotThreadSafe
 public class TChannelBufferOutputTransport extends TTransport {
     private final ChannelBuffer outputBuffer = ChannelBuffers.dynamicBuffer(1024);
 
@@ -34,17 +37,17 @@ public class TChannelBufferOutputTransport extends TTransport {
 
     @Override
     public void open() throws TTransportException {
-        throw new RuntimeException("Not implemented");
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void close() {
-        throw new RuntimeException("Not implemented");
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public int read(byte[] buf, int off, int len) throws TTransportException {
-        throw new RuntimeException("Not implemented");
+        throw new UnsupportedOperationException();
     }
 
     @Override

@@ -31,18 +31,21 @@ import org.jboss.netty.util.Timeout;
 import org.jboss.netty.util.Timer;
 import org.jboss.netty.util.TimerTask;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+@NotThreadSafe
 public abstract class AbstractClientChannel extends SimpleChannelHandler implements
         NiftyClientChannel {
     private final Channel nettyChannel;
     private Duration sendTimeout = null;
     private Duration requestTimeout = null;
-    private final HashMap<Integer, Request> requestMap = new HashMap<Integer, Request>();
+    private final Map<Integer, Request> requestMap = new HashMap<Integer, Request>();
     private volatile TException channelError;
     private final Timer timer;
 
@@ -142,7 +145,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
                     {
                         if (future.isSuccess()) {
                             cancelRequestTimeouts(request);
-                            listener.requestSent();
+                            listener.onRequestSent();
                             if (oneway) {
                                 retireRequest(sequenceId);
                             } else {
@@ -152,7 +155,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
                             TTransportException transportException =
                                     new TTransportException("Sending request failed",
                                                             future.getCause());
-                            listener.channelError(transportException);
+                            listener.onChannelError(transportException);
                             onError(transportException);
                         }
                     }
@@ -229,7 +232,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
         if (request == null) {
             onError(new TTransportException("Bad sequence id in response: " + sequenceId));
         } else {
-            request.getListener().responseReceived(response);
+            request.getListener().onResponseReceived(response);
         }
     }
 
@@ -247,7 +250,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
         requests.addAll(requestMap.values());
         requestMap.clear();
         for (Request request : requests) {
-            request.getListener().channelError(wrappedException);
+            request.getListener().onChannelError(wrappedException);
         }
     }
 
@@ -270,7 +273,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
                     new TimeoutException("Timed out waiting " + (long) getSendTimeout().toMillis() +
                                          " ms to send request");
 
-            request.getListener().channelError(new TTransportException(timeoutException));
+            request.getListener().onChannelError(new TTransportException(timeoutException));
         }
     }
 
@@ -286,7 +289,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
                             "Timed out waiting " + (long) getReceiveTimeout().toMillis() +
                             " ms to receive response");
 
-            request.getListener().channelError(new TTransportException(timeoutException));
+            request.getListener().onChannelError(new TTransportException(timeoutException));
         }
     }
 

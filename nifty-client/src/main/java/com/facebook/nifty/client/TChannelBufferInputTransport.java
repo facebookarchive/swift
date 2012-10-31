@@ -19,11 +19,14 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.buffer.ChannelBuffer;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
 /**
  * Implementation of {@link TTransport} that wraps an incoming message received from a
  * {@link NiftyClientChannel} so that a {@link org.apache.thrift.protocol.TProtocol} can
  * be constructed around the wrapper to read the message.
  */
+@NotThreadSafe
 public class TChannelBufferInputTransport extends TTransport {
     private final ChannelBuffer inputBuffer;
 
@@ -33,17 +36,17 @@ public class TChannelBufferInputTransport extends TTransport {
 
     @Override
     public boolean isOpen() {
-        throw new RuntimeException("Not implemented");
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void open() throws TTransportException {
-        throw new RuntimeException("Not implemented");
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void close() {
-        throw new RuntimeException("Not implemented");
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -54,6 +57,6 @@ public class TChannelBufferInputTransport extends TTransport {
 
     @Override
     public void write(byte[] buf, int off, int len) throws TTransportException {
-        throw new RuntimeException("Not implemented");
+        throw new UnsupportedOperationException();
     }
 }

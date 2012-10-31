@@ -24,7 +24,7 @@ import org.jboss.netty.util.Timer;
 
 public interface NiftyClientChannel {
     /**
-     * Sends a single message synchronously, and notifies the {@link Listener}
+     * Sends a single message asynchronously, and notifies the {@link Listener}
      * when the request is finished sending, when the response has arrived, and/or when an error
      * occurs.
      *
@@ -107,10 +107,10 @@ public interface NiftyClientChannel {
     }
 
     public interface Listener {
-        public abstract void requestSent();
+        public abstract void onRequestSent();
 
-        public abstract void responseReceived(ChannelBuffer message);
+        public abstract void onResponseReceived(ChannelBuffer message);
 
-        public abstract void channelError(TException t);
+        public abstract void onChannelError(TException t);
     }
 }
