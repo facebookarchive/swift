@@ -23,6 +23,7 @@ import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
@@ -293,12 +294,17 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
         }
     }
 
-    private void queueSendTimeout(Request request)
+    private void queueSendTimeout(final Request request)
     {
         if (this.sendTimeout != null) {
             double sendTimeoutMs = this.sendTimeout.toMillis();
             if (sendTimeoutMs > 0) {
-                final TimerTask sendTimeoutTask = new SendTimeoutTask(this, request);
+                TimerTask sendTimeoutTask = new IoThreadBoundTimerTask(this, new TimerTask() {
+                    @Override
+                    public void run(Timeout timeout) {
+                        onSendTimeoutExpired(request);
+                    }
+                });
 
                 Timeout sendTimeout = timer.newTimeout(sendTimeoutTask,
                                                        (long) sendTimeoutMs,
@@ -308,12 +314,17 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
         }
     }
 
-    private void queueReceiveTimeout(Request request)
+    private void queueReceiveTimeout(final Request request)
     {
         if (this.requestTimeout != null) {
             double requestTimeoutMs = this.requestTimeout.toMillis();
             if (requestTimeoutMs > 0) {
-                final TimerTask receiveTimeoutTask = new ReceiveTimeoutTask(this, request);
+                TimerTask receiveTimeoutTask = new IoThreadBoundTimerTask(this, new TimerTask() {
+                    @Override
+                    public void run(Timeout timeout) {
+                        onReceiveTimeoutExpired(request);
+                    }
+                });
 
                 Timeout timeout = timer.newTimeout(receiveTimeoutTask,
                                                    (long) requestTimeoutMs,
@@ -323,19 +334,21 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
         }
     }
 
-    private static class SendTimeoutTask implements TimerTask
-    {
-        private final Request request;
-        private final AbstractClientChannel channel;
+    /**
+     * Used to create TimerTasks that will fire
+     */
+    private class IoThreadBoundTimerTask implements TimerTask {
+        private final NiftyClientChannel channel;
+        private final TimerTask timerTask;
 
-        public SendTimeoutTask(AbstractClientChannel channel, Request request)
+        public IoThreadBoundTimerTask(NiftyClientChannel channel, TimerTask timerTask)
         {
-            this.request = request;
             this.channel = channel;
+            this.timerTask = timerTask;
         }
 
         @Override
-        public void run(Timeout timeout)
+        public void run(final Timeout timeout)
                 throws Exception
         {
             channel.executeInIoThread(new Runnable()
@@ -343,33 +356,11 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
                 @Override
                 public void run()
                 {
-                    channel.onSendTimeoutExpired(request);
-                }
-            });
-        }
-    }
-
-    private static class ReceiveTimeoutTask implements TimerTask
-    {
-        private final Request request;
-        private final AbstractClientChannel channel;
-
-        public ReceiveTimeoutTask(AbstractClientChannel channel, Request request)
-        {
-            this.request = request;
-            this.channel = channel;
-        }
-
-        @Override
-        public void run(Timeout timeout)
-                throws Exception
-        {
-            channel.executeInIoThread(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    channel.onReceiveTimeoutExpired(request);
+                    try {
+                        timerTask.run(timeout);
+                    } catch (Exception e) {
+                        Channels.fireExceptionCaught(channel.getNettyChannel(), e);
+                    }
                 }
             });
         }
