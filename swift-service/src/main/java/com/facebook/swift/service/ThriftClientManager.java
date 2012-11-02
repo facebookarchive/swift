@@ -74,10 +74,21 @@ public class ThriftClientManager implements Closeable
         this(new ThriftCodecManager());
     }
 
+    public ThriftClientManager(int maxFrameSize)
+    {
+      this(new ThriftCodecManager(), maxFrameSize);
+    }
+
     public ThriftClientManager(ThriftCodecManager codecManager)
     {
         this.codecManager = codecManager;
         niftyClient = new NiftyClient();
+    }
+
+    public ThriftClientManager(ThriftCodecManager codecManager, int maxFrameSize)
+    {
+      this.codecManager = codecManager;
+      niftyClient = new NiftyClient(maxFrameSize);
     }
 
     public <T> T createClient(HostAndPort address, Class<T> type)
