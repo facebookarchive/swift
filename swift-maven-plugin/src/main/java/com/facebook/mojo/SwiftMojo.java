@@ -1,17 +1,21 @@
 package com.facebook.mojo;
 
-import com.google.common.base.Throwables;
-import com.pyx4j.log4j.MavenLogAppender;
+import java.io.File;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.maven.model.FileSet;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
 
-import java.io.File;
-import java.util.List;
+import com.facebook.swift.generator.SwiftGenerator;
+import com.facebook.swift.generator.SwiftGeneratorConfig;
+import com.google.common.base.Throwables;
+import com.pyx4j.log4j.MavenLogAppender;
 
 /**
  * Process one or more idl files and write java code.
@@ -19,6 +23,7 @@ import java.util.List;
  * @requiresProject true
  * @goal generate
  * @phase generate-sources
+ * @requiresProject true
  */
 public class SwiftMojo extends AbstractMojo
 {
@@ -26,12 +31,6 @@ public class SwiftMojo extends AbstractMojo
 
     /**
      * Skip the plugin execution.
-     *
-     * <pre>
-     *   <configuration>
-     *     <skip>true</skip>
-     *   </configuration>
-     * </pre>
      *
      * @parameter default-value="false"
      */
@@ -53,6 +52,21 @@ public class SwiftMojo extends AbstractMojo
      */
     private FileSet idlFiles;
 
+    /**
+     * Output folder
+     *
+     * @parameter default-value="${project.build.directory}/generated-sources/swift"
+     * @required
+     */
+    private File outputFolder = null;
+
+    /**
+     * @parameter expression="${project}"
+     * @required
+     * @readonly
+     */
+    protected MavenProject project;
+
     @Override
     public final void execute() throws MojoExecutionException, MojoFailureException
     {
@@ -60,14 +74,18 @@ public class SwiftMojo extends AbstractMojo
 
         try {
             if (!skip) {
-                LOG.info("Hello, World!");
+
+                final File inputFolder = new File(idlFiles.getDirectory());
 
                 @SuppressWarnings("unchecked")
-                List<File> files = FileUtils.getFiles(new File(idlFiles.getDirectory()),
+                List<File> files = FileUtils.getFiles(inputFolder,
                                                       StringUtils.join(idlFiles.getIncludes(), ','),
                                                       StringUtils.join(idlFiles.getExcludes(), ','));
+                final SwiftGeneratorConfig config = new SwiftGeneratorConfig(inputFolder, files.toArray(new File [files.size()]), outputFolder, packageName);
+                final SwiftGenerator generator = new SwiftGenerator(config);
+                generator.parse();
 
-                LOG.info("Files: " + files);
+                project.addCompileSourceRoot(outputFolder.getPath());
             }
         }
         catch (Exception e) {
