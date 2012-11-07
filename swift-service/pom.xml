@@ -16,6 +16,10 @@
   <name>${project.artifactId}</name>
   <description>Annotation based encoder and decoder for Thrift</description>
 
+  <properties>
+    <fb.main.basedir>${project.parent.basedir}</fb.main.basedir>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>com.facebook.swift</groupId>
@@ -94,7 +98,7 @@
 
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
-      <artifactId>jsr305</artifactId>
+      <artifactId>annotations</artifactId>
     </dependency>
 
     <dependency>

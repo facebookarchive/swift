@@ -16,6 +16,10 @@
   <packaging>maven-plugin</packaging>
   <name>${project.artifactId}</name>
 
+  <properties>
+    <fb.main.basedir>${project.parent.basedir}</fb.main.basedir>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>log4j</groupId>
