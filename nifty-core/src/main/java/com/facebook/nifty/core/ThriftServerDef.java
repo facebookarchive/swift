@@ -57,6 +57,11 @@ public class ThriftServerDef
         this.executor = executor;
     }
 
+    public static ThriftServerDefBuilder newBuilder()
+    {
+        return new ThriftServerDefBuilder();
+    }
+
     public int getServerPort()
     {
         return serverPort;
