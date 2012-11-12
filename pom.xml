@@ -74,7 +74,7 @@
       </dependency>
       <dependency>
 		<groupId>com.facebook.nifty</groupId>
-		<artifactId>nifty-example</artifactId>
+		<artifactId>nifty-examples</artifactId>
 		<version>${project.version}</version>
       </dependency>
       <dependency>
