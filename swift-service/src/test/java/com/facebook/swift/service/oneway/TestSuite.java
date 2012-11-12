@@ -35,7 +35,7 @@ import org.apache.thrift.TException;
 import org.testng.annotations.Test;
 
 @Test
-public class TestSuite extends TestSuiteBase<TestService> {
+public class TestSuite extends TestSuiteBase<TestService, TestService> {
 
     public TestSuite() {
         super(TestServiceHandler.class, TestServiceClient.class);

@@ -22,8 +22,11 @@ import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftFieldMetadata;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.facebook.swift.service.metadata.ThriftMethodMetadata;
+import com.google.common.base.Defaults;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeToken;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.protocol.TMessage;
@@ -36,6 +39,7 @@ import org.weakref.jmx.Managed;
 import javax.annotation.concurrent.ThreadSafe;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.Map;
 
 import static io.airlift.units.Duration.nanosSince;
@@ -49,7 +53,9 @@ public class ThriftMethodProcessor
     private final Method method;
     private final String resultStructName;
     private final boolean oneway;
+    private final ImmutableList<ThriftFieldMetadata> parameters;
     private final Map<Short, ThriftCodec<?>> parameterCodecs;
+    private final Map<Short, Short> thriftParameterIdToJavaArgumentListPositionMap;
     private final ThriftCodec<Object> successCodec;
     private final Map<Class<?>, ExceptionProcessor> exceptionCodecs;
 
@@ -69,11 +75,21 @@ public class ThriftMethodProcessor
         method = methodMetadata.getMethod();
         oneway = methodMetadata.getOneway();
 
+        parameters = ImmutableList.copyOf(methodMetadata.getParameters());
+
         ImmutableMap.Builder<Short, ThriftCodec<?>> builder = ImmutableMap.builder();
         for (ThriftFieldMetadata fieldMetadata : methodMetadata.getParameters()) {
             builder.put(fieldMetadata.getId(), codecManager.getCodec(fieldMetadata.getType()));
         }
         parameterCodecs = builder.build();
+
+        // Build a mapping from thrift parameter ID to a position in the formal argument list
+        ImmutableMap.Builder<Short, Short> parameterOrderingBuilder = ImmutableMap.builder();
+        short javaArgumentPosition = 0;
+        for (ThriftFieldMetadata fieldMetadata : methodMetadata.getParameters()) {
+            parameterOrderingBuilder.put(fieldMetadata.getId(), javaArgumentPosition++);
+        }
+        thriftParameterIdToJavaArgumentListPositionMap = parameterOrderingBuilder.build();
 
         ImmutableMap.Builder<Class<?>, ExceptionProcessor> exceptions = ImmutableMap.builder();
         for (Map.Entry<Short, ThriftType> entry : methodMetadata.getExceptions().entrySet()) {
@@ -195,9 +211,12 @@ public class ThriftMethodProcessor
         long start = System.nanoTime();
 
         try {
-            Object[] args = new Object[method.getParameterTypes().length];
+            int numArgs = method.getParameterTypes().length;
+            Object[] args = new Object[numArgs];
             TProtocolReader reader = new TProtocolReader(in);
 
+            // Map incoming arguments from the ID passed in on the wire to the position in the
+            // java argument list we expect to see a parameter with that ID.
             reader.readStructBegin();
             while (reader.nextField()) {
                 short fieldId = reader.getFieldId();
@@ -207,10 +226,30 @@ public class ThriftMethodProcessor
                     // unknown field
                     reader.skipFieldData();
                 }
-
-                args[fieldId - 1] = reader.readField(codec);
+                else {
+                    // Map the incoming arguments to an array of arguments ordered as the java
+                    // code for the handler method expects to see them
+                    args[thriftParameterIdToJavaArgumentListPositionMap.get(fieldId)] = reader.readField(codec);
+                }
             }
             reader.readStructEnd();
+
+            // Walk through our list of expected parameters and if no incoming parameters were
+            // mapped to a particular expected parameter, fill the expected parameter slow with
+            // the default for the parameter type.
+            int argumentPosition = 0;
+            for (ThriftFieldMetadata argument : parameters) {
+                if (args[argumentPosition] == null) {
+                    Type argumentType = argument.getType().getJavaType();
+
+                    if (argumentType instanceof Class) {
+                        Class<?> argumentClass = (Class<?>) argumentType;
+                        argumentClass = Primitives.unwrap(argumentClass);
+                        args[argumentPosition] = Defaults.defaultValue(argumentClass);
+                    }
+                }
+                argumentPosition++;
+            }
 
             stats.addReadTime(nanosSince(start));
             return args;
