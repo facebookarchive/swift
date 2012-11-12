@@ -15,7 +15,6 @@
  */
 package com.facebook.nifty.core;
 
-import junit.framework.Assert;
 import org.apache.thrift.transport.TTransport;
 import org.easymock.EasyMock;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -23,6 +22,7 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelEvent;
 import org.jboss.netty.channel.ChannelHandlerContext;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 public class TestCodec
