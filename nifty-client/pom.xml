@@ -32,6 +32,10 @@ limitations under the License.
     <artifactId>nifty-client</artifactId>
     <packaging>jar</packaging>
 
+    <properties>
+        <fb.main.basedir>${project.parent.basedir}</fb.main.basedir>
+    </properties>
+
     <dependencies>
 	<dependency>
 	    <groupId>com.facebook.nifty</groupId>
