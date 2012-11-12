@@ -36,19 +36,20 @@ import org.apache.thrift.protocol.TProtocolException;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
-import javax.annotation.PreDestroy;
-import javax.annotation.concurrent.Immutable;
 import java.io.Closeable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.annotation.PreDestroy;
+import javax.annotation.concurrent.Immutable;
 
 import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_CONNECT_TIMEOUT;
 import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_READ_TIMEOUT;
+import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_SEND_TIMEOUT;
 import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
 
 public class ThriftClientManager implements Closeable
@@ -83,18 +84,24 @@ public class ThriftClientManager implements Closeable
     public <T> T createClient(HostAndPort address, Class<T> type)
             throws TTransportException
     {
-        return createClient(address, type, DEFAULT_CONNECT_TIMEOUT, DEFAULT_READ_TIMEOUT, DEFAULT_NAME, null);
+        return createClient(address, type, DEFAULT_CONNECT_TIMEOUT, DEFAULT_READ_TIMEOUT, DEFAULT_SEND_TIMEOUT, DEFAULT_NAME, null);
     }
 
-    public <T> T createClient(HostAndPort address, Class<T> type, Duration connectTimeout, Duration readTimeout, String clientName, HostAndPort socksProxy)
+    public <T> T createClient(HostAndPort address,
+                              Class<T> type,
+                              Duration connectTimeout,
+                              Duration readTimeout,
+                              Duration sendTimeout,
+                              String clientName,
+                              HostAndPort socksProxy)
             throws TTransportException
     {
         TNiftyClientTransport transport;
         try {
             transport = niftyClient.connectSync(new InetSocketAddress(address.getHostText(), address.getPort()),
-                    (long) connectTimeout.toMillis(),
-                    (long) readTimeout.toMillis(),
-                    TimeUnit.MILLISECONDS,
+                    connectTimeout,
+                    readTimeout,
+                    sendTimeout,
                     toSocksProxyAddress(socksProxy));
         }
         catch (InterruptedException e) {

@@ -18,6 +18,7 @@ package com.facebook.swift.service;
 import com.facebook.nifty.core.NettyConfigBuilder;
 import com.facebook.nifty.core.NettyServerTransport;
 import com.facebook.nifty.core.ThriftServerDef;
+import com.facebook.nifty.core.ThriftServerDefBuilder;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
@@ -26,15 +27,17 @@ import org.apache.thrift.TProcessorFactory;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.weakref.jmx.Managed;
+import org.weakref.jmx.com.google.common.primitives.Ints;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 
 import static java.util.concurrent.Executors.newCachedThreadPool;
 import static java.util.concurrent.Executors.newFixedThreadPool;
@@ -76,16 +79,15 @@ public class ThriftServer implements Closeable
         acceptorExecutor = newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("thrift-acceptor-%s").build());
         ioExecutor = newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("thrift-io-%s").build());
 
-        ThriftServerDef thriftServerDef = new ThriftServerDef(
-                "thrift",
-                port,
-                (int) config.getMaxFrameSize().toBytes(),
-                processorFactory,
-                new TBinaryProtocol.Factory(),
-                new TBinaryProtocol.Factory(),
-                false,
-                workerExecutor
-        );
+        final ThriftServerDef thriftServerDef = new ThriftServerDefBuilder()
+            .name("thrift")
+            .listen(port)
+            .limitFrameSizeTo(Ints.saturatedCast(config.getMaxFrameSize().toBytes()))
+            .withProcessorFactory(processorFactory)
+            .inProtocol(new TBinaryProtocol.Factory())
+            .outProtocol(new TBinaryProtocol.Factory())
+            .using(workerExecutor)
+            .build();
 
         transport = new NettyServerTransport(thriftServerDef, new NettyConfigBuilder(), allChannels);
     }
