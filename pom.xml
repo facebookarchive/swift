@@ -72,6 +72,13 @@ limitations under the License.
         <url>https://github.com/facebook/nifty</url>
     </scm>
 
+    <distributionManagement>
+      <site>
+	<id>github-project-site</id>
+	<url>gitsite:git@github.com/facebook/nifty.git</url>
+      </site>
+    </distributionManagement>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
