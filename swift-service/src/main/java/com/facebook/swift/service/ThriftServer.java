@@ -18,12 +18,12 @@ package com.facebook.swift.service;
 import com.facebook.nifty.core.NettyConfigBuilder;
 import com.facebook.nifty.core.NettyServerTransport;
 import com.facebook.nifty.core.ThriftServerDef;
+import com.facebook.nifty.core.ThriftServerDefBuilder;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.TProcessorFactory;
-import org.apache.thrift.protocol.TBinaryProtocol;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.weakref.jmx.Managed;
 
@@ -76,16 +76,12 @@ public class ThriftServer implements Closeable
         acceptorExecutor = newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("thrift-acceptor-%s").build());
         ioExecutor = newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("thrift-io-%s").build());
 
-        ThriftServerDef thriftServerDef = new ThriftServerDef(
-                "thrift",
-                port,
-                (int) config.getMaxFrameSize().toBytes(),
-                processorFactory,
-                new TBinaryProtocol.Factory(),
-                new TBinaryProtocol.Factory(),
-                false,
-                workerExecutor
-        );
+        ThriftServerDef thriftServerDef = ThriftServerDef.newBuilder()
+                                                         .name("thrift")
+                                                         .listen(port)
+                                                         .limitFrameSizeTo((int) config.getMaxFrameSize().toBytes())
+                                                         .withProcessorFactory(processorFactory)
+                                                         .using(workerExecutor).build();
 
         transport = new NettyServerTransport(thriftServerDef, new NettyConfigBuilder(), allChannels);
     }

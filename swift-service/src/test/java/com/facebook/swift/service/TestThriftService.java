@@ -106,7 +106,7 @@ public class TestThriftService
     {
         try (
                 ThriftClientManager clientManager = new ThriftClientManager();
-                Scribe scribe = clientManager.createClient(fromParts("localhost", port), Scribe.class)
+                Scribe scribe = clientManager.createClient(fromParts("localhost", port), Scribe.class).get()
         ) {
             return scribe.log(entries);
         }
