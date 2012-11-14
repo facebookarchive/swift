@@ -66,7 +66,7 @@ public class ThriftMethodHandler
 
     private final ThriftMethodStats stats = new ThriftMethodStats();
 
-    private boolean invokeAsynchronously;
+    private final boolean invokeAsynchronously;
 
     public ThriftMethodHandler(ThriftMethodMetadata methodMetadata, ThriftCodecManager codecManager)
     {

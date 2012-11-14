@@ -76,11 +76,12 @@ public class ThriftServer implements Closeable
         acceptorExecutor = newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("thrift-acceptor-%s").build());
         ioExecutor = newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("thrift-io-%s").build());
 
-        ThriftServerDef thriftServerDef = new ThriftServerDefBuilder().name("thrift")
-                                                                      .listen(port)
-                                                                      .limitFrameSizeTo((int) config.getMaxFrameSize().toBytes())
-                                                                      .withProcessorFactory(processorFactory)
-                                                                      .using(workerExecutor).build();
+        ThriftServerDef thriftServerDef = ThriftServerDef.newBuilder()
+                                                         .name("thrift")
+                                                         .listen(port)
+                                                         .limitFrameSizeTo((int) config.getMaxFrameSize().toBytes())
+                                                         .withProcessorFactory(processorFactory)
+                                                         .using(workerExecutor).build();
 
         transport = new NettyServerTransport(thriftServerDef, new NettyConfigBuilder(), allChannels);
     }

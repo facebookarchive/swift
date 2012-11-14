@@ -113,14 +113,14 @@ public class ThriftClientManager implements Closeable
     {
         NiftyClientChannel channel = null;
         try {
-            ListenableFuture<FramedClientChannel> connectFuture;
             final SettableFuture<T> clientFuture = SettableFuture.create();
-            connectFuture = niftyClient.connectAsync(new FramedClientChannel.Factory(),
-                                                     new InetSocketAddress(address.getHostText(), address.getPort()),
-                                                     connectTimeout,
-                                                     readTimeout,
-                                                     writeTimeout,
-                                                     this.toSocksProxyAddress(socksProxy));
+            ListenableFuture<FramedClientChannel> connectFuture =
+                    niftyClient.connectAsync(new FramedClientChannel.Factory(),
+                                             toInetSocketAddress(address),
+                                             connectTimeout,
+                                             readTimeout,
+                                             writeTimeout,
+                                             this.toSocksProxyAddress(socksProxy));
             Futures.addCallback(connectFuture, new FutureCallback<FramedClientChannel>()
             {
                 @Override
@@ -146,7 +146,9 @@ public class ThriftClientManager implements Closeable
             return clientFuture;
         }
         catch (RuntimeException | Error e) {
-            channel.close();
+            if (channel != null) {
+                channel.close();
+            }
             throw e;
         }
     }
@@ -169,6 +171,11 @@ public class ThriftClientManager implements Closeable
                 new Class<?>[]{ type, Closeable.class },
                 handler
         ));
+    }
+
+    private InetSocketAddress toInetSocketAddress(HostAndPort hostAndPort)
+    {
+        return new InetSocketAddress(hostAndPort.getHostText(), hostAndPort.getPort());
     }
 
     private InetSocketAddress toSocksProxyAddress(HostAndPort socksProxy)
