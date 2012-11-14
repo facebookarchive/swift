@@ -131,7 +131,7 @@
                                     <version>3.0.0</version>
                                 </requireMavenVersion>
                                 <requireJavaVersion>
-                                    <version>1.6</version>
+                                    <version>1.7</version>
                                 </requireJavaVersion>
                             </rules>
                         </configuration>
@@ -157,6 +157,9 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>2.8.1</version>
+                    <configuration>
+                      <forkMode>always</forkMode>
+                    </configuration>
                 </plugin>
 
                 <plugin>
@@ -181,8 +184,8 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>2.3.2</version>
                     <configuration>
-                        <source>1.6</source>
-                        <target>1.6</target>
+                        <source>1.7</source>
+                        <target>1.7</target>
                     </configuration>
                 </plugin>
 
