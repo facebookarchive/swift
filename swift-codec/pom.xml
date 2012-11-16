@@ -16,6 +16,10 @@
   <name>${project.artifactId}</name>
   <description>Annotation based encoder and decoder for Thrift</description>
 
+  <properties>
+    <fb.main.basedir>${project.parent.basedir}</fb.main.basedir>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.apache.thrift</groupId>
@@ -39,12 +43,7 @@
 
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
-      <artifactId>jsr305</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.nesscomputing.testing</groupId>
-      <artifactId>findbugs-annotations</artifactId>
+      <artifactId>annotations</artifactId>
     </dependency>
     
     <dependency>

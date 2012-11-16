@@ -16,6 +16,10 @@
   <name>${project.artifactId}</name>
   <description>Code generator for Thrift IDLs</description>
 
+  <properties>
+    <fb.main.basedir>${project.parent.basedir}</fb.main.basedir>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>com.facebook.swift</groupId>
