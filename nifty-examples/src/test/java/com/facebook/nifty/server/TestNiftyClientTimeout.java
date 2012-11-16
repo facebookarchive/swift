@@ -58,10 +58,10 @@ public class TestNiftyClientTimeout
 
         final NiftyClient client = new NiftyClient();
         try {
-            client.connectSync(new InetSocketAddress(port),
-                               TEST_CONNECT_TIMEOUT,
-                               TEST_READ_TIMEOUT,
-                               TEST_WRITE_TIMEOUT);
+                client.connectSync(new InetSocketAddress(port),
+                                   TEST_CONNECT_TIMEOUT,
+                                   TEST_READ_TIMEOUT,
+                                   TEST_WRITE_TIMEOUT);
         }
         catch (Throwable throwable) {
             if (isTimeoutException(throwable)) {
