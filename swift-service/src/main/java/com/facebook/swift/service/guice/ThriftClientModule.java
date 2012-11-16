@@ -43,7 +43,7 @@ public class ThriftClientModule implements Module
     public void configure(Binder binder)
     {
         // Bind single shared ThriftClientManager
-        binder.bind(ThriftClientManager.class).in(Scopes.SINGLETON);
+        binder.bind(ThriftClientManager.class).toProvider(ThriftClientManagerProvider.class).in(Scopes.SINGLETON);
 
         // We bind the ThriftClientProviderProviders in a Set so below we can export the thrift methods to JMX
         newSetBinder(binder, ThriftClientProviderProvider.class).permitDuplicates();

@@ -27,6 +27,8 @@ import com.facebook.swift.service.ThriftMethod;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.reflect.TypeToken;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.thrift.TException;
 
 import javax.annotation.concurrent.Immutable;
@@ -188,5 +190,12 @@ public class ThriftMethodMetadata
         }
 
         return exceptions.build();
+    }
+
+    public boolean isAsync()
+    {
+        Type returnType = method.getGenericReturnType();
+        Class<?> rawType = TypeToken.of(returnType).getRawType();
+        return ListenableFuture.class.isAssignableFrom(rawType);
     }
 }

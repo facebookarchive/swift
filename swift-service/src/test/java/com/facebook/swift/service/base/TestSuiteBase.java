@@ -20,35 +20,42 @@ import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.ThriftServer;
 import com.facebook.swift.service.ThriftServiceProcessor;
 import com.google.common.net.HostAndPort;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.thrift.transport.TTransportException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 
-public class TestSuiteBase<ServiceInterface> {
+import java.util.concurrent.ExecutionException;
+
+public class TestSuiteBase<ServiceInterface, ClientInterface> {
     private ThriftCodecManager codecManager = new ThriftCodecManager();
     private ThriftClientManager clientManager;
-    private Class<? extends ServiceInterface> clientClass;
+    private Class<? extends ClientInterface> clientClass;
     private Class<? extends ServiceInterface> handlerClass;
-    private ServiceInterface client;
+    private ClientInterface client;
     private ThriftServer server;
+    private ServiceInterface handler;
 
-    public TestSuiteBase(Class<? extends ServiceInterface> handlerClass, Class<? extends ServiceInterface>
-      clientClass) {
+    public TestSuiteBase(Class<? extends ServiceInterface> handlerClass,
+                         Class<? extends ClientInterface> clientClass) {
         this.clientClass = clientClass;
         this.handlerClass = handlerClass;
     }
 
     @BeforeClass
     public void setupSuite() throws InstantiationException, IllegalAccessException {
-        server = createServer().start();
     }
 
     @BeforeMethod
-    public void setupTest() throws TTransportException {
+    public void setupTest() throws Exception {
+        // TODO: move this to setupSuite when TestNG/surefire integration is fixed
+        handler = handlerClass.newInstance();
+        server = createServer(handler).start();
+
         clientManager = new ThriftClientManager(codecManager);
-        client = createClient(clientManager);
+        client = createClient(clientManager).get();
     }
 
     @AfterMethod
@@ -56,26 +63,36 @@ public class TestSuiteBase<ServiceInterface> {
         AutoCloseable closeable = (AutoCloseable) client;
         closeable.close();
         clientManager.close();
+
+        // TODO: move this to tearDownSuite when TestNG/surefire integration is fixed
+        // (currently @AfterClass methods do not run if you are running a single test method
+        // from a class containing multiple test methods)
+        server.close();
     }
 
     @AfterClass
     public void tearDownSuite() {
-        server.close();
     }
 
-    private ThriftServer createServer() throws IllegalAccessException, InstantiationException {
-        ThriftServiceProcessor processor = new ThriftServiceProcessor(codecManager,
-                                                                      handlerClass.newInstance());
+    private ThriftServer createServer(ServiceInterface handler)
+            throws IllegalAccessException, InstantiationException {
+        ThriftServiceProcessor processor = new ThriftServiceProcessor(codecManager, handler);
         return new ThriftServer(processor);
     }
 
-    private ServiceInterface createClient(ThriftClientManager clientManager) throws
-      TTransportException {
+    private ListenableFuture<? extends ClientInterface> createClient(ThriftClientManager clientManager)
+            throws TTransportException, InterruptedException, ExecutionException
+    {
         HostAndPort address = HostAndPort.fromParts("localhost", server.getPort());
         return clientManager.createClient(address, clientClass);
     }
 
-    protected ServiceInterface getClient() {
+    protected ClientInterface getClient() {
         return client;
+    }
+
+    protected ServiceInterface getHandler()
+    {
+        return handler;
     }
 }

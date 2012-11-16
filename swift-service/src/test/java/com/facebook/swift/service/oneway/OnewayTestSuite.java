@@ -20,9 +20,9 @@ import org.apache.thrift.TException;
 import org.testng.annotations.Test;
 
 @Test
-public class TestSuite extends TestSuiteBase<TestService> {
+public class OnewayTestSuite extends TestSuiteBase<TestService, TestService> {
 
-    public TestSuite() {
+    public OnewayTestSuite() {
         super(TestServiceHandler.class, TestServiceClient.class);
     }
 
