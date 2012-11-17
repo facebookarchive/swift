@@ -46,6 +46,7 @@
     <dep.guice.version>3.0</dep.guice.version>
     <dep.airlift.version>0.67-SNAPSHOT</dep.airlift.version>
     <dep.slf4j.version>1.6.4</dep.slf4j.version>
+    <dep.logback.version>1.0.7</dep.logback.version>
     <dep.nifty.version>0.0.2-SNAPSHOT</dep.nifty.version>
   </properties>
 
@@ -235,6 +236,12 @@
         <groupId>org.testng</groupId>
         <artifactId>testng</artifactId>
         <version>6.7</version>
+        <exclusions>
+          <exclusion>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
@@ -251,8 +258,14 @@
 
       <dependency>
         <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-core</artifactId>
+        <version>${dep.logback.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>ch.qos.logback</groupId>
         <artifactId>logback-classic</artifactId>
-        <version>1.0.7</version>
+        <version>${dep.logback.version}</version>
       </dependency>
 
       <dependency>
@@ -262,9 +275,32 @@
       </dependency>
 
       <dependency>
+        <groupId>commons-lang</groupId>
+        <artifactId>commons-lang</artifactId>
+        <version>2.6</version>
+      </dependency>
+
+      <dependency>
         <groupId>com.proofpoint.platform</groupId>
         <artifactId>bootstrap</artifactId>
         <version>0.51</version>
+        <exclusions>
+          <exclusion>
+            <!-- Swift uses a newer version named io.netty:netty -->
+            <groupId>org.jboss.netty</groupId>
+            <artifactId>netty</artifactId>
+          </exclusion>
+          <exclusion>
+            <!-- Swift uses a newer version named org.ow2.asm:asm-all -->
+            <groupId>asm</groupId>
+            <artifactId>asm</artifactId>
+          </exclusion>
+          <exclusion>
+            <!-- Swift doesn't use this and it causes META-INF content conflicts with jsr-303 -->
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-validator</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
     </dependencies>
   </dependencyManagement>

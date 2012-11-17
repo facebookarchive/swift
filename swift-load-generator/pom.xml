@@ -28,9 +28,33 @@
     </dependency>
 
     <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
-      <scope>runtime</scope>
+      <groupId>com.google.inject</groupId>
+      <artifactId>guice</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.airlift</groupId>
+      <artifactId>units</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.airlift</groupId>
+      <artifactId>configuration</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.thrift</groupId>
+      <artifactId>libthrift</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.facebook.nifty</groupId>
+      <artifactId>nifty-client</artifactId>
     </dependency>
 
     <dependency>
@@ -41,6 +65,17 @@
     <dependency>
       <groupId>com.proofpoint.platform</groupId>
       <artifactId>bootstrap</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-core</artifactId>
+      <scope>runtime</scope>
     </dependency>
   </dependencies>
 
