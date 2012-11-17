@@ -15,6 +15,18 @@
  */
 package com.facebook.swift.perf.loadgenerator;
 
+import static java.lang.Math.max;
+
+import io.airlift.units.Duration;
+
+import java.io.Closeable;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.thrift.TException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.facebook.nifty.client.NiftyClientChannel;
 import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.ThriftMethod;
@@ -25,16 +37,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
-import io.airlift.units.Duration;
-import org.apache.thrift.TException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.Closeable;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-
-import static java.lang.Math.max;
 
 public final class AsyncClientWorker extends AbstractClientWorker implements FutureCallback<Object>
 {

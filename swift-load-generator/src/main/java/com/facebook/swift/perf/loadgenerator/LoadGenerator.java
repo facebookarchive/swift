@@ -15,6 +15,16 @@
  */
 package com.facebook.swift.perf.loadgenerator;
 
+import static com.facebook.swift.service.guice.ThriftClientBinder.thriftClientBinder;
+
+import io.airlift.bootstrap.LifeCycleManager;
+import io.airlift.bootstrap.LifeCycleModule;
+import io.airlift.configuration.ConfigurationFactory;
+import io.airlift.configuration.ConfigurationModule;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
 import com.beust.jcommander.JCommander;
 import com.facebook.swift.codec.guice.ThriftCodecModule;
 import com.facebook.swift.service.ThriftClientManager;
@@ -28,15 +38,6 @@ import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import com.google.inject.Stage;
-import com.proofpoint.bootstrap.LifeCycleManager;
-import com.proofpoint.bootstrap.LifeCycleModule;
-import io.airlift.configuration.ConfigurationFactory;
-import io.airlift.configuration.ConfigurationModule;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-
-import static com.facebook.swift.service.guice.ThriftClientBinder.thriftClientBinder;
 
 public class LoadGenerator
 {
