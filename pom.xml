@@ -24,7 +24,7 @@ limitations under the License.
     <parent>
         <groupId>com.facebook</groupId>
         <artifactId>facebook-oss-pom</artifactId>
-        <version>1-SNAPSHOT</version>
+        <version>1</version>
     </parent>
 
     <groupId>com.facebook.nifty</groupId>
