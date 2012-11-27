@@ -20,7 +20,10 @@ import com.facebook.nifty.client.NiftyClient;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.airlift.units.Duration;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -39,15 +42,20 @@ public class TestNiftyClientTimeout
     private static final Duration TEST_WRITE_TIMEOUT = new Duration(500, TimeUnit.MILLISECONDS);
 
     @BeforeTest(alwaysRun = true)
-    public void setup() throws IOException
-    {
-        System.setProperty("java.nio.channels.spi.SelectorProvider", DeafSelectorProvider.class.getName());
+    public void init() {
+      // must load DelegateSelectorProvider before entire test suite to
+      // properly wire up selector provider.
+      DelegateSelectorProvider.init();
     }
 
-    @AfterTest(alwaysRun = true)
-    public void tearDown()
-    {
-        System.clearProperty("java.nio.channels.spi.SelectorProvider");
+    @BeforeMethod(alwaysRun = true)
+    public void setup() {
+      DelegateSelectorProvider.makeDeaf();
+    }
+
+    @AfterMethod(alwaysRun = true)
+    public void tearDown() {
+      DelegateSelectorProvider.makeUndeaf();
     }
 
     @Test(timeOut = 2000)
@@ -55,7 +63,6 @@ public class TestNiftyClientTimeout
     {
         ServerSocket serverSocket = new ServerSocket(0);
         int port = serverSocket.getLocalPort();
-
         final NiftyClient client = new NiftyClient();
         try {
                 client.connectSync(new InetSocketAddress(port),
