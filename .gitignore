@@ -17,3 +17,4 @@ eclipse-classes
 .arc
 *.releaseBackup
 release.properties
+dependency-reduced-pom.xml
