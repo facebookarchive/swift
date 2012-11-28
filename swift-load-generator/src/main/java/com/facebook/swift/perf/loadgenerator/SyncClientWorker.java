@@ -28,7 +28,7 @@ import java.util.concurrent.ExecutionException;
 
 public class SyncClientWorker extends AbstractClientWorker
 {
-    private static final Logger logger = LoggerFactory.getLogger(AsyncClientWorker.class);
+    private static final Logger logger = LoggerFactory.getLogger(SyncClientWorker.class);
     private volatile boolean shutdownRequested = false;
 
     @Override
