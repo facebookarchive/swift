@@ -47,7 +47,7 @@
     <dep.airlift.version>0.67-SNAPSHOT</dep.airlift.version>
     <dep.slf4j.version>1.7.2</dep.slf4j.version>
     <dep.logback.version>1.0.7</dep.logback.version>
-    <dep.nifty.version>0.0.2</dep.nifty.version>
+    <dep.nifty.version>0.0.3-SNAPSHOT</dep.nifty.version>
   </properties>
 
   <dependencyManagement>
