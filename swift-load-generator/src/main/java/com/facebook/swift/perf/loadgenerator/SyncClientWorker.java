@@ -15,6 +15,10 @@
  */
 package com.facebook.swift.perf.loadgenerator;
 
+import com.facebook.nifty.client.FramedClientChannel;
+import com.facebook.nifty.client.NiftyClient;
+import com.facebook.nifty.client.NiftyClientChannel;
+import com.facebook.nifty.client.UnframedClientChannel;
 import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.ThriftMethod;
 import com.facebook.swift.service.ThriftService;
@@ -24,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutionException;
 
 public class SyncClientWorker extends AbstractClientWorker
@@ -63,10 +68,21 @@ public class SyncClientWorker extends AbstractClientWorker
             public void run()
             {
                 while (!shutdownRequested) {
-                    try (LoadTest client = clientManager.createClient(serverHostAndPort, LoadTest.class).get()) {
-                        logger.info("Worker connected");
-                        for (int i = 0; i < getOperationsPerConnection(); i++) {
-                            sendRequest(client);
+                    try {
+                        NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory;
+                        if (config.transport == TransportType.FRAMED) {
+                            channelFactory = new FramedClientChannel.Factory();
+                        } else if (config.transport == TransportType.UNFRAMED) {
+                            channelFactory = new UnframedClientChannel.Factory();
+                        } else {
+                            throw new IllegalStateException("Unknown transport");
+                        }
+
+                        try (LoadTest client = clientManager.createClient(serverHostAndPort, LoadTest.class, channelFactory).get()) {
+                            logger.info("Worker connected");
+                            for (int i = 0; i < getOperationsPerConnection(); i++) {
+                                sendRequest(client);
+                            }
                         }
                     }
                     catch (Exception ex) {

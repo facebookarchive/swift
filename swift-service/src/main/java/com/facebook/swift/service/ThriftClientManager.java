@@ -100,32 +100,51 @@ public class ThriftClientManager implements Closeable
     public <T> ListenableFuture<T> createClient(HostAndPort address, Class<T> type)
             throws TTransportException, InterruptedException, ExecutionException
     {
-        return createClient(address, type, DEFAULT_CONNECT_TIMEOUT, DEFAULT_READ_TIMEOUT, DEFAULT_WRITE_TIMEOUT, DEFAULT_NAME, null);
+        FramedClientChannel.Factory channelFactory = new FramedClientChannel.Factory();
+        return createClient(address, type, channelFactory);
     }
 
-    public <T> ListenableFuture<T> createClient(final HostAndPort address,
-                                                final Class<T> type,
-                                                final Duration connectTimeout,
-                                                final Duration readTimeout,
-                                                final Duration writeTimeout,
-                                                final String clientName,
-                                                HostAndPort socksProxy)
+    public <T, C extends NiftyClientChannel>
+    ListenableFuture<T> createClient(HostAndPort address,
+                                     Class<T> type,
+                                     NiftyClientChannel.Factory<C> channelFactory)
+            throws TTransportException, InterruptedException, ExecutionException
+    {
+        return createClient(address,
+                            type,
+                            channelFactory,
+                            DEFAULT_CONNECT_TIMEOUT,
+                            DEFAULT_READ_TIMEOUT,
+                            DEFAULT_WRITE_TIMEOUT,
+                            DEFAULT_NAME,
+                            null);
+    }
+
+    public <T, C extends NiftyClientChannel>
+    ListenableFuture<T> createClient(final HostAndPort address,
+                                     final Class<T> type,
+                                     final NiftyClientChannel.Factory<C> channelFactory,
+                                     final Duration connectTimeout,
+                                     final Duration readTimeout,
+                                     final Duration writeTimeout,
+                                     final String clientName,
+                                     HostAndPort socksProxy)
             throws TTransportException, InterruptedException
     {
         NiftyClientChannel channel = null;
         try {
             final SettableFuture<T> clientFuture = SettableFuture.create();
-            ListenableFuture<FramedClientChannel> connectFuture =
-                    niftyClient.connectAsync(new FramedClientChannel.Factory(),
+            ListenableFuture<C> connectFuture =
+                    niftyClient.connectAsync(channelFactory,
                                              toInetSocketAddress(address),
                                              connectTimeout,
                                              readTimeout,
                                              writeTimeout,
                                              this.toSocksProxyAddress(socksProxy));
-            Futures.addCallback(connectFuture, new FutureCallback<FramedClientChannel>()
+            Futures.addCallback(connectFuture, new FutureCallback<C>()
             {
                 @Override
-                public void onSuccess(FramedClientChannel result)
+                public void onSuccess(C result)
                 {
                     NiftyClientChannel channel = result;
 

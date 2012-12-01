@@ -30,6 +30,9 @@ public class LoadGeneratorCommandLineConfig
     @Parameter(names = "-port", description = "Port number of load test server")
     public int serverPort = 1234;
 
+    @Parameter(names = "-transport", description = "Type of Thrift transport to use for connecting")
+    public TransportType transport = TransportType.FRAMED;
+
     @Parameter(names = "-num_threads", description = "Number of workers to create")
     public int numThreads = 1;
 

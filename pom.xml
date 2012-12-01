@@ -55,9 +55,12 @@
     <!-- This actually wants to be fixed -->
     <fb.check.fail-findbugs>false</fb.check.fail-findbugs>
 
+    <dep.guice.version>3.0</dep.guice.version>
     <dep.airlift.version>0.66</dep.airlift.version>
     <dep.maven-api.version>2.2.1</dep.maven-api.version>
-    <dep.fb.nifty.version>0.0.2</dep.fb.nifty.version>
+    <dep.slf4j.version>1.7.2</dep.slf4j.version>
+    <dep.logback.version>1.0.7</dep.logback.version>
+    <dep.fb.nifty.version>0.0.3-SNAPSHOT</dep.fb.nifty.version>
   </properties>
 
   <dependencyManagement>

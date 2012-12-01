@@ -27,7 +27,11 @@ import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.facebook.nifty.client.FramedClientChannel;
+import com.facebook.nifty.client.HttpClientChannel;
+import com.facebook.nifty.client.NiftyClient;
 import com.facebook.nifty.client.NiftyClientChannel;
+import com.facebook.nifty.client.UnframedClientChannel;
 import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.ThriftMethod;
 import com.facebook.swift.service.ThriftService;
@@ -91,8 +95,19 @@ public final class AsyncClientWorker extends AbstractClientWorker implements Fut
     {
         try {
             ListenableFuture<LoadTest> clientFuture;
+
+            NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory;
+            if (config.transport == TransportType.FRAMED) {
+                channelFactory = new FramedClientChannel.Factory();
+            } else if (config.transport == TransportType.UNFRAMED) {
+                channelFactory = new UnframedClientChannel.Factory();
+            } else {
+                throw new IllegalStateException("Unknown transport");
+            }
+
             clientFuture = clientManager.createClient(HostAndPort.fromParts(config.serverAddress, config.serverPort),
                                                       LoadTest.class,
+                                                      channelFactory,
                                                       new Duration(config.connectTimeoutMilliseconds, TimeUnit.SECONDS),
                                                       new Duration(config.sendTimeoutMilliseconds, TimeUnit.MILLISECONDS),
                                                       new Duration(config.receiveTimeoutMilliseconds, TimeUnit.MILLISECONDS),

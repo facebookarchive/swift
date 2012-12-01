@@ -15,6 +15,7 @@
  */
 package com.facebook.swift.service;
 
+import com.facebook.nifty.client.FramedClientChannel;
 import com.facebook.nifty.client.NiftyClientChannel;
 import com.google.common.base.Preconditions;
 import com.google.common.net.HostAndPort;
@@ -36,6 +37,8 @@ public class ThriftClient<T>
     private final Duration writeTimeout;
 
     private final HostAndPort socksProxy;
+    private final NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory;
+    private static FramedClientChannel.Factory defaultChannelFactory = new FramedClientChannel.Factory();
 
     @Inject
     public ThriftClient(ThriftClientManager clientManager, Class<T> clientType)
@@ -43,7 +46,19 @@ public class ThriftClient<T>
         this(clientManager, clientType, new ThriftClientConfig(), ThriftClientManager.DEFAULT_NAME);
     }
 
-    public ThriftClient(ThriftClientManager clientManager, Class<T> clientType, ThriftClientConfig clientConfig, String clientName)
+    public ThriftClient(ThriftClientManager clientManager,
+                        Class<T> clientType,
+                        ThriftClientConfig clientConfig,
+                        String clientName)
+    {
+        this(clientManager, clientType, defaultChannelFactory, clientConfig, clientName);
+    }
+
+    public ThriftClient(ThriftClientManager clientManager,
+                        Class<T> clientType,
+                        NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory,
+                        ThriftClientConfig clientConfig,
+                        String clientName)
     {
         Preconditions.checkNotNull(clientManager, "clientManager is null");
         Preconditions.checkNotNull(clientType, "clientInterface is null");
@@ -52,6 +67,7 @@ public class ThriftClient<T>
         this.clientManager = clientManager;
         this.clientType = clientType;
         this.clientName = clientName;
+        this.channelFactory = channelFactory;
         connectTimeout = clientConfig.getConnectTimeout();
         readTimeout = clientConfig.getReadTimeout();
         writeTimeout = clientConfig.getWriteTimeout();
@@ -100,7 +116,14 @@ public class ThriftClient<T>
     public ListenableFuture<T> open(HostAndPort address)
             throws TTransportException, InterruptedException, ExecutionException
     {
-        return clientManager.createClient(address, clientType, connectTimeout, readTimeout, writeTimeout, clientName, socksProxy);
+        return clientManager.createClient(address,
+                                          clientType,
+                                          channelFactory,
+                                          connectTimeout,
+                                          readTimeout,
+                                          writeTimeout,
+                                          clientName,
+                                          socksProxy);
     }
 
     public T open(NiftyClientChannel channel)
