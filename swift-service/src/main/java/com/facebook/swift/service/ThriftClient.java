@@ -113,7 +113,6 @@ public class ThriftClient<T>
     }
 
     public ListenableFuture<T> open(HostAndPort address)
-            throws TTransportException, InterruptedException, ExecutionException
     {
         return clientManager.createClient(address,
                                           clientType,
@@ -126,7 +125,6 @@ public class ThriftClient<T>
     }
 
     public T open(NiftyClientChannel channel)
-            throws TTransportException, InterruptedException
     {
       return clientManager.createClient(channel, clientType, clientName);
     }
