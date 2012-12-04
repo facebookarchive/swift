@@ -100,7 +100,6 @@ public class NiftyClient implements Closeable
     public <T extends NiftyClientChannel> ListenableFuture<T> connectAsync(
             NiftyClientChannel.Factory<T> clientChannelFactory,
             InetSocketAddress addr)
-            throws InterruptedException
     {
         return connectAsync(clientChannelFactory,
                             addr,
@@ -116,7 +115,6 @@ public class NiftyClient implements Closeable
             Duration connectTimeout,
             Duration receiveTimeout,
             Duration sendTimeout)
-            throws InterruptedException
     {
         return connectAsync(clientChannelFactory,
                             addr,
@@ -133,7 +131,6 @@ public class NiftyClient implements Closeable
             Duration receiveTimeout,
             Duration sendTimeout,
             @Nullable InetSocketAddress socksProxyAddress)
-            throws InterruptedException
     {
         ClientBootstrap bootstrap = createClientBootstrap(socksProxyAddress);
         bootstrap.setOptions(configBuilder.getOptions());
