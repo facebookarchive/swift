@@ -145,8 +145,7 @@ public class HttpClientChannel extends AbstractClientChannel {
                 public ChannelPipeline getPipeline()
                         throws Exception {
                 ChannelPipeline cp = Channels.pipeline();
-                cp.addLast("frameEncoder", new HttpRequestEncoder());
-                cp.addLast("frameDecoder", new HttpResponseDecoder());
+                cp.addLast("httpClientCodec", new HttpClientCodec());
                 cp.addLast("chunkAggregator", new HttpChunkAggregator(maxFrameSize));
                 return cp;
                 }
