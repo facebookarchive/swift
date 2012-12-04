@@ -32,7 +32,9 @@ public class ThriftUnframedDecoder extends FrameDecoder {
 
         try
         {
-            TNiftyTransport transport = new TNiftyTransport(channel, buffer);
+            TNiftyTransport transport = new TNiftyTransport(channel,
+                                                            buffer,
+                                                            ThriftTransportType.UNFRAMED);
             TBinaryProtocol protocol = new TBinaryProtocol(transport);
 
             protocol.readMessageBegin();

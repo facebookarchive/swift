@@ -28,13 +28,17 @@ public class TNiftyTransport extends TTransport
 {
     private final Channel channel;
     private final ChannelBuffer in;
+    private final ThriftTransportType thriftTransportType;
     private final ChannelBuffer out;
     private static final int DEFAULT_OUTPUT_BUFFER_SIZE = 1024;
 
-    public TNiftyTransport(Channel channel, ChannelBuffer in)
+    public TNiftyTransport(Channel channel,
+                           ChannelBuffer in,
+                           ThriftTransportType thriftTransportType)
     {
         this.channel = channel;
         this.in = in;
+        this.thriftTransportType = thriftTransportType;
         this.out = ChannelBuffers.dynamicBuffer(DEFAULT_OUTPUT_BUFFER_SIZE);
     }
 
@@ -68,6 +72,12 @@ public class TNiftyTransport extends TTransport
     }
 
     @Override
+    public int readAll(byte[] bytes, int offset, int length) throws TTransportException {
+        in.readBytes(bytes, offset, length);
+        return length;
+    }
+
+    @Override
     public void write(byte[] bytes, int offset, int length)
             throws TTransportException
     {
@@ -77,6 +87,10 @@ public class TNiftyTransport extends TTransport
     public ChannelBuffer getOutputBuffer()
     {
         return out;
+    }
+
+    public ThriftTransportType getTransportType() {
+        return thriftTransportType;
     }
 
     @Override
