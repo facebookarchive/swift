@@ -15,17 +15,10 @@
  */
 package com.facebook.swift.perf.loadgenerator;
 
-import static com.facebook.swift.service.guice.ThriftClientBinder.thriftClientBinder;
-
-import io.airlift.bootstrap.LifeCycleManager;
-import io.airlift.bootstrap.LifeCycleModule;
-import io.airlift.configuration.ConfigurationFactory;
-import io.airlift.configuration.ConfigurationModule;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-
 import com.beust.jcommander.JCommander;
+import com.facebook.nifty.client.FramedClientChannel;
+import com.facebook.nifty.client.NiftyClientChannel;
+import com.facebook.nifty.client.UnframedClientChannel;
 import com.facebook.swift.codec.guice.ThriftCodecModule;
 import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.guice.ThriftClientModule;
@@ -38,6 +31,16 @@ import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import com.google.inject.Stage;
+import com.google.inject.TypeLiteral;
+import io.airlift.bootstrap.LifeCycleManager;
+import io.airlift.bootstrap.LifeCycleModule;
+import io.airlift.configuration.ConfigurationFactory;
+import io.airlift.configuration.ConfigurationModule;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
+import static com.facebook.swift.service.guice.ThriftClientBinder.thriftClientBinder;
 
 public class LoadGenerator
 {
@@ -78,6 +81,18 @@ public class LoadGenerator
                                 binder.bind(AbstractClientWorker.class).to(SyncClientWorker.class);
                             } else {
                                 binder.bind(AbstractClientWorker.class).to(AsyncClientWorker.class);
+                            }
+
+                            TypeLiteral<NiftyClientChannel.Factory<? extends NiftyClientChannel>> channelFactoryType =
+                                    new TypeLiteral<NiftyClientChannel.Factory<? extends NiftyClientChannel>>() {};
+                            if (config.transport == TransportType.FRAMED) {
+                                binder.bind(channelFactoryType)
+                                      .to(FramedClientChannel.Factory.class);
+                            } else if (config.transport == TransportType.UNFRAMED) {
+                                binder.bind(channelFactoryType)
+                                      .to(UnframedClientChannel.Factory.class);
+                            } else {
+                                throw new IllegalStateException("Unknown transport");
                             }
                         }
                     }
