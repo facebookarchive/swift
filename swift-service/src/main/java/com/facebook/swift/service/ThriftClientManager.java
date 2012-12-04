@@ -98,7 +98,6 @@ public class ThriftClientManager implements Closeable
     }
 
     public <T> ListenableFuture<T> createClient(HostAndPort address, Class<T> type)
-            throws TTransportException, InterruptedException, ExecutionException
     {
         FramedClientChannel.Factory channelFactory = new FramedClientChannel.Factory();
         return createClient(address, type, channelFactory);
@@ -108,7 +107,6 @@ public class ThriftClientManager implements Closeable
     ListenableFuture<T> createClient(HostAndPort address,
                                      Class<T> type,
                                      NiftyClientChannel.Factory<C> channelFactory)
-            throws TTransportException, InterruptedException, ExecutionException
     {
         return createClient(address,
                             type,
@@ -129,7 +127,6 @@ public class ThriftClientManager implements Closeable
                                      final Duration writeTimeout,
                                      final String clientName,
                                      HostAndPort socksProxy)
-            throws TTransportException, InterruptedException
     {
         NiftyClientChannel channel = null;
         try {
