@@ -15,11 +15,7 @@
  */
 package com.facebook.swift.perf.loadgenerator;
 
-import com.facebook.nifty.client.FramedClientChannel;
-import com.facebook.nifty.client.HttpClientChannel;
-import com.facebook.nifty.client.NiftyClient;
 import com.facebook.nifty.client.NiftyClientChannel;
-import com.facebook.nifty.client.UnframedClientChannel;
 import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.ThriftMethod;
 import com.facebook.swift.service.ThriftService;
@@ -49,6 +45,7 @@ public final class AsyncClientWorker extends AbstractClientWorker implements Fut
     private final long pendingOperationsHighWaterMark;
     private final Executor simpleExecutor;
     private NiftyClientChannel channel;
+    private NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory;
     private LoadTest client;
 
     @Override
@@ -68,9 +65,13 @@ public final class AsyncClientWorker extends AbstractClientWorker implements Fut
     }
 
     @Inject
-    public AsyncClientWorker(final LoadGeneratorCommandLineConfig config, ThriftClientManager clientManager)
+    public AsyncClientWorker(LoadGeneratorCommandLineConfig config,
+                             ThriftClientManager clientManager,
+                             NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory)
     {
         super(clientManager, config);
+
+        this.channelFactory = channelFactory;
 
         // Keep the pipe full with between target and target * 2 operations
         pendingOperationsLowWaterMark = max(config.targetAsyncOperationsPending * 9 / 10, 1);
@@ -93,15 +94,6 @@ public final class AsyncClientWorker extends AbstractClientWorker implements Fut
     {
         try {
             ListenableFuture<LoadTest> clientFuture;
-
-            NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory;
-            if (config.transport == TransportType.FRAMED) {
-                channelFactory = new FramedClientChannel.Factory();
-            } else if (config.transport == TransportType.UNFRAMED) {
-                channelFactory = new UnframedClientChannel.Factory();
-            } else {
-                throw new IllegalStateException("Unknown transport");
-            }
 
             clientFuture = clientManager.createClient(HostAndPort.fromParts(config.serverAddress, config.serverPort),
                                                       LoadTest.class,

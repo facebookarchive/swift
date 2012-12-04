@@ -15,10 +15,7 @@
  */
 package com.facebook.swift.perf.loadgenerator;
 
-import com.facebook.nifty.client.FramedClientChannel;
-import com.facebook.nifty.client.NiftyClient;
 import com.facebook.nifty.client.NiftyClientChannel;
-import com.facebook.nifty.client.UnframedClientChannel;
 import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.ThriftMethod;
 import com.facebook.swift.service.ThriftService;
@@ -28,13 +25,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
-import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutionException;
 
 public class SyncClientWorker extends AbstractClientWorker
 {
     private static final Logger logger = LoggerFactory.getLogger(SyncClientWorker.class);
     private volatile boolean shutdownRequested = false;
+    private NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory;
 
     @Override
     public void shutdown()
@@ -53,9 +50,12 @@ public class SyncClientWorker extends AbstractClientWorker
     }
 
     @Inject
-    public SyncClientWorker(LoadGeneratorCommandLineConfig config, ThriftClientManager clientManager)
+    public SyncClientWorker(LoadGeneratorCommandLineConfig config,
+                            ThriftClientManager clientManager,
+                            NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory)
     {
         super(clientManager, config);
+        this.channelFactory = channelFactory;
     }
 
     @Override
@@ -69,15 +69,6 @@ public class SyncClientWorker extends AbstractClientWorker
             {
                 while (!shutdownRequested) {
                     try {
-                        NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory;
-                        if (config.transport == TransportType.FRAMED) {
-                            channelFactory = new FramedClientChannel.Factory();
-                        } else if (config.transport == TransportType.UNFRAMED) {
-                            channelFactory = new UnframedClientChannel.Factory();
-                        } else {
-                            throw new IllegalStateException("Unknown transport");
-                        }
-
                         try (LoadTest client = clientManager.createClient(serverHostAndPort, LoadTest.class, channelFactory).get()) {
                             logger.info("Worker connected");
                             for (int i = 0; i < getOperationsPerConnection(); i++) {
