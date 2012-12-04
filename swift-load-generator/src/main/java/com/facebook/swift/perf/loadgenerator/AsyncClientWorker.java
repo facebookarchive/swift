@@ -45,6 +45,7 @@ public final class AsyncClientWorker extends AbstractClientWorker implements Fut
     private final long pendingOperationsHighWaterMark;
     private final Executor simpleExecutor;
     private NiftyClientChannel channel;
+    private NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory;
     private LoadTest client;
 
     @Override
@@ -64,9 +65,13 @@ public final class AsyncClientWorker extends AbstractClientWorker implements Fut
     }
 
     @Inject
-    public AsyncClientWorker(final LoadGeneratorCommandLineConfig config, ThriftClientManager clientManager)
+    public AsyncClientWorker(LoadGeneratorCommandLineConfig config,
+                             ThriftClientManager clientManager,
+                             NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory)
     {
         super(clientManager, config);
+
+        this.channelFactory = channelFactory;
 
         // Keep the pipe full with between target and target * 2 operations
         pendingOperationsLowWaterMark = max(config.targetAsyncOperationsPending * 9 / 10, 1);
@@ -89,8 +94,10 @@ public final class AsyncClientWorker extends AbstractClientWorker implements Fut
     {
         try {
             ListenableFuture<LoadTest> clientFuture;
+
             clientFuture = clientManager.createClient(HostAndPort.fromParts(config.serverAddress, config.serverPort),
                                                       LoadTest.class,
+                                                      channelFactory,
                                                       new Duration(config.connectTimeoutMilliseconds, TimeUnit.SECONDS),
                                                       new Duration(config.sendTimeoutMilliseconds, TimeUnit.MILLISECONDS),
                                                       new Duration(config.receiveTimeoutMilliseconds, TimeUnit.MILLISECONDS),

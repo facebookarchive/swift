@@ -15,6 +15,7 @@
  */
 package com.facebook.swift.perf.loadgenerator;
 
+import com.facebook.nifty.client.NiftyClientChannel;
 import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.ThriftMethod;
 import com.facebook.swift.service.ThriftService;
@@ -28,8 +29,9 @@ import java.util.concurrent.ExecutionException;
 
 public class SyncClientWorker extends AbstractClientWorker
 {
-    private static final Logger logger = LoggerFactory.getLogger(AsyncClientWorker.class);
+    private static final Logger logger = LoggerFactory.getLogger(SyncClientWorker.class);
     private volatile boolean shutdownRequested = false;
+    private NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory;
 
     @Override
     public void shutdown()
@@ -48,9 +50,12 @@ public class SyncClientWorker extends AbstractClientWorker
     }
 
     @Inject
-    public SyncClientWorker(LoadGeneratorCommandLineConfig config, ThriftClientManager clientManager)
+    public SyncClientWorker(LoadGeneratorCommandLineConfig config,
+                            ThriftClientManager clientManager,
+                            NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory)
     {
         super(clientManager, config);
+        this.channelFactory = channelFactory;
     }
 
     @Override
@@ -63,10 +68,12 @@ public class SyncClientWorker extends AbstractClientWorker
             public void run()
             {
                 while (!shutdownRequested) {
-                    try (LoadTest client = clientManager.createClient(serverHostAndPort, LoadTest.class).get()) {
-                        logger.info("Worker connected");
-                        for (int i = 0; i < getOperationsPerConnection(); i++) {
-                            sendRequest(client);
+                    try {
+                        try (LoadTest client = clientManager.createClient(serverHostAndPort, LoadTest.class, channelFactory).get()) {
+                            logger.info("Worker connected");
+                            for (int i = 0; i < getOperationsPerConnection(); i++) {
+                                sendRequest(client);
+                            }
                         }
                     }
                     catch (Exception ex) {

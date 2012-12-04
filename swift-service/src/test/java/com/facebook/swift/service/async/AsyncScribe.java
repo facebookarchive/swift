@@ -13,27 +13,21 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package com.facebook.swift.service.explicitidentifiers;
+package com.facebook.swift.service.async;
 
-import com.facebook.swift.codec.ThriftField;
-import com.facebook.swift.codec.ThriftStruct;
+import com.facebook.swift.service.LogEntry;
+import com.facebook.swift.service.ResultCode;
+import com.facebook.swift.service.ThriftMethod;
+import com.facebook.swift.service.ThriftService;
+import com.google.common.util.concurrent.ListenableFuture;
+import org.apache.thrift.TException;
 
-@ThriftStruct
-public class CustomArgument
+import java.util.List;
+
+@ThriftService
+public interface AsyncScribe extends AutoCloseable
 {
-    public CustomArgument() {
-        this.integerField = 0;
-        this.stringField = null;
-    }
-
-    public CustomArgument(int integerField, String stringField) {
-        this.integerField = integerField;
-        this.stringField = stringField;
-    }
-
-    @ThriftField(value = 1)
-    public int integerField;
-
-    @ThriftField(value = 2)
-    public String stringField;
+    @ThriftMethod(value = "Log")
+    public ListenableFuture<ResultCode> log(List<LogEntry> logEntries)
+        throws TException;
 }
