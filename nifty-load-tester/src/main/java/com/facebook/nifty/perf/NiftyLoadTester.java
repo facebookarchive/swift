@@ -40,7 +40,7 @@ import java.util.concurrent.Executors;
 
 public class NiftyLoadTester {
 
-  public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws Exception {
     ConfigurationFactory cf = new ConfigurationFactory(new ConfigurationLoader().loadProperties());
     AbstractModule exampleModule = new AbstractModule() {
       @Override
@@ -60,7 +60,7 @@ public class NiftyLoadTester {
           @Override
           protected void configureNifty() {
             bind().toProvider(LoadTestServerProvider.class);
-            withDefaultNettyConfig();
+            withNettyConfig(LoadTesterNettyConfigProvider.class);
           }
         }
       )
