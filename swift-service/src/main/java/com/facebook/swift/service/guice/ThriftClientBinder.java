@@ -73,7 +73,7 @@ public class ThriftClientBinder
         // Bind ThriftClient to a provider which knows how to find the ThriftClientConfig using
         // the random @Named annotation
         TypeLiteral<ThriftClient<T>> typeLiteral = toThriftClientTypeLiteral(clientInterface);
-        ThriftClientProviderProvider<T> provider = new ThriftClientProviderProvider<>(clientInterface, DEFAULT_NAME, Key.get(ThriftClientConfig.class, thriftClientConfigKey));
+        ThriftClientProvider<T> provider = new ThriftClientProvider<>(clientInterface, DEFAULT_NAME, Key.get(ThriftClientConfig.class, thriftClientConfigKey));
         binder.bind(typeLiteral).toProvider(provider).in(Scopes.SINGLETON);
 
         // Export client to jmx
@@ -84,7 +84,7 @@ public class ThriftClientBinder
                         DEFAULT_NAME));
 
         // Add the provider itself to a SetBinding so later we can export the thrift methods to JMX
-        Multibinder.newSetBinder(binder, ThriftClientProviderProvider.class).addBinding().toInstance(provider);
+        Multibinder.newSetBinder(binder, ThriftClientProvider.class).addBinding().toInstance(provider);
     }
 
     public <T> void bindThriftClient(Class<T> clientInterface, Class<? extends Annotation> annotationType)
@@ -102,7 +102,7 @@ public class ThriftClientBinder
         // Bind ThriftClient to a provider which knows how to find the ThriftClientConfig using
         // the random @Named annotation
         TypeLiteral<ThriftClient<T>> typeLiteral = toThriftClientTypeLiteral(clientInterface);
-        ThriftClientProviderProvider<T> provider = new ThriftClientProviderProvider<>(clientInterface,
+        ThriftClientProvider<T> provider = new ThriftClientProvider<>(clientInterface,
                 name,
                 Key.get(ThriftClientConfig.class, thriftClientConfigKey));
         binder.bind(Key.get(typeLiteral, annotationType)).toProvider(provider).in(Scopes.SINGLETON);
@@ -111,11 +111,11 @@ public class ThriftClientBinder
         ExportBinder.newExporter(binder)
                 .export(Key.get(typeLiteral))
                 .as(format("com.facebook.swift.client:type=%s,clientName=%s",
-                        typeName,
-                        name));
+                           typeName,
+                           name));
 
         // Add the provider itself to a SetBinding so later we can export the thrift methods to JMX
-        Multibinder.newSetBinder(binder, ThriftClientProviderProvider.class).addBinding().toInstance(provider);
+        Multibinder.newSetBinder(binder, ThriftClientProvider.class).addBinding().toInstance(provider);
     }
 
     private static String getServiceName(Class<?> clientInterface)
@@ -140,7 +140,7 @@ public class ThriftClientBinder
         return (TypeLiteral<ThriftClient<T>>) TypeLiteral.get(javaType);
     }
 
-    public static class ThriftClientProviderProvider<T> implements Provider<ThriftClient<T>>
+    public static class ThriftClientProvider<T> implements Provider<ThriftClient<T>>
     {
         private final Class<T> clientType;
         private final String clientName;
@@ -148,7 +148,7 @@ public class ThriftClientBinder
         private ThriftClientManager clientManager;
         private Injector injector;
 
-        public ThriftClientProviderProvider(Class<T> clientType, String clientName, Key<ThriftClientConfig> configKey)
+        public ThriftClientProvider(Class<T> clientType, String clientName, Key<ThriftClientConfig> configKey)
         {
             Preconditions.checkNotNull(clientType, "clientInterface is null");
             Preconditions.checkNotNull(clientName, "clientName is null");
@@ -195,7 +195,7 @@ public class ThriftClientBinder
                 return false;
             }
 
-            ThriftClientProviderProvider<?> that = (ThriftClientProviderProvider<?>) o;
+            ThriftClientProvider<?> that = (ThriftClientProvider<?>) o;
 
             if (!clientName.equals(that.clientName)) {
                 return false;
