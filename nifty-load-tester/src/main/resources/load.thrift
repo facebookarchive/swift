@@ -1,7 +1,4 @@
-namespace cpp apache.thrift.test
-namespace py apache.thrift.test.load
-namespace py.twisted apache.thrift.test.twisted.load
-namespace java org.apache.thrift.perf
+namespace java com.facebook.nifty.perf
 
 exception LoadError {
   1: i32 code
