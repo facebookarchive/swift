@@ -94,6 +94,7 @@ public class HttpClientChannel extends AbstractClientChannel {
         httpRequest.setHeader(HttpHeaders.HOST, hostName);
         httpRequest.setHeader(HttpHeaders.CONTENT_LENGTH, request.readableBytes());
         httpRequest.setHeader(HttpHeaders.CONTENT_TYPE, "application/x-thrift");
+        httpRequest.setHeader(HttpHeaders.ACCEPT, "application/x-thrift");
         httpRequest.setHeader(HttpHeaders.USER_AGENT, "Java/Swift-HttpThriftClientChannel");
 
         if (headerDictionary != null) {
