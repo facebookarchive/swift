@@ -138,7 +138,7 @@ public class TypeToJavaConverter
         {
             final String name = ((IdentifierType) type).getName();
             if (name.indexOf('.') == -1) {
-                return typeRegistry.findType(defaultNamespace, ContextGenerator.mangleTypeName(name)).getSimpleName();
+                return typeRegistry.findType(defaultNamespace, ContextGenerator.mangleJavatypeName(name)).getSimpleName();
             }
             else {
                 return typeRegistry.findType(name).getClassName();

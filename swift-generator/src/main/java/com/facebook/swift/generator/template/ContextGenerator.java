@@ -44,7 +44,7 @@ public class ContextGenerator
 
     public ServiceContext serviceFromThrift(final Service service)
     {
-        final String name = mangleTypeName(service.getName());
+        final String name = mangleJavatypeName(service.getName());
         final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, name);
         final SwiftJavaType parentType = typeRegistry.findType(service.getParent().orNull());
 
@@ -56,7 +56,7 @@ public class ContextGenerator
 
     public StructContext structFromThrift(final AbstractStruct struct)
     {
-        final String name = mangleTypeName(struct.getName());
+        final String name = mangleJavatypeName(struct.getName());
         final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, name);
 
         return new StructContext(name,
@@ -68,7 +68,7 @@ public class ContextGenerator
     {
         return new MethodContext(method.getName(),
                                  method.isOneway(),
-                                 mangleMethodName(method.getName()),
+                                 mangleJavamethodName(method.getName()),
                                  typeConverter.convertType(method.getReturnType()));
     }
 
@@ -79,7 +79,7 @@ public class ContextGenerator
         return new FieldContext(field.getName(),
                                 field.getIdentifier().get().shortValue(),
                                 typeConverter.convertType(field.getType()),
-                                mangleMethodName(field.getName()),
+                                mangleJavamethodName(field.getName()),
                                 getterName(field),
                                 setterName(field));
     }
@@ -92,14 +92,14 @@ public class ContextGenerator
 
     public EnumContext enumFromThrift(final IntegerEnum integerEnum)
     {
-        final String name = mangleTypeName(integerEnum.getName());
+        final String name = mangleJavatypeName(integerEnum.getName());
         final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, name);
         return new EnumContext(javaType.getPackage(), javaType.getSimpleName());
     }
 
     public EnumContext enumFromThrift(final StringEnum stringEnum)
     {
-        final String name = mangleTypeName(stringEnum.getName());
+        final String name = mangleJavatypeName(stringEnum.getName());
         final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, name);
         return new EnumContext(javaType.getPackage(), javaType.getSimpleName());
     }
@@ -115,17 +115,26 @@ public class ContextGenerator
         return new EnumFieldContext(mangleJavaConstantName(value), null);
     }
 
-    public static final String mangleMethodName(final String src)
+    /**
+     * Turn an incoming snake case name into camel case for use in a java method name.
+     */
+    public static final String mangleJavamethodName(final String src)
     {
         return mangleJavaName(src, false);
     }
-    public static final String mangleTypeName(final String src)
+
+    /**
+     * Turn an incoming snake case name into camel case for use in a java type name.
+     */
+    public static final String mangleJavatypeName(final String src)
     {
         return mangleJavaName(src, true);
     }
 
     private static final String mangleJavaName(final String src, boolean capitalize)
     {
+        Preconditions.checkArgument(StringUtils.isNotBlank(src), "input name must not be blank!");
+
         final StringBuilder sb = new StringBuilder();
         if (!StringUtils.isBlank(src)) {
             boolean upCase = capitalize;
@@ -168,11 +177,11 @@ public class ContextGenerator
     private String getterName(final ThriftField field)
     {
         final String type = typeConverter.convertType(field.getType());
-        return ("boolean".equals(type) ? "is" : "get") + mangleTypeName(field.getName());
+        return ("boolean".equals(type) ? "is" : "get") + mangleJavatypeName(field.getName());
     }
 
     private String setterName(final ThriftField field)
     {
-        return "set" + mangleTypeName(field.getName());
+        return "set" + mangleJavatypeName(field.getName());
     }
 }

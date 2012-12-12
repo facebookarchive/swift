@@ -50,7 +50,7 @@ header returns [Header value]
     $value = new Header(includes, namespaces, cppIncludes);
 }
     : ( include     { includes.add($include.value); }
-      | namespace   { namespaces.put($namespace.type, $namespace.value); }
+      | namespace   { namespaces.put($namespace.language, $namespace.value); }
       | cpp_include { cppIncludes.add($cpp_include.value); }
       )*
     ;
@@ -59,8 +59,8 @@ include returns [String value]
     : ^(INCLUDE LITERAL) { $value = $LITERAL.text; }
     ;
 
-namespace returns [String type, String value]
-    : ^(NAMESPACE k=IDENTIFIER (v=IDENTIFIER | v=LITERAL)) { $type = $k.text ; $value = $v.text; }
+namespace returns [String language, String value]
+    : ^(NAMESPACE k=IDENTIFIER (v=IDENTIFIER | v=LITERAL)) { $language = $k.text ; $value = $v.text; }
     ;
 
 cpp_include returns [String value]
