@@ -1,0 +1,200 @@
+/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.generator;
+
+import java.util.EnumMap;
+import java.util.List;
+
+import com.facebook.swift.generator.template.ContextGenerator;
+import com.facebook.swift.parser.model.BaseType;
+import com.facebook.swift.parser.model.IdentifierType;
+import com.facebook.swift.parser.model.ListType;
+import com.facebook.swift.parser.model.MapType;
+import com.facebook.swift.parser.model.SetType;
+import com.facebook.swift.parser.model.ThriftType;
+import com.facebook.swift.parser.model.VoidType;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
+
+public class TypeToJavaConverter
+{
+    private final TypeRegistry typeRegistry;
+    private final String defaultNamespace;
+
+    private final List<Converter> converters;
+
+    public TypeToJavaConverter(final TypeRegistry typeRegistry, final String defaultNamespace)
+    {
+        this.typeRegistry = typeRegistry;
+        this.defaultNamespace = defaultNamespace;
+
+        final ImmutableList.Builder<Converter> builder = ImmutableList.builder();
+        builder.add(new VoidConverter());
+        builder.add(new BaseConverter());
+        builder.add(new IdentifierConverter());
+        builder.add(new SetConverter());
+        builder.add(new ListConverter());
+        builder.add(new MapConverter());
+        converters = builder.build();
+    }
+
+    public String convertType(final ThriftType thriftType)
+    {
+        return convert(thriftType, true);
+    }
+
+    public String convert(final ThriftType thriftType, boolean primitive)
+    {
+        for (Converter converter : converters) {
+            if (converter.accept(thriftType)) {
+                return converter.convert(thriftType, primitive);
+            }
+        }
+        throw new IllegalArgumentException("Thrift type %s is unknown!");
+    }
+
+    private static interface Converter
+    {
+        boolean accept(ThriftType type);
+
+        String convert(ThriftType type, boolean primitive);
+    }
+
+    private static class VoidConverter implements Converter
+    {
+        public boolean accept(final ThriftType type)
+        {
+            return type.getClass() == VoidType.class;
+        }
+
+        public String convert(final ThriftType type, boolean primitive)
+        {
+            return primitive ? "void" : "VOID";
+        }
+    }
+
+    private static class BaseConverter implements Converter
+    {
+        private static final EnumMap<BaseType.Type, String> JAVA_PRIMITIVES_MAP;
+        private static final EnumMap<BaseType.Type, String> JAVA_TYPE_MAP;
+
+        static {
+            final EnumMap<BaseType.Type, String> javaPrimitivesMap = Maps.newEnumMap(BaseType.Type.class);
+            javaPrimitivesMap.put(BaseType.Type.BOOL, "boolean");
+            javaPrimitivesMap.put(BaseType.Type.BYTE, "byte");
+            javaPrimitivesMap.put(BaseType.Type.I16, "short");
+            javaPrimitivesMap.put(BaseType.Type.I32, "int");
+            javaPrimitivesMap.put(BaseType.Type.I64, "long");
+            javaPrimitivesMap.put(BaseType.Type.DOUBLE, "double");
+            javaPrimitivesMap.put(BaseType.Type.STRING, "String");
+            javaPrimitivesMap.put(BaseType.Type.BINARY, "byte []");
+            JAVA_PRIMITIVES_MAP = javaPrimitivesMap;
+
+            final EnumMap<BaseType.Type, String> javaTypeMap = Maps.newEnumMap(BaseType.Type.class);
+            javaTypeMap.put(BaseType.Type.BOOL, "Boolean");
+            javaTypeMap.put(BaseType.Type.BYTE, "Byte");
+            javaTypeMap.put(BaseType.Type.I16, "Short");
+            javaTypeMap.put(BaseType.Type.I32, "Integer");
+            javaTypeMap.put(BaseType.Type.I64, "Long");
+            javaTypeMap.put(BaseType.Type.DOUBLE, "Double");
+            javaTypeMap.put(BaseType.Type.STRING, "String");
+            javaTypeMap.put(BaseType.Type.BINARY, "byte []");
+            JAVA_TYPE_MAP = javaTypeMap;
+        }
+
+        public boolean accept(final ThriftType type)
+        {
+            return type.getClass() == BaseType.class;
+        }
+
+        public String convert(final ThriftType type, boolean primitive)
+        {
+            final BaseType.Type baseType = ((BaseType) type).getType();
+            return primitive ? JAVA_PRIMITIVES_MAP.get(baseType) : JAVA_TYPE_MAP.get(baseType);
+        }
+    }
+
+    private class IdentifierConverter implements Converter
+    {
+        public boolean accept(final ThriftType type)
+        {
+            return type.getClass() == IdentifierType.class;
+        }
+
+        public String convert(final ThriftType type, final boolean ignored)
+        {
+            final String name = ((IdentifierType) type).getName();
+            if (name.indexOf('.') == -1) {
+                return typeRegistry.findType(defaultNamespace, ContextGenerator.mangleTypeName(name)).getSimpleName();
+            }
+            else {
+                return typeRegistry.findType(name).getClassName();
+            }
+        }
+    }
+
+    private class SetConverter implements Converter
+    {
+        public boolean accept(final ThriftType type)
+        {
+            return type.getClass() == SetType.class;
+        }
+
+        public String convert(final ThriftType type, final boolean ignored)
+        {
+            final SetType setType = SetType.class.cast(type);
+
+            final String actualType = TypeToJavaConverter.this.convert(setType.getType(), false);
+
+            return "Set<" + actualType + ">";
+        }
+    }
+
+    private class ListConverter implements Converter
+    {
+        public boolean accept(final ThriftType type)
+        {
+            return type.getClass() == ListType.class;
+        }
+
+        public String convert(final ThriftType type, final boolean ignored)
+        {
+            final ListType listType = ListType.class.cast(type);
+
+            final String actualType = TypeToJavaConverter.this.convert(listType.getType(), false);
+
+            return "List<" + actualType + ">";
+        }
+    }
+
+    private class MapConverter implements Converter
+    {
+        public boolean accept(final ThriftType type)
+        {
+            return type.getClass() == MapType.class;
+        }
+
+        public String convert(final ThriftType type, final boolean ignored)
+        {
+            final MapType mapType = MapType.class.cast(type);
+
+            final String actualKeyType = TypeToJavaConverter.this.convert(mapType.getKeyType(), false);
+            final String actualValueType = TypeToJavaConverter.this.convert(mapType.getValueType(), false);
+
+            return String.format("Map<%s, %s>", actualKeyType, actualValueType);
+        }
+    }
+}

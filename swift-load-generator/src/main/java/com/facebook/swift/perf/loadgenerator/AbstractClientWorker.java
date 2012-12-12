@@ -1,5 +1,5 @@
-/**
- * Copyright 2012 Facebook, Inc.
+/*
+ * Copyright (C) 2012 Facebook, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may
  * not use this file except in compliance with the License. You may obtain
@@ -15,10 +15,10 @@
  */
 package com.facebook.swift.perf.loadgenerator;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 import com.facebook.swift.service.ThriftClientManager;
 import com.google.common.net.HostAndPort;
-
-import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class AbstractClientWorker implements Runnable
 {

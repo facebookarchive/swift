@@ -1,5 +1,4 @@
-/***
- *
+/*
  * Portions Copyright (c) 2007 Paul Hammant
  * Portions copyright (c) 2000-2007 INRIA, France Telecom
  * All rights reserved.

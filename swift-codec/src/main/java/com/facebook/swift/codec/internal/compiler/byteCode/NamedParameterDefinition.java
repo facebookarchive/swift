@@ -1,5 +1,5 @@
-/**
- * Copyright 2012 Facebook, Inc.
+/*
+ * Copyright (C) 2012 Facebook, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may
  * not use this file except in compliance with the License. You may obtain
@@ -18,7 +18,6 @@ package com.facebook.swift.codec.internal.compiler.byteCode;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 
-import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
 
 @Immutable

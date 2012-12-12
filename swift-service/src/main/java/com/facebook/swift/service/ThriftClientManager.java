@@ -1,5 +1,5 @@
-/**
- * Copyright 2012 Facebook, Inc.
+/*
+ * Copyright (C) 2012 Facebook, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may
  * not use this file except in compliance with the License. You may obtain
@@ -40,8 +40,6 @@ import org.apache.thrift.protocol.TProtocolException;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TTransportException;
 
-import javax.annotation.PreDestroy;
-import javax.annotation.concurrent.Immutable;
 import java.io.Closeable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -50,6 +48,9 @@ import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.annotation.PreDestroy;
+import javax.annotation.concurrent.Immutable;
 
 import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_CONNECT_TIMEOUT;
 import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_READ_TIMEOUT;

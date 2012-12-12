@@ -6,13 +6,14 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.facebook.swift</groupId>
-    <artifactId>swift-parent</artifactId>
-    <version>0.2-SNAPSHOT</version>
-    <relativePath>swift-parent/pom.xml</relativePath>
+    <groupId>com.facebook</groupId>
+    <artifactId>facebook-oss-pom</artifactId>
+    <version>3-SNAPSHOT</version>
   </parent>
 
+  <groupId>com.facebook.swift</groupId>
   <artifactId>swift-root</artifactId>
+  <version>0.2-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>${project.artifactId}</name>
   <description>Annotation based Thrift implementation</description>
@@ -20,15 +21,23 @@
   <scm>
     <connection>scm:git:git://github.com/facebook/swift.git</connection>
     <developerConnection>scm:git:git@github.com:facebook/swift.git</developerConnection>
-    <url>http://github.com/facebook/swift</url>
+    <url>https://github.com/facebook/swift</url>
     <tag>HEAD</tag>
   </scm>
 
+  <distributionManagement>
+    <site>
+      <id>github-project-site</id>
+      <url>gitsite:git@github.com/facebook/swift.git</url>
+    </site>
+  </distributionManagement>
+
   <modules>
-    <module>swift-parent</module>
     <module>swift-codec</module>
     <module>swift-idl-parser</module>
     <module>swift-service</module>
+    <module>swift-generator</module>
+    <module>swift-maven-plugin</module>
     <module>swift-load-generator</module>
   </modules>
 
@@ -43,11 +52,12 @@
   </developers>
 
   <properties>
-    <dep.guice.version>3.0</dep.guice.version>
-    <dep.airlift.version>0.67-SNAPSHOT</dep.airlift.version>
-    <dep.slf4j.version>1.7.2</dep.slf4j.version>
-    <dep.logback.version>1.0.7</dep.logback.version>
-    <dep.nifty.version>0.0.2</dep.nifty.version>
+    <!-- This actually wants to be fixed -->
+    <fb.check.fail-findbugs>false</fb.check.fail-findbugs>
+
+    <dep.airlift.version>0.66</dep.airlift.version>
+    <dep.maven-api.version>2.2.1</dep.maven-api.version>
+    <dep.fb.nifty.version>0.0.2</dep.fb.nifty.version>
   </properties>
 
   <dependencyManagement>
@@ -71,21 +81,9 @@
       </dependency>
 
       <dependency>
-        <groupId>com.google.inject</groupId>
-        <artifactId>guice</artifactId>
-        <version>${dep.guice.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.google.inject.extensions</groupId>
-        <artifactId>guice-multibindings</artifactId>
-        <version>${dep.guice.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>javax.inject</groupId>
-        <artifactId>javax.inject</artifactId>
-        <version>1</version>
+        <groupId>com.facebook.swift</groupId>
+        <artifactId>swift-generator</artifactId>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
@@ -106,7 +104,6 @@
         <version>13.0.1</version>
       </dependency>
 
-
       <dependency>
         <groupId>org.ow2.asm</groupId>
         <artifactId>asm-all</artifactId>
@@ -116,19 +113,13 @@
       <dependency>
         <groupId>com.facebook.nifty</groupId>
         <artifactId>nifty-core</artifactId>
-        <version>${dep.nifty.version}</version>
+        <version>${dep.fb.nifty.version}</version>
       </dependency>
 
       <dependency>
         <groupId>com.facebook.nifty</groupId>
         <artifactId>nifty-client</artifactId>
-        <version>${dep.nifty.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>annotations</artifactId>
-          </exclusion>
-        </exclusions>
+        <version>${dep.fb.nifty.version}</version>
       </dependency>
 
       <dependency>
@@ -144,6 +135,10 @@
           <exclusion>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -167,129 +162,9 @@
       </dependency>
 
       <dependency>
-        <groupId>io.netty</groupId>
-        <artifactId>netty</artifactId>
-        <version>3.5.2.Final</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.weakref</groupId>
-        <artifactId>jmxutils</artifactId>
-        <version>1.13</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.thoughtworks.paranamer</groupId>
-        <artifactId>paranamer</artifactId>
-        <version>2.5</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-api</artifactId>
-        <version>${dep.slf4j.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-simple</artifactId>
-        <version>${dep.slf4j.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-log4j12</artifactId>
-        <version>${dep.slf4j.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>log4j</groupId>
-        <artifactId>log4j</artifactId>
-        <version>1.2.16</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.httpcomponents</groupId>
-        <artifactId>httpclient</artifactId>
-        <version>4.1.2</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.httpcomponents</groupId>
-        <artifactId>httpcore</artifactId>
-        <version>4.1.4</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.google.code.findbugs</groupId>
-        <artifactId>jsr305</artifactId>
-        <version>2.0.1</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.nesscomputing.testing</groupId>
-        <artifactId>findbugs-annotations</artifactId>
-        <version>2.0.0</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.antlr</groupId>
-        <artifactId>antlr-runtime</artifactId>
-        <version>3.4</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.testng</groupId>
-        <artifactId>testng</artifactId>
-        <version>6.7</version>
-        <exclusions>
-          <exclusion>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>org.easytesting</groupId>
-        <artifactId>fest-assert</artifactId>
-        <version>1.4</version>
-      </dependency>
-
-      <dependency>
-        <groupId>args4j</groupId>
-        <artifactId>args4j</artifactId>
-        <version>2.0.16</version>
-      </dependency>
-
-      <dependency>
-        <groupId>ch.qos.logback</groupId>
-        <artifactId>logback-core</artifactId>
-        <version>${dep.logback.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>ch.qos.logback</groupId>
-        <artifactId>logback-classic</artifactId>
-        <version>${dep.logback.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.beust</groupId>
-        <artifactId>jcommander</artifactId>
-        <version>1.29</version>
-      </dependency>
-
-      <dependency>
-        <groupId>commons-lang</groupId>
-        <artifactId>commons-lang</artifactId>
-        <version>2.6</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.proofpoint.platform</groupId>
+        <groupId>io.airlift</groupId>
         <artifactId>bootstrap</artifactId>
-        <version>0.51</version>
+        <version>${dep.airlift.version}</version>
         <exclusions>
           <exclusion>
             <!-- Swift uses a newer version named io.netty:netty -->
@@ -308,7 +183,175 @@
           </exclusion>
         </exclusions>
       </dependency>
+
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty</artifactId>
+        <version>3.5.2.Final</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.weakref</groupId>
+        <artifactId>jmxutils</artifactId>
+        <version>1.13</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.thoughtworks.paranamer</groupId>
+        <artifactId>paranamer</artifactId>
+        <version>2.5</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpclient</artifactId>
+        <version>4.1.2</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpcore</artifactId>
+        <version>4.1.4</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.antlr</groupId>
+        <artifactId>antlr-runtime</artifactId>
+        <version>3.4</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.antlr</groupId>
+        <artifactId>stringtemplate</artifactId>
+        <version>3.2.1</version>
+      </dependency>
+
+      <!-- maven -->
+      <dependency>
+        <groupId>org.apache.maven</groupId>
+        <artifactId>maven-plugin-api</artifactId>
+        <version>${dep.maven-api.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.maven</groupId>
+        <artifactId>maven-model</artifactId>
+        <version>${dep.maven-api.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.maven</groupId>
+        <artifactId>maven-artifact</artifactId>
+        <version>${dep.maven-api.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.maven</groupId>
+        <artifactId>maven-project</artifactId>
+        <version>${dep.maven-api.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>com.pyx4j</groupId>
+        <artifactId>maven-plugin-log4j</artifactId>
+        <version>1.0.1</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.codehaus.plexus</groupId>
+        <artifactId>plexus-utils</artifactId>
+        <version>1.5.15</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.easytesting</groupId>
+        <artifactId>fest-assert</artifactId>
+        <version>1.4</version>
+      </dependency>
+
+      <dependency>
+        <groupId>args4j</groupId>
+        <artifactId>args4j</artifactId>
+        <version>2.0.16</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.beust</groupId>
+        <artifactId>jcommander</artifactId>
+        <version>1.29</version>
+      </dependency>
+
     </dependencies>
   </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.antlr</groupId>
+          <artifactId>antlr3-maven-plugin</artifactId>
+          <version>3.4</version>
+          <executions>
+            <execution>
+              <id>default</id>
+              <phase>generate-sources</phase>
+              <goals>
+                <goal>antlr</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+
+        <plugin>
+          <groupId>org.codehaus.plexus</groupId>
+          <artifactId>plexus-maven-plugin</artifactId>
+          <version>1.3.8</version>
+          <executions>
+            <execution>
+              <goals>
+                <goal>descriptor</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-plugin-plugin</artifactId>
+          <version>2.9</version>
+          <executions>
+            <execution>
+              <id>help-mojo</id>
+              <goals>
+                <goal>helpmojo</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+	
+	<plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-shade-plugin</artifactId>
+	  <version>2.0</version>
+	</plugin>
+
+	<plugin>
+          <groupId>com.mycila.maven-license-plugin</groupId>
+          <artifactId>maven-license-plugin</artifactId>
+          <configuration>
+            <validHeaders>
+              <validHeader>${fb.main.basedir}/src/license/paranamer.txt</validHeader>
+            </validHeaders>
+          </configuration>
+	</plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
 
 </project>

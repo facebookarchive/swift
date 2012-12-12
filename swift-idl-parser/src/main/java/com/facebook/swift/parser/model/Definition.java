@@ -1,5 +1,5 @@
-/**
- * Copyright 2012 Facebook, Inc.
+/*
+ * Copyright (C) 2012 Facebook, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may
  * not use this file except in compliance with the License. You may obtain
@@ -15,8 +15,23 @@
  */
 package com.facebook.swift.parser.model;
 
-public abstract class Definition
+import com.facebook.swift.parser.visitor.DocumentVisitor;
+import com.facebook.swift.parser.visitor.Nameable;
+import com.facebook.swift.parser.visitor.Visitable;
+
+import java.io.IOException;
+
+public abstract class Definition implements Visitable, Nameable
 {
+    @Override
+    public void visit(final DocumentVisitor visitor) throws IOException
+    {
+        Visitable.Utils.visit(visitor, this);
+    }
+
+    @Override
+    public abstract String getName();
+
     @Override
     public abstract String toString();
 }
