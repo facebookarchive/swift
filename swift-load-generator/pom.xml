@@ -16,6 +16,10 @@
   <name>${project.artifactId}</name>
   <description>Swift client load generator for measuring server performance and testing client functionality under stress</description>
 
+  <properties>
+    <fb.main.basedir>${project.parent.basedir}</fb.main.basedir>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>com.facebook.swift</groupId>
