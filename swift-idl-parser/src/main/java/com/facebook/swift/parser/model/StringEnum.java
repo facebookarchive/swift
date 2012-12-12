@@ -1,5 +1,5 @@
-/**
- * Copyright 2012 Facebook, Inc.
+/*
+ * Copyright (C) 2012 Facebook, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may
  * not use this file except in compliance with the License. You may obtain
@@ -34,6 +34,7 @@ public class StringEnum
         this.values = ImmutableList.copyOf(checkNotNull(values, "values"));
     }
 
+    @Override
     public String getName()
     {
         return name;

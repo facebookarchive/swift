@@ -1,5 +1,5 @@
-/**
- * Copyright 2012 Facebook, Inc.
+/*
+ * Copyright (C) 2012 Facebook, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may
  * not use this file except in compliance with the License. You may obtain
@@ -15,10 +15,15 @@
  */
 package com.facebook.swift.parser.model;
 
+import com.facebook.swift.parser.visitor.DocumentVisitor;
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
+import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
@@ -44,6 +49,18 @@ public class Document
         return definitions;
     }
 
+    public void visit(final DocumentVisitor visitor) throws IOException
+    {
+        Preconditions.checkNotNull(visitor, "the visitor must not be null!");
+
+        for (Definition definition : definitions) {
+            if (visitor.accept(definition)) {
+                definition.visit(visitor);
+            }
+        }
+    }
+
+
     @Override
     public String toString()
     {
@@ -56,7 +73,7 @@ public class Document
     public static Document emptyDocument()
     {
         List<String> includes = emptyList();
-        List<Namespace> namespaces = emptyList();
+        Map<String, String> namespaces = Collections.emptyMap();
         List<String> cppIncludes = emptyList();
         Header header = new Header(includes, namespaces, cppIncludes);
         List<Definition> definitions = emptyList();

@@ -1,5 +1,5 @@
-/**
- * Copyright 2012 Facebook, Inc.
+/*
+ * Copyright (C) 2012 Facebook, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may
  * not use this file except in compliance with the License. You may obtain
@@ -15,12 +15,16 @@
  */
 package com.facebook.swift.parser.model;
 
+import com.facebook.swift.parser.visitor.DocumentVisitor;
+import com.facebook.swift.parser.visitor.Visitable;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 
+import java.io.IOException;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class TypeAnnotation
+public class TypeAnnotation implements Visitable
 {
     private final String name;
     private final String value;
@@ -48,5 +52,11 @@ public class TypeAnnotation
                 .add("name", name)
                 .add("value", value)
                 .toString();
+    }
+
+    @Override
+    public void visit(final DocumentVisitor visitor) throws IOException
+    {
+        visitor.visit(this);
     }
 }

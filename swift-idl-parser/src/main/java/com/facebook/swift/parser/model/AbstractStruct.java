@@ -1,5 +1,5 @@
-/**
- * Copyright 2012 Facebook, Inc.
+/*
+ * Copyright (C) 2012 Facebook, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may
  * not use this file except in compliance with the License. You may obtain
@@ -15,9 +15,12 @@
  */
 package com.facebook.swift.parser.model;
 
+import com.facebook.swift.parser.visitor.DocumentVisitor;
+import com.facebook.swift.parser.visitor.Visitable;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 
+import java.io.IOException;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -36,6 +39,7 @@ public abstract class AbstractStruct
         this.annotations = ImmutableList.copyOf(checkNotNull(annotations, "annotations"));
     }
 
+    @Override
     public String getName()
     {
         return name;
@@ -49,6 +53,15 @@ public abstract class AbstractStruct
     public List<TypeAnnotation> getAnnotations()
     {
         return annotations;
+    }
+
+    @Override
+    public void visit(final DocumentVisitor visitor) throws IOException
+    {
+        super.visit(visitor);
+
+        Visitable.Utils.visitAll(visitor, getFields());
+        Visitable.Utils.visitAll(visitor, getAnnotations());
     }
 
     @Override

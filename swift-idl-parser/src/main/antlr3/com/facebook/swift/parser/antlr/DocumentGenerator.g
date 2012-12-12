@@ -43,14 +43,14 @@ document returns [Document value]
 header returns [Header value]
 @init {
     List<String> includes = new ArrayList<>();
-    List<Namespace> namespaces = new ArrayList<>();
+    Map<String, String> namespaces = new HashMap<>();
     List<String> cppIncludes = new ArrayList<>();
 }
 @after {
     $value = new Header(includes, namespaces, cppIncludes);
 }
     : ( include     { includes.add($include.value); }
-      | namespace   { namespaces.add($namespace.value); }
+      | namespace   { namespaces.put($namespace.type, $namespace.value); }
       | cpp_include { cppIncludes.add($cpp_include.value); }
       )*
     ;
@@ -59,8 +59,8 @@ include returns [String value]
     : ^(INCLUDE LITERAL) { $value = $LITERAL.text; }
     ;
 
-namespace returns [Namespace value]
-    : ^(NAMESPACE k=IDENTIFIER (v=IDENTIFIER | v=LITERAL)) { $value = new Namespace($k.text, $v.text); }
+namespace returns [String type, String value]
+    : ^(NAMESPACE k=IDENTIFIER (v=IDENTIFIER | v=LITERAL)) { $type = $k.text ; $value = $v.text; }
     ;
 
 cpp_include returns [String value]
