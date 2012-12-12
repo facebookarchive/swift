@@ -28,8 +28,8 @@ import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import com.google.inject.Stage;
-import com.proofpoint.bootstrap.LifeCycleManager;
-import com.proofpoint.bootstrap.LifeCycleModule;
+import io.airlift.bootstrap.LifeCycleManager;
+import io.airlift.bootstrap.LifeCycleModule;
 import io.airlift.configuration.ConfigurationFactory;
 import io.airlift.configuration.ConfigurationModule;
 
