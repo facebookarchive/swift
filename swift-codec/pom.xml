@@ -39,14 +39,9 @@
 
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
-      <artifactId>jsr305</artifactId>
+      <artifactId>annotations</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>com.nesscomputing.testing</groupId>
-      <artifactId>findbugs-annotations</artifactId>
-    </dependency>
-    
     <dependency>
       <groupId>com.google.inject</groupId>
       <artifactId>guice</artifactId>
