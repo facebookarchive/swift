@@ -15,16 +15,21 @@
  */
 package com.facebook.swift.perf.loadgenerator;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.TimeUnit;
 
 public class LoadStatsThread extends Thread
 {
+    private static final Logger logger = LoggerFactory.getLogger(LoadStatsThread.class);
+
     private final AbstractClientWorker[] clientWorkers;
     private volatile boolean shutdown = false;
 
     public LoadStatsThread(AbstractClientWorker[] clientWorkers)
     {
-        this.clientWorkers = clientWorkers;
+        this.clientWorkers = clientWorkers.clone();
     }
 
     @Override
@@ -61,11 +66,14 @@ public class LoadStatsThread extends Thread
                 long currentQps = deltaSuccessfulOperations * TimeUnit.SECONDS.toNanos(1) / (currentTime - lastTime);
                 long averageQps = operations * TimeUnit.SECONDS.toNanos(1) / (currentTime - startTime);
 
-                System.out.println("QPS: " + currentQps + " Delta completed: " + deltaSuccessfulOperations + " Average QPS: " + averageQps + " Total completed: " + operations + " Total failed: " + failedOperations);
+                logger.info(
+                        "QPS: " + currentQps + " Delta completed: " + deltaSuccessfulOperations +
+                        " Average QPS: " + averageQps + " Total completed: " + operations +
+                        " Total failed: " + failedOperations);
 
                 lastTime = currentTime;
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                logger.error("Stats thread was interrupted");
             }
         }
     }
