@@ -1,0 +1,4 @@
+com.facebook.swift.parser
+com.facebook.swift.parser.antlr
+com.facebook.swift.parser.model
+com.facebook.swift.parser.visitor
