@@ -1,0 +1,9 @@
+com.facebook.swift.codec
+com.facebook.swift.codec.guice
+com.facebook.swift.codec.internal
+com.facebook.swift.codec.internal.builtin
+com.facebook.swift.codec.internal.coercion
+com.facebook.swift.codec.internal.compiler
+com.facebook.swift.codec.internal.compiler.byteCode
+com.facebook.swift.codec.internal.reflection
+com.facebook.swift.codec.metadata
