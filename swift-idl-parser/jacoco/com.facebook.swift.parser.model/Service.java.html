@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>Service.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-idl-parser</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.parser.model</a> &gt; <span class="el_source">Service.java</span></div><h1>Service.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.parser.model;
+
+import com.facebook.swift.parser.visitor.DocumentVisitor;
+import com.facebook.swift.parser.visitor.Visitable;
+import com.google.common.base.Objects;
+import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
+
+import java.io.IOException;
+import java.util.List;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
+public class Service
+        extends Definition
+{
+    private final String name;
+    private final Optional&lt;String&gt; parent;
+    private final List&lt;ThriftMethod&gt; methods;
+
+    public Service(String name, String parent, List&lt;ThriftMethod&gt; methods)
+<span class="fc" id="L37">    {</span>
+<span class="fc" id="L38">        this.name = checkNotNull(name, &quot;name&quot;);</span>
+<span class="fc" id="L39">        this.parent = Optional.fromNullable(parent);</span>
+<span class="fc" id="L40">        this.methods = ImmutableList.copyOf(checkNotNull(methods, &quot;methods&quot;));</span>
+<span class="fc" id="L41">    }</span>
+
+    @Override
+    public String getName()
+    {
+<span class="nc" id="L46">        return name;</span>
+    }
+
+    public Optional&lt;String&gt; getParent()
+    {
+<span class="nc" id="L51">        return parent;</span>
+    }
+
+    public List&lt;ThriftMethod&gt; getMethods()
+    {
+<span class="nc" id="L56">        return methods;</span>
+    }
+
+    @Override
+    public void visit(final DocumentVisitor visitor) throws IOException
+    {
+<span class="nc" id="L62">        super.visit(visitor);</span>
+<span class="nc" id="L63">        Visitable.Utils.visitAll(visitor, getMethods());</span>
+<span class="nc" id="L64">    }</span>
+
+
+    @Override
+    public String toString()
+    {
+<span class="fc" id="L70">        return Objects.toStringHelper(this)</span>
+                .add(&quot;name&quot;, name)
+                .add(&quot;parent&quot;, parent)
+                .add(&quot;methods&quot;, methods)
+                .toString();
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

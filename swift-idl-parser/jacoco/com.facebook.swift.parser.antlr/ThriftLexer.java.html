@@ -1,0 +1,2876 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ThriftLexer.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-idl-parser</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.parser.antlr</a> &gt; <span class="el_source">ThriftLexer.java</span></div><h1>ThriftLexer.java</h1><pre class="source lang-java linenums">// $ANTLR 3.4 com/facebook/swift/parser/antlr/Thrift.g 2012-12-12 13:31:11
+
+    package com.facebook.swift.parser.antlr;
+
+
+import org.antlr.runtime.*;
+import java.util.Stack;
+import java.util.List;
+import java.util.ArrayList;
+
+@SuppressWarnings({&quot;all&quot;, &quot;warnings&quot;, &quot;unchecked&quot;})
+public class ThriftLexer extends Lexer {
+    public static final int EOF=-1;
+    public static final int T__52=52;
+    public static final int T__53=53;
+    public static final int T__54=54;
+    public static final int T__55=55;
+    public static final int T__56=56;
+    public static final int T__57=57;
+    public static final int T__58=58;
+    public static final int T__59=59;
+    public static final int T__60=60;
+    public static final int T__61=61;
+    public static final int T__62=62;
+    public static final int T__63=63;
+    public static final int T__64=64;
+    public static final int T__65=65;
+    public static final int T__66=66;
+    public static final int T__67=67;
+    public static final int T__68=68;
+    public static final int T__69=69;
+    public static final int T__70=70;
+    public static final int T__71=71;
+    public static final int T__72=72;
+    public static final int T__73=73;
+    public static final int T__74=74;
+    public static final int T__75=75;
+    public static final int T__76=76;
+    public static final int T__77=77;
+    public static final int T__78=78;
+    public static final int T__79=79;
+    public static final int T__80=80;
+    public static final int T__81=81;
+    public static final int T__82=82;
+    public static final int T__83=83;
+    public static final int T__84=84;
+    public static final int T__85=85;
+    public static final int T__86=86;
+    public static final int ARGS=4;
+    public static final int COMMA=5;
+    public static final int COMMENT=6;
+    public static final int CONST=7;
+    public static final int CPP_INCLUDE=8;
+    public static final int CPP_TYPE=9;
+    public static final int DIGIT=10;
+    public static final int DOCUMENT=11;
+    public static final int DOUBLE=12;
+    public static final int ENTRY=13;
+    public static final int ENUM=14;
+    public static final int EXCEPTION=15;
+    public static final int EXTENDS=16;
+    public static final int FIELD=17;
+    public static final int HEX_DIGIT=18;
+    public static final int HEX_INTEGER=19;
+    public static final int IDENTIFIER=20;
+    public static final int INCLUDE=21;
+    public static final int INTEGER=22;
+    public static final int LETTER=23;
+    public static final int LIST=24;
+    public static final int LITERAL=25;
+    public static final int MAP=26;
+    public static final int METHOD=27;
+    public static final int NAMESPACE=28;
+    public static final int ONEWAY=29;
+    public static final int OPTIONAL=30;
+    public static final int REQUIRED=31;
+    public static final int REQUIREDNESS=32;
+    public static final int SENUM=33;
+    public static final int SERVICE=34;
+    public static final int SET=35;
+    public static final int STRUCT=36;
+    public static final int THROWS=37;
+    public static final int TYPE=38;
+    public static final int TYPEDEF=39;
+    public static final int TYPES=40;
+    public static final int TYPE_BINARY=41;
+    public static final int TYPE_BOOL=42;
+    public static final int TYPE_BYTE=43;
+    public static final int TYPE_DOUBLE=44;
+    public static final int TYPE_I16=45;
+    public static final int TYPE_I32=46;
+    public static final int TYPE_I64=47;
+    public static final int TYPE_STRING=48;
+    public static final int UNION=49;
+    public static final int VOID=50;
+    public static final int WS=51;
+
+    // delegates
+    // delegators
+    public Lexer[] getDelegates() {
+<span class="nc" id="L101">        return new Lexer[] {};</span>
+    }
+
+<span class="nc" id="L104">    public ThriftLexer() {} </span>
+    public ThriftLexer(CharStream input) {
+<span class="fc" id="L106">        this(input, new RecognizerSharedState());</span>
+<span class="fc" id="L107">    }</span>
+    public ThriftLexer(CharStream input, RecognizerSharedState state) {
+<span class="fc" id="L109">        super(input,state);</span>
+<span class="fc" id="L110">    }</span>
+<span class="nc" id="L111">    public String getGrammarFileName() { return &quot;com/facebook/swift/parser/antlr/Thrift.g&quot;; }</span>
+
+    // $ANTLR start &quot;T__52&quot;
+    public final void mT__52() throws RecognitionException {
+        try {
+<span class="fc" id="L116">            int _type = T__52;</span>
+<span class="fc" id="L117">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:6:7: ( '(' )
+            // com/facebook/swift/parser/antlr/Thrift.g:6:9: '('
+            {
+<span class="fc" id="L121">            match('('); </span>
+
+            }
+
+<span class="fc" id="L125">            state.type = _type;</span>
+<span class="fc" id="L126">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L128">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L130">        }</span>
+<span class="fc" id="L131">    }</span>
+    // $ANTLR end &quot;T__52&quot;
+
+    // $ANTLR start &quot;T__53&quot;
+    public final void mT__53() throws RecognitionException {
+        try {
+<span class="fc" id="L137">            int _type = T__53;</span>
+<span class="fc" id="L138">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:7:7: ( ')' )
+            // com/facebook/swift/parser/antlr/Thrift.g:7:9: ')'
+            {
+<span class="fc" id="L142">            match(')'); </span>
+
+            }
+
+<span class="fc" id="L146">            state.type = _type;</span>
+<span class="fc" id="L147">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L149">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L151">        }</span>
+<span class="fc" id="L152">    }</span>
+    // $ANTLR end &quot;T__53&quot;
+
+    // $ANTLR start &quot;T__54&quot;
+    public final void mT__54() throws RecognitionException {
+        try {
+<span class="fc" id="L158">            int _type = T__54;</span>
+<span class="fc" id="L159">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:8:7: ( ':' )
+            // com/facebook/swift/parser/antlr/Thrift.g:8:9: ':'
+            {
+<span class="fc" id="L163">            match(':'); </span>
+
+            }
+
+<span class="fc" id="L167">            state.type = _type;</span>
+<span class="fc" id="L168">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L170">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L172">        }</span>
+<span class="fc" id="L173">    }</span>
+    // $ANTLR end &quot;T__54&quot;
+
+    // $ANTLR start &quot;T__55&quot;
+    public final void mT__55() throws RecognitionException {
+        try {
+<span class="fc" id="L179">            int _type = T__55;</span>
+<span class="fc" id="L180">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:9:7: ( ';' )
+            // com/facebook/swift/parser/antlr/Thrift.g:9:9: ';'
+            {
+<span class="fc" id="L184">            match(';'); </span>
+
+            }
+
+<span class="fc" id="L188">            state.type = _type;</span>
+<span class="fc" id="L189">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L191">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L193">        }</span>
+<span class="fc" id="L194">    }</span>
+    // $ANTLR end &quot;T__55&quot;
+
+    // $ANTLR start &quot;T__56&quot;
+    public final void mT__56() throws RecognitionException {
+        try {
+<span class="fc" id="L200">            int _type = T__56;</span>
+<span class="fc" id="L201">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:10:7: ( '&lt;' )
+            // com/facebook/swift/parser/antlr/Thrift.g:10:9: '&lt;'
+            {
+<span class="fc" id="L205">            match('&lt;'); </span>
+
+            }
+
+<span class="fc" id="L209">            state.type = _type;</span>
+<span class="fc" id="L210">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L212">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L214">        }</span>
+<span class="fc" id="L215">    }</span>
+    // $ANTLR end &quot;T__56&quot;
+
+    // $ANTLR start &quot;T__57&quot;
+    public final void mT__57() throws RecognitionException {
+        try {
+<span class="fc" id="L221">            int _type = T__57;</span>
+<span class="fc" id="L222">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:11:7: ( '=' )
+            // com/facebook/swift/parser/antlr/Thrift.g:11:9: '='
+            {
+<span class="fc" id="L226">            match('='); </span>
+
+            }
+
+<span class="fc" id="L230">            state.type = _type;</span>
+<span class="fc" id="L231">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L233">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L235">        }</span>
+<span class="fc" id="L236">    }</span>
+    // $ANTLR end &quot;T__57&quot;
+
+    // $ANTLR start &quot;T__58&quot;
+    public final void mT__58() throws RecognitionException {
+        try {
+<span class="fc" id="L242">            int _type = T__58;</span>
+<span class="fc" id="L243">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:12:7: ( '&gt;' )
+            // com/facebook/swift/parser/antlr/Thrift.g:12:9: '&gt;'
+            {
+<span class="fc" id="L247">            match('&gt;'); </span>
+
+            }
+
+<span class="fc" id="L251">            state.type = _type;</span>
+<span class="fc" id="L252">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L254">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L256">        }</span>
+<span class="fc" id="L257">    }</span>
+    // $ANTLR end &quot;T__58&quot;
+
+    // $ANTLR start &quot;T__59&quot;
+    public final void mT__59() throws RecognitionException {
+        try {
+<span class="fc" id="L263">            int _type = T__59;</span>
+<span class="fc" id="L264">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:13:7: ( '[' )
+            // com/facebook/swift/parser/antlr/Thrift.g:13:9: '['
+            {
+<span class="fc" id="L268">            match('['); </span>
+
+            }
+
+<span class="fc" id="L272">            state.type = _type;</span>
+<span class="fc" id="L273">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L275">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L277">        }</span>
+<span class="fc" id="L278">    }</span>
+    // $ANTLR end &quot;T__59&quot;
+
+    // $ANTLR start &quot;T__60&quot;
+    public final void mT__60() throws RecognitionException {
+        try {
+<span class="fc" id="L284">            int _type = T__60;</span>
+<span class="fc" id="L285">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:14:7: ( ']' )
+            // com/facebook/swift/parser/antlr/Thrift.g:14:9: ']'
+            {
+<span class="fc" id="L289">            match(']'); </span>
+
+            }
+
+<span class="fc" id="L293">            state.type = _type;</span>
+<span class="fc" id="L294">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L296">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L298">        }</span>
+<span class="fc" id="L299">    }</span>
+    // $ANTLR end &quot;T__60&quot;
+
+    // $ANTLR start &quot;T__61&quot;
+    public final void mT__61() throws RecognitionException {
+        try {
+<span class="nc" id="L305">            int _type = T__61;</span>
+<span class="nc" id="L306">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:15:7: ( 'async' )
+            // com/facebook/swift/parser/antlr/Thrift.g:15:9: 'async'
+            {
+<span class="nc" id="L310">            match(&quot;async&quot;); </span>
+
+
+
+            }
+
+<span class="nc" id="L316">            state.type = _type;</span>
+<span class="nc" id="L317">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L319">        finally {</span>
+        	// do for sure before leaving
+<span class="nc" id="L321">        }</span>
+<span class="nc" id="L322">    }</span>
+    // $ANTLR end &quot;T__61&quot;
+
+    // $ANTLR start &quot;T__62&quot;
+    public final void mT__62() throws RecognitionException {
+        try {
+<span class="fc" id="L328">            int _type = T__62;</span>
+<span class="fc" id="L329">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:16:7: ( 'const' )
+            // com/facebook/swift/parser/antlr/Thrift.g:16:9: 'const'
+            {
+<span class="fc" id="L333">            match(&quot;const&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L339">            state.type = _type;</span>
+<span class="fc" id="L340">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L342">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L344">        }</span>
+<span class="fc" id="L345">    }</span>
+    // $ANTLR end &quot;T__62&quot;
+
+    // $ANTLR start &quot;T__63&quot;
+    public final void mT__63() throws RecognitionException {
+        try {
+<span class="nc" id="L351">            int _type = T__63;</span>
+<span class="nc" id="L352">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:17:7: ( 'cpp_include' )
+            // com/facebook/swift/parser/antlr/Thrift.g:17:9: 'cpp_include'
+            {
+<span class="nc" id="L356">            match(&quot;cpp_include&quot;); </span>
+
+
+
+            }
+
+<span class="nc" id="L362">            state.type = _type;</span>
+<span class="nc" id="L363">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L365">        finally {</span>
+        	// do for sure before leaving
+<span class="nc" id="L367">        }</span>
+<span class="nc" id="L368">    }</span>
+    // $ANTLR end &quot;T__63&quot;
+
+    // $ANTLR start &quot;T__64&quot;
+    public final void mT__64() throws RecognitionException {
+        try {
+<span class="nc" id="L374">            int _type = T__64;</span>
+<span class="nc" id="L375">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:18:7: ( 'cpp_namespace' )
+            // com/facebook/swift/parser/antlr/Thrift.g:18:9: 'cpp_namespace'
+            {
+<span class="nc" id="L379">            match(&quot;cpp_namespace&quot;); </span>
+
+
+
+            }
+
+<span class="nc" id="L385">            state.type = _type;</span>
+<span class="nc" id="L386">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L388">        finally {</span>
+        	// do for sure before leaving
+<span class="nc" id="L390">        }</span>
+<span class="nc" id="L391">    }</span>
+    // $ANTLR end &quot;T__64&quot;
+
+    // $ANTLR start &quot;T__65&quot;
+    public final void mT__65() throws RecognitionException {
+        try {
+<span class="nc" id="L397">            int _type = T__65;</span>
+<span class="nc" id="L398">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:19:7: ( 'cpp_type' )
+            // com/facebook/swift/parser/antlr/Thrift.g:19:9: 'cpp_type'
+            {
+<span class="nc" id="L402">            match(&quot;cpp_type&quot;); </span>
+
+
+
+            }
+
+<span class="nc" id="L408">            state.type = _type;</span>
+<span class="nc" id="L409">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L411">        finally {</span>
+        	// do for sure before leaving
+<span class="nc" id="L413">        }</span>
+<span class="nc" id="L414">    }</span>
+    // $ANTLR end &quot;T__65&quot;
+
+    // $ANTLR start &quot;T__66&quot;
+    public final void mT__66() throws RecognitionException {
+        try {
+<span class="fc" id="L420">            int _type = T__66;</span>
+<span class="fc" id="L421">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:20:7: ( 'enum' )
+            // com/facebook/swift/parser/antlr/Thrift.g:20:9: 'enum'
+            {
+<span class="fc" id="L425">            match(&quot;enum&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L431">            state.type = _type;</span>
+<span class="fc" id="L432">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L434">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L436">        }</span>
+<span class="fc" id="L437">    }</span>
+    // $ANTLR end &quot;T__66&quot;
+
+    // $ANTLR start &quot;T__67&quot;
+    public final void mT__67() throws RecognitionException {
+        try {
+<span class="fc" id="L443">            int _type = T__67;</span>
+<span class="fc" id="L444">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:21:7: ( 'exception' )
+            // com/facebook/swift/parser/antlr/Thrift.g:21:9: 'exception'
+            {
+<span class="fc" id="L448">            match(&quot;exception&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L454">            state.type = _type;</span>
+<span class="fc" id="L455">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L457">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L459">        }</span>
+<span class="fc" id="L460">    }</span>
+    // $ANTLR end &quot;T__67&quot;
+
+    // $ANTLR start &quot;T__68&quot;
+    public final void mT__68() throws RecognitionException {
+        try {
+<span class="fc" id="L466">            int _type = T__68;</span>
+<span class="fc" id="L467">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:22:7: ( 'extends' )
+            // com/facebook/swift/parser/antlr/Thrift.g:22:9: 'extends'
+            {
+<span class="fc" id="L471">            match(&quot;extends&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L477">            state.type = _type;</span>
+<span class="fc" id="L478">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L480">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L482">        }</span>
+<span class="fc" id="L483">    }</span>
+    // $ANTLR end &quot;T__68&quot;
+
+    // $ANTLR start &quot;T__69&quot;
+    public final void mT__69() throws RecognitionException {
+        try {
+<span class="fc" id="L489">            int _type = T__69;</span>
+<span class="fc" id="L490">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:23:7: ( 'include' )
+            // com/facebook/swift/parser/antlr/Thrift.g:23:9: 'include'
+            {
+<span class="fc" id="L494">            match(&quot;include&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L500">            state.type = _type;</span>
+<span class="fc" id="L501">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L503">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L505">        }</span>
+<span class="fc" id="L506">    }</span>
+    // $ANTLR end &quot;T__69&quot;
+
+    // $ANTLR start &quot;T__70&quot;
+    public final void mT__70() throws RecognitionException {
+        try {
+<span class="fc" id="L512">            int _type = T__70;</span>
+<span class="fc" id="L513">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:24:7: ( 'list' )
+            // com/facebook/swift/parser/antlr/Thrift.g:24:9: 'list'
+            {
+<span class="fc" id="L517">            match(&quot;list&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L523">            state.type = _type;</span>
+<span class="fc" id="L524">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L526">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L528">        }</span>
+<span class="fc" id="L529">    }</span>
+    // $ANTLR end &quot;T__70&quot;
+
+    // $ANTLR start &quot;T__71&quot;
+    public final void mT__71() throws RecognitionException {
+        try {
+<span class="fc" id="L535">            int _type = T__71;</span>
+<span class="fc" id="L536">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:25:7: ( 'map' )
+            // com/facebook/swift/parser/antlr/Thrift.g:25:9: 'map'
+            {
+<span class="fc" id="L540">            match(&quot;map&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L546">            state.type = _type;</span>
+<span class="fc" id="L547">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L549">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L551">        }</span>
+<span class="fc" id="L552">    }</span>
+    // $ANTLR end &quot;T__71&quot;
+
+    // $ANTLR start &quot;T__72&quot;
+    public final void mT__72() throws RecognitionException {
+        try {
+<span class="fc" id="L558">            int _type = T__72;</span>
+<span class="fc" id="L559">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:26:7: ( 'namespace' )
+            // com/facebook/swift/parser/antlr/Thrift.g:26:9: 'namespace'
+            {
+<span class="fc" id="L563">            match(&quot;namespace&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L569">            state.type = _type;</span>
+<span class="fc" id="L570">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L572">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L574">        }</span>
+<span class="fc" id="L575">    }</span>
+    // $ANTLR end &quot;T__72&quot;
+
+    // $ANTLR start &quot;T__73&quot;
+    public final void mT__73() throws RecognitionException {
+        try {
+<span class="fc" id="L581">            int _type = T__73;</span>
+<span class="fc" id="L582">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:27:7: ( 'oneway' )
+            // com/facebook/swift/parser/antlr/Thrift.g:27:9: 'oneway'
+            {
+<span class="fc" id="L586">            match(&quot;oneway&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L592">            state.type = _type;</span>
+<span class="fc" id="L593">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L595">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L597">        }</span>
+<span class="fc" id="L598">    }</span>
+    // $ANTLR end &quot;T__73&quot;
+
+    // $ANTLR start &quot;T__74&quot;
+    public final void mT__74() throws RecognitionException {
+        try {
+<span class="fc" id="L604">            int _type = T__74;</span>
+<span class="fc" id="L605">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:28:7: ( 'optional' )
+            // com/facebook/swift/parser/antlr/Thrift.g:28:9: 'optional'
+            {
+<span class="fc" id="L609">            match(&quot;optional&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L615">            state.type = _type;</span>
+<span class="fc" id="L616">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L618">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L620">        }</span>
+<span class="fc" id="L621">    }</span>
+    // $ANTLR end &quot;T__74&quot;
+
+    // $ANTLR start &quot;T__75&quot;
+    public final void mT__75() throws RecognitionException {
+        try {
+<span class="nc" id="L627">            int _type = T__75;</span>
+<span class="nc" id="L628">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:29:7: ( 'php_namespace' )
+            // com/facebook/swift/parser/antlr/Thrift.g:29:9: 'php_namespace'
+            {
+<span class="nc" id="L632">            match(&quot;php_namespace&quot;); </span>
+
+
+
+            }
+
+<span class="nc" id="L638">            state.type = _type;</span>
+<span class="nc" id="L639">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L641">        finally {</span>
+        	// do for sure before leaving
+<span class="nc" id="L643">        }</span>
+<span class="nc" id="L644">    }</span>
+    // $ANTLR end &quot;T__75&quot;
+
+    // $ANTLR start &quot;T__76&quot;
+    public final void mT__76() throws RecognitionException {
+        try {
+<span class="fc" id="L650">            int _type = T__76;</span>
+<span class="fc" id="L651">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:30:7: ( 'required' )
+            // com/facebook/swift/parser/antlr/Thrift.g:30:9: 'required'
+            {
+<span class="fc" id="L655">            match(&quot;required&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L661">            state.type = _type;</span>
+<span class="fc" id="L662">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L664">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L666">        }</span>
+<span class="fc" id="L667">    }</span>
+    // $ANTLR end &quot;T__76&quot;
+
+    // $ANTLR start &quot;T__77&quot;
+    public final void mT__77() throws RecognitionException {
+        try {
+<span class="fc" id="L673">            int _type = T__77;</span>
+<span class="fc" id="L674">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:31:7: ( 'senum' )
+            // com/facebook/swift/parser/antlr/Thrift.g:31:9: 'senum'
+            {
+<span class="fc" id="L678">            match(&quot;senum&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L684">            state.type = _type;</span>
+<span class="fc" id="L685">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L687">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L689">        }</span>
+<span class="fc" id="L690">    }</span>
+    // $ANTLR end &quot;T__77&quot;
+
+    // $ANTLR start &quot;T__78&quot;
+    public final void mT__78() throws RecognitionException {
+        try {
+<span class="fc" id="L696">            int _type = T__78;</span>
+<span class="fc" id="L697">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:32:7: ( 'service' )
+            // com/facebook/swift/parser/antlr/Thrift.g:32:9: 'service'
+            {
+<span class="fc" id="L701">            match(&quot;service&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L707">            state.type = _type;</span>
+<span class="fc" id="L708">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L710">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L712">        }</span>
+<span class="fc" id="L713">    }</span>
+    // $ANTLR end &quot;T__78&quot;
+
+    // $ANTLR start &quot;T__79&quot;
+    public final void mT__79() throws RecognitionException {
+        try {
+<span class="fc" id="L719">            int _type = T__79;</span>
+<span class="fc" id="L720">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:33:7: ( 'set' )
+            // com/facebook/swift/parser/antlr/Thrift.g:33:9: 'set'
+            {
+<span class="fc" id="L724">            match(&quot;set&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L730">            state.type = _type;</span>
+<span class="fc" id="L731">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L733">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L735">        }</span>
+<span class="fc" id="L736">    }</span>
+    // $ANTLR end &quot;T__79&quot;
+
+    // $ANTLR start &quot;T__80&quot;
+    public final void mT__80() throws RecognitionException {
+        try {
+<span class="fc" id="L742">            int _type = T__80;</span>
+<span class="fc" id="L743">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:34:7: ( 'struct' )
+            // com/facebook/swift/parser/antlr/Thrift.g:34:9: 'struct'
+            {
+<span class="fc" id="L747">            match(&quot;struct&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L753">            state.type = _type;</span>
+<span class="fc" id="L754">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L756">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L758">        }</span>
+<span class="fc" id="L759">    }</span>
+    // $ANTLR end &quot;T__80&quot;
+
+    // $ANTLR start &quot;T__81&quot;
+    public final void mT__81() throws RecognitionException {
+        try {
+<span class="fc" id="L765">            int _type = T__81;</span>
+<span class="fc" id="L766">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:35:7: ( 'throws' )
+            // com/facebook/swift/parser/antlr/Thrift.g:35:9: 'throws'
+            {
+<span class="fc" id="L770">            match(&quot;throws&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L776">            state.type = _type;</span>
+<span class="fc" id="L777">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L779">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L781">        }</span>
+<span class="fc" id="L782">    }</span>
+    // $ANTLR end &quot;T__81&quot;
+
+    // $ANTLR start &quot;T__82&quot;
+    public final void mT__82() throws RecognitionException {
+        try {
+<span class="fc" id="L788">            int _type = T__82;</span>
+<span class="fc" id="L789">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:36:7: ( 'typedef' )
+            // com/facebook/swift/parser/antlr/Thrift.g:36:9: 'typedef'
+            {
+<span class="fc" id="L793">            match(&quot;typedef&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L799">            state.type = _type;</span>
+<span class="fc" id="L800">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L802">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L804">        }</span>
+<span class="fc" id="L805">    }</span>
+    // $ANTLR end &quot;T__82&quot;
+
+    // $ANTLR start &quot;T__83&quot;
+    public final void mT__83() throws RecognitionException {
+        try {
+<span class="fc" id="L811">            int _type = T__83;</span>
+<span class="fc" id="L812">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:37:7: ( 'union' )
+            // com/facebook/swift/parser/antlr/Thrift.g:37:9: 'union'
+            {
+<span class="fc" id="L816">            match(&quot;union&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L822">            state.type = _type;</span>
+<span class="fc" id="L823">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L825">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L827">        }</span>
+<span class="fc" id="L828">    }</span>
+    // $ANTLR end &quot;T__83&quot;
+
+    // $ANTLR start &quot;T__84&quot;
+    public final void mT__84() throws RecognitionException {
+        try {
+<span class="fc" id="L834">            int _type = T__84;</span>
+<span class="fc" id="L835">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:38:7: ( 'void' )
+            // com/facebook/swift/parser/antlr/Thrift.g:38:9: 'void'
+            {
+<span class="fc" id="L839">            match(&quot;void&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L845">            state.type = _type;</span>
+<span class="fc" id="L846">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L848">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L850">        }</span>
+<span class="fc" id="L851">    }</span>
+    // $ANTLR end &quot;T__84&quot;
+
+    // $ANTLR start &quot;T__85&quot;
+    public final void mT__85() throws RecognitionException {
+        try {
+<span class="fc" id="L857">            int _type = T__85;</span>
+<span class="fc" id="L858">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:39:7: ( '{' )
+            // com/facebook/swift/parser/antlr/Thrift.g:39:9: '{'
+            {
+<span class="fc" id="L862">            match('{'); </span>
+
+            }
+
+<span class="fc" id="L866">            state.type = _type;</span>
+<span class="fc" id="L867">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L869">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L871">        }</span>
+<span class="fc" id="L872">    }</span>
+    // $ANTLR end &quot;T__85&quot;
+
+    // $ANTLR start &quot;T__86&quot;
+    public final void mT__86() throws RecognitionException {
+        try {
+<span class="fc" id="L878">            int _type = T__86;</span>
+<span class="fc" id="L879">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:40:7: ( '}' )
+            // com/facebook/swift/parser/antlr/Thrift.g:40:9: '}'
+            {
+<span class="fc" id="L883">            match('}'); </span>
+
+            }
+
+<span class="fc" id="L887">            state.type = _type;</span>
+<span class="fc" id="L888">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L890">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L892">        }</span>
+<span class="fc" id="L893">    }</span>
+    // $ANTLR end &quot;T__86&quot;
+
+    // $ANTLR start &quot;INTEGER&quot;
+    public final void mINTEGER() throws RecognitionException {
+        try {
+<span class="fc" id="L899">            int _type = INTEGER;</span>
+<span class="fc" id="L900">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:216:5: ( ( '+' | '-' )? ( DIGIT )+ )
+            // com/facebook/swift/parser/antlr/Thrift.g:216:7: ( '+' | '-' )? ( DIGIT )+
+            {
+            // com/facebook/swift/parser/antlr/Thrift.g:216:7: ( '+' | '-' )?
+<span class="fc" id="L905">            int alt1=2;</span>
+<span class="fc bfc" id="L906" title="All 2 branches covered.">            switch ( input.LA(1) ) {</span>
+                case '+':
+                case '-':
+                    {
+<span class="fc" id="L910">                    alt1=1;</span>
+                    }
+                    break;
+            }
+
+<span class="fc bfc" id="L915" title="All 2 branches covered.">            switch (alt1) {</span>
+                case 1 :
+                    // com/facebook/swift/parser/antlr/Thrift.g:
+                    {
+<span class="pc bpc" id="L919" title="2 of 4 branches missed.">                    if ( input.LA(1)=='+'||input.LA(1)=='-' ) {</span>
+<span class="fc" id="L920">                        input.consume();</span>
+                    }
+                    else {
+<span class="nc" id="L923">                        MismatchedSetException mse = new MismatchedSetException(null,input);</span>
+<span class="nc" id="L924">                        recover(mse);</span>
+<span class="nc" id="L925">                        throw mse;</span>
+                    }
+
+
+                    }
+                    break;
+
+            }
+
+
+            // com/facebook/swift/parser/antlr/Thrift.g:216:20: ( DIGIT )+
+<span class="fc" id="L936">            int cnt2=0;</span>
+            loop2:
+            do {
+<span class="fc" id="L939">                int alt2=2;</span>
+<span class="fc bfc" id="L940" title="All 2 branches covered.">                switch ( input.LA(1) ) {</span>
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                    {
+<span class="fc" id="L952">                    alt2=1;</span>
+                    }
+                    break;
+
+                }
+
+<span class="fc bfc" id="L958" title="All 2 branches covered.">                switch (alt2) {</span>
+            	case 1 :
+            	    // com/facebook/swift/parser/antlr/Thrift.g:
+            	    {
+<span class="pc bpc" id="L962" title="2 of 4 branches missed.">            	    if ( (input.LA(1) &gt;= '0' &amp;&amp; input.LA(1) &lt;= '9') ) {</span>
+<span class="fc" id="L963">            	        input.consume();</span>
+            	    }
+            	    else {
+<span class="nc" id="L966">            	        MismatchedSetException mse = new MismatchedSetException(null,input);</span>
+<span class="nc" id="L967">            	        recover(mse);</span>
+<span class="nc" id="L968">            	        throw mse;</span>
+            	    }
+
+
+            	    }
+            	    break;
+
+            	default :
+<span class="pc bpc" id="L976" title="1 of 2 branches missed.">            	    if ( cnt2 &gt;= 1 ) break loop2;</span>
+<span class="nc" id="L977">                        EarlyExitException eee =</span>
+                            new EarlyExitException(2, input);
+<span class="nc" id="L979">                        throw eee;</span>
+                }
+<span class="fc" id="L981">                cnt2++;</span>
+<span class="fc" id="L982">            } while (true);</span>
+
+
+            }
+
+<span class="fc" id="L987">            state.type = _type;</span>
+<span class="fc" id="L988">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L990">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L992">        }</span>
+<span class="fc" id="L993">    }</span>
+    // $ANTLR end &quot;INTEGER&quot;
+
+    // $ANTLR start &quot;HEX_INTEGER&quot;
+    public final void mHEX_INTEGER() throws RecognitionException {
+        try {
+<span class="fc" id="L999">            int _type = HEX_INTEGER;</span>
+<span class="fc" id="L1000">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:220:5: ( '0x' ( HEX_DIGIT )+ )
+            // com/facebook/swift/parser/antlr/Thrift.g:220:7: '0x' ( HEX_DIGIT )+
+            {
+<span class="fc" id="L1004">            match(&quot;0x&quot;); </span>
+
+
+
+            // com/facebook/swift/parser/antlr/Thrift.g:220:12: ( HEX_DIGIT )+
+<span class="fc" id="L1009">            int cnt3=0;</span>
+            loop3:
+            do {
+<span class="fc" id="L1012">                int alt3=2;</span>
+<span class="fc bfc" id="L1013" title="All 2 branches covered.">                switch ( input.LA(1) ) {</span>
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                case 'A':
+                case 'B':
+                case 'C':
+                case 'D':
+                case 'E':
+                case 'F':
+                case 'a':
+                case 'b':
+                case 'c':
+                case 'd':
+                case 'e':
+                case 'f':
+                    {
+<span class="fc" id="L1037">                    alt3=1;</span>
+                    }
+                    break;
+
+                }
+
+<span class="fc bfc" id="L1043" title="All 2 branches covered.">                switch (alt3) {</span>
+            	case 1 :
+            	    // com/facebook/swift/parser/antlr/Thrift.g:
+            	    {
+<span class="pc bpc" id="L1047" title="4 of 12 branches missed.">            	    if ( (input.LA(1) &gt;= '0' &amp;&amp; input.LA(1) &lt;= '9')||(input.LA(1) &gt;= 'A' &amp;&amp; input.LA(1) &lt;= 'F')||(input.LA(1) &gt;= 'a' &amp;&amp; input.LA(1) &lt;= 'f') ) {</span>
+<span class="fc" id="L1048">            	        input.consume();</span>
+            	    }
+            	    else {
+<span class="nc" id="L1051">            	        MismatchedSetException mse = new MismatchedSetException(null,input);</span>
+<span class="nc" id="L1052">            	        recover(mse);</span>
+<span class="nc" id="L1053">            	        throw mse;</span>
+            	    }
+
+
+            	    }
+            	    break;
+
+            	default :
+<span class="pc bpc" id="L1061" title="1 of 2 branches missed.">            	    if ( cnt3 &gt;= 1 ) break loop3;</span>
+<span class="nc" id="L1062">                        EarlyExitException eee =</span>
+                            new EarlyExitException(3, input);
+<span class="nc" id="L1064">                        throw eee;</span>
+                }
+<span class="fc" id="L1066">                cnt3++;</span>
+<span class="fc" id="L1067">            } while (true);</span>
+
+
+            }
+
+<span class="fc" id="L1072">            state.type = _type;</span>
+<span class="fc" id="L1073">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L1075">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L1077">        }</span>
+<span class="fc" id="L1078">    }</span>
+    // $ANTLR end &quot;HEX_INTEGER&quot;
+
+    // $ANTLR start &quot;DOUBLE&quot;
+    public final void mDOUBLE() throws RecognitionException {
+        try {
+<span class="fc" id="L1084">            int _type = DOUBLE;</span>
+<span class="fc" id="L1085">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:224:5: ( ( '+' | '-' )? ( DIGIT )* ( '.' ( DIGIT )+ )? ( ( 'E' | 'e' ) INTEGER )? )
+            // com/facebook/swift/parser/antlr/Thrift.g:224:7: ( '+' | '-' )? ( DIGIT )* ( '.' ( DIGIT )+ )? ( ( 'E' | 'e' ) INTEGER )?
+            {
+            // com/facebook/swift/parser/antlr/Thrift.g:224:7: ( '+' | '-' )?
+<span class="fc" id="L1090">            int alt4=2;</span>
+<span class="fc bfc" id="L1091" title="All 2 branches covered.">            switch ( input.LA(1) ) {</span>
+                case '+':
+                case '-':
+                    {
+<span class="fc" id="L1095">                    alt4=1;</span>
+                    }
+                    break;
+            }
+
+<span class="fc bfc" id="L1100" title="All 2 branches covered.">            switch (alt4) {</span>
+                case 1 :
+                    // com/facebook/swift/parser/antlr/Thrift.g:
+                    {
+<span class="pc bpc" id="L1104" title="2 of 4 branches missed.">                    if ( input.LA(1)=='+'||input.LA(1)=='-' ) {</span>
+<span class="fc" id="L1105">                        input.consume();</span>
+                    }
+                    else {
+<span class="nc" id="L1108">                        MismatchedSetException mse = new MismatchedSetException(null,input);</span>
+<span class="nc" id="L1109">                        recover(mse);</span>
+<span class="nc" id="L1110">                        throw mse;</span>
+                    }
+
+
+                    }
+                    break;
+
+            }
+
+
+            // com/facebook/swift/parser/antlr/Thrift.g:224:20: ( DIGIT )*
+            loop5:
+            do {
+<span class="fc" id="L1123">                int alt5=2;</span>
+<span class="fc bfc" id="L1124" title="All 2 branches covered.">                switch ( input.LA(1) ) {</span>
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                    {
+<span class="fc" id="L1136">                    alt5=1;</span>
+                    }
+                    break;
+
+                }
+
+<span class="fc bfc" id="L1142" title="All 2 branches covered.">                switch (alt5) {</span>
+            	case 1 :
+            	    // com/facebook/swift/parser/antlr/Thrift.g:
+            	    {
+<span class="pc bpc" id="L1146" title="2 of 4 branches missed.">            	    if ( (input.LA(1) &gt;= '0' &amp;&amp; input.LA(1) &lt;= '9') ) {</span>
+<span class="fc" id="L1147">            	        input.consume();</span>
+            	    }
+            	    else {
+<span class="nc" id="L1150">            	        MismatchedSetException mse = new MismatchedSetException(null,input);</span>
+<span class="nc" id="L1151">            	        recover(mse);</span>
+<span class="nc" id="L1152">            	        throw mse;</span>
+            	    }
+
+
+            	    }
+            	    break;
+
+            	default :
+<span class="fc" id="L1160">            	    break loop5;</span>
+                }
+<span class="fc" id="L1162">            } while (true);</span>
+
+
+            // com/facebook/swift/parser/antlr/Thrift.g:224:27: ( '.' ( DIGIT )+ )?
+<span class="fc" id="L1166">            int alt7=2;</span>
+<span class="pc bpc" id="L1167" title="1 of 2 branches missed.">            switch ( input.LA(1) ) {</span>
+                case '.':
+                    {
+<span class="fc" id="L1170">                    alt7=1;</span>
+                    }
+                    break;
+            }
+
+<span class="pc bpc" id="L1175" title="1 of 2 branches missed.">            switch (alt7) {</span>
+                case 1 :
+                    // com/facebook/swift/parser/antlr/Thrift.g:224:28: '.' ( DIGIT )+
+                    {
+<span class="fc" id="L1179">                    match('.'); </span>
+
+                    // com/facebook/swift/parser/antlr/Thrift.g:224:32: ( DIGIT )+
+<span class="fc" id="L1182">                    int cnt6=0;</span>
+                    loop6:
+                    do {
+<span class="fc" id="L1185">                        int alt6=2;</span>
+<span class="fc bfc" id="L1186" title="All 2 branches covered.">                        switch ( input.LA(1) ) {</span>
+                        case '0':
+                        case '1':
+                        case '2':
+                        case '3':
+                        case '4':
+                        case '5':
+                        case '6':
+                        case '7':
+                        case '8':
+                        case '9':
+                            {
+<span class="fc" id="L1198">                            alt6=1;</span>
+                            }
+                            break;
+
+                        }
+
+<span class="fc bfc" id="L1204" title="All 2 branches covered.">                        switch (alt6) {</span>
+                    	case 1 :
+                    	    // com/facebook/swift/parser/antlr/Thrift.g:
+                    	    {
+<span class="pc bpc" id="L1208" title="2 of 4 branches missed.">                    	    if ( (input.LA(1) &gt;= '0' &amp;&amp; input.LA(1) &lt;= '9') ) {</span>
+<span class="fc" id="L1209">                    	        input.consume();</span>
+                    	    }
+                    	    else {
+<span class="nc" id="L1212">                    	        MismatchedSetException mse = new MismatchedSetException(null,input);</span>
+<span class="nc" id="L1213">                    	        recover(mse);</span>
+<span class="nc" id="L1214">                    	        throw mse;</span>
+                    	    }
+
+
+                    	    }
+                    	    break;
+
+                    	default :
+<span class="pc bpc" id="L1222" title="1 of 2 branches missed.">                    	    if ( cnt6 &gt;= 1 ) break loop6;</span>
+<span class="nc" id="L1223">                                EarlyExitException eee =</span>
+                                    new EarlyExitException(6, input);
+<span class="nc" id="L1225">                                throw eee;</span>
+                        }
+<span class="fc" id="L1227">                        cnt6++;</span>
+<span class="fc" id="L1228">                    } while (true);</span>
+
+
+                    }
+                    break;
+
+            }
+
+
+            // com/facebook/swift/parser/antlr/Thrift.g:224:41: ( ( 'E' | 'e' ) INTEGER )?
+<span class="fc" id="L1238">            int alt8=2;</span>
+<span class="pc bpc" id="L1239" title="1 of 2 branches missed.">            switch ( input.LA(1) ) {</span>
+                case 'E':
+                case 'e':
+                    {
+<span class="nc" id="L1243">                    alt8=1;</span>
+                    }
+                    break;
+            }
+
+<span class="pc bpc" id="L1248" title="1 of 2 branches missed.">            switch (alt8) {</span>
+                case 1 :
+                    // com/facebook/swift/parser/antlr/Thrift.g:224:42: ( 'E' | 'e' ) INTEGER
+                    {
+<span class="nc bnc" id="L1252" title="All 4 branches missed.">                    if ( input.LA(1)=='E'||input.LA(1)=='e' ) {</span>
+<span class="nc" id="L1253">                        input.consume();</span>
+                    }
+                    else {
+<span class="nc" id="L1256">                        MismatchedSetException mse = new MismatchedSetException(null,input);</span>
+<span class="nc" id="L1257">                        recover(mse);</span>
+<span class="nc" id="L1258">                        throw mse;</span>
+                    }
+
+
+<span class="nc" id="L1262">                    mINTEGER(); </span>
+
+
+                    }
+                    break;
+
+            }
+
+
+            }
+
+<span class="fc" id="L1273">            state.type = _type;</span>
+<span class="fc" id="L1274">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L1276">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L1278">        }</span>
+<span class="fc" id="L1279">    }</span>
+    // $ANTLR end &quot;DOUBLE&quot;
+
+    // $ANTLR start &quot;TYPE_BOOL&quot;
+    public final void mTYPE_BOOL() throws RecognitionException {
+        try {
+<span class="fc" id="L1285">            int _type = TYPE_BOOL;</span>
+<span class="fc" id="L1286">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:244:10: ( 'bool' )
+            // com/facebook/swift/parser/antlr/Thrift.g:244:12: 'bool'
+            {
+<span class="fc" id="L1290">            match(&quot;bool&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L1296">            state.type = _type;</span>
+<span class="fc" id="L1297">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L1299">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L1301">        }</span>
+<span class="fc" id="L1302">    }</span>
+    // $ANTLR end &quot;TYPE_BOOL&quot;
+
+    // $ANTLR start &quot;TYPE_BYTE&quot;
+    public final void mTYPE_BYTE() throws RecognitionException {
+        try {
+<span class="fc" id="L1308">            int _type = TYPE_BYTE;</span>
+<span class="fc" id="L1309">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:245:10: ( 'byte' )
+            // com/facebook/swift/parser/antlr/Thrift.g:245:12: 'byte'
+            {
+<span class="fc" id="L1313">            match(&quot;byte&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L1319">            state.type = _type;</span>
+<span class="fc" id="L1320">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L1322">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L1324">        }</span>
+<span class="fc" id="L1325">    }</span>
+    // $ANTLR end &quot;TYPE_BYTE&quot;
+
+    // $ANTLR start &quot;TYPE_I16&quot;
+    public final void mTYPE_I16() throws RecognitionException {
+        try {
+<span class="fc" id="L1331">            int _type = TYPE_I16;</span>
+<span class="fc" id="L1332">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:246:9: ( 'i16' )
+            // com/facebook/swift/parser/antlr/Thrift.g:246:11: 'i16'
+            {
+<span class="fc" id="L1336">            match(&quot;i16&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L1342">            state.type = _type;</span>
+<span class="fc" id="L1343">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L1345">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L1347">        }</span>
+<span class="fc" id="L1348">    }</span>
+    // $ANTLR end &quot;TYPE_I16&quot;
+
+    // $ANTLR start &quot;TYPE_I32&quot;
+    public final void mTYPE_I32() throws RecognitionException {
+        try {
+<span class="fc" id="L1354">            int _type = TYPE_I32;</span>
+<span class="fc" id="L1355">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:247:9: ( 'i32' )
+            // com/facebook/swift/parser/antlr/Thrift.g:247:11: 'i32'
+            {
+<span class="fc" id="L1359">            match(&quot;i32&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L1365">            state.type = _type;</span>
+<span class="fc" id="L1366">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L1368">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L1370">        }</span>
+<span class="fc" id="L1371">    }</span>
+    // $ANTLR end &quot;TYPE_I32&quot;
+
+    // $ANTLR start &quot;TYPE_I64&quot;
+    public final void mTYPE_I64() throws RecognitionException {
+        try {
+<span class="fc" id="L1377">            int _type = TYPE_I64;</span>
+<span class="fc" id="L1378">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:248:9: ( 'i64' )
+            // com/facebook/swift/parser/antlr/Thrift.g:248:11: 'i64'
+            {
+<span class="fc" id="L1382">            match(&quot;i64&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L1388">            state.type = _type;</span>
+<span class="fc" id="L1389">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L1391">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L1393">        }</span>
+<span class="fc" id="L1394">    }</span>
+    // $ANTLR end &quot;TYPE_I64&quot;
+
+    // $ANTLR start &quot;TYPE_DOUBLE&quot;
+    public final void mTYPE_DOUBLE() throws RecognitionException {
+        try {
+<span class="fc" id="L1400">            int _type = TYPE_DOUBLE;</span>
+<span class="fc" id="L1401">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:249:12: ( 'double' )
+            // com/facebook/swift/parser/antlr/Thrift.g:249:14: 'double'
+            {
+<span class="fc" id="L1405">            match(&quot;double&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L1411">            state.type = _type;</span>
+<span class="fc" id="L1412">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L1414">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L1416">        }</span>
+<span class="fc" id="L1417">    }</span>
+    // $ANTLR end &quot;TYPE_DOUBLE&quot;
+
+    // $ANTLR start &quot;TYPE_STRING&quot;
+    public final void mTYPE_STRING() throws RecognitionException {
+        try {
+<span class="fc" id="L1423">            int _type = TYPE_STRING;</span>
+<span class="fc" id="L1424">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:250:12: ( 'string' )
+            // com/facebook/swift/parser/antlr/Thrift.g:250:14: 'string'
+            {
+<span class="fc" id="L1428">            match(&quot;string&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L1434">            state.type = _type;</span>
+<span class="fc" id="L1435">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L1437">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L1439">        }</span>
+<span class="fc" id="L1440">    }</span>
+    // $ANTLR end &quot;TYPE_STRING&quot;
+
+    // $ANTLR start &quot;TYPE_BINARY&quot;
+    public final void mTYPE_BINARY() throws RecognitionException {
+        try {
+<span class="fc" id="L1446">            int _type = TYPE_BINARY;</span>
+<span class="fc" id="L1447">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:251:12: ( 'binary' )
+            // com/facebook/swift/parser/antlr/Thrift.g:251:14: 'binary'
+            {
+<span class="fc" id="L1451">            match(&quot;binary&quot;); </span>
+
+
+
+            }
+
+<span class="fc" id="L1457">            state.type = _type;</span>
+<span class="fc" id="L1458">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L1460">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L1462">        }</span>
+<span class="fc" id="L1463">    }</span>
+    // $ANTLR end &quot;TYPE_BINARY&quot;
+
+    // $ANTLR start &quot;LITERAL&quot;
+    public final void mLITERAL() throws RecognitionException {
+        try {
+<span class="fc" id="L1469">            int _type = LITERAL;</span>
+<span class="fc" id="L1470">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:254:5: ( ( ( '\&quot;' (~ '\&quot;' )* '\&quot;' ) | ( '\\'' (~ '\\'' )* '\\'' ) ) )
+            // com/facebook/swift/parser/antlr/Thrift.g:254:7: ( ( '\&quot;' (~ '\&quot;' )* '\&quot;' ) | ( '\\'' (~ '\\'' )* '\\'' ) )
+            {
+            // com/facebook/swift/parser/antlr/Thrift.g:254:7: ( ( '\&quot;' (~ '\&quot;' )* '\&quot;' ) | ( '\\'' (~ '\\'' )* '\\'' ) )
+<span class="fc" id="L1475">            int alt11=2;</span>
+<span class="pc bpc" id="L1476" title="1 of 3 branches missed.">            switch ( input.LA(1) ) {</span>
+            case '\&quot;':
+                {
+<span class="fc" id="L1479">                alt11=1;</span>
+                }
+<span class="fc" id="L1481">                break;</span>
+            case '\'':
+                {
+<span class="fc" id="L1484">                alt11=2;</span>
+                }
+<span class="fc" id="L1486">                break;</span>
+            default:
+<span class="nc" id="L1488">                NoViableAltException nvae =</span>
+                    new NoViableAltException(&quot;&quot;, 11, 0, input);
+
+<span class="nc" id="L1491">                throw nvae;</span>
+
+            }
+
+<span class="pc bpc" id="L1495" title="1 of 3 branches missed.">            switch (alt11) {</span>
+                case 1 :
+                    // com/facebook/swift/parser/antlr/Thrift.g:254:8: ( '\&quot;' (~ '\&quot;' )* '\&quot;' )
+                    {
+                    // com/facebook/swift/parser/antlr/Thrift.g:254:8: ( '\&quot;' (~ '\&quot;' )* '\&quot;' )
+                    // com/facebook/swift/parser/antlr/Thrift.g:254:9: '\&quot;' (~ '\&quot;' )* '\&quot;'
+                    {
+<span class="fc" id="L1502">                    match('\&quot;'); </span>
+
+                    // com/facebook/swift/parser/antlr/Thrift.g:254:13: (~ '\&quot;' )*
+                    loop9:
+                    do {
+<span class="fc" id="L1507">                        int alt9=2;</span>
+<span class="fc" id="L1508">                        int LA9_0 = input.LA(1);</span>
+
+<span class="pc bpc" id="L1510" title="2 of 8 branches missed.">                        if ( ((LA9_0 &gt;= '\u0000' &amp;&amp; LA9_0 &lt;= '!')||(LA9_0 &gt;= '#' &amp;&amp; LA9_0 &lt;= '\uFFFF')) ) {</span>
+<span class="fc" id="L1511">                            alt9=1;</span>
+                        }
+
+
+<span class="fc bfc" id="L1515" title="All 2 branches covered.">                        switch (alt9) {</span>
+                    	case 1 :
+                    	    // com/facebook/swift/parser/antlr/Thrift.g:
+                    	    {
+<span class="pc bpc" id="L1519" title="3 of 8 branches missed.">                    	    if ( (input.LA(1) &gt;= '\u0000' &amp;&amp; input.LA(1) &lt;= '!')||(input.LA(1) &gt;= '#' &amp;&amp; input.LA(1) &lt;= '\uFFFF') ) {</span>
+<span class="fc" id="L1520">                    	        input.consume();</span>
+                    	    }
+                    	    else {
+<span class="nc" id="L1523">                    	        MismatchedSetException mse = new MismatchedSetException(null,input);</span>
+<span class="nc" id="L1524">                    	        recover(mse);</span>
+<span class="nc" id="L1525">                    	        throw mse;</span>
+                    	    }
+
+
+                    	    }
+                    	    break;
+
+                    	default :
+<span class="fc" id="L1533">                    	    break loop9;</span>
+                        }
+<span class="fc" id="L1535">                    } while (true);</span>
+
+
+<span class="fc" id="L1538">                    match('\&quot;'); </span>
+
+                    }
+
+
+                    }
+<span class="fc" id="L1544">                    break;</span>
+                case 2 :
+                    // com/facebook/swift/parser/antlr/Thrift.g:254:26: ( '\\'' (~ '\\'' )* '\\'' )
+                    {
+                    // com/facebook/swift/parser/antlr/Thrift.g:254:26: ( '\\'' (~ '\\'' )* '\\'' )
+                    // com/facebook/swift/parser/antlr/Thrift.g:254:27: '\\'' (~ '\\'' )* '\\''
+                    {
+<span class="fc" id="L1551">                    match('\''); </span>
+
+                    // com/facebook/swift/parser/antlr/Thrift.g:254:32: (~ '\\'' )*
+                    loop10:
+                    do {
+<span class="fc" id="L1556">                        int alt10=2;</span>
+<span class="fc" id="L1557">                        int LA10_0 = input.LA(1);</span>
+
+<span class="pc bpc" id="L1559" title="3 of 8 branches missed.">                        if ( ((LA10_0 &gt;= '\u0000' &amp;&amp; LA10_0 &lt;= '&amp;')||(LA10_0 &gt;= '(' &amp;&amp; LA10_0 &lt;= '\uFFFF')) ) {</span>
+<span class="fc" id="L1560">                            alt10=1;</span>
+                        }
+
+
+<span class="fc bfc" id="L1564" title="All 2 branches covered.">                        switch (alt10) {</span>
+                    	case 1 :
+                    	    // com/facebook/swift/parser/antlr/Thrift.g:
+                    	    {
+<span class="pc bpc" id="L1568" title="4 of 8 branches missed.">                    	    if ( (input.LA(1) &gt;= '\u0000' &amp;&amp; input.LA(1) &lt;= '&amp;')||(input.LA(1) &gt;= '(' &amp;&amp; input.LA(1) &lt;= '\uFFFF') ) {</span>
+<span class="fc" id="L1569">                    	        input.consume();</span>
+                    	    }
+                    	    else {
+<span class="nc" id="L1572">                    	        MismatchedSetException mse = new MismatchedSetException(null,input);</span>
+<span class="nc" id="L1573">                    	        recover(mse);</span>
+<span class="nc" id="L1574">                    	        throw mse;</span>
+                    	    }
+
+
+                    	    }
+                    	    break;
+
+                    	default :
+<span class="fc" id="L1582">                    	    break loop10;</span>
+                        }
+<span class="fc" id="L1584">                    } while (true);</span>
+
+
+<span class="fc" id="L1587">                    match('\''); </span>
+
+                    }
+
+
+                    }
+                    break;
+
+            }
+
+
+<span class="fc" id="L1598">             setText(getText().substring(1, getText().length() - 1)); </span>
+
+            }
+
+<span class="fc" id="L1602">            state.type = _type;</span>
+<span class="fc" id="L1603">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L1605">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L1607">        }</span>
+<span class="fc" id="L1608">    }</span>
+    // $ANTLR end &quot;LITERAL&quot;
+
+    // $ANTLR start &quot;IDENTIFIER&quot;
+    public final void mIDENTIFIER() throws RecognitionException {
+        try {
+<span class="fc" id="L1614">            int _type = IDENTIFIER;</span>
+<span class="fc" id="L1615">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:259:5: ( ( LETTER | '_' ) ( LETTER | DIGIT | '.' | '_' )* )
+            // com/facebook/swift/parser/antlr/Thrift.g:259:7: ( LETTER | '_' ) ( LETTER | DIGIT | '.' | '_' )*
+            {
+<span class="pc bpc" id="L1619" title="4 of 10 branches missed.">            if ( (input.LA(1) &gt;= 'A' &amp;&amp; input.LA(1) &lt;= 'Z')||input.LA(1)=='_'||(input.LA(1) &gt;= 'a' &amp;&amp; input.LA(1) &lt;= 'z') ) {</span>
+<span class="fc" id="L1620">                input.consume();</span>
+            }
+            else {
+<span class="nc" id="L1623">                MismatchedSetException mse = new MismatchedSetException(null,input);</span>
+<span class="nc" id="L1624">                recover(mse);</span>
+<span class="nc" id="L1625">                throw mse;</span>
+            }
+
+
+            // com/facebook/swift/parser/antlr/Thrift.g:259:22: ( LETTER | DIGIT | '.' | '_' )*
+            loop12:
+            do {
+<span class="fc" id="L1632">                int alt12=2;</span>
+<span class="fc bfc" id="L1633" title="All 2 branches covered.">                switch ( input.LA(1) ) {</span>
+                case '.':
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                case 'A':
+                case 'B':
+                case 'C':
+                case 'D':
+                case 'E':
+                case 'F':
+                case 'G':
+                case 'H':
+                case 'I':
+                case 'J':
+                case 'K':
+                case 'L':
+                case 'M':
+                case 'N':
+                case 'O':
+                case 'P':
+                case 'Q':
+                case 'R':
+                case 'S':
+                case 'T':
+                case 'U':
+                case 'V':
+                case 'W':
+                case 'X':
+                case 'Y':
+                case 'Z':
+                case '_':
+                case 'a':
+                case 'b':
+                case 'c':
+                case 'd':
+                case 'e':
+                case 'f':
+                case 'g':
+                case 'h':
+                case 'i':
+                case 'j':
+                case 'k':
+                case 'l':
+                case 'm':
+                case 'n':
+                case 'o':
+                case 'p':
+                case 'q':
+                case 'r':
+                case 's':
+                case 't':
+                case 'u':
+                case 'v':
+                case 'w':
+                case 'x':
+                case 'y':
+                case 'z':
+                    {
+<span class="fc" id="L1699">                    alt12=1;</span>
+                    }
+                    break;
+
+                }
+
+<span class="fc bfc" id="L1705" title="All 2 branches covered.">                switch (alt12) {</span>
+            	case 1 :
+            	    // com/facebook/swift/parser/antlr/Thrift.g:
+            	    {
+<span class="pc bpc" id="L1709" title="4 of 16 branches missed.">            	    if ( input.LA(1)=='.'||(input.LA(1) &gt;= '0' &amp;&amp; input.LA(1) &lt;= '9')||(input.LA(1) &gt;= 'A' &amp;&amp; input.LA(1) &lt;= 'Z')||input.LA(1)=='_'||(input.LA(1) &gt;= 'a' &amp;&amp; input.LA(1) &lt;= 'z') ) {</span>
+<span class="fc" id="L1710">            	        input.consume();</span>
+            	    }
+            	    else {
+<span class="nc" id="L1713">            	        MismatchedSetException mse = new MismatchedSetException(null,input);</span>
+<span class="nc" id="L1714">            	        recover(mse);</span>
+<span class="nc" id="L1715">            	        throw mse;</span>
+            	    }
+
+
+            	    }
+            	    break;
+
+            	default :
+<span class="fc" id="L1723">            	    break loop12;</span>
+                }
+<span class="fc" id="L1725">            } while (true);</span>
+
+
+            }
+
+<span class="fc" id="L1730">            state.type = _type;</span>
+<span class="fc" id="L1731">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L1733">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L1735">        }</span>
+<span class="fc" id="L1736">    }</span>
+    // $ANTLR end &quot;IDENTIFIER&quot;
+
+    // $ANTLR start &quot;COMMA&quot;
+    public final void mCOMMA() throws RecognitionException {
+        try {
+<span class="fc" id="L1742">            int _type = COMMA;</span>
+<span class="fc" id="L1743">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:263:5: ( ',' )
+            // com/facebook/swift/parser/antlr/Thrift.g:263:7: ','
+            {
+<span class="fc" id="L1747">            match(','); </span>
+
+            }
+
+<span class="fc" id="L1751">            state.type = _type;</span>
+<span class="fc" id="L1752">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L1754">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L1756">        }</span>
+<span class="fc" id="L1757">    }</span>
+    // $ANTLR end &quot;COMMA&quot;
+
+    // $ANTLR start &quot;LETTER&quot;
+    public final void mLETTER() throws RecognitionException {
+        try {
+            // com/facebook/swift/parser/antlr/Thrift.g:267:5: ( 'A' .. 'Z' | 'a' .. 'z' )
+            // com/facebook/swift/parser/antlr/Thrift.g:
+            {
+<span class="nc bnc" id="L1766" title="All 8 branches missed.">            if ( (input.LA(1) &gt;= 'A' &amp;&amp; input.LA(1) &lt;= 'Z')||(input.LA(1) &gt;= 'a' &amp;&amp; input.LA(1) &lt;= 'z') ) {</span>
+<span class="nc" id="L1767">                input.consume();</span>
+            }
+            else {
+<span class="nc" id="L1770">                MismatchedSetException mse = new MismatchedSetException(null,input);</span>
+<span class="nc" id="L1771">                recover(mse);</span>
+<span class="nc" id="L1772">                throw mse;</span>
+            }
+
+
+            }
+
+
+        }
+<span class="nc" id="L1780">        finally {</span>
+        	// do for sure before leaving
+<span class="nc" id="L1782">        }</span>
+<span class="nc" id="L1783">    }</span>
+    // $ANTLR end &quot;LETTER&quot;
+
+    // $ANTLR start &quot;DIGIT&quot;
+    public final void mDIGIT() throws RecognitionException {
+        try {
+            // com/facebook/swift/parser/antlr/Thrift.g:271:5: ( '0' .. '9' )
+            // com/facebook/swift/parser/antlr/Thrift.g:
+            {
+<span class="nc bnc" id="L1792" title="All 4 branches missed.">            if ( (input.LA(1) &gt;= '0' &amp;&amp; input.LA(1) &lt;= '9') ) {</span>
+<span class="nc" id="L1793">                input.consume();</span>
+            }
+            else {
+<span class="nc" id="L1796">                MismatchedSetException mse = new MismatchedSetException(null,input);</span>
+<span class="nc" id="L1797">                recover(mse);</span>
+<span class="nc" id="L1798">                throw mse;</span>
+            }
+
+
+            }
+
+
+        }
+<span class="nc" id="L1806">        finally {</span>
+        	// do for sure before leaving
+<span class="nc" id="L1808">        }</span>
+<span class="nc" id="L1809">    }</span>
+    // $ANTLR end &quot;DIGIT&quot;
+
+    // $ANTLR start &quot;HEX_DIGIT&quot;
+    public final void mHEX_DIGIT() throws RecognitionException {
+        try {
+            // com/facebook/swift/parser/antlr/Thrift.g:275:5: ( DIGIT | 'A' .. 'F' | 'a' .. 'f' )
+            // com/facebook/swift/parser/antlr/Thrift.g:
+            {
+<span class="nc bnc" id="L1818" title="All 12 branches missed.">            if ( (input.LA(1) &gt;= '0' &amp;&amp; input.LA(1) &lt;= '9')||(input.LA(1) &gt;= 'A' &amp;&amp; input.LA(1) &lt;= 'F')||(input.LA(1) &gt;= 'a' &amp;&amp; input.LA(1) &lt;= 'f') ) {</span>
+<span class="nc" id="L1819">                input.consume();</span>
+            }
+            else {
+<span class="nc" id="L1822">                MismatchedSetException mse = new MismatchedSetException(null,input);</span>
+<span class="nc" id="L1823">                recover(mse);</span>
+<span class="nc" id="L1824">                throw mse;</span>
+            }
+
+
+            }
+
+
+        }
+<span class="nc" id="L1832">        finally {</span>
+        	// do for sure before leaving
+<span class="nc" id="L1834">        }</span>
+<span class="nc" id="L1835">    }</span>
+    // $ANTLR end &quot;HEX_DIGIT&quot;
+
+    // $ANTLR start &quot;WS&quot;
+    public final void mWS() throws RecognitionException {
+        try {
+<span class="fc" id="L1841">            int _type = WS;</span>
+<span class="fc" id="L1842">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:279:5: ( ( ' ' | '\\t' | '\\r' '\\n' | '\\n' )+ )
+            // com/facebook/swift/parser/antlr/Thrift.g:279:7: ( ' ' | '\\t' | '\\r' '\\n' | '\\n' )+
+            {
+            // com/facebook/swift/parser/antlr/Thrift.g:279:7: ( ' ' | '\\t' | '\\r' '\\n' | '\\n' )+
+<span class="fc" id="L1847">            int cnt13=0;</span>
+            loop13:
+            do {
+<span class="fc" id="L1850">                int alt13=5;</span>
+<span class="pc bpc" id="L1851" title="1 of 5 branches missed.">                switch ( input.LA(1) ) {</span>
+                case ' ':
+                    {
+<span class="fc" id="L1854">                    alt13=1;</span>
+                    }
+<span class="fc" id="L1856">                    break;</span>
+                case '\t':
+                    {
+<span class="fc" id="L1859">                    alt13=2;</span>
+                    }
+<span class="fc" id="L1861">                    break;</span>
+                case '\r':
+                    {
+<span class="nc" id="L1864">                    alt13=3;</span>
+                    }
+<span class="nc" id="L1866">                    break;</span>
+                case '\n':
+                    {
+<span class="fc" id="L1869">                    alt13=4;</span>
+                    }
+                    break;
+
+                }
+
+<span class="pc bpc" id="L1875" title="1 of 5 branches missed.">                switch (alt13) {</span>
+            	case 1 :
+            	    // com/facebook/swift/parser/antlr/Thrift.g:279:8: ' '
+            	    {
+<span class="fc" id="L1879">            	    match(' '); </span>
+
+            	    }
+<span class="fc" id="L1882">            	    break;</span>
+            	case 2 :
+            	    // com/facebook/swift/parser/antlr/Thrift.g:279:14: '\\t'
+            	    {
+<span class="fc" id="L1886">            	    match('\t'); </span>
+
+            	    }
+<span class="fc" id="L1889">            	    break;</span>
+            	case 3 :
+            	    // com/facebook/swift/parser/antlr/Thrift.g:279:21: '\\r' '\\n'
+            	    {
+<span class="nc" id="L1893">            	    match('\r'); </span>
+
+<span class="nc" id="L1895">            	    match('\n'); </span>
+
+            	    }
+<span class="nc" id="L1898">            	    break;</span>
+            	case 4 :
+            	    // com/facebook/swift/parser/antlr/Thrift.g:279:33: '\\n'
+            	    {
+<span class="fc" id="L1902">            	    match('\n'); </span>
+
+            	    }
+<span class="fc" id="L1905">            	    break;</span>
+
+            	default :
+<span class="pc bpc" id="L1908" title="1 of 2 branches missed.">            	    if ( cnt13 &gt;= 1 ) break loop13;</span>
+<span class="nc" id="L1909">                        EarlyExitException eee =</span>
+                            new EarlyExitException(13, input);
+<span class="nc" id="L1911">                        throw eee;</span>
+                }
+<span class="fc" id="L1913">                cnt13++;</span>
+<span class="fc" id="L1914">            } while (true);</span>
+
+
+<span class="fc" id="L1917">             _channel = HIDDEN; </span>
+
+            }
+
+<span class="fc" id="L1921">            state.type = _type;</span>
+<span class="fc" id="L1922">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L1924">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L1926">        }</span>
+<span class="fc" id="L1927">    }</span>
+    // $ANTLR end &quot;WS&quot;
+
+    // $ANTLR start &quot;COMMENT&quot;
+    public final void mCOMMENT() throws RecognitionException {
+        try {
+<span class="fc" id="L1933">            int _type = COMMENT;</span>
+<span class="fc" id="L1934">            int _channel = DEFAULT_TOKEN_CHANNEL;</span>
+            // com/facebook/swift/parser/antlr/Thrift.g:283:5: ( '/*' ( options {greedy=false; } : . )* '*/' | ( '//' | '#' ) (~ '\\n' )* )
+<span class="fc" id="L1936">            int alt17=2;</span>
+<span class="pc bpc" id="L1937" title="1 of 3 branches missed.">            switch ( input.LA(1) ) {</span>
+            case '/':
+                {
+<span class="pc bpc" id="L1940" title="1 of 3 branches missed.">                switch ( input.LA(2) ) {</span>
+                case '*':
+                    {
+<span class="fc" id="L1943">                    alt17=1;</span>
+                    }
+<span class="fc" id="L1945">                    break;</span>
+                case '/':
+                    {
+<span class="fc" id="L1948">                    alt17=2;</span>
+                    }
+<span class="fc" id="L1950">                    break;</span>
+                default:
+<span class="nc" id="L1952">                    NoViableAltException nvae =</span>
+                        new NoViableAltException(&quot;&quot;, 17, 1, input);
+
+<span class="nc" id="L1955">                    throw nvae;</span>
+
+                }
+
+                }
+<span class="fc" id="L1960">                break;</span>
+            case '#':
+                {
+<span class="fc" id="L1963">                alt17=2;</span>
+                }
+<span class="fc" id="L1965">                break;</span>
+            default:
+<span class="nc" id="L1967">                NoViableAltException nvae =</span>
+                    new NoViableAltException(&quot;&quot;, 17, 0, input);
+
+<span class="nc" id="L1970">                throw nvae;</span>
+
+            }
+
+<span class="pc bpc" id="L1974" title="1 of 3 branches missed.">            switch (alt17) {</span>
+                case 1 :
+                    // com/facebook/swift/parser/antlr/Thrift.g:283:7: '/*' ( options {greedy=false; } : . )* '*/'
+                    {
+<span class="fc" id="L1978">                    match(&quot;/*&quot;); </span>
+
+
+
+                    // com/facebook/swift/parser/antlr/Thrift.g:283:12: ( options {greedy=false; } : . )*
+                    loop14:
+                    do {
+<span class="fc" id="L1985">                        int alt14=2;</span>
+<span class="fc" id="L1986">                        int LA14_0 = input.LA(1);</span>
+
+<span class="fc bfc" id="L1988" title="All 2 branches covered.">                        if ( (LA14_0=='*') ) {</span>
+<span class="fc" id="L1989">                            int LA14_1 = input.LA(2);</span>
+
+<span class="fc bfc" id="L1991" title="All 2 branches covered.">                            if ( (LA14_1=='/') ) {</span>
+<span class="fc" id="L1992">                                alt14=2;</span>
+                            }
+<span class="pc bpc" id="L1994" title="3 of 8 branches missed.">                            else if ( ((LA14_1 &gt;= '\u0000' &amp;&amp; LA14_1 &lt;= '.')||(LA14_1 &gt;= '0' &amp;&amp; LA14_1 &lt;= '\uFFFF')) ) {</span>
+<span class="fc" id="L1995">                                alt14=1;</span>
+                            }
+
+
+<span class="fc" id="L1999">                        }</span>
+<span class="pc bpc" id="L2000" title="3 of 8 branches missed.">                        else if ( ((LA14_0 &gt;= '\u0000' &amp;&amp; LA14_0 &lt;= ')')||(LA14_0 &gt;= '+' &amp;&amp; LA14_0 &lt;= '\uFFFF')) ) {</span>
+<span class="fc" id="L2001">                            alt14=1;</span>
+                        }
+
+
+<span class="fc bfc" id="L2005" title="All 2 branches covered.">                        switch (alt14) {</span>
+                    	case 1 :
+                    	    // com/facebook/swift/parser/antlr/Thrift.g:283:39: .
+                    	    {
+<span class="fc" id="L2009">                    	    matchAny(); </span>
+
+                    	    }
+<span class="fc" id="L2012">                    	    break;</span>
+
+                    	default :
+<span class="fc" id="L2015">                    	    break loop14;</span>
+                        }
+<span class="fc" id="L2017">                    } while (true);</span>
+
+
+<span class="fc" id="L2020">                    match(&quot;*/&quot;); </span>
+
+
+
+<span class="fc" id="L2024">                     _channel = HIDDEN; </span>
+
+                    }
+<span class="fc" id="L2027">                    break;</span>
+                case 2 :
+                    // com/facebook/swift/parser/antlr/Thrift.g:284:7: ( '//' | '#' ) (~ '\\n' )*
+                    {
+                    // com/facebook/swift/parser/antlr/Thrift.g:284:7: ( '//' | '#' )
+<span class="fc" id="L2032">                    int alt15=2;</span>
+<span class="pc bpc" id="L2033" title="1 of 3 branches missed.">                    switch ( input.LA(1) ) {</span>
+                    case '/':
+                        {
+<span class="fc" id="L2036">                        alt15=1;</span>
+                        }
+<span class="fc" id="L2038">                        break;</span>
+                    case '#':
+                        {
+<span class="fc" id="L2041">                        alt15=2;</span>
+                        }
+<span class="fc" id="L2043">                        break;</span>
+                    default:
+<span class="nc" id="L2045">                        NoViableAltException nvae =</span>
+                            new NoViableAltException(&quot;&quot;, 15, 0, input);
+
+<span class="nc" id="L2048">                        throw nvae;</span>
+
+                    }
+
+<span class="pc bpc" id="L2052" title="1 of 3 branches missed.">                    switch (alt15) {</span>
+                        case 1 :
+                            // com/facebook/swift/parser/antlr/Thrift.g:284:8: '//'
+                            {
+<span class="fc" id="L2056">                            match(&quot;//&quot;); </span>
+
+
+
+                            }
+<span class="fc" id="L2061">                            break;</span>
+                        case 2 :
+                            // com/facebook/swift/parser/antlr/Thrift.g:284:15: '#'
+                            {
+<span class="fc" id="L2065">                            match('#'); </span>
+
+                            }
+                            break;
+
+                    }
+
+
+                    // com/facebook/swift/parser/antlr/Thrift.g:284:20: (~ '\\n' )*
+                    loop16:
+                    do {
+<span class="fc" id="L2076">                        int alt16=2;</span>
+<span class="fc" id="L2077">                        int LA16_0 = input.LA(1);</span>
+
+<span class="pc bpc" id="L2079" title="3 of 8 branches missed.">                        if ( ((LA16_0 &gt;= '\u0000' &amp;&amp; LA16_0 &lt;= '\t')||(LA16_0 &gt;= '\u000B' &amp;&amp; LA16_0 &lt;= '\uFFFF')) ) {</span>
+<span class="fc" id="L2080">                            alt16=1;</span>
+                        }
+
+
+<span class="fc bfc" id="L2084" title="All 2 branches covered.">                        switch (alt16) {</span>
+                    	case 1 :
+                    	    // com/facebook/swift/parser/antlr/Thrift.g:
+                    	    {
+<span class="pc bpc" id="L2088" title="4 of 8 branches missed.">                    	    if ( (input.LA(1) &gt;= '\u0000' &amp;&amp; input.LA(1) &lt;= '\t')||(input.LA(1) &gt;= '\u000B' &amp;&amp; input.LA(1) &lt;= '\uFFFF') ) {</span>
+<span class="fc" id="L2089">                    	        input.consume();</span>
+                    	    }
+                    	    else {
+<span class="nc" id="L2092">                    	        MismatchedSetException mse = new MismatchedSetException(null,input);</span>
+<span class="nc" id="L2093">                    	        recover(mse);</span>
+<span class="nc" id="L2094">                    	        throw mse;</span>
+                    	    }
+
+
+                    	    }
+                    	    break;
+
+                    	default :
+<span class="fc" id="L2102">                    	    break loop16;</span>
+                        }
+<span class="fc" id="L2104">                    } while (true);</span>
+
+
+<span class="fc" id="L2107">                     _channel = HIDDEN; </span>
+
+                    }
+                    break;
+
+            }
+<span class="fc" id="L2113">            state.type = _type;</span>
+<span class="fc" id="L2114">            state.channel = _channel;</span>
+        }
+<span class="nc" id="L2116">        finally {</span>
+        	// do for sure before leaving
+<span class="fc" id="L2118">        }</span>
+<span class="fc" id="L2119">    }</span>
+    // $ANTLR end &quot;COMMENT&quot;
+
+    public void mTokens() throws RecognitionException {
+        // com/facebook/swift/parser/antlr/Thrift.g:1:8: ( T__52 | T__53 | T__54 | T__55 | T__56 | T__57 | T__58 | T__59 | T__60 | T__61 | T__62 | T__63 | T__64 | T__65 | T__66 | T__67 | T__68 | T__69 | T__70 | T__71 | T__72 | T__73 | T__74 | T__75 | T__76 | T__77 | T__78 | T__79 | T__80 | T__81 | T__82 | T__83 | T__84 | T__85 | T__86 | INTEGER | HEX_INTEGER | DOUBLE | TYPE_BOOL | TYPE_BYTE | TYPE_I16 | TYPE_I32 | TYPE_I64 | TYPE_DOUBLE | TYPE_STRING | TYPE_BINARY | LITERAL | IDENTIFIER | COMMA | WS | COMMENT )
+<span class="fc" id="L2124">        int alt18=51;</span>
+<span class="fc" id="L2125">        alt18 = dfa18.predict(input);</span>
+<span class="pc bpc" id="L2126" title="6 of 52 branches missed.">        switch (alt18) {</span>
+            case 1 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:10: T__52
+                {
+<span class="fc" id="L2130">                mT__52(); </span>
+
+
+                }
+<span class="fc" id="L2134">                break;</span>
+            case 2 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:16: T__53
+                {
+<span class="fc" id="L2138">                mT__53(); </span>
+
+
+                }
+<span class="fc" id="L2142">                break;</span>
+            case 3 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:22: T__54
+                {
+<span class="fc" id="L2146">                mT__54(); </span>
+
+
+                }
+<span class="fc" id="L2150">                break;</span>
+            case 4 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:28: T__55
+                {
+<span class="fc" id="L2154">                mT__55(); </span>
+
+
+                }
+<span class="fc" id="L2158">                break;</span>
+            case 5 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:34: T__56
+                {
+<span class="fc" id="L2162">                mT__56(); </span>
+
+
+                }
+<span class="fc" id="L2166">                break;</span>
+            case 6 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:40: T__57
+                {
+<span class="fc" id="L2170">                mT__57(); </span>
+
+
+                }
+<span class="fc" id="L2174">                break;</span>
+            case 7 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:46: T__58
+                {
+<span class="fc" id="L2178">                mT__58(); </span>
+
+
+                }
+<span class="fc" id="L2182">                break;</span>
+            case 8 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:52: T__59
+                {
+<span class="fc" id="L2186">                mT__59(); </span>
+
+
+                }
+<span class="fc" id="L2190">                break;</span>
+            case 9 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:58: T__60
+                {
+<span class="fc" id="L2194">                mT__60(); </span>
+
+
+                }
+<span class="fc" id="L2198">                break;</span>
+            case 10 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:64: T__61
+                {
+<span class="nc" id="L2202">                mT__61(); </span>
+
+
+                }
+<span class="nc" id="L2206">                break;</span>
+            case 11 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:70: T__62
+                {
+<span class="fc" id="L2210">                mT__62(); </span>
+
+
+                }
+<span class="fc" id="L2214">                break;</span>
+            case 12 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:76: T__63
+                {
+<span class="nc" id="L2218">                mT__63(); </span>
+
+
+                }
+<span class="nc" id="L2222">                break;</span>
+            case 13 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:82: T__64
+                {
+<span class="nc" id="L2226">                mT__64(); </span>
+
+
+                }
+<span class="nc" id="L2230">                break;</span>
+            case 14 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:88: T__65
+                {
+<span class="nc" id="L2234">                mT__65(); </span>
+
+
+                }
+<span class="nc" id="L2238">                break;</span>
+            case 15 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:94: T__66
+                {
+<span class="fc" id="L2242">                mT__66(); </span>
+
+
+                }
+<span class="fc" id="L2246">                break;</span>
+            case 16 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:100: T__67
+                {
+<span class="fc" id="L2250">                mT__67(); </span>
+
+
+                }
+<span class="fc" id="L2254">                break;</span>
+            case 17 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:106: T__68
+                {
+<span class="fc" id="L2258">                mT__68(); </span>
+
+
+                }
+<span class="fc" id="L2262">                break;</span>
+            case 18 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:112: T__69
+                {
+<span class="fc" id="L2266">                mT__69(); </span>
+
+
+                }
+<span class="fc" id="L2270">                break;</span>
+            case 19 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:118: T__70
+                {
+<span class="fc" id="L2274">                mT__70(); </span>
+
+
+                }
+<span class="fc" id="L2278">                break;</span>
+            case 20 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:124: T__71
+                {
+<span class="fc" id="L2282">                mT__71(); </span>
+
+
+                }
+<span class="fc" id="L2286">                break;</span>
+            case 21 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:130: T__72
+                {
+<span class="fc" id="L2290">                mT__72(); </span>
+
+
+                }
+<span class="fc" id="L2294">                break;</span>
+            case 22 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:136: T__73
+                {
+<span class="fc" id="L2298">                mT__73(); </span>
+
+
+                }
+<span class="fc" id="L2302">                break;</span>
+            case 23 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:142: T__74
+                {
+<span class="fc" id="L2306">                mT__74(); </span>
+
+
+                }
+<span class="fc" id="L2310">                break;</span>
+            case 24 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:148: T__75
+                {
+<span class="nc" id="L2314">                mT__75(); </span>
+
+
+                }
+<span class="nc" id="L2318">                break;</span>
+            case 25 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:154: T__76
+                {
+<span class="fc" id="L2322">                mT__76(); </span>
+
+
+                }
+<span class="fc" id="L2326">                break;</span>
+            case 26 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:160: T__77
+                {
+<span class="fc" id="L2330">                mT__77(); </span>
+
+
+                }
+<span class="fc" id="L2334">                break;</span>
+            case 27 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:166: T__78
+                {
+<span class="fc" id="L2338">                mT__78(); </span>
+
+
+                }
+<span class="fc" id="L2342">                break;</span>
+            case 28 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:172: T__79
+                {
+<span class="fc" id="L2346">                mT__79(); </span>
+
+
+                }
+<span class="fc" id="L2350">                break;</span>
+            case 29 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:178: T__80
+                {
+<span class="fc" id="L2354">                mT__80(); </span>
+
+
+                }
+<span class="fc" id="L2358">                break;</span>
+            case 30 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:184: T__81
+                {
+<span class="fc" id="L2362">                mT__81(); </span>
+
+
+                }
+<span class="fc" id="L2366">                break;</span>
+            case 31 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:190: T__82
+                {
+<span class="fc" id="L2370">                mT__82(); </span>
+
+
+                }
+<span class="fc" id="L2374">                break;</span>
+            case 32 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:196: T__83
+                {
+<span class="fc" id="L2378">                mT__83(); </span>
+
+
+                }
+<span class="fc" id="L2382">                break;</span>
+            case 33 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:202: T__84
+                {
+<span class="fc" id="L2386">                mT__84(); </span>
+
+
+                }
+<span class="fc" id="L2390">                break;</span>
+            case 34 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:208: T__85
+                {
+<span class="fc" id="L2394">                mT__85(); </span>
+
+
+                }
+<span class="fc" id="L2398">                break;</span>
+            case 35 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:214: T__86
+                {
+<span class="fc" id="L2402">                mT__86(); </span>
+
+
+                }
+<span class="fc" id="L2406">                break;</span>
+            case 36 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:220: INTEGER
+                {
+<span class="fc" id="L2410">                mINTEGER(); </span>
+
+
+                }
+<span class="fc" id="L2414">                break;</span>
+            case 37 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:228: HEX_INTEGER
+                {
+<span class="fc" id="L2418">                mHEX_INTEGER(); </span>
+
+
+                }
+<span class="fc" id="L2422">                break;</span>
+            case 38 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:240: DOUBLE
+                {
+<span class="fc" id="L2426">                mDOUBLE(); </span>
+
+
+                }
+<span class="fc" id="L2430">                break;</span>
+            case 39 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:247: TYPE_BOOL
+                {
+<span class="fc" id="L2434">                mTYPE_BOOL(); </span>
+
+
+                }
+<span class="fc" id="L2438">                break;</span>
+            case 40 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:257: TYPE_BYTE
+                {
+<span class="fc" id="L2442">                mTYPE_BYTE(); </span>
+
+
+                }
+<span class="fc" id="L2446">                break;</span>
+            case 41 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:267: TYPE_I16
+                {
+<span class="fc" id="L2450">                mTYPE_I16(); </span>
+
+
+                }
+<span class="fc" id="L2454">                break;</span>
+            case 42 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:276: TYPE_I32
+                {
+<span class="fc" id="L2458">                mTYPE_I32(); </span>
+
+
+                }
+<span class="fc" id="L2462">                break;</span>
+            case 43 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:285: TYPE_I64
+                {
+<span class="fc" id="L2466">                mTYPE_I64(); </span>
+
+
+                }
+<span class="fc" id="L2470">                break;</span>
+            case 44 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:294: TYPE_DOUBLE
+                {
+<span class="fc" id="L2474">                mTYPE_DOUBLE(); </span>
+
+
+                }
+<span class="fc" id="L2478">                break;</span>
+            case 45 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:306: TYPE_STRING
+                {
+<span class="fc" id="L2482">                mTYPE_STRING(); </span>
+
+
+                }
+<span class="fc" id="L2486">                break;</span>
+            case 46 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:318: TYPE_BINARY
+                {
+<span class="fc" id="L2490">                mTYPE_BINARY(); </span>
+
+
+                }
+<span class="fc" id="L2494">                break;</span>
+            case 47 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:330: LITERAL
+                {
+<span class="fc" id="L2498">                mLITERAL(); </span>
+
+
+                }
+<span class="fc" id="L2502">                break;</span>
+            case 48 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:338: IDENTIFIER
+                {
+<span class="fc" id="L2506">                mIDENTIFIER(); </span>
+
+
+                }
+<span class="fc" id="L2510">                break;</span>
+            case 49 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:349: COMMA
+                {
+<span class="fc" id="L2514">                mCOMMA(); </span>
+
+
+                }
+<span class="fc" id="L2518">                break;</span>
+            case 50 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:355: WS
+                {
+<span class="fc" id="L2522">                mWS(); </span>
+
+
+                }
+<span class="fc" id="L2526">                break;</span>
+            case 51 :
+                // com/facebook/swift/parser/antlr/Thrift.g:1:358: COMMENT
+                {
+<span class="fc" id="L2530">                mCOMMENT(); </span>
+
+
+                }
+                break;
+
+        }
+
+<span class="fc" id="L2538">    }</span>
+
+
+<span class="pc" id="L2541">    protected DFA18 dfa18 = new DFA18(this);</span>
+    static final String DFA18_eotS =
+        &quot;\1\35\11\uffff\16\42\2\uffff\1\35\2\76\1\uffff\3\42\5\uffff\5\42&quot;+
+        &quot;\1\35\21\42\2\uffff\13\42\1\147\1\150\1\151\1\42\1\153\7\42\1\163&quot;+
+        &quot;\14\42\1\u0083\3\42\3\uffff\1\u0087\1\uffff\7\42\1\uffff\5\42\1&quot;+
+        &quot;\u0094\1\u0095\1\u0096\2\42\1\u0099\1\u009a\3\42\1\uffff\3\42\1&quot;+
+        &quot;\uffff\5\42\1\u00a6\5\42\1\u00ac\3\uffff\2\42\2\uffff\7\42\1\u00b6&quot;+
+        &quot;\3\42\1\uffff\1\42\1\u00bb\1\u00bc\1\u00bd\1\42\1\uffff\1\u00bf&quot;+
+        &quot;\1\u00c0\4\42\1\u00c5\1\u00c6\1\42\1\uffff\3\42\1\u00cb\3\uffff&quot;+
+        &quot;\1\u00cc\2\uffff\2\42\1\u00cf\1\42\2\uffff\1\42\1\u00d2\1\42\1\u00d4&quot;+
+        &quot;\2\uffff\2\42\1\uffff\1\u00d7\1\u00d8\1\uffff\1\42\1\uffff\2\42&quot;+
+        &quot;\2\uffff\1\42\1\u00dd\2\42\1\uffff\2\42\1\u00e2\1\u00e3\2\uffff&quot;;
+    static final String DFA18_eofS =
+        &quot;\u00e4\uffff&quot;;
+    static final String DFA18_minS =
+        &quot;\1\11\11\uffff\1\163\1\157\1\53\1\61\1\151\2\141\1\156\1\150\2\145&quot;+
+        &quot;\1\150\1\156\1\157\2\uffff\1\60\2\56\1\uffff\1\53\1\151\1\157\5&quot;+
+        &quot;\uffff\1\171\1\156\1\160\1\165\1\143\1\56\1\143\1\66\1\62\1\64\1&quot;+
+        &quot;\163\1\160\1\155\1\145\1\164\1\160\1\161\1\156\2\162\1\160\2\151&quot;+
+        &quot;\2\uffff\1\157\1\164\1\156\1\165\1\156\1\163\1\137\1\155\2\145\1&quot;+
+        &quot;\154\3\56\1\164\1\56\1\145\1\167\1\151\1\137\2\165\1\166\1\56\1&quot;+
+        &quot;\151\1\157\1\145\1\157\1\144\1\154\1\145\1\141\1\142\1\143\1\164&quot;+
+        &quot;\1\151\1\56\1\160\1\156\1\165\3\uffff\1\56\1\uffff\1\163\1\141\1&quot;+
+        &quot;\157\1\156\1\151\1\155\1\151\1\uffff\1\143\1\156\1\167\1\144\1\156&quot;+
+        &quot;\3\56\1\162\1\154\2\56\1\156\1\141\1\171\1\uffff\1\164\2\144\1\uffff&quot;+
+        &quot;\1\160\1\171\1\156\1\141\1\162\1\56\1\143\1\164\1\147\1\163\1\145&quot;+
+        &quot;\1\56\3\uffff\1\171\1\145\2\uffff\1\143\1\155\1\160\1\151\1\163&quot;+
+        &quot;\1\145\1\141\1\56\1\141\1\155\1\145\1\uffff\1\145\3\56\1\146\1\uffff&quot;+
+        &quot;\2\56\1\154\2\145\1\157\2\56\1\143\1\uffff\1\154\1\145\1\144\1\56&quot;+
+        &quot;\3\uffff\1\56\2\uffff\1\165\1\163\1\56\1\156\2\uffff\1\145\1\56&quot;+
+        &quot;\1\163\1\56\2\uffff\1\144\1\160\1\uffff\2\56\1\uffff\1\160\1\uffff&quot;+
+        &quot;\1\145\1\141\2\uffff\1\141\1\56\2\143\1\uffff\2\145\2\56\2\uffff&quot;;
+    static final String DFA18_maxS =
+        &quot;\1\175\11\uffff\1\163\1\160\1\170\1\156\1\151\2\141\1\160\1\150&quot;+
+        &quot;\1\145\1\164\1\171\1\156\1\157\2\uffff\1\71\1\170\1\145\1\uffff&quot;+
+        &quot;\1\71\1\171\1\157\5\uffff\1\171\1\156\1\160\1\165\1\164\1\172\1&quot;+
+        &quot;\143\1\66\1\62\1\64\1\163\1\160\1\155\1\145\1\164\1\160\1\161\1&quot;+
+        &quot;\164\2\162\1\160\2\151\2\uffff\1\157\1\164\1\156\1\165\1\156\1\163&quot;+
+        &quot;\1\137\1\155\2\145\1\154\3\172\1\164\1\172\1\145\1\167\1\151\1\137&quot;+
+        &quot;\2\165\1\166\1\172\1\165\1\157\1\145\1\157\1\144\1\154\1\145\1\141&quot;+
+        &quot;\1\142\1\143\2\164\1\172\1\160\1\156\1\165\3\uffff\1\172\1\uffff&quot;+
+        &quot;\1\163\1\141\1\157\1\156\1\151\1\155\1\151\1\uffff\1\143\1\156\1&quot;+
+        &quot;\167\1\144\1\156\3\172\1\162\1\154\2\172\1\156\1\141\1\171\1\uffff&quot;+
+        &quot;\1\164\2\144\1\uffff\1\160\1\171\1\156\1\141\1\162\1\172\1\143\1&quot;+
+        &quot;\164\1\147\1\163\1\145\1\172\3\uffff\1\171\1\145\2\uffff\1\143\1&quot;+
+        &quot;\155\1\160\1\151\1\163\1\145\1\141\1\172\1\141\1\155\1\145\1\uffff&quot;+
+        &quot;\1\145\3\172\1\146\1\uffff\2\172\1\154\2\145\1\157\2\172\1\143\1&quot;+
+        &quot;\uffff\1\154\1\145\1\144\1\172\3\uffff\1\172\2\uffff\1\165\1\163&quot;+
+        &quot;\1\172\1\156\2\uffff\1\145\1\172\1\163\1\172\2\uffff\1\144\1\160&quot;+
+        &quot;\1\uffff\2\172\1\uffff\1\160\1\uffff\1\145\1\141\2\uffff\1\141\1&quot;+
+        &quot;\172\2\143\1\uffff\2\145\2\172\2\uffff&quot;;
+    static final String DFA18_acceptS =
+        &quot;\1\uffff\1\1\1\2\1\3\1\4\1\5\1\6\1\7\1\10\1\11\16\uffff\1\42\1\43&quot;+
+        &quot;\3\uffff\1\46\3\uffff\1\57\1\60\1\61\1\62\1\63\27\uffff\1\45\1\44&quot;+
+        &quot;\50\uffff\1\51\1\52\1\53\1\uffff\1\24\7\uffff\1\34\17\uffff\1\17&quot;+
+        &quot;\3\uffff\1\23\14\uffff\1\41\1\47\1\50\2\uffff\1\12\1\13\13\uffff&quot;+
+        &quot;\1\32\5\uffff\1\40\11\uffff\1\26\4\uffff\1\35\1\55\1\36\1\uffff&quot;+
+        &quot;\1\56\1\54\4\uffff\1\21\1\22\4\uffff\1\33\1\37\2\uffff\1\16\2\uffff&quot;+
+        &quot;\1\27\1\uffff\1\31\2\uffff\1\20\1\25\4\uffff\1\14\4\uffff\1\15\1&quot;+
+        &quot;\30&quot;;
+    static final String DFA18_specialS =
+        &quot;\u00e4\uffff}&gt;&quot;;
+<span class="fc" id="L2603">    static final String[] DFA18_transitionS = {</span>
+            &quot;\2\44\2\uffff\1\44\22\uffff\1\44\1\uffff\1\41\1\45\3\uffff\1&quot;+
+            &quot;\41\1\1\1\2\1\uffff\1\32\1\43\1\32\1\uffff\1\45\1\33\11\34\1&quot;+
+            &quot;\3\1\4\1\5\1\6\1\7\2\uffff\4\42\1\36\25\42\1\10\1\uffff\1\11&quot;+
+            &quot;\1\uffff\1\42\1\uffff\1\12\1\37\1\13\1\40\1\14\3\42\1\15\2\42&quot;+
+            &quot;\1\16\1\17\1\20\1\21\1\22\1\42\1\23\1\24\1\25\1\26\1\27\4\42&quot;+
+            &quot;\1\30\1\uffff\1\31&quot;,
+            &quot;&quot;,
+            &quot;&quot;,
+            &quot;&quot;,
+            &quot;&quot;,
+            &quot;&quot;,
+            &quot;&quot;,
+            &quot;&quot;,
+            &quot;&quot;,
+            &quot;&quot;,
+            &quot;\1\46&quot;,
+            &quot;\1\47\1\50&quot;,
+            &quot;\1\35\1\uffff\1\35\2\uffff\12\53\64\uffff\1\51\11\uffff\1\52&quot;,
+            &quot;\1\55\1\uffff\1\56\2\uffff\1\57\67\uffff\1\54&quot;,
+            &quot;\1\60&quot;,
+            &quot;\1\61&quot;,
+            &quot;\1\62&quot;,
+            &quot;\1\63\1\uffff\1\64&quot;,
+            &quot;\1\65&quot;,
+            &quot;\1\66&quot;,
+            &quot;\1\67\16\uffff\1\70&quot;,
+            &quot;\1\71\20\uffff\1\72&quot;,
+            &quot;\1\73&quot;,
+            &quot;\1\74&quot;,
+            &quot;&quot;,
+            &quot;&quot;,
+            &quot;\12\34&quot;,
+            &quot;\1\35\1\uffff\12\34\13\uffff\1\35\37\uffff\1\35\22\uffff\1&quot;+
+            &quot;\75&quot;,
+            &quot;\1\35\1\uffff\12\34\13\uffff\1\35\37\uffff\1\35&quot;,
+            &quot;&quot;,
+            &quot;\1\35\1\uffff\1\35\2\uffff\12\53&quot;,
+            &quot;\1\101\5\uffff\1\77\11\uffff\1\100&quot;,
+            &quot;\1\102&quot;,
+            &quot;&quot;,
+            &quot;&quot;,
+            &quot;&quot;,
+            &quot;&quot;,
+            &quot;&quot;,
+            &quot;\1\103&quot;,
+            &quot;\1\104&quot;,
+            &quot;\1\105&quot;,
+            &quot;\1\106&quot;,
+            &quot;\1\107\20\uffff\1\110&quot;,
+            &quot;\1\42\1\uffff\12\53\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;\1\111&quot;,
+            &quot;\1\112&quot;,
+            &quot;\1\113&quot;,
+            &quot;\1\114&quot;,
+            &quot;\1\115&quot;,
+            &quot;\1\116&quot;,
+            &quot;\1\117&quot;,
+            &quot;\1\120&quot;,
+            &quot;\1\121&quot;,
+            &quot;\1\122&quot;,
+            &quot;\1\123&quot;,
+            &quot;\1\124\3\uffff\1\125\1\uffff\1\126&quot;,
+            &quot;\1\127&quot;,
+            &quot;\1\130&quot;,
+            &quot;\1\131&quot;,
+            &quot;\1\132&quot;,
+            &quot;\1\133&quot;,
+            &quot;&quot;,
+            &quot;&quot;,
+            &quot;\1\134&quot;,
+            &quot;\1\135&quot;,
+            &quot;\1\136&quot;,
+            &quot;\1\137&quot;,
+            &quot;\1\140&quot;,
+            &quot;\1\141&quot;,
+            &quot;\1\142&quot;,
+            &quot;\1\143&quot;,
+            &quot;\1\144&quot;,
+            &quot;\1\145&quot;,
+            &quot;\1\146&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;\1\152&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;\1\154&quot;,
+            &quot;\1\155&quot;,
+            &quot;\1\156&quot;,
+            &quot;\1\157&quot;,
+            &quot;\1\160&quot;,
+            &quot;\1\161&quot;,
+            &quot;\1\162&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;\1\165\13\uffff\1\164&quot;,
+            &quot;\1\166&quot;,
+            &quot;\1\167&quot;,
+            &quot;\1\170&quot;,
+            &quot;\1\171&quot;,
+            &quot;\1\172&quot;,
+            &quot;\1\173&quot;,
+            &quot;\1\174&quot;,
+            &quot;\1\175&quot;,
+            &quot;\1\176&quot;,
+            &quot;\1\177&quot;,
+            &quot;\1\u0080\4\uffff\1\u0081\5\uffff\1\u0082&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;\1\u0084&quot;,
+            &quot;\1\u0085&quot;,
+            &quot;\1\u0086&quot;,
+            &quot;&quot;,
+            &quot;&quot;,
+            &quot;&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;&quot;,
+            &quot;\1\u0088&quot;,
+            &quot;\1\u0089&quot;,
+            &quot;\1\u008a&quot;,
+            &quot;\1\u008b&quot;,
+            &quot;\1\u008c&quot;,
+            &quot;\1\u008d&quot;,
+            &quot;\1\u008e&quot;,
+            &quot;&quot;,
+            &quot;\1\u008f&quot;,
+            &quot;\1\u0090&quot;,
+            &quot;\1\u0091&quot;,
+            &quot;\1\u0092&quot;,
+            &quot;\1\u0093&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;\1\u0097&quot;,
+            &quot;\1\u0098&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;\1\u009b&quot;,
+            &quot;\1\u009c&quot;,
+            &quot;\1\u009d&quot;,
+            &quot;&quot;,
+            &quot;\1\u009e&quot;,
+            &quot;\1\u009f&quot;,
+            &quot;\1\u00a0&quot;,
+            &quot;&quot;,
+            &quot;\1\u00a1&quot;,
+            &quot;\1\u00a2&quot;,
+            &quot;\1\u00a3&quot;,
+            &quot;\1\u00a4&quot;,
+            &quot;\1\u00a5&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;\1\u00a7&quot;,
+            &quot;\1\u00a8&quot;,
+            &quot;\1\u00a9&quot;,
+            &quot;\1\u00aa&quot;,
+            &quot;\1\u00ab&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;&quot;,
+            &quot;&quot;,
+            &quot;&quot;,
+            &quot;\1\u00ad&quot;,
+            &quot;\1\u00ae&quot;,
+            &quot;&quot;,
+            &quot;&quot;,
+            &quot;\1\u00af&quot;,
+            &quot;\1\u00b0&quot;,
+            &quot;\1\u00b1&quot;,
+            &quot;\1\u00b2&quot;,
+            &quot;\1\u00b3&quot;,
+            &quot;\1\u00b4&quot;,
+            &quot;\1\u00b5&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;\1\u00b7&quot;,
+            &quot;\1\u00b8&quot;,
+            &quot;\1\u00b9&quot;,
+            &quot;&quot;,
+            &quot;\1\u00ba&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;\1\u00be&quot;,
+            &quot;&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;\1\u00c1&quot;,
+            &quot;\1\u00c2&quot;,
+            &quot;\1\u00c3&quot;,
+            &quot;\1\u00c4&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;\1\u00c7&quot;,
+            &quot;&quot;,
+            &quot;\1\u00c8&quot;,
+            &quot;\1\u00c9&quot;,
+            &quot;\1\u00ca&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;&quot;,
+            &quot;&quot;,
+            &quot;&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;&quot;,
+            &quot;&quot;,
+            &quot;\1\u00cd&quot;,
+            &quot;\1\u00ce&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;\1\u00d0&quot;,
+            &quot;&quot;,
+            &quot;&quot;,
+            &quot;\1\u00d1&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;\1\u00d3&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;&quot;,
+            &quot;&quot;,
+            &quot;\1\u00d5&quot;,
+            &quot;\1\u00d6&quot;,
+            &quot;&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;&quot;,
+            &quot;\1\u00d9&quot;,
+            &quot;&quot;,
+            &quot;\1\u00da&quot;,
+            &quot;\1\u00db&quot;,
+            &quot;&quot;,
+            &quot;&quot;,
+            &quot;\1\u00dc&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;\1\u00de&quot;,
+            &quot;\1\u00df&quot;,
+            &quot;&quot;,
+            &quot;\1\u00e0&quot;,
+            &quot;\1\u00e1&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;\1\42\1\uffff\12\42\7\uffff\32\42\4\uffff\1\42\1\uffff\32\42&quot;,
+            &quot;&quot;,
+            &quot;&quot;
+    };
+
+<span class="fc" id="L2840">    static final short[] DFA18_eot = DFA.unpackEncodedString(DFA18_eotS);</span>
+<span class="fc" id="L2841">    static final short[] DFA18_eof = DFA.unpackEncodedString(DFA18_eofS);</span>
+<span class="fc" id="L2842">    static final char[] DFA18_min = DFA.unpackEncodedStringToUnsignedChars(DFA18_minS);</span>
+<span class="fc" id="L2843">    static final char[] DFA18_max = DFA.unpackEncodedStringToUnsignedChars(DFA18_maxS);</span>
+<span class="fc" id="L2844">    static final short[] DFA18_accept = DFA.unpackEncodedString(DFA18_acceptS);</span>
+<span class="fc" id="L2845">    static final short[] DFA18_special = DFA.unpackEncodedString(DFA18_specialS);</span>
+    static final short[][] DFA18_transition;
+
+    static {
+<span class="fc" id="L2849">        int numStates = DFA18_transitionS.length;</span>
+<span class="fc" id="L2850">        DFA18_transition = new short[numStates][];</span>
+<span class="fc bfc" id="L2851" title="All 2 branches covered.">        for (int i=0; i&lt;numStates; i++) {</span>
+<span class="fc" id="L2852">            DFA18_transition[i] = DFA.unpackEncodedString(DFA18_transitionS[i]);</span>
+        }
+<span class="fc" id="L2854">    }</span>
+
+    class DFA18 extends DFA {
+
+<span class="fc" id="L2858">        public DFA18(BaseRecognizer recognizer) {</span>
+<span class="fc" id="L2859">            this.recognizer = recognizer;</span>
+<span class="fc" id="L2860">            this.decisionNumber = 18;</span>
+<span class="fc" id="L2861">            this.eot = DFA18_eot;</span>
+<span class="fc" id="L2862">            this.eof = DFA18_eof;</span>
+<span class="fc" id="L2863">            this.min = DFA18_min;</span>
+<span class="fc" id="L2864">            this.max = DFA18_max;</span>
+<span class="fc" id="L2865">            this.accept = DFA18_accept;</span>
+<span class="fc" id="L2866">            this.special = DFA18_special;</span>
+<span class="fc" id="L2867">            this.transition = DFA18_transition;</span>
+<span class="fc" id="L2868">        }</span>
+        public String getDescription() {
+<span class="nc" id="L2870">            return &quot;1:1: Tokens : ( T__52 | T__53 | T__54 | T__55 | T__56 | T__57 | T__58 | T__59 | T__60 | T__61 | T__62 | T__63 | T__64 | T__65 | T__66 | T__67 | T__68 | T__69 | T__70 | T__71 | T__72 | T__73 | T__74 | T__75 | T__76 | T__77 | T__78 | T__79 | T__80 | T__81 | T__82 | T__83 | T__84 | T__85 | T__86 | INTEGER | HEX_INTEGER | DOUBLE | TYPE_BOOL | TYPE_BYTE | TYPE_I16 | TYPE_I32 | TYPE_I64 | TYPE_DOUBLE | TYPE_STRING | TYPE_BINARY | LITERAL | IDENTIFIER | COMMA | WS | COMMENT );&quot;;</span>
+        }
+    }
+ 
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

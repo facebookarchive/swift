@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>BaseType.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-idl-parser</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.parser.model</a> &gt; <span class="el_source">BaseType.java</span></div><h1>BaseType.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.parser.model;
+
+import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableList;
+
+import java.util.List;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
+public class BaseType
+        extends ThriftType
+{
+<span class="pc" id="L28">    public static enum Type</span>
+    {
+<span class="fc" id="L30">        BOOL, BYTE, I16, I32, I64, DOUBLE, STRING, BINARY</span>
+    }
+
+    private final Type type;
+    private final List&lt;TypeAnnotation&gt; annotations;
+
+    public BaseType(Type type, List&lt;TypeAnnotation&gt; annotations)
+<span class="fc" id="L37">    {</span>
+<span class="fc" id="L38">        this.type = checkNotNull(type, &quot;type&quot;);</span>
+<span class="fc" id="L39">        this.annotations = ImmutableList.copyOf(checkNotNull(annotations, &quot;annotations&quot;));</span>
+<span class="fc" id="L40">    }</span>
+
+    public Type getType()
+    {
+
+<span class="nc" id="L45">        return type;</span>
+    }
+
+    public List&lt;TypeAnnotation&gt; getAnnotations()
+    {
+<span class="nc" id="L50">        return annotations;</span>
+    }
+
+    @Override
+    public String toString()
+    {
+<span class="fc" id="L56">        return Objects.toStringHelper(this)</span>
+                .add(&quot;type&quot;, type)
+                .add(&quot;annotations&quot;, annotations)
+                .toString();
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

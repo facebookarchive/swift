@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ThriftField.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-idl-parser</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.parser.model</a> &gt; <span class="el_source">ThriftField.java</span></div><h1>ThriftField.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.parser.model;
+
+import com.facebook.swift.parser.visitor.DocumentVisitor;
+import com.facebook.swift.parser.visitor.Visitable;
+import com.google.common.base.Objects;
+import com.google.common.base.Optional;
+
+import java.io.IOException;
+import java.util.List;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
+public class ThriftField implements Visitable
+{
+<span class="pc" id="L30">    public static enum Required</span>
+    {
+<span class="fc" id="L32">        REQUIRED, OPTIONAL, NONE</span>
+    }
+
+    private final String name;
+    private final ThriftType type;
+    private final Optional&lt;Long&gt; identifier;
+    private final Required required;
+    private final Optional&lt;ConstValue&gt; value;
+    private final List&lt;TypeAnnotation&gt; annotations;
+
+    public ThriftField(
+            String name,
+            ThriftType type,
+            Long identifier,
+            Required required,
+            ConstValue value,
+            List&lt;TypeAnnotation&gt; annotations)
+<span class="fc" id="L49">    {</span>
+<span class="fc" id="L50">        this.name = checkNotNull(name, &quot;name&quot;);</span>
+<span class="fc" id="L51">        this.type = checkNotNull(type, &quot;type&quot;);</span>
+<span class="fc" id="L52">        this.identifier = Optional.fromNullable(identifier);</span>
+<span class="fc" id="L53">        this.required = checkNotNull(required, &quot;required&quot;);</span>
+<span class="fc" id="L54">        this.value = Optional.fromNullable(value);</span>
+<span class="fc" id="L55">        this.annotations = checkNotNull(annotations, &quot;annotations&quot;);</span>
+<span class="fc" id="L56">    }</span>
+
+    public String getName()
+    {
+<span class="nc" id="L60">        return name;</span>
+    }
+
+    public ThriftType getType()
+    {
+<span class="nc" id="L65">        return type;</span>
+    }
+
+    public Optional&lt;Long&gt; getIdentifier()
+    {
+<span class="nc" id="L70">        return identifier;</span>
+    }
+
+    public Required getRequired()
+    {
+<span class="nc" id="L75">        return required;</span>
+    }
+
+    public Optional&lt;ConstValue&gt; getValue()
+    {
+<span class="nc" id="L80">        return value;</span>
+    }
+
+    public List&lt;TypeAnnotation&gt; getAnnotations()
+    {
+<span class="nc" id="L85">        return annotations;</span>
+    }
+
+    @Override
+    public String toString()
+    {
+<span class="fc" id="L91">        return Objects.toStringHelper(this)</span>
+                .add(&quot;name&quot;, name)
+                .add(&quot;type&quot;, type)
+                .add(&quot;identifier&quot;, identifier)
+                .add(&quot;required&quot;, required)
+                .add(&quot;value&quot;, value)
+                .add(&quot;annotations&quot;, annotations)
+                .toString();
+    }
+
+    @Override
+    public void visit(final DocumentVisitor visitor)
+        throws IOException
+    {
+<span class="nc" id="L105">        visitor.visit(this);</span>
+<span class="nc" id="L106">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

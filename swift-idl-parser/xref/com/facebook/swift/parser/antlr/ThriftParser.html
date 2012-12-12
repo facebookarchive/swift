@@ -8,7 +8,7 @@
 <body>
 <div id="overview"><a href="../../../../../../apidocs/com/facebook/swift/parser/antlr/ThriftParser.html">View Javadoc</a></div><pre>
 
-<a class="jxr_linenumber" name="1" href="#1">1</a>   <em class="jxr_comment">// $ANTLR 3.4 com/facebook/swift/parser/antlr/Thrift.g 2012-12-12 11:16:32</em>
+<a class="jxr_linenumber" name="1" href="#1">1</a>   <em class="jxr_comment">// $ANTLR 3.4 com/facebook/swift/parser/antlr/Thrift.g 2012-12-12 13:31:11</em>
 <a class="jxr_linenumber" name="2" href="#2">2</a>   
 <a class="jxr_linenumber" name="3" href="#3">3</a>       <strong class="jxr_keyword">package</strong> com.facebook.swift.parser.antlr;
 <a class="jxr_linenumber" name="4" href="#4">4</a>   
@@ -1219,7 +1219,7 @@
 <a class="jxr_linenumber" name="1209" href="#1209">1209</a> 
 <a class="jxr_linenumber" name="1210" href="#1210">1210</a> 
 <a class="jxr_linenumber" name="1211" href="#1211">1211</a>             <em class="jxr_comment">// AST REWRITE</em>
-<a class="jxr_linenumber" name="1212" href="#1212">1212</a>             <em class="jxr_comment">// elements: const_value, field_type, IDENTIFIER</em>
+<a class="jxr_linenumber" name="1212" href="#1212">1212</a>             <em class="jxr_comment">// elements: field_type, IDENTIFIER, const_value</em>
 <a class="jxr_linenumber" name="1213" href="#1213">1213</a>             <em class="jxr_comment">// token labels: </em>
 <a class="jxr_linenumber" name="1214" href="#1214">1214</a>             <em class="jxr_comment">// rule labels: retval</em>
 <a class="jxr_linenumber" name="1215" href="#1215">1215</a>             <em class="jxr_comment">// token list labels: </em>
@@ -1323,7 +1323,7 @@
 <a class="jxr_linenumber" name="1313" href="#1313">1313</a> 
 <a class="jxr_linenumber" name="1314" href="#1314">1314</a> 
 <a class="jxr_linenumber" name="1315" href="#1315">1315</a>             <em class="jxr_comment">// AST REWRITE</em>
-<a class="jxr_linenumber" name="1316" href="#1316">1316</a>             <em class="jxr_comment">// elements: IDENTIFIER, field_type</em>
+<a class="jxr_linenumber" name="1316" href="#1316">1316</a>             <em class="jxr_comment">// elements: field_type, IDENTIFIER</em>
 <a class="jxr_linenumber" name="1317" href="#1317">1317</a>             <em class="jxr_comment">// token labels: </em>
 <a class="jxr_linenumber" name="1318" href="#1318">1318</a>             <em class="jxr_comment">// rule labels: retval</em>
 <a class="jxr_linenumber" name="1319" href="#1319">1319</a>             <em class="jxr_comment">// token list labels: </em>
@@ -2386,7 +2386,7 @@
 <a class="jxr_linenumber" name="2376" href="#2376">2376</a> 
 <a class="jxr_linenumber" name="2377" href="#2377">2377</a> 
 <a class="jxr_linenumber" name="2378" href="#2378">2378</a>             <em class="jxr_comment">// AST REWRITE</em>
-<a class="jxr_linenumber" name="2379" href="#2379">2379</a>             <em class="jxr_comment">// elements: type_annotations, field, IDENTIFIER</em>
+<a class="jxr_linenumber" name="2379" href="#2379">2379</a>             <em class="jxr_comment">// elements: type_annotations, IDENTIFIER, field</em>
 <a class="jxr_linenumber" name="2380" href="#2380">2380</a>             <em class="jxr_comment">// token labels: </em>
 <a class="jxr_linenumber" name="2381" href="#2381">2381</a>             <em class="jxr_comment">// rule labels: retval</em>
 <a class="jxr_linenumber" name="2382" href="#2382">2382</a>             <em class="jxr_comment">// token list labels: </em>
@@ -2587,7 +2587,7 @@
 <a class="jxr_linenumber" name="2577" href="#2577">2577</a> 
 <a class="jxr_linenumber" name="2578" href="#2578">2578</a> 
 <a class="jxr_linenumber" name="2579" href="#2579">2579</a>             <em class="jxr_comment">// AST REWRITE</em>
-<a class="jxr_linenumber" name="2580" href="#2580">2580</a>             <em class="jxr_comment">// elements: e, function, s</em>
+<a class="jxr_linenumber" name="2580" href="#2580">2580</a>             <em class="jxr_comment">// elements: s, e, function</em>
 <a class="jxr_linenumber" name="2581" href="#2581">2581</a>             <em class="jxr_comment">// token labels: e, s</em>
 <a class="jxr_linenumber" name="2582" href="#2582">2582</a>             <em class="jxr_comment">// rule labels: retval</em>
 <a class="jxr_linenumber" name="2583" href="#2583">2583</a>             <em class="jxr_comment">// token list labels: </em>
@@ -2864,7 +2864,7 @@
 <a class="jxr_linenumber" name="2854" href="#2854">2854</a> 
 <a class="jxr_linenumber" name="2855" href="#2855">2855</a> 
 <a class="jxr_linenumber" name="2856" href="#2856">2856</a>             <em class="jxr_comment">// AST REWRITE</em>
-<a class="jxr_linenumber" name="2857" href="#2857">2857</a>             <em class="jxr_comment">// elements: field_type, const_value, IDENTIFIER, field_id, type_annotations, field_req</em>
+<a class="jxr_linenumber" name="2857" href="#2857">2857</a>             <em class="jxr_comment">// elements: field_type, IDENTIFIER, field_req, type_annotations, const_value, field_id</em>
 <a class="jxr_linenumber" name="2858" href="#2858">2858</a>             <em class="jxr_comment">// token labels: </em>
 <a class="jxr_linenumber" name="2859" href="#2859">2859</a>             <em class="jxr_comment">// rule labels: retval</em>
 <a class="jxr_linenumber" name="2860" href="#2860">2860</a>             <em class="jxr_comment">// token list labels: </em>
@@ -3397,7 +3397,7 @@
 <a class="jxr_linenumber" name="3387" href="#3387">3387</a> 
 <a class="jxr_linenumber" name="3388" href="#3388">3388</a> 
 <a class="jxr_linenumber" name="3389" href="#3389">3389</a>             <em class="jxr_comment">// AST REWRITE</em>
-<a class="jxr_linenumber" name="3390" href="#3390">3390</a>             <em class="jxr_comment">// elements: type_annotations, field, IDENTIFIER, throws_list, oneway, function_type</em>
+<a class="jxr_linenumber" name="3390" href="#3390">3390</a>             <em class="jxr_comment">// elements: type_annotations, IDENTIFIER, field, function_type, oneway, throws_list</em>
 <a class="jxr_linenumber" name="3391" href="#3391">3391</a>             <em class="jxr_comment">// token labels: </em>
 <a class="jxr_linenumber" name="3392" href="#3392">3392</a>             <em class="jxr_comment">// rule labels: retval</em>
 <a class="jxr_linenumber" name="3393" href="#3393">3393</a>             <em class="jxr_comment">// token list labels: </em>
@@ -4091,7 +4091,7 @@
 <a class="jxr_linenumber" name="4081" href="#4081">4081</a> 
 <a class="jxr_linenumber" name="4082" href="#4082">4082</a> 
 <a class="jxr_linenumber" name="4083" href="#4083">4083</a>             <em class="jxr_comment">// AST REWRITE</em>
-<a class="jxr_linenumber" name="4084" href="#4084">4084</a>             <em class="jxr_comment">// elements: annotation_value, IDENTIFIER</em>
+<a class="jxr_linenumber" name="4084" href="#4084">4084</a>             <em class="jxr_comment">// elements: IDENTIFIER, annotation_value</em>
 <a class="jxr_linenumber" name="4085" href="#4085">4085</a>             <em class="jxr_comment">// token labels: </em>
 <a class="jxr_linenumber" name="4086" href="#4086">4086</a>             <em class="jxr_comment">// rule labels: retval</em>
 <a class="jxr_linenumber" name="4087" href="#4087">4087</a>             <em class="jxr_comment">// token list labels: </em>
@@ -4710,7 +4710,7 @@
 <a class="jxr_linenumber" name="4700" href="#4700">4700</a> 
 <a class="jxr_linenumber" name="4701" href="#4701">4701</a> 
 <a class="jxr_linenumber" name="4702" href="#4702">4702</a>             <em class="jxr_comment">// AST REWRITE</em>
-<a class="jxr_linenumber" name="4703" href="#4703">4703</a>             <em class="jxr_comment">// elements: cpp_type, field_type, field_type</em>
+<a class="jxr_linenumber" name="4703" href="#4703">4703</a>             <em class="jxr_comment">// elements: field_type, cpp_type, field_type</em>
 <a class="jxr_linenumber" name="4704" href="#4704">4704</a>             <em class="jxr_comment">// token labels: </em>
 <a class="jxr_linenumber" name="4705" href="#4705">4705</a>             <em class="jxr_comment">// rule labels: retval</em>
 <a class="jxr_linenumber" name="4706" href="#4706">4706</a>             <em class="jxr_comment">// token list labels: </em>
@@ -4996,7 +4996,7 @@
 <a class="jxr_linenumber" name="4986" href="#4986">4986</a> 
 <a class="jxr_linenumber" name="4987" href="#4987">4987</a> 
 <a class="jxr_linenumber" name="4988" href="#4988">4988</a>             <em class="jxr_comment">// AST REWRITE</em>
-<a class="jxr_linenumber" name="4989" href="#4989">4989</a>             <em class="jxr_comment">// elements: cpp_type, field_type</em>
+<a class="jxr_linenumber" name="4989" href="#4989">4989</a>             <em class="jxr_comment">// elements: field_type, cpp_type</em>
 <a class="jxr_linenumber" name="4990" href="#4990">4990</a>             <em class="jxr_comment">// token labels: </em>
 <a class="jxr_linenumber" name="4991" href="#4991">4991</a>             <em class="jxr_comment">// rule labels: retval</em>
 <a class="jxr_linenumber" name="4992" href="#4992">4992</a>             <em class="jxr_comment">// token list labels: </em>

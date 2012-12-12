@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ThriftMethod.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-idl-parser</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.parser.model</a> &gt; <span class="el_source">ThriftMethod.java</span></div><h1>ThriftMethod.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.parser.model;
+
+import com.facebook.swift.parser.visitor.DocumentVisitor;
+import com.facebook.swift.parser.visitor.Visitable;
+import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableList;
+
+import java.io.IOException;
+import java.util.List;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
+public class ThriftMethod implements Visitable
+{
+    private final String name;
+    private final ThriftType returnType;
+    private final List&lt;ThriftField&gt; arguments;
+    private final boolean oneway;
+    private final List&lt;ThriftField&gt; throwsFields;
+    private final List&lt;TypeAnnotation&gt; annotations;
+
+    public ThriftMethod(
+            String name,
+            ThriftType returnType,
+            List&lt;ThriftField&gt; arguments,
+            boolean oneway,
+            List&lt;ThriftField&gt; throwsFields,
+            List&lt;TypeAnnotation&gt; annotations)
+<span class="fc" id="L44">    {</span>
+<span class="fc" id="L45">        this.name = checkNotNull(name, &quot;name&quot;);</span>
+<span class="fc" id="L46">        this.returnType = checkNotNull(returnType, &quot;returnType&quot;);</span>
+<span class="fc" id="L47">        this.arguments = ImmutableList.copyOf(checkNotNull(arguments, &quot;arguments&quot;));</span>
+<span class="fc" id="L48">        this.oneway = oneway;</span>
+<span class="fc" id="L49">        this.throwsFields = ImmutableList.copyOf(checkNotNull(throwsFields, &quot;throwsFields&quot;));</span>
+<span class="fc" id="L50">        this.annotations = ImmutableList.copyOf(checkNotNull(annotations, &quot;annotations&quot;));</span>
+<span class="fc" id="L51">    }</span>
+
+    public String getName()
+    {
+<span class="nc" id="L55">        return name;</span>
+    }
+
+    public ThriftType getReturnType()
+    {
+<span class="nc" id="L60">        return returnType;</span>
+    }
+
+    public List&lt;ThriftField&gt; getArguments()
+    {
+<span class="nc" id="L65">        return arguments;</span>
+    }
+
+    public boolean isOneway()
+    {
+<span class="nc" id="L70">        return oneway;</span>
+    }
+
+    public List&lt;ThriftField&gt; getThrowsFields()
+    {
+<span class="nc" id="L75">        return throwsFields;</span>
+    }
+
+    public List&lt;TypeAnnotation&gt; getAnnotations()
+    {
+<span class="nc" id="L80">        return annotations;</span>
+    }
+
+    @Override
+    public void visit(final DocumentVisitor visitor) throws IOException
+    {
+<span class="nc" id="L86">        Visitable.Utils.visit(visitor, this);</span>
+<span class="nc" id="L87">    }</span>
+
+    @Override
+    public String toString()
+    {
+<span class="fc" id="L92">        return Objects.toStringHelper(this)</span>
+                .add(&quot;name&quot;, name)
+                .add(&quot;returnType&quot;, returnType)
+                .add(&quot;arguments&quot;, arguments)
+                .add(&quot;oneway&quot;, oneway)
+                .add(&quot;throwsFields&quot;, throwsFields)
+                .add(&quot;annotations&quot;, annotations)
+                .toString();
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>
