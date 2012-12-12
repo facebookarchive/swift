@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ThriftClient.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-service</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.service</a> &gt; <span class="el_source">ThriftClient.java</span></div><h1>ThriftClient.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.service;
+
+import com.facebook.nifty.client.NiftyClientChannel;
+import com.google.common.base.Preconditions;
+import com.google.common.net.HostAndPort;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.inject.Inject;
+import io.airlift.units.Duration;
+import org.apache.thrift.transport.TTransportException;
+import org.weakref.jmx.Managed;
+
+import java.util.concurrent.ExecutionException;
+
+public class ThriftClient&lt;T&gt;
+{
+    private final ThriftClientManager clientManager;
+    private final Class&lt;T&gt; clientType;
+    private final String clientName;
+    private final Duration connectTimeout;
+    private final Duration readTimeout;
+    private final Duration writeTimeout;
+
+    private final HostAndPort socksProxy;
+
+    @Inject
+    public ThriftClient(ThriftClientManager clientManager, Class&lt;T&gt; clientType)
+    {
+<span class="nc" id="L43">        this(clientManager, clientType, new ThriftClientConfig(), ThriftClientManager.DEFAULT_NAME);</span>
+<span class="nc" id="L44">    }</span>
+
+    public ThriftClient(ThriftClientManager clientManager, Class&lt;T&gt; clientType, ThriftClientConfig clientConfig, String clientName)
+<span class="fc" id="L47">    {</span>
+<span class="fc" id="L48">        Preconditions.checkNotNull(clientManager, &quot;clientManager is null&quot;);</span>
+<span class="fc" id="L49">        Preconditions.checkNotNull(clientType, &quot;clientInterface is null&quot;);</span>
+<span class="fc" id="L50">        Preconditions.checkNotNull(clientName, &quot;clientName is null&quot;);</span>
+
+<span class="fc" id="L52">        this.clientManager = clientManager;</span>
+<span class="fc" id="L53">        this.clientType = clientType;</span>
+<span class="fc" id="L54">        this.clientName = clientName;</span>
+<span class="fc" id="L55">        connectTimeout = clientConfig.getConnectTimeout();</span>
+<span class="fc" id="L56">        readTimeout = clientConfig.getReadTimeout();</span>
+<span class="fc" id="L57">        writeTimeout = clientConfig.getWriteTimeout();</span>
+<span class="fc" id="L58">        socksProxy = clientConfig.getSocksProxy();</span>
+<span class="fc" id="L59">    }</span>
+
+    @Managed
+    public String getClientType()
+    {
+<span class="nc" id="L64">        return clientType.getName();</span>
+    }
+
+    @Managed
+    public String getClientName()
+    {
+<span class="nc" id="L70">        return clientName;</span>
+    }
+
+    @Managed
+    public String getConnectTimeout()
+    {
+<span class="nc" id="L76">        return connectTimeout.toString();</span>
+    }
+
+    @Managed
+    public String getReadTimeout()
+    {
+<span class="nc" id="L82">        return readTimeout.toString();</span>
+    }
+
+    @Managed
+    public String getWriteTimeout()
+    {
+<span class="nc" id="L88">        return writeTimeout.toString();</span>
+    }
+
+    @Managed
+    public String getSocksProxy()
+    {
+<span class="nc bnc" id="L94" title="All 2 branches missed.">        if (socksProxy == null) {</span>
+<span class="nc" id="L95">            return null;</span>
+        }
+<span class="nc" id="L97">        return socksProxy.toString();</span>
+    }
+
+    public ListenableFuture&lt;T&gt; open(HostAndPort address)
+            throws TTransportException, InterruptedException, ExecutionException
+    {
+<span class="fc" id="L103">        return clientManager.createClient(address, clientType, connectTimeout, readTimeout, writeTimeout, clientName, socksProxy);</span>
+    }
+
+    public T open(NiftyClientChannel channel)
+            throws TTransportException, InterruptedException
+    {
+<span class="nc" id="L109">      return clientManager.createClient(channel, clientType, clientName);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ThriftServerModule.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-service</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.service.guice</a> &gt; <span class="el_source">ThriftServerModule.java</span></div><h1>ThriftServerModule.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.service.guice;
+
+import com.facebook.swift.service.ThriftMethodProcessor;
+import com.facebook.swift.service.ThriftServer;
+import com.facebook.swift.service.ThriftServerConfig;
+import com.facebook.swift.service.ThriftServiceProcessor;
+import com.facebook.swift.service.guice.ThriftServiceExporter.ThriftServiceExport;
+import com.facebook.swift.service.guice.ThriftServiceExporter.ThriftServiceProcessorProvider;
+import com.google.common.base.Throwables;
+import com.google.inject.Binder;
+import com.google.inject.Key;
+import com.google.inject.Module;
+import com.google.inject.Provides;
+import com.google.inject.Scopes;
+import org.apache.thrift.TProcessor;
+import org.weakref.jmx.guice.ExportBinder;
+import org.weakref.jmx.guice.ObjectNameFunction;
+
+import javax.inject.Singleton;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+import java.util.Map;
+
+import static com.facebook.swift.service.metadata.ThriftServiceMetadata.getThriftServiceAnnotation;
+import static com.google.inject.multibindings.Multibinder.newSetBinder;
+import static io.airlift.configuration.ConfigurationModule.bindConfig;
+import static java.lang.String.format;
+
+<span class="fc" id="L44">public class ThriftServerModule implements Module</span>
+{
+    @Override
+    public void configure(Binder binder)
+    {
+<span class="fc" id="L49">        newSetBinder(binder, ThriftServiceExport.class).permitDuplicates();</span>
+<span class="fc" id="L50">        binder.bind(ThriftServiceProcessor.class).toProvider(ThriftServiceProcessorProvider.class).in(Scopes.SINGLETON);</span>
+<span class="fc" id="L51">        binder.bind(TProcessor.class).to(Key.get(ThriftServiceProcessor.class)).in(Scopes.SINGLETON);</span>
+
+<span class="fc" id="L53">        bindConfig(binder).to(ThriftServerConfig.class);</span>
+<span class="fc" id="L54">        binder.bind(ThriftServer.class).in(Scopes.SINGLETON);</span>
+
+        // export methods from processors to JMX
+<span class="fc" id="L57">        ExportBinder.newExporter(binder).exportMap(ThriftMethodProcessor.class).withGeneratedName(new ObjectNameFunction&lt;ThriftMethodProcessor&gt;() {</span>
+            @Override
+            public ObjectName name(ThriftMethodProcessor methodProcessor)
+            {
+                try {
+<span class="fc" id="L62">                    Class&lt;?&gt; serviceClass = methodProcessor.getServiceClass();</span>
+<span class="fc" id="L63">                    String name = format(&quot;com.facebook.swift.server:type=%s,name=%s&quot;,</span>
+                            getServiceName(serviceClass),
+                            methodProcessor.getName());
+
+<span class="fc" id="L67">                    return new ObjectName(name);</span>
+                }
+<span class="nc" id="L69">                catch (MalformedObjectNameException e) {</span>
+<span class="nc" id="L70">                    throw Throwables.propagate(e);</span>
+                }
+            }
+        });
+<span class="fc" id="L74">    }</span>
+
+    @Provides
+    @Singleton
+    public Map&lt;String, ThriftMethodProcessor&gt; getMethodProcessors(ThriftServiceProcessor thriftServiceProcessor)
+    {
+        // extract method handles into a map so they can be exported individually to JMX
+<span class="fc" id="L81">        return thriftServiceProcessor.getMethods();</span>
+    }
+
+    private static String getServiceName(Class&lt;?&gt; serviceClass)
+    {
+<span class="fc" id="L86">        String serviceName = getThriftServiceAnnotation(serviceClass).value();</span>
+<span class="fc bfc" id="L87" title="All 2 branches covered.">        if (!serviceName.isEmpty()) {</span>
+<span class="fc" id="L88">            return serviceName;</span>
+        }
+<span class="fc" id="L90">        return serviceClass.getSimpleName();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

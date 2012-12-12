@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ThriftMethodHandler.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-service</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.service</a> &gt; <span class="el_source">ThriftMethodHandler.java</span></div><h1>ThriftMethodHandler.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.service;
+
+import com.facebook.nifty.client.NiftyClientChannel;
+import com.facebook.nifty.client.TChannelBufferInputTransport;
+import com.facebook.nifty.client.TChannelBufferOutputTransport;
+import com.facebook.swift.codec.ThriftCodec;
+import com.facebook.swift.codec.ThriftCodecManager;
+import com.facebook.swift.codec.internal.TProtocolReader;
+import com.facebook.swift.codec.internal.TProtocolWriter;
+import com.facebook.swift.codec.metadata.ThriftFieldMetadata;
+import com.facebook.swift.codec.metadata.ThriftParameterInjection;
+import com.facebook.swift.codec.metadata.ThriftType;
+import com.facebook.swift.service.metadata.ThriftMethodMetadata;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
+import org.apache.thrift.TApplicationException;
+import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TMessage;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.protocol.TProtocolFactory;
+import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.TTransportException;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.weakref.jmx.Flatten;
+import org.weakref.jmx.Managed;
+
+import javax.annotation.concurrent.ThreadSafe;
+import java.util.List;
+import java.util.Map;
+
+import static io.airlift.units.Duration.nanosSince;
+import static java.lang.System.nanoTime;
+import static org.apache.thrift.TApplicationException.BAD_SEQUENCE_ID;
+import static org.apache.thrift.TApplicationException.INVALID_MESSAGE_TYPE;
+import static org.apache.thrift.TApplicationException.WRONG_METHOD_NAME;
+import static org.apache.thrift.protocol.TMessageType.CALL;
+import static org.apache.thrift.protocol.TMessageType.EXCEPTION;
+import static org.apache.thrift.protocol.TMessageType.ONEWAY;
+import static org.apache.thrift.protocol.TMessageType.REPLY;
+
+@ThreadSafe
+public class ThriftMethodHandler
+{
+    private final String name;
+    private final List&lt;ParameterHandler&gt; parameterCodecs;
+    private final ThriftCodec&lt;Object&gt; successCodec;
+    private final Map&lt;Short, ThriftCodec&lt;Object&gt;&gt; exceptionCodecs;
+    private final boolean oneway;
+
+<span class="fc" id="L67">    private final ThriftMethodStats stats = new ThriftMethodStats();</span>
+
+    private final boolean invokeAsynchronously;
+
+    public ThriftMethodHandler(ThriftMethodMetadata methodMetadata, ThriftCodecManager codecManager)
+<span class="fc" id="L72">    {</span>
+<span class="fc" id="L73">        name = methodMetadata.getName();</span>
+<span class="fc" id="L74">        invokeAsynchronously = methodMetadata.isAsync();</span>
+
+<span class="fc" id="L76">        oneway = methodMetadata.getOneway();</span>
+
+        // get the thrift codecs for the parameters
+<span class="fc" id="L79">        ParameterHandler[] parameters = new ParameterHandler[methodMetadata.getParameters().size()];</span>
+<span class="fc bfc" id="L80" title="All 2 branches covered.">        for (ThriftFieldMetadata fieldMetadata : methodMetadata.getParameters()) {</span>
+<span class="fc" id="L81">            ThriftParameterInjection parameter = (ThriftParameterInjection) fieldMetadata.getInjections().get(0);</span>
+
+<span class="fc" id="L83">            ParameterHandler handler = new ParameterHandler(</span>
+                    fieldMetadata.getId(),
+                    fieldMetadata.getName(),
+                    (ThriftCodec&lt;Object&gt;) codecManager.getCodec(fieldMetadata.getType()));
+
+<span class="fc" id="L88">            parameters[parameter.getParameterIndex()] = handler;</span>
+<span class="fc" id="L89">        }</span>
+<span class="fc" id="L90">        parameterCodecs = ImmutableList.copyOf(parameters);</span>
+
+        // get the thrift codecs for the exceptions
+<span class="fc" id="L93">        ImmutableMap.Builder&lt;Short, ThriftCodec&lt;Object&gt;&gt; exceptions = ImmutableMap.builder();</span>
+<span class="fc bfc" id="L94" title="All 2 branches covered.">        for (Map.Entry&lt;Short, ThriftType&gt; entry : methodMetadata.getExceptions().entrySet()) {</span>
+<span class="fc" id="L95">            exceptions.put(entry.getKey(), (ThriftCodec&lt;Object&gt;) codecManager.getCodec(entry.getValue()));</span>
+<span class="fc" id="L96">        }</span>
+<span class="fc" id="L97">        exceptionCodecs = exceptions.build();</span>
+
+        // get the thrift codec for the return value
+<span class="fc" id="L100">        successCodec = (ThriftCodec&lt;Object&gt;) codecManager.getCodec(methodMetadata.getReturnType());</span>
+<span class="fc" id="L101">    }</span>
+
+    @Managed
+    public String getName()
+    {
+<span class="fc" id="L106">        return name;</span>
+    }
+
+    @Managed
+    @Flatten
+    public ThriftMethodStats getStats()
+    {
+<span class="fc" id="L113">        return stats;</span>
+    }
+
+    public Object invoke(final TProtocolFactory in,
+                         final TProtocolFactory out,
+                         final NiftyClientChannel channel,
+                         final int sequenceId,
+                         final Object... args)
+            throws Exception
+    {
+<span class="pc bpc" id="L123" title="1 of 2 branches missed.">        if (channel.hasError()) {</span>
+<span class="nc" id="L124">            throw new TTransportException(channel.getError());</span>
+        }
+
+<span class="pc bpc" id="L127" title="1 of 2 branches missed.">        if (invokeAsynchronously)</span>
+        {
+            // This method declares a Future return value: run it asynchronously
+<span class="nc" id="L130">            return asynchronousInvoke(in, out, channel, sequenceId, args);</span>
+        }
+        else
+        {
+            // This method declares an immediate return value: run it synchronously
+<span class="fc" id="L135">            return synchronousInvoke(in, out, channel, sequenceId, args);</span>
+        }
+    }
+
+    private Object synchronousInvoke(TProtocolFactory in,
+                                     TProtocolFactory out,
+                                     NiftyClientChannel channel,
+                                     int sequenceId,
+                                     Object[] args)
+            throws Exception
+    {
+<span class="fc" id="L146">        long start = nanoTime();</span>
+
+        try {
+<span class="fc" id="L149">            Object results = null;</span>
+<span class="fc" id="L150">            TChannelBufferOutputTransport outputTransport = new TChannelBufferOutputTransport();</span>
+<span class="fc" id="L151">            ChannelBuffer requestBuffer = outputTransport.getOutputBuffer();</span>
+<span class="fc" id="L152">            TProtocol outputProtocol = out.getProtocol(outputTransport);</span>
+
+            // write request
+<span class="fc" id="L155">            writeArguments(outputProtocol, sequenceId, args);</span>
+
+<span class="pc bpc" id="L157" title="1 of 2 branches missed.">            if (!this.oneway) {</span>
+                ChannelBuffer responseBuffer;
+
+<span class="fc" id="L160">                responseBuffer = SyncClientHelpers.sendSynchronousTwoWayMessage(channel, requestBuffer);</span>
+
+<span class="fc" id="L162">                TTransport inputTransport = new TChannelBufferInputTransport(responseBuffer);</span>
+<span class="fc" id="L163">                TProtocol inputProtocol = in.getProtocol(inputTransport);</span>
+<span class="fc" id="L164">                waitForResponse(inputProtocol, sequenceId);</span>
+
+                // read results
+<span class="fc" id="L167">                results = readResponse(inputProtocol);</span>
+<span class="fc" id="L168">            } else {</span>
+<span class="nc" id="L169">                SyncClientHelpers.sendSynchronousOneWayMessage(channel, requestBuffer);</span>
+            }
+
+<span class="fc" id="L172">            stats.addSuccessTime(nanosSince(start));</span>
+<span class="fc" id="L173">            return results;</span>
+        }
+<span class="fc" id="L175">        catch (Exception e) {</span>
+<span class="fc" id="L176">            stats.addErrorTime(nanosSince(start));</span>
+<span class="fc" id="L177">            throw e;</span>
+        }
+    }
+
+    public ListenableFuture&lt;Object&gt; asynchronousInvoke(final TProtocolFactory in,
+                                                       final TProtocolFactory out,
+                                                       final NiftyClientChannel channel,
+                                                       final int sequenceId,
+                                                       final Object[] args)
+        throws Exception
+    {
+<span class="nc" id="L188">        final long start = nanoTime();</span>
+
+        try {
+<span class="nc" id="L191">            final SettableFuture&lt;Object&gt; future = SettableFuture.create();</span>
+
+<span class="nc" id="L193">            TChannelBufferOutputTransport outTransport = new TChannelBufferOutputTransport();</span>
+<span class="nc" id="L194">            TProtocol outProtocol = out.getProtocol(outTransport);</span>
+<span class="nc" id="L195">            writeArguments(outProtocol, sequenceId, args);</span>
+
+            // send message and setup listener to handle the response
+<span class="nc" id="L198">            channel.sendAsynchronousRequest(outTransport.getOutputBuffer(), false, new NiftyClientChannel.Listener() {</span>
+                @Override
+<span class="nc" id="L200">                public void onRequestSent() {}</span>
+
+                @Override
+                public void onResponseReceived(ChannelBuffer message) {
+                    try {
+<span class="nc" id="L205">                        TTransport inputTransport = new TChannelBufferInputTransport(message);</span>
+<span class="nc" id="L206">                        TProtocol inputProtocol = in.getProtocol(inputTransport);</span>
+<span class="nc" id="L207">                        waitForResponse(inputProtocol, sequenceId);</span>
+<span class="nc" id="L208">                        Object results = readResponse(inputProtocol);</span>
+<span class="nc" id="L209">                        stats.addSuccessTime(nanosSince(start));</span>
+<span class="nc" id="L210">                        future.set(results);</span>
+<span class="nc" id="L211">                    } catch (Exception e) {</span>
+<span class="nc" id="L212">                        onException(e);</span>
+<span class="nc" id="L213">                    }</span>
+<span class="nc" id="L214">                }</span>
+
+                @Override
+                public void onChannelError(TException e) {
+<span class="nc" id="L218">                    onException(e);</span>
+<span class="nc" id="L219">                }</span>
+
+                private void onException(Throwable cause) {
+<span class="nc" id="L222">                    future.setException(cause);</span>
+<span class="nc" id="L223">                }</span>
+            });
+
+<span class="nc" id="L226">            return future;</span>
+<span class="nc" id="L227">        } catch (Exception e) {</span>
+<span class="nc" id="L228">            stats.addErrorTime(nanosSince(start));</span>
+<span class="nc" id="L229">            throw e;</span>
+        }
+
+    }
+
+    private Object readResponse(TProtocol in)
+            throws Exception
+    {
+<span class="fc" id="L237">        long start = nanoTime();</span>
+
+<span class="fc" id="L239">        TProtocolReader reader = new TProtocolReader(in);</span>
+<span class="fc" id="L240">        reader.readStructBegin();</span>
+<span class="fc" id="L241">        Object results = null;</span>
+<span class="fc" id="L242">        Exception exception = null;</span>
+<span class="fc bfc" id="L243" title="All 2 branches covered.">        while (reader.nextField()) {</span>
+<span class="fc bfc" id="L244" title="All 2 branches covered.">            if (reader.getFieldId() == 0) {</span>
+<span class="fc" id="L245">                results = reader.readField(successCodec);</span>
+            }
+            else {
+<span class="fc" id="L248">                ThriftCodec&lt;Object&gt; exceptionCodec = exceptionCodecs.get(reader.getFieldId());</span>
+<span class="pc bpc" id="L249" title="1 of 2 branches missed.">                if (exceptionCodec != null) {</span>
+<span class="fc" id="L250">                    exception = (Exception) reader.readField(exceptionCodec);</span>
+                }
+                else {
+<span class="nc" id="L253">                    reader.skipFieldData();</span>
+                }
+<span class="fc" id="L255">            }</span>
+        }
+<span class="fc" id="L257">        reader.readStructEnd();</span>
+<span class="fc" id="L258">        in.readMessageEnd();</span>
+
+<span class="fc" id="L260">        stats.addReadTime(nanosSince(start));</span>
+
+<span class="fc bfc" id="L262" title="All 2 branches covered.">        if (exception != null) {</span>
+<span class="fc" id="L263">            throw exception;</span>
+        }
+
+<span class="pc bpc" id="L266" title="1 of 2 branches missed.">        if (successCodec.getType() == ThriftType.VOID) {</span>
+            // TODO: check for non-null return from a void function?
+<span class="nc" id="L268">            return null;</span>
+        }
+
+<span class="pc bpc" id="L271" title="1 of 2 branches missed.">        if (results == null) {</span>
+<span class="nc" id="L272">            throw new TApplicationException(TApplicationException.MISSING_RESULT, name + &quot; failed: unknown result&quot;);</span>
+        }
+<span class="fc" id="L274">        return results;</span>
+    }
+
+    private void writeArguments(TProtocol out, int sequenceId, Object[] args)
+            throws Exception
+    {
+<span class="fc" id="L280">        long start = nanoTime();</span>
+
+        // Note that though setting message type to ONEWAY can be helpful when looking at packet
+        // captures, some clients always send CALL and so servers are forced to rely on the &quot;oneway&quot;
+        // attribute on thrift method in the interface definition, rather than checking the message
+        // type.
+<span class="pc bpc" id="L286" title="1 of 2 branches missed.">        out.writeMessageBegin(new TMessage(name, oneway ? ONEWAY : CALL, sequenceId));</span>
+
+        // write the parameters
+<span class="fc" id="L289">        TProtocolWriter writer = new TProtocolWriter(out);</span>
+<span class="fc" id="L290">        writer.writeStructBegin(name + &quot;_args&quot;);</span>
+<span class="fc bfc" id="L291" title="All 2 branches covered.">        for (int i = 0; i &lt; args.length; i++) {</span>
+<span class="fc" id="L292">            Object value = args[i];</span>
+<span class="fc" id="L293">            ParameterHandler parameter = parameterCodecs.get(i);</span>
+<span class="fc" id="L294">            writer.writeField(parameter.getName(), parameter.getId(), parameter.getCodec(), value);</span>
+        }
+<span class="fc" id="L296">        writer.writeStructEnd();</span>
+
+<span class="fc" id="L298">        out.writeMessageEnd();</span>
+<span class="fc" id="L299">        out.getTransport().flush();</span>
+
+<span class="fc" id="L301">        stats.addWriteTime(nanosSince(start));</span>
+<span class="fc" id="L302">    }</span>
+
+    private void waitForResponse(TProtocol in, int sequenceId)
+            throws TException
+    {
+<span class="fc" id="L307">        long start = nanoTime();</span>
+
+<span class="fc" id="L309">        TMessage message = in.readMessageBegin();</span>
+<span class="pc bpc" id="L310" title="1 of 2 branches missed.">        if (message.type == EXCEPTION) {</span>
+<span class="nc" id="L311">            TApplicationException exception = TApplicationException.read(in);</span>
+<span class="nc" id="L312">            in.readMessageEnd();</span>
+<span class="nc" id="L313">            throw exception;</span>
+        }
+<span class="pc bpc" id="L315" title="1 of 2 branches missed.">        if (message.type != REPLY) {</span>
+<span class="nc" id="L316">            throw new TApplicationException(INVALID_MESSAGE_TYPE,</span>
+                                            &quot;Received invalid message type &quot; + message.type + &quot; from server&quot;);
+        }
+<span class="pc bpc" id="L319" title="1 of 2 branches missed.">        if (!message.name.equals(this.name)) {</span>
+<span class="nc" id="L320">            throw new TApplicationException(WRONG_METHOD_NAME,</span>
+                                            &quot;Wrong method name in reply: expected &quot; + this.name + &quot; but received &quot; + message.name);
+        }
+<span class="pc bpc" id="L323" title="1 of 2 branches missed.">        if (message.seqid != sequenceId) {</span>
+<span class="nc" id="L324">            throw new TApplicationException(BAD_SEQUENCE_ID, name + &quot; failed: out of sequence response&quot;);</span>
+        }
+
+<span class="fc" id="L327">        stats.addInvokeTime(nanosSince(start));</span>
+<span class="fc" id="L328">    }</span>
+
+    private static final class ParameterHandler
+    {
+        private final short id;
+        private final String name;
+        private final ThriftCodec&lt;Object&gt; codec;
+
+        private ParameterHandler(short id, String name, ThriftCodec&lt;Object&gt; codec)
+<span class="fc" id="L337">        {</span>
+<span class="fc" id="L338">            this.id = id;</span>
+<span class="fc" id="L339">            this.name = name;</span>
+<span class="fc" id="L340">            this.codec = codec;</span>
+<span class="fc" id="L341">        }</span>
+
+        public short getId()
+        {
+<span class="fc" id="L345">            return id;</span>
+        }
+
+        public String getName()
+        {
+<span class="fc" id="L350">            return name;</span>
+        }
+
+        public ThriftCodec&lt;Object&gt; getCodec()
+        {
+<span class="fc" id="L355">            return codec;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

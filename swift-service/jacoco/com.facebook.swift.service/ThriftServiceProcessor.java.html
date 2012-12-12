@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ThriftServiceProcessor.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-service</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.service</a> &gt; <span class="el_source">ThriftServiceProcessor.java</span></div><h1>ThriftServiceProcessor.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.service;
+
+import com.facebook.swift.codec.ThriftCodecManager;
+import com.facebook.swift.service.metadata.ThriftMethodMetadata;
+import com.facebook.swift.service.metadata.ThriftServiceMetadata;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
+import org.apache.thrift.TApplicationException;
+import org.apache.thrift.TException;
+import org.apache.thrift.TProcessor;
+import org.apache.thrift.protocol.TMessage;
+import org.apache.thrift.protocol.TMessageType;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.protocol.TProtocolUtil;
+import org.apache.thrift.protocol.TType;
+
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.concurrent.ThreadSafe;
+
+import static org.apache.thrift.TApplicationException.INVALID_MESSAGE_TYPE;
+import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
+
+/**
+ * Example TProcessor that wraps a Thrift service.  This should only be considered an example, and
+ * is not production ready.  For example, this class makes assumptions about the thrift id of
+ * method parameters, and does not support Thrift exceptions properly.
+ */
+@ThreadSafe
+public class ThriftServiceProcessor implements TProcessor
+{
+    private final Map&lt;String, ThriftMethodProcessor&gt; methods;
+    private final Multimap&lt;String, ThriftMethodStats&gt; serviceStats;
+
+    /**
+     * @param services the services to expose; services must be thread safe
+     */
+    public ThriftServiceProcessor(ThriftCodecManager codecManager, Object... services)
+    {
+<span class="fc" id="L60">        this(codecManager, ImmutableList.copyOf(services));</span>
+<span class="fc" id="L61">    }</span>
+
+    public ThriftServiceProcessor(ThriftCodecManager codecManager, List&lt;Object&gt; services)
+<span class="fc" id="L64">    {</span>
+<span class="fc" id="L65">        Preconditions.checkNotNull(codecManager, &quot;codecManager is null&quot;);</span>
+<span class="fc" id="L66">        Preconditions.checkNotNull(services, &quot;service is null&quot;);</span>
+<span class="pc bpc" id="L67" title="1 of 2 branches missed.">        Preconditions.checkArgument(!services.isEmpty(), &quot;services is empty&quot;);</span>
+
+        // NOTE: ImmutableMap enforces that we don't have duplicate method names
+<span class="fc" id="L70">        ImmutableMap.Builder&lt;String, ThriftMethodProcessor&gt; processorBuilder = ImmutableMap.builder();</span>
+<span class="fc" id="L71">        ImmutableMultimap.Builder&lt;String, ThriftMethodStats&gt; statsBuilder = ImmutableMultimap.builder();</span>
+<span class="fc bfc" id="L72" title="All 2 branches covered.">        for (Object service : services) {</span>
+<span class="fc" id="L73">            ThriftServiceMetadata serviceMetadata = new ThriftServiceMetadata(service.getClass(), codecManager.getCatalog());</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">            for (ThriftMethodMetadata methodMetadata : serviceMetadata.getMethods().values()) {</span>
+<span class="fc" id="L75">                ThriftMethodProcessor methodProcessor = new ThriftMethodProcessor(service, methodMetadata, codecManager);</span>
+<span class="fc" id="L76">                processorBuilder.put(methodMetadata.getName(), methodProcessor);</span>
+<span class="fc" id="L77">                statsBuilder.put(serviceMetadata.getName(), methodProcessor.getStats());</span>
+<span class="fc" id="L78">            }</span>
+<span class="fc" id="L79">        }</span>
+<span class="fc" id="L80">        methods = processorBuilder.build();</span>
+<span class="fc" id="L81">        serviceStats = statsBuilder.build();</span>
+<span class="fc" id="L82">    }</span>
+
+    public Map&lt;String, ThriftMethodProcessor&gt; getMethods()
+    {
+<span class="fc" id="L86">        return methods;</span>
+    }
+
+    public Multimap&lt;String, ThriftMethodStats&gt; getServiceStats()
+    {
+<span class="nc" id="L91">        return serviceStats;</span>
+    }
+
+    @Override
+    @SuppressWarnings(&quot;PMD.EmptyCatchBlock&quot;)
+    public boolean process(TProtocol in, TProtocol out)
+            throws TException
+    {
+<span class="fc" id="L99">        TMessage message = in.readMessageBegin();</span>
+<span class="fc" id="L100">        String methodName = message.name;</span>
+<span class="fc" id="L101">        int sequenceId = message.seqid;</span>
+
+        try {
+            // lookup method
+<span class="fc" id="L105">            ThriftMethodProcessor method = methods.get(methodName);</span>
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">            if (method == null) {</span>
+<span class="nc" id="L107">                TProtocolUtil.skip(in, TType.STRUCT);</span>
+<span class="nc" id="L108">                throw new TApplicationException(UNKNOWN_METHOD, &quot;Invalid method name: '&quot; + methodName + &quot;'&quot;);</span>
+            }
+
+<span class="pc bpc" id="L111" title="1 of 2 branches missed.">            switch (message.type) {</span>
+                case TMessageType.CALL:
+                case TMessageType.ONEWAY:
+                    // Ideally we'd check the message type here to make the presence/absence of
+                    // the &quot;oneway&quot; keyword annotating the method matches the message type.
+                    // Unfortunately most clients send both one-way and two-way messages as CALL
+                    // message type instead of using ONEWAY message type, and servers ignore the
+                    // difference.
+<span class="fc" id="L119">                    break;</span>
+
+                default:
+<span class="nc" id="L122">                    throw new TApplicationException(INVALID_MESSAGE_TYPE,</span>
+                                                    &quot;Received invalid message type &quot; + message.type + &quot; from client&quot;);
+            }
+
+            // invoke method
+<span class="fc" id="L127">            method.process(in, out, sequenceId);</span>
+
+<span class="fc" id="L129">            return true;</span>
+        }
+<span class="nc" id="L131">        catch (Exception e) {</span>
+            // Other exceptions are not recoverable. The input or output streams may be corrupt.
+<span class="nc" id="L133">            Throwables.propagateIfInstanceOf(e, TException.class);</span>
+<span class="nc" id="L134">            throw new TException(e);</span>
+        }
+        finally {
+<span class="nc" id="L137">            try {</span>
+<span class="pc" id="L138">                in.readMessageEnd();</span>
+            }
+<span class="nc" id="L140">            catch (TException ignore) {</span>
+<span class="pc" id="L141">            }</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

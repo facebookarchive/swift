@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ThriftClientBinder.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-service</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.service.guice</a> &gt; <span class="el_source">ThriftClientBinder.java</span></div><h1>ThriftClientBinder.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.service.guice;
+
+import com.facebook.swift.service.ThriftClient;
+import com.facebook.swift.service.ThriftClientConfig;
+import com.facebook.swift.service.ThriftClientManager;
+import com.facebook.swift.service.ThriftClientManager.ThriftClientMetadata;
+import com.google.common.base.Preconditions;
+import com.google.common.reflect.TypeParameter;
+import com.google.common.reflect.TypeToken;
+import com.google.inject.Binder;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.Provider;
+import com.google.inject.Scopes;
+import com.google.inject.TypeLiteral;
+import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Named;
+import com.google.inject.name.Names;
+import org.weakref.jmx.guice.ExportBinder;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+import java.util.UUID;
+
+import static com.facebook.swift.service.ThriftClientManager.DEFAULT_NAME;
+import static com.facebook.swift.service.metadata.ThriftServiceMetadata.getThriftServiceAnnotation;
+import static io.airlift.configuration.ConfigurationModule.bindConfig;
+import static java.lang.String.format;
+
+public class ThriftClientBinder
+{
+    public static ThriftClientBinder thriftClientBinder(Binder binder)
+    {
+<span class="fc" id="L50">        return new ThriftClientBinder(binder);</span>
+    }
+
+    private final Binder binder;
+
+    private ThriftClientBinder(Binder binder)
+<span class="fc" id="L56">    {</span>
+<span class="fc" id="L57">        this.binder = binder;</span>
+<span class="fc" id="L58">    }</span>
+
+    public &lt;T&gt; void bindThriftClient(Class&lt;T&gt; clientInterface)
+    {
+<span class="fc" id="L62">        Preconditions.checkNotNull(clientInterface, &quot;clientInterface is null&quot;);</span>
+<span class="fc" id="L63">        String typeName = getServiceName(clientInterface);</span>
+
+        // Bind ThriftClientConfig with random @Named annotation
+        // We generate a random Named annotation for binding the ThriftClientConfig because we
+        // need one of these for each clientType+annotationType pair.  Without this, the
+        // ThriftClientConfig bindings collapse to a single instance which is shared by all
+        // clients.
+<span class="fc" id="L70">        Named thriftClientConfigKey = Names.named(UUID.randomUUID().toString());</span>
+<span class="fc" id="L71">        bindConfig(binder).annotatedWith(thriftClientConfigKey).prefixedWith(typeName).to(ThriftClientConfig.class);</span>
+
+        // Bind ThriftClient to a provider which knows how to find the ThriftClientConfig using
+        // the random @Named annotation
+<span class="fc" id="L75">        TypeLiteral&lt;ThriftClient&lt;T&gt;&gt; typeLiteral = toThriftClientTypeLiteral(clientInterface);</span>
+<span class="fc" id="L76">        ThriftClientProviderProvider&lt;T&gt; provider = new ThriftClientProviderProvider&lt;&gt;(clientInterface, DEFAULT_NAME, Key.get(ThriftClientConfig.class, thriftClientConfigKey));</span>
+<span class="fc" id="L77">        binder.bind(typeLiteral).toProvider(provider).in(Scopes.SINGLETON);</span>
+
+        // Export client to jmx
+<span class="fc" id="L80">        ExportBinder.newExporter(binder)</span>
+                .export(Key.get(typeLiteral))
+                .as(format(&quot;com.facebook.swift.client:type=%s,clientName=%s&quot;,
+                        typeName,
+                        DEFAULT_NAME));
+
+        // Add the provider itself to a SetBinding so later we can export the thrift methods to JMX
+<span class="fc" id="L87">        Multibinder.newSetBinder(binder, ThriftClientProviderProvider.class).addBinding().toInstance(provider);</span>
+<span class="fc" id="L88">    }</span>
+
+    public &lt;T&gt; void bindThriftClient(Class&lt;T&gt; clientInterface, Class&lt;? extends Annotation&gt; annotationType)
+    {
+<span class="fc" id="L92">        Preconditions.checkNotNull(clientInterface, &quot;clientInterface is null&quot;);</span>
+<span class="fc" id="L93">        String typeName = getServiceName(clientInterface);</span>
+<span class="fc" id="L94">        String name = annotationType.getSimpleName();</span>
+
+        // Bind ThriftClientConfig with random @Named annotation
+        // see comment on random Named annotation above
+<span class="fc" id="L98">        Named thriftClientConfigKey = Names.named(UUID.randomUUID().toString());</span>
+<span class="fc" id="L99">        String prefix = String.format(&quot;%s.%s&quot;, typeName, name);</span>
+<span class="fc" id="L100">        bindConfig(binder).annotatedWith(thriftClientConfigKey).prefixedWith(prefix).to(ThriftClientConfig.class);</span>
+
+        // Bind ThriftClient to a provider which knows how to find the ThriftClientConfig using
+        // the random @Named annotation
+<span class="fc" id="L104">        TypeLiteral&lt;ThriftClient&lt;T&gt;&gt; typeLiteral = toThriftClientTypeLiteral(clientInterface);</span>
+<span class="fc" id="L105">        ThriftClientProviderProvider&lt;T&gt; provider = new ThriftClientProviderProvider&lt;&gt;(clientInterface,</span>
+                name,
+                Key.get(ThriftClientConfig.class, thriftClientConfigKey));
+<span class="fc" id="L108">        binder.bind(Key.get(typeLiteral, annotationType)).toProvider(provider).in(Scopes.SINGLETON);</span>
+
+        // Export client to jmx
+<span class="fc" id="L111">        ExportBinder.newExporter(binder)</span>
+                .export(Key.get(typeLiteral))
+                .as(format(&quot;com.facebook.swift.client:type=%s,clientName=%s&quot;,
+                        typeName,
+                        name));
+
+        // Add the provider itself to a SetBinding so later we can export the thrift methods to JMX
+<span class="fc" id="L118">        Multibinder.newSetBinder(binder, ThriftClientProviderProvider.class).addBinding().toInstance(provider);</span>
+<span class="fc" id="L119">    }</span>
+
+    private static String getServiceName(Class&lt;?&gt; clientInterface)
+    {
+<span class="fc" id="L123">        String serviceName = getThriftServiceAnnotation(clientInterface).value();</span>
+<span class="fc bfc" id="L124" title="All 2 branches covered.">        if (!serviceName.isEmpty()) {</span>
+<span class="fc" id="L125">            return serviceName;</span>
+        }
+<span class="fc" id="L127">        return clientInterface.getSimpleName();</span>
+    }
+
+    /**
+     * @return TypeLiteral&lt;ThriftClient&lt;T&gt;&gt;
+     */
+    private static &lt;T&gt; TypeLiteral&lt;ThriftClient&lt;T&gt;&gt; toThriftClientTypeLiteral(Class&lt;T&gt; clientInterface)
+    {
+        // build a TypeLiteral&lt;ThriftClientProvider&lt;T&gt;&gt; where T is bound to the actual clientInterface class
+        @SuppressWarnings(&quot;serial&quot;)
+<span class="fc" id="L137">        Type javaType = new TypeToken&lt;ThriftClient&lt;T&gt;&gt;() {}</span>
+<span class="fc" id="L138">                .where(new TypeParameter&lt;T&gt;() {}, TypeToken.of(clientInterface))</span>
+                .getType();
+<span class="fc" id="L140">        return (TypeLiteral&lt;ThriftClient&lt;T&gt;&gt;) TypeLiteral.get(javaType);</span>
+    }
+
+    public static class ThriftClientProviderProvider&lt;T&gt; implements Provider&lt;ThriftClient&lt;T&gt;&gt;
+    {
+        private final Class&lt;T&gt; clientType;
+        private final String clientName;
+        private final Key&lt;ThriftClientConfig&gt; configKey;
+        private ThriftClientManager clientManager;
+        private Injector injector;
+
+        public ThriftClientProviderProvider(Class&lt;T&gt; clientType, String clientName, Key&lt;ThriftClientConfig&gt; configKey)
+<span class="fc" id="L152">        {</span>
+<span class="fc" id="L153">            Preconditions.checkNotNull(clientType, &quot;clientInterface is null&quot;);</span>
+<span class="fc" id="L154">            Preconditions.checkNotNull(clientName, &quot;clientName is null&quot;);</span>
+<span class="fc" id="L155">            Preconditions.checkNotNull(configKey, &quot;configKey is null&quot;);</span>
+<span class="fc" id="L156">            this.clientType = clientType;</span>
+<span class="fc" id="L157">            this.clientName = clientName;</span>
+<span class="fc" id="L158">            this.configKey = configKey;</span>
+<span class="fc" id="L159">        }</span>
+
+        @Inject
+        public void setClientManager(ThriftClientManager clientManager)
+        {
+<span class="fc" id="L164">            this.clientManager = clientManager;</span>
+<span class="fc" id="L165">        }</span>
+
+        @Inject
+        public void setInjector(Injector injector)
+        {
+<span class="fc" id="L170">            this.injector = injector;</span>
+<span class="fc" id="L171">        }</span>
+
+        @Override
+        public ThriftClient&lt;T&gt; get()
+        {
+<span class="pc bpc" id="L176" title="1 of 2 branches missed.">            Preconditions.checkState(clientManager != null, &quot;clientManager has not been set&quot;);</span>
+<span class="pc bpc" id="L177" title="1 of 2 branches missed.">            Preconditions.checkState(injector != null, &quot;injector has not been set&quot;);</span>
+<span class="fc" id="L178">            ThriftClientConfig clientConfig = injector.getInstance(configKey);</span>
+<span class="fc" id="L179">            return new ThriftClient&lt;&gt;(clientManager, clientType, clientConfig, clientName);</span>
+        }
+
+        public ThriftClientMetadata getClientMetadata()
+        {
+<span class="pc bpc" id="L184" title="1 of 2 branches missed.">            Preconditions.checkState(clientManager != null, &quot;clientManager has not been set&quot;);</span>
+<span class="fc" id="L185">            return clientManager.getClientMetadata(clientType, clientName);</span>
+        }
+
+        @Override
+        public boolean equals(Object o)
+        {
+<span class="nc bnc" id="L191" title="All 2 branches missed.">            if (this == o) {</span>
+<span class="nc" id="L192">                return true;</span>
+            }
+<span class="nc bnc" id="L194" title="All 4 branches missed.">            if (o == null || getClass() != o.getClass()) {</span>
+<span class="nc" id="L195">                return false;</span>
+            }
+
+<span class="nc" id="L198">            ThriftClientProviderProvider&lt;?&gt; that = (ThriftClientProviderProvider&lt;?&gt;) o;</span>
+
+<span class="nc bnc" id="L200" title="All 2 branches missed.">            if (!clientName.equals(that.clientName)) {</span>
+<span class="nc" id="L201">                return false;</span>
+            }
+<span class="nc bnc" id="L203" title="All 2 branches missed.">            if (!clientType.equals(that.clientType)) {</span>
+<span class="nc" id="L204">                return false;</span>
+            }
+
+<span class="nc" id="L207">            return true;</span>
+        }
+
+        @Override
+        public int hashCode()
+        {
+<span class="fc" id="L213">            int result = clientType.hashCode();</span>
+<span class="fc" id="L214">            result = 31 * result + clientName.hashCode();</span>
+<span class="fc" id="L215">            return result;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

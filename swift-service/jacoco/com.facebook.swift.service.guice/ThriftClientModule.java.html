@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ThriftClientModule.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-service</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.service.guice</a> &gt; <span class="el_source">ThriftClientModule.java</span></div><h1>ThriftClientModule.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.service.guice;
+
+import com.facebook.swift.service.ThriftClientManager;
+import com.facebook.swift.service.ThriftClientManager.ThriftClientMetadata;
+import com.facebook.swift.service.ThriftMethodHandler;
+import com.facebook.swift.service.guice.ThriftClientBinder.ThriftClientProviderProvider;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
+import com.google.inject.Binder;
+import com.google.inject.Module;
+import com.google.inject.Provides;
+import com.google.inject.Scopes;
+import org.weakref.jmx.guice.ExportBinder;
+import org.weakref.jmx.guice.MapObjectNameFunction;
+
+import javax.inject.Singleton;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+import java.util.Map;
+import java.util.Set;
+
+import static com.google.inject.multibindings.Multibinder.newSetBinder;
+import static java.lang.String.format;
+
+<span class="fc" id="L40">public class ThriftClientModule implements Module</span>
+{
+    @Override
+    public void configure(Binder binder)
+    {
+        // Bind single shared ThriftClientManager
+<span class="fc" id="L46">        binder.bind(ThriftClientManager.class).toProvider(ThriftClientManagerProvider.class).in(Scopes.SINGLETON);</span>
+
+        // We bind the ThriftClientProviderProviders in a Set so below we can export the thrift methods to JMX
+<span class="fc" id="L49">        newSetBinder(binder, ThriftClientProviderProvider.class).permitDuplicates();</span>
+<span class="fc" id="L50">        ExportBinder.newExporter(binder)</span>
+                .exportMap(ObjectName.class, ThriftMethodHandler.class)
+                .withGeneratedName(new MapObjectNameFunction&lt;ObjectName, ThriftMethodHandler&gt;()
+<span class="fc" id="L53">                {</span>
+                    @Override
+                    public ObjectName name(ObjectName key, ThriftMethodHandler value)
+                    {
+<span class="fc" id="L57">                        return key;</span>
+                    }
+                });
+<span class="fc" id="L60">    }</span>
+
+    @Provides
+    @Singleton
+    public Map&lt;ObjectName, ThriftMethodHandler&gt; getMethodProcessors(Set&lt;ThriftClientProviderProvider&gt; clientProviders)
+    {
+        try {
+            // extract method handles into a map so they can be exported individually into jmx
+<span class="fc" id="L68">            ImmutableMap.Builder&lt;ObjectName, ThriftMethodHandler&gt; builder = ImmutableMap.builder();</span>
+<span class="fc bfc" id="L69" title="All 2 branches covered.">            for (ThriftClientProviderProvider&lt;?&gt; clientProvider : clientProviders) {</span>
+<span class="fc" id="L70">                ThriftClientMetadata clientMetadata = clientProvider.getClientMetadata();</span>
+<span class="fc bfc" id="L71" title="All 2 branches covered.">                for (ThriftMethodHandler methodHandler : clientMetadata.getMethodHandlers().values()) {</span>
+<span class="fc" id="L72">                    String name = format(&quot;com.facebook.swift.client:type=%s,clientName=%s,name=%s&quot;,</span>
+                            clientMetadata.getClientType(),
+                            clientMetadata.getClientName(),
+                            methodHandler.getName());
+<span class="fc" id="L76">                    builder.put(ObjectName.getInstance(name), methodHandler);</span>
+<span class="fc" id="L77">                }</span>
+<span class="fc" id="L78">            }</span>
+<span class="fc" id="L79">            return builder.build();</span>
+        }
+<span class="nc" id="L81">        catch (MalformedObjectNameException e) {</span>
+<span class="nc" id="L82">            throw Throwables.propagate(e);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

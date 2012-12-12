@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>SyncClientHelpers.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-service</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.service</a> &gt; <span class="el_source">SyncClientHelpers.java</span></div><h1>SyncClientHelpers.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.service;
+
+import com.facebook.nifty.client.NiftyClientChannel;
+import org.apache.thrift.TException;
+import org.apache.thrift.transport.TTransportException;
+import org.jboss.netty.buffer.ChannelBuffer;
+
+import java.util.concurrent.CountDownLatch;
+
+/**
+ * Helper class simulating synchronous operations on asynchronous {@link NiftyClientChannel}
+ */
+<span class="nc" id="L28">class SyncClientHelpers</span>
+{
+    /**
+     * Sends a single message synchronously, and blocks until the responses is received.
+     * &lt;p/&gt;
+     * NOTE: the underlying transport may be non-blocking, in which case the blocking is simulated
+     * by waits instead of using blocking network operations.
+     *
+     * @param request
+     * @return The response, stored in a ChannelBuffer
+     * @throws TException           if an error occurs while serializing or sending the request or
+     *                              while receiving or de-serializing the response
+     * @throws InterruptedException if the operation is interrupted before the response arrives
+     */
+    public static ChannelBuffer sendSynchronousTwoWayMessage(NiftyClientChannel channel,
+                                                             final ChannelBuffer request)
+            throws TException, InterruptedException
+    {
+<span class="fc" id="L46">        final ChannelBuffer[] responseHolder = new ChannelBuffer[1];</span>
+<span class="fc" id="L47">        final TException[] exceptionHolder = new TTransportException[1];</span>
+<span class="fc" id="L48">        final CountDownLatch latch = new CountDownLatch(1);</span>
+
+<span class="fc" id="L50">        responseHolder[0] = null;</span>
+<span class="fc" id="L51">        exceptionHolder[0] = null;</span>
+
+<span class="fc" id="L53">        channel.sendAsynchronousRequest(request, false, new NiftyClientChannel.Listener()</span>
+<span class="fc" id="L54">        {</span>
+            @Override
+            public void onRequestSent()
+            {
+<span class="fc" id="L58">            }</span>
+
+            @Override
+            public void onResponseReceived(ChannelBuffer response)
+            {
+<span class="fc" id="L63">                responseHolder[0] = response;</span>
+<span class="fc" id="L64">                latch.countDown();</span>
+<span class="fc" id="L65">            }</span>
+
+            @Override
+            public void onChannelError(TException e)
+            {
+<span class="nc" id="L70">                exceptionHolder[0] = e;</span>
+<span class="nc" id="L71">                latch.countDown();</span>
+<span class="nc" id="L72">            }</span>
+        });
+
+<span class="fc" id="L75">        latch.await();</span>
+
+<span class="pc bpc" id="L77" title="1 of 2 branches missed.">        if (exceptionHolder[0] != null) {</span>
+<span class="nc" id="L78">            throw exceptionHolder[0];</span>
+        }
+
+<span class="fc" id="L81">        return responseHolder[0];</span>
+    }
+
+    /**
+     * Sends a single message synchronously, blocking until the send is complete. Does not wait for
+     * a response.
+     * &lt;p/&gt;
+     * NOTE: the underlying transport may be non-blocking, in which case the blocking is simulated
+     * by waits instead of using blocking network operations.
+     *
+     * @param request
+     * @throws TException           if a network or protocol error occurs while serializing or
+     *                              sending the request
+     * @throws InterruptedException if the thread is interrupted before the request is sent
+     */
+    public static void sendSynchronousOneWayMessage(NiftyClientChannel channel,
+                                                    final ChannelBuffer request)
+            throws TException, InterruptedException
+    {
+
+<span class="nc" id="L101">        final TException[] exceptionHolder = new TTransportException[1];</span>
+<span class="nc" id="L102">        final CountDownLatch latch = new CountDownLatch(1);</span>
+
+<span class="nc" id="L104">        exceptionHolder[0] = null;</span>
+
+<span class="nc" id="L106">        channel.sendAsynchronousRequest(request, true, new NiftyClientChannel.Listener()</span>
+<span class="nc" id="L107">        {</span>
+            @Override
+            public void onRequestSent()
+            {
+<span class="nc" id="L111">                latch.countDown();</span>
+<span class="nc" id="L112">            }</span>
+
+            @Override
+            public void onResponseReceived(ChannelBuffer response)
+            {
+<span class="nc" id="L117">            }</span>
+
+            @Override
+            public void onChannelError(TException e)
+            {
+<span class="nc" id="L122">                exceptionHolder[0] = e;</span>
+<span class="nc" id="L123">                latch.countDown();</span>
+<span class="nc" id="L124">            }</span>
+        });
+
+<span class="nc" id="L127">        latch.await();</span>
+
+<span class="nc bnc" id="L129" title="All 2 branches missed.">        if (exceptionHolder[0] != null) {</span>
+<span class="nc" id="L130">            throw exceptionHolder[0];</span>
+        }
+<span class="nc" id="L132">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

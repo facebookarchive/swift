@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ThriftClientConfig.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-service</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.service</a> &gt; <span class="el_source">ThriftClientConfig.java</span></div><h1>ThriftClientConfig.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.service;
+
+import com.google.common.net.HostAndPort;
+import io.airlift.configuration.Config;
+import io.airlift.units.Duration;
+import io.airlift.units.MinDuration;
+
+import java.util.concurrent.TimeUnit;
+
+<span class="fc" id="L25">public class ThriftClientConfig</span>
+{
+<span class="fc" id="L27">    public static final Duration DEFAULT_CONNECT_TIMEOUT = new Duration(500, TimeUnit.MILLISECONDS);</span>
+<span class="fc" id="L28">    public static final Duration DEFAULT_READ_TIMEOUT = new Duration(1, TimeUnit.MINUTES);</span>
+<span class="fc" id="L29">    public static final Duration DEFAULT_WRITE_TIMEOUT = new Duration(1, TimeUnit.MINUTES);</span>
+
+<span class="fc" id="L31">    private Duration connectTimeout = DEFAULT_CONNECT_TIMEOUT;</span>
+<span class="fc" id="L32">    private Duration readTimeout = DEFAULT_READ_TIMEOUT;</span>
+<span class="fc" id="L33">    private Duration writeTimeout = DEFAULT_WRITE_TIMEOUT;</span>
+    private HostAndPort socksProxy;
+
+    @MinDuration(&quot;1ms&quot;)
+    public Duration getConnectTimeout()
+    {
+<span class="fc" id="L39">        return connectTimeout;</span>
+    }
+
+    @Config(&quot;thrift.client.connect-timeout&quot;)
+    public ThriftClientConfig setConnectTimeout(Duration connectTimeout)
+    {
+<span class="nc" id="L45">        this.connectTimeout = connectTimeout;</span>
+<span class="nc" id="L46">        return this;</span>
+    }
+
+    @MinDuration(&quot;1ms&quot;)
+    public Duration getReadTimeout()
+    {
+<span class="fc" id="L52">        return readTimeout;</span>
+    }
+
+    @Config(&quot;thrift.client.read-timeout&quot;)
+    public ThriftClientConfig setReadTimeout(Duration readTimeout)
+    {
+<span class="nc" id="L58">        this.readTimeout = readTimeout;</span>
+<span class="nc" id="L59">        return this;</span>
+    }
+
+    @MinDuration(&quot;1ms&quot;)
+    public Duration getWriteTimeout()
+    {
+<span class="fc" id="L65">        return writeTimeout;</span>
+    }
+
+    @Config(&quot;thrift.client.write-timeout&quot;)
+    public ThriftClientConfig setWriteTimeout(Duration writeTimeout)
+    {
+<span class="nc" id="L71">        this.writeTimeout = writeTimeout;</span>
+<span class="nc" id="L72">        return this;</span>
+    }
+
+    public HostAndPort getSocksProxy()
+    {
+<span class="fc" id="L77">        return socksProxy;</span>
+    }
+
+    @Config(&quot;thrift.client.socks-proxy&quot;)
+    public ThriftClientConfig setSocksProxy(HostAndPort socksProxy)
+    {
+<span class="nc" id="L83">        this.socksProxy = socksProxy;</span>
+<span class="nc" id="L84">        return this;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

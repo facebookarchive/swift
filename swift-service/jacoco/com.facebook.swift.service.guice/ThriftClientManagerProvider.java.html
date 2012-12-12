@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ThriftClientManagerProvider.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-service</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.service.guice</a> &gt; <span class="el_source">ThriftClientManagerProvider.java</span></div><h1>ThriftClientManagerProvider.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.service.guice;
+
+import com.facebook.swift.service.ThriftClientManager;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.name.Named;
+
+<span class="fc" id="L23">public class ThriftClientManagerProvider implements Provider&lt;ThriftClientManager&gt;</span>
+{
+    private Integer maxFrameSize;
+
+    @Inject(optional = true)
+    public void setMaxFrameSize(@Named(&quot;thrift_client_max_frame_size&quot;) Integer maxFrameSize)
+    {
+<span class="nc" id="L30">        this.maxFrameSize = maxFrameSize;</span>
+<span class="nc" id="L31">    }</span>
+
+    @Override
+    public ThriftClientManager get()
+    {
+<span class="pc bpc" id="L36" title="1 of 2 branches missed.">        if (maxFrameSize == null) {</span>
+<span class="fc" id="L37">            return new ThriftClientManager();</span>
+        }
+
+<span class="nc" id="L40">        return new ThriftClientManager(maxFrameSize);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ThriftMethodMetadata.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-service</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.service.metadata</a> &gt; <span class="el_source">ThriftMethodMetadata.java</span></div><h1>ThriftMethodMetadata.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.service.metadata;
+
+import com.facebook.swift.codec.ThriftField;
+import com.facebook.swift.codec.ThriftStruct;
+import com.facebook.swift.codec.metadata.ThriftCatalog;
+import com.facebook.swift.codec.metadata.ThriftFieldMetadata;
+import com.facebook.swift.codec.metadata.ThriftInjection;
+import com.facebook.swift.codec.metadata.ThriftParameterInjection;
+import com.facebook.swift.codec.metadata.ThriftType;
+import com.facebook.swift.service.ThriftException;
+import com.facebook.swift.service.ThriftMethod;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.reflect.TypeToken;
+import com.google.common.util.concurrent.ListenableFuture;
+import org.apache.thrift.TException;
+
+import javax.annotation.concurrent.Immutable;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static com.facebook.swift.codec.metadata.ReflectionHelper.extractParameterNames;
+import static com.google.common.base.Preconditions.checkState;
+
+@Immutable
+public class ThriftMethodMetadata
+{
+    private final String name;
+    private final ThriftType returnType;
+    private final List&lt;ThriftFieldMetadata&gt; parameters;
+    private final Method method;
+    private final ImmutableMap&lt;Short, ThriftType&gt; exceptions;
+    private final boolean oneway;
+
+    public ThriftMethodMetadata(Method method, ThriftCatalog catalog)
+<span class="fc" id="L58">    {</span>
+<span class="fc" id="L59">        Preconditions.checkNotNull(method, &quot;method is null&quot;);</span>
+<span class="fc" id="L60">        Preconditions.checkNotNull(catalog, &quot;catalog is null&quot;);</span>
+
+<span class="fc" id="L62">        this.method = method;</span>
+
+<span class="fc" id="L64">        ThriftMethod thriftMethod = method.getAnnotation(ThriftMethod.class);</span>
+<span class="pc bpc" id="L65" title="1 of 2 branches missed.">        Preconditions.checkArgument(thriftMethod != null, &quot;Method is not annotated with @ThriftMethod&quot;);</span>
+
+<span class="pc bpc" id="L67" title="1 of 2 branches missed.">        Preconditions.checkArgument(!Modifier.isStatic(method.getModifiers()), &quot;Method %s is static&quot;, method.toGenericString());</span>
+
+<span class="fc bfc" id="L69" title="All 2 branches covered.">        if (thriftMethod.value().length() == 0) {</span>
+<span class="fc" id="L70">            name = method.getName();</span>
+        }
+        else {
+<span class="fc" id="L73">            name = thriftMethod.value();</span>
+        }
+
+<span class="fc" id="L76">        returnType = catalog.getThriftType(method.getGenericReturnType());</span>
+
+<span class="fc" id="L78">        ImmutableList.Builder&lt;ThriftFieldMetadata&gt; builder = ImmutableList.builder();</span>
+<span class="fc" id="L79">        Type[] parameterTypes = method.getGenericParameterTypes();</span>
+<span class="fc" id="L80">        String[] parameterNames = extractParameterNames(method);</span>
+<span class="fc" id="L81">        Annotation[][] parameterAnnotations = method.getParameterAnnotations();</span>
+<span class="fc bfc" id="L82" title="All 2 branches covered.">        for (int index = 0; index &lt; parameterTypes.length; index++) {</span>
+<span class="fc" id="L83">            ThriftField thriftField = null;</span>
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">            for (Annotation annotation : parameterAnnotations[index]) {</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">                if (annotation instanceof ThriftField) {</span>
+<span class="nc" id="L86">                    thriftField = (ThriftField) annotation;</span>
+<span class="nc" id="L87">                    break;</span>
+                }
+            }
+
+<span class="fc" id="L91">            short parameterId = Short.MIN_VALUE;</span>
+<span class="fc" id="L92">            String parameterName = null;</span>
+<span class="pc bpc" id="L93" title="1 of 2 branches missed.">            if (thriftField != null) {</span>
+<span class="nc" id="L94">                parameterId = thriftField.value();</span>
+<span class="nc bnc" id="L95" title="All 2 branches missed.">                if (!thriftField.name().isEmpty()) {</span>
+<span class="nc" id="L96">                    parameterName = thriftField.name();</span>
+                }
+            }
+<span class="pc bpc" id="L99" title="1 of 2 branches missed.">            if (parameterId == Short.MIN_VALUE) {</span>
+<span class="fc" id="L100">                parameterId = (short) (index + 1);</span>
+            }
+<span class="pc bpc" id="L102" title="1 of 2 branches missed.">            if (parameterName == null) {</span>
+<span class="fc" id="L103">                parameterName = parameterNames[index];</span>
+            }
+
+<span class="fc" id="L106">            Type parameterType = parameterTypes[index];</span>
+
+<span class="fc" id="L108">            ThriftType thriftType = catalog.getThriftType(parameterType);</span>
+
+<span class="fc" id="L110">            ThriftFieldMetadata fieldMetadata = new ThriftFieldMetadata(</span>
+                    parameterId,
+                    thriftType,
+                    parameterName,
+                    ImmutableList.&lt;ThriftInjection&gt;of(new ThriftParameterInjection(parameterId, parameterName, index, parameterType)),
+                    null,
+                    null
+            );
+<span class="fc" id="L118">            builder.add(fieldMetadata);</span>
+        }
+<span class="fc" id="L120">        parameters = builder.build();</span>
+
+<span class="fc" id="L122">        exceptions = buildExceptionMap(catalog, thriftMethod);</span>
+
+<span class="fc" id="L124">        this.oneway = thriftMethod.oneway();</span>
+<span class="fc" id="L125">    }</span>
+
+    public String getName()
+    {
+<span class="fc" id="L129">        return name;</span>
+    }
+
+    public ThriftType getReturnType()
+    {
+<span class="fc" id="L134">        return returnType;</span>
+    }
+
+    public List&lt;ThriftFieldMetadata&gt; getParameters()
+    {
+<span class="fc" id="L139">        return parameters;</span>
+    }
+
+    public Map&lt;Short, ThriftType&gt; getExceptions()
+    {
+<span class="fc" id="L144">        return exceptions;</span>
+    }
+
+    public ThriftType getException(short id)
+    {
+<span class="nc" id="L149">        return exceptions.get(id);</span>
+    }
+
+    public Method getMethod()
+    {
+<span class="fc" id="L154">        return method;</span>
+    }
+
+    public boolean getOneway() {
+<span class="fc" id="L158">        return oneway;</span>
+    }
+
+    private ImmutableMap&lt;Short, ThriftType&gt; buildExceptionMap(ThriftCatalog catalog,
+                                                              ThriftMethod thriftMethod) {
+<span class="fc" id="L163">        ImmutableMap.Builder&lt;Short, ThriftType&gt; exceptions = ImmutableMap.builder();</span>
+<span class="fc" id="L164">        Set&lt;Type&gt; exceptionTypes = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L165">        int customExceptionCount = 0;</span>
+
+<span class="fc bfc" id="L167" title="All 2 branches covered.">        if (thriftMethod.exception().length &gt; 0) {</span>
+<span class="fc bfc" id="L168" title="All 2 branches covered.">            for (ThriftException thriftException : thriftMethod.exception()) {</span>
+<span class="fc" id="L169">                exceptions.put(thriftException.id(), catalog.getThriftType(thriftException.type()));</span>
+<span class="fc" id="L170">                checkState(exceptionTypes.add(thriftException.type()), &quot;ThriftMethod.exception contains more than one value for %s&quot;, thriftException.type());</span>
+            }
+        }
+
+<span class="fc bfc" id="L174" title="All 2 branches covered.">        for (Class&lt;?&gt; exceptionClass : method.getExceptionTypes()) {</span>
+<span class="fc bfc" id="L175" title="All 2 branches covered.">            if (exceptionClass.isAssignableFrom(TException.class)) {</span>
+                // the built-in exception types don't need special treatment
+<span class="fc" id="L177">                continue;</span>
+            }
+
+<span class="fc bfc" id="L180" title="All 2 branches covered.">            if (exceptionClass.isAnnotationPresent(ThriftStruct.class)) {</span>
+<span class="fc" id="L181">                ++customExceptionCount;</span>
+
+<span class="fc bfc" id="L183" title="All 2 branches covered.">                if (!exceptionTypes.contains(exceptionClass)) {</span>
+                    // there is no rhyme or reason to the order exception types are given to us,
+                    // so we can only infer the id once
+<span class="fc bfc" id="L186" title="All 2 branches covered.">                    checkState(customExceptionCount &lt;= 1, &quot;ThriftMethod.exception annotation value must be specified when more than one custom exception is thrown.&quot;);</span>
+<span class="fc" id="L187">                    exceptions.put((short) 1, catalog.getThriftType(exceptionClass));</span>
+                }
+            }
+        }
+
+<span class="fc" id="L192">        return exceptions.build();</span>
+    }
+
+    public boolean isAsync()
+    {
+<span class="fc" id="L197">        Type returnType = method.getGenericReturnType();</span>
+<span class="fc" id="L198">        Class&lt;?&gt; rawType = TypeToken.of(returnType).getRawType();</span>
+<span class="fc" id="L199">        return ListenableFuture.class.isAssignableFrom(rawType);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

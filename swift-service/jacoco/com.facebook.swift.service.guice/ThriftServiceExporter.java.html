@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ThriftServiceExporter.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-service</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.service.guice</a> &gt; <span class="el_source">ThriftServiceExporter.java</span></div><h1>ThriftServiceExporter.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.service.guice;
+
+import com.facebook.swift.codec.ThriftCodecManager;
+import com.facebook.swift.service.ThriftServiceProcessor;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.inject.Binder;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.Provider;
+
+import java.lang.annotation.Annotation;
+import java.util.Set;
+
+import static com.google.inject.multibindings.Multibinder.newSetBinder;
+
+public class ThriftServiceExporter
+{
+    public static ThriftServiceExporter thriftServerBinder(Binder binder)
+    {
+<span class="fc" id="L37">        return new ThriftServiceExporter(binder);</span>
+    }
+
+    private final Binder binder;
+
+    private ThriftServiceExporter(Binder binder)
+<span class="fc" id="L43">    {</span>
+<span class="fc" id="L44">        this.binder = binder;</span>
+<span class="fc" id="L45">    }</span>
+
+    public &lt;T&gt; void exportThriftService(Class&lt;T&gt; thriftServer)
+    {
+<span class="fc" id="L49">        Preconditions.checkNotNull(thriftServer, &quot;thriftServer is null&quot;);</span>
+<span class="fc" id="L50">        newSetBinder(binder, ThriftServiceExport.class).addBinding().toInstance(new ThriftServiceExport(Key.get(thriftServer)));</span>
+<span class="fc" id="L51">    }</span>
+
+    public &lt;T&gt; void exportThriftService(Class&lt;T&gt; thriftServer, Class&lt;? extends Annotation&gt; annotationType)
+    {
+<span class="fc" id="L55">        Preconditions.checkNotNull(thriftServer, &quot;thriftServer is null&quot;);</span>
+<span class="fc" id="L56">        newSetBinder(binder, ThriftServiceExport.class).addBinding().toInstance(new ThriftServiceExport(Key.get(thriftServer, annotationType)));</span>
+<span class="fc" id="L57">    }</span>
+
+    public &lt;T&gt; void exportThriftService(Key&lt;T&gt; key)
+    {
+<span class="fc" id="L61">        Preconditions.checkNotNull(key, &quot;key is null&quot;);</span>
+<span class="fc" id="L62">        newSetBinder(binder, ThriftServiceExport.class).addBinding().toInstance(new ThriftServiceExport(key));</span>
+<span class="fc" id="L63">    }</span>
+
+    public static class ThriftServiceProcessorProvider implements Provider&lt;ThriftServiceProcessor&gt;
+    {
+        private final Injector injector;
+        private final ThriftCodecManager codecManager;
+        private final Set&lt;ThriftServiceExport&gt; serviceExports;
+
+        @Inject
+        public ThriftServiceProcessorProvider(Injector injector, ThriftCodecManager codecManager, Set&lt;ThriftServiceExport&gt; serviceExports)
+<span class="fc" id="L73">        {</span>
+<span class="fc" id="L74">            this.injector = injector;</span>
+<span class="fc" id="L75">            this.codecManager = codecManager;</span>
+<span class="fc" id="L76">            this.serviceExports = serviceExports;</span>
+<span class="fc" id="L77">        }</span>
+
+        @Override
+        public ThriftServiceProcessor get()
+        {
+<span class="fc" id="L82">            ImmutableList.Builder&lt;Object&gt; servers = ImmutableList.builder();</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">            for (ThriftServiceExport serviceExport : serviceExports) {</span>
+<span class="fc" id="L84">                Object server = injector.getInstance(serviceExport.getKey());</span>
+<span class="fc" id="L85">                servers.add(server);</span>
+<span class="fc" id="L86">            }</span>
+<span class="fc" id="L87">            return new ThriftServiceProcessor(codecManager, servers.build());</span>
+        }
+    }
+
+    public static class ThriftServiceExport
+    {
+        private final Key&lt;?&gt; key;
+
+        public ThriftServiceExport(Key&lt;?&gt; key)
+<span class="fc" id="L96">        {</span>
+<span class="fc" id="L97">            this.key = key;</span>
+<span class="fc" id="L98">        }</span>
+
+        @Override
+        public boolean equals(Object o)
+        {
+<span class="nc bnc" id="L103" title="All 2 branches missed.">            if (this == o) {</span>
+<span class="nc" id="L104">                return true;</span>
+            }
+<span class="nc bnc" id="L106" title="All 4 branches missed.">            if (o == null || getClass() != o.getClass()) {</span>
+<span class="nc" id="L107">                return false;</span>
+            }
+
+<span class="nc" id="L110">            ThriftServiceExport that = (ThriftServiceExport) o;</span>
+
+<span class="nc bnc" id="L112" title="All 2 branches missed.">            if (!key.equals(that.key)) {</span>
+<span class="nc" id="L113">                return false;</span>
+            }
+
+<span class="nc" id="L116">            return true;</span>
+        }
+
+        public Key&lt;?&gt; getKey()
+        {
+<span class="fc" id="L121">            return key;</span>
+        }
+
+        @Override
+        public int hashCode()
+        {
+<span class="fc" id="L127">            return key.hashCode();</span>
+        }
+
+        @Override
+        public String toString()
+        {
+<span class="nc" id="L133">            final StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L134">            sb.append(&quot;ThriftServerBinding&quot;);</span>
+<span class="nc" id="L135">            sb.append(&quot;{key=&quot;).append(key);</span>
+<span class="nc" id="L136">            sb.append('}');</span>
+<span class="nc" id="L137">            return sb.toString();</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>
