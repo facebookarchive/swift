@@ -47,6 +47,6 @@ public class TypeVisitor implements DocumentVisitor
     public void visit(final Visitable visitable)
     {
         final Nameable type = Nameable.class.cast(visitable);
-        typeRegistry.add(new SwiftJavaType(defaultThriftNamespace, ContextGenerator.mangleTypeName(type.getName()), javaNamespace));
+        typeRegistry.add(new SwiftJavaType(defaultThriftNamespace, ContextGenerator.mangleJavatypeName(type.getName()), javaNamespace));
     }
 }
