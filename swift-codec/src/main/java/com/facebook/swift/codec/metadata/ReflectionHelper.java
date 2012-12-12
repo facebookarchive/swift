@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 import com.thoughtworks.paranamer.AdaptiveParanamer;
 import com.thoughtworks.paranamer.AnnotationParanamer;
+import com.thoughtworks.paranamer.BytecodeReadingParanamer;
 import com.thoughtworks.paranamer.CachingParanamer;
 import com.thoughtworks.paranamer.Paranamer;
 
