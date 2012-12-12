@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ThriftEnumMetadata.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-codec</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.codec.metadata</a> &gt; <span class="el_source">ThriftEnumMetadata.java</span></div><h1>ThriftEnumMetadata.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.codec.metadata;
+
+import com.facebook.swift.codec.ThriftEnumValue;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.Map;
+
+import javax.annotation.concurrent.Immutable;
+
+import static java.lang.String.format;
+
+@Immutable
+public class ThriftEnumMetadata&lt;T extends Enum&lt;T&gt;&gt;
+{
+    private final Class&lt;T&gt; enumClass;
+    private final Map&lt;Integer, T&gt; byEnumValue;
+    private final Map&lt;T, Integer&gt; byEnumConstant;
+
+    public ThriftEnumMetadata(Class&lt;T&gt; enumClass)
+            throws RuntimeException
+<span class="fc" id="L39">    {</span>
+<span class="fc" id="L40">        Preconditions.checkNotNull(enumClass, &quot;enumClass must not be null&quot;);</span>
+<span class="fc" id="L41">        this.enumClass = enumClass;</span>
+
+<span class="fc" id="L43">        Method enumValueMethod = null;</span>
+<span class="fc bfc" id="L44" title="All 2 branches covered.">        for (Method method : enumClass.getMethods()) {</span>
+<span class="fc bfc" id="L45" title="All 2 branches covered.">            if (method.isAnnotationPresent(ThriftEnumValue.class)) {</span>
+<span class="fc" id="L46">                Preconditions.checkArgument(</span>
+                        Modifier.isPublic(method.getModifiers()),
+                        &quot;Enum class %s @ThriftEnumValue method is not public: %s&quot;,
+                        enumClass.getName(),
+                        method);
+<span class="pc bpc" id="L51" title="1 of 2 branches missed.">                Preconditions.checkArgument(</span>
+                        !Modifier.isStatic(method.getModifiers()),
+                        &quot;Enum class %s @ThriftEnumValue method is static: %s&quot;,
+                        enumClass.getName(),
+                        method);
+<span class="pc bpc" id="L56" title="1 of 2 branches missed.">                Preconditions.checkArgument(</span>
+                        method.getTypeParameters().length == 0,
+                        &quot;Enum class %s @ThriftEnumValue method has parameters: %s&quot;,
+                        enumClass.getName(),
+                        method);
+<span class="fc" id="L61">                Class&lt;?&gt; returnType = method.getReturnType();</span>
+<span class="pc bpc" id="L62" title="3 of 4 branches missed.">                Preconditions.checkArgument(</span>
+                        returnType == int.class || returnType == Integer.class,
+                        &quot;Enum class %s @ThriftEnumValue method does not return int or Integer: %s&quot;,
+                        enumClass.getName(),
+                        method);
+<span class="fc" id="L67">                enumValueMethod = method;</span>
+            }
+        }
+
+<span class="fc bfc" id="L71" title="All 2 branches covered.">        if (enumValueMethod != null) {</span>
+<span class="fc" id="L72">            ImmutableMap.Builder&lt;Integer, T&gt; byEnumValue = ImmutableMap.builder();</span>
+<span class="fc" id="L73">            ImmutableMap.Builder&lt;T, Integer&gt; byEnumConstant = ImmutableMap.builder();</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">            for (T enumConstant : enumClass.getEnumConstants()) {</span>
+                Integer value;
+                try {
+<span class="fc" id="L77">                    value = (Integer) enumValueMethod.invoke(enumConstant);</span>
+                }
+<span class="nc" id="L79">                catch (Exception e) {</span>
+<span class="nc" id="L80">                    throw new RuntimeException(format(&quot;Enum class %s element %s get value method threw an exception&quot;, enumClass.getName(), enumConstant), e);</span>
+<span class="fc" id="L81">                }</span>
+<span class="pc bpc" id="L82" title="1 of 2 branches missed.">                Preconditions.checkArgument(</span>
+                        value != null,
+                        &quot;Enum class %s element %s returned null for enum value: %s&quot;,
+                        enumClass.getName(),
+                        enumConstant
+                );
+
+<span class="fc" id="L89">                byEnumValue.put(value, enumConstant);</span>
+<span class="fc" id="L90">                byEnumConstant.put(enumConstant, value);</span>
+            }
+<span class="fc" id="L92">            this.byEnumValue = byEnumValue.build();</span>
+<span class="fc" id="L93">            this.byEnumConstant = byEnumConstant.build();</span>
+<span class="fc" id="L94">        }</span>
+        else {
+<span class="fc" id="L96">            byEnumValue = null;</span>
+<span class="fc" id="L97">            byEnumConstant = null;</span>
+        }
+<span class="fc" id="L99">    }</span>
+
+    public Class&lt;T&gt; getEnumClass()
+    {
+<span class="fc" id="L103">        return enumClass;</span>
+    }
+
+    public boolean hasExplicitThriftValue()
+    {
+<span class="fc bfc" id="L108" title="All 2 branches covered.">        return byEnumValue != null;</span>
+    }
+
+    public Map&lt;Integer, T&gt; getByEnumValue()
+    {
+<span class="fc" id="L113">        return byEnumValue;</span>
+    }
+
+    public Map&lt;T, Integer&gt; getByEnumConstant()
+    {
+<span class="fc" id="L118">        return byEnumConstant;</span>
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+<span class="nc bnc" id="L124" title="All 2 branches missed.">        if (this == o) {</span>
+<span class="nc" id="L125">            return true;</span>
+        }
+<span class="nc bnc" id="L127" title="All 4 branches missed.">        if (o == null || getClass() != o.getClass()) {</span>
+<span class="nc" id="L128">            return false;</span>
+        }
+
+<span class="nc" id="L131">        final ThriftEnumMetadata&lt;?&gt; that = (ThriftEnumMetadata&lt;?&gt;) o;</span>
+
+<span class="nc bnc" id="L133" title="All 2 branches missed.">        if (!enumClass.equals(that.enumClass)) {</span>
+<span class="nc" id="L134">            return false;</span>
+        }
+
+<span class="nc" id="L137">        return true;</span>
+    }
+
+    @Override
+    public int hashCode()
+    {
+<span class="nc" id="L143">        return enumClass.hashCode();</span>
+    }
+
+    @Override
+    public String toString()
+    {
+<span class="nc" id="L149">        final StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L150">        sb.append(&quot;ThriftEnumMetadata&quot;);</span>
+<span class="nc" id="L151">        sb.append(&quot;{enumClass=&quot;).append(enumClass);</span>
+<span class="nc" id="L152">        sb.append(&quot;, byThriftValue=&quot;).append(byEnumValue);</span>
+<span class="nc" id="L153">        sb.append('}');</span>
+<span class="nc" id="L154">        return sb.toString();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

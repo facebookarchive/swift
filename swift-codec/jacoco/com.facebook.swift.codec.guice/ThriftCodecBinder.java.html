@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ThriftCodecBinder.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-codec</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.codec.guice</a> &gt; <span class="el_source">ThriftCodecBinder.java</span></div><h1>ThriftCodecBinder.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.codec.guice;
+
+import com.facebook.swift.codec.InternalThriftCodec;
+import com.facebook.swift.codec.ThriftCodec;
+import com.facebook.swift.codec.ThriftCodecManager;
+import com.google.common.base.Preconditions;
+import com.google.inject.Binder;
+import com.google.inject.Inject;
+import com.google.inject.Key;
+import com.google.inject.Provider;
+import com.google.inject.Scopes;
+import com.google.inject.TypeLiteral;
+import com.google.inject.internal.MoreTypes.ParameterizedTypeImpl;
+
+import java.lang.reflect.Type;
+import java.util.List;
+import java.util.Map;
+
+import static com.google.inject.multibindings.Multibinder.newSetBinder;
+
+public class ThriftCodecBinder
+{
+    public static ThriftCodecBinder thriftCodecBinder(Binder binder)
+    {
+<span class="fc" id="L40">        return new ThriftCodecBinder(binder);</span>
+    }
+
+    private final Binder binder;
+
+    private ThriftCodecBinder(Binder binder)
+<span class="fc" id="L46">    {</span>
+<span class="fc" id="L47">        this.binder = binder;</span>
+<span class="fc" id="L48">    }</span>
+
+    public void bindThriftCodec(ThriftCodec&lt;?&gt; thriftCodec)
+    {
+<span class="fc" id="L52">        Preconditions.checkNotNull(thriftCodec, &quot;thriftCodec is null&quot;);</span>
+
+        // bind the instance to the internal thrift codec set
+<span class="fc" id="L55">        newSetBinder(binder, new TypeLiteral&lt;ThriftCodec&lt;?&gt;&gt;() {}, InternalThriftCodec.class).addBinding().toInstance(thriftCodec);</span>
+
+        // make the codec available to user code for binding
+<span class="fc" id="L58">        Type type = thriftCodec.getType().getJavaType();</span>
+<span class="fc" id="L59">        binder.bind(getThriftCodecKey(type)).toProvider(new ThriftCodecProvider(type)).in(Scopes.SINGLETON);</span>
+<span class="fc" id="L60">    }</span>
+
+    public void bindThriftCodec(Class&lt;?&gt; type)
+    {
+<span class="fc" id="L64">        Preconditions.checkNotNull(type, &quot;type is null&quot;);</span>
+
+<span class="fc" id="L66">        binder.bind(getThriftCodecKey(type)).toProvider(new ThriftCodecProvider(type)).in(Scopes.SINGLETON);</span>
+<span class="fc" id="L67">    }</span>
+
+    public void bindThriftCodec(TypeLiteral&lt;?&gt; type)
+    {
+<span class="fc" id="L71">        Preconditions.checkNotNull(type, &quot;type is null&quot;);</span>
+
+<span class="fc" id="L73">        binder.bind(getThriftCodecKey(type.getType())).toProvider(new ThriftCodecProvider(type.getType())).in(Scopes.SINGLETON);</span>
+<span class="fc" id="L74">    }</span>
+
+    public void bindListThriftCodec(Class&lt;?&gt; type)
+    {
+<span class="fc" id="L78">        Preconditions.checkNotNull(type, &quot;type is null&quot;);</span>
+
+<span class="fc" id="L80">        ParameterizedTypeImpl listType = new ParameterizedTypeImpl(null, List.class, type);</span>
+<span class="fc" id="L81">        binder.bind(getThriftCodecKey(listType)).toProvider(new ThriftCodecProvider(listType)).in(Scopes.SINGLETON);</span>
+<span class="fc" id="L82">    }</span>
+
+    public void bindMapThriftCodec(Class&lt;?&gt; keyType, Class&lt;?&gt; valueType)
+    {
+<span class="fc" id="L86">        Preconditions.checkNotNull(keyType, &quot;keyType is null&quot;);</span>
+<span class="fc" id="L87">        Preconditions.checkNotNull(valueType, &quot;valueType is null&quot;);</span>
+
+<span class="fc" id="L89">        ParameterizedTypeImpl mapType = new ParameterizedTypeImpl(null, Map.class, keyType, valueType);</span>
+<span class="fc" id="L90">        binder.bind(getThriftCodecKey(mapType)).toProvider(new ThriftCodecProvider(mapType)).in(Scopes.SINGLETON);</span>
+<span class="fc" id="L91">    }</span>
+
+    private Key&lt;ThriftCodec&lt;?&gt;&gt; getThriftCodecKey(Type type)
+    {
+<span class="fc" id="L95">        return (Key&lt;ThriftCodec&lt;?&gt;&gt;) Key.get(new ParameterizedTypeImpl(null, ThriftCodec.class, type));</span>
+    }
+
+    static class ThriftCodecProvider implements Provider&lt;ThriftCodec&lt;?&gt;&gt;
+    {
+        private final Type type;
+        private ThriftCodecManager thriftCodecManager;
+
+        public ThriftCodecProvider(Type type)
+<span class="fc" id="L104">        {</span>
+<span class="fc" id="L105">            this.type = type;</span>
+<span class="fc" id="L106">        }</span>
+
+        @Inject
+        public void setThriftCodecManager(ThriftCodecManager thriftCodecManager)
+        {
+<span class="fc" id="L111">            this.thriftCodecManager = thriftCodecManager;</span>
+<span class="fc" id="L112">        }</span>
+
+        @Override
+        public ThriftCodec&lt;?&gt; get()
+        {
+<span class="fc" id="L117">            return thriftCodecManager.getCodec(type);</span>
+        }
+
+        @Override
+        public boolean equals(Object o)
+        {
+<span class="nc bnc" id="L123" title="All 2 branches missed.">            if (this == o) {</span>
+<span class="nc" id="L124">                return true;</span>
+            }
+<span class="nc bnc" id="L126" title="All 4 branches missed.">            if (o == null || getClass() != o.getClass()) {</span>
+<span class="nc" id="L127">                return false;</span>
+            }
+
+<span class="nc" id="L130">            ThriftCodecProvider that = (ThriftCodecProvider) o;</span>
+
+<span class="nc bnc" id="L132" title="All 2 branches missed.">            if (!type.equals(that.type)) {</span>
+<span class="nc" id="L133">                return false;</span>
+            }
+
+<span class="nc" id="L136">            return true;</span>
+        }
+
+        @Override
+        public int hashCode()
+        {
+<span class="nc" id="L142">            return type.hashCode();</span>
+        }
+    }
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

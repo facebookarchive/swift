@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>MetadataErrors.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-codec</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.codec.metadata</a> &gt; <span class="el_source">MetadataErrors.java</span></div><h1>MetadataErrors.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.codec.metadata;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+
+import javax.annotation.concurrent.NotThreadSafe;
+import java.util.List;
+
+/**
+ * MetadataErrors collects all known issues with metadata extraction.  This allows all known
+ * problems to be reported together instead of one at a time.
+ * &lt;p/&gt;
+ * This code is heavily based on https://github.com/dain/platform/blob/master/configuration/src/main/java/com/proofpoint/configuration/Problems.java
+ */
+@NotThreadSafe
+public class MetadataErrors
+{
+<span class="pc" id="L33">    private final List&lt;MetadataErrorException&gt; errors = Lists.newArrayList();</span>
+<span class="pc" id="L34">    private final List&lt;MetadataWarningException&gt; warnings = Lists.newArrayList();</span>
+    private final Monitor monitor;
+
+    public interface Monitor
+    {
+        void onError(MetadataErrorException errorMessage);
+
+        void onWarning(MetadataWarningException warningMessage);
+    }
+
+<span class="fc" id="L44">    public static final NullMonitor NULL_MONITOR = new NullMonitor();</span>
+
+<span class="fc" id="L46">    private static final class NullMonitor implements MetadataErrors.Monitor</span>
+    {
+        @Override
+        public void onError(MetadataErrorException unused)
+        {
+<span class="fc" id="L51">        }</span>
+
+        @Override
+        public void onWarning(MetadataWarningException unused)
+        {
+<span class="fc" id="L56">        }</span>
+    }
+
+    public MetadataErrors()
+<span class="nc" id="L60">    {</span>
+<span class="nc" id="L61">        this.monitor = NULL_MONITOR;</span>
+<span class="nc" id="L62">    }</span>
+
+    public MetadataErrors(Monitor monitor)
+<span class="fc" id="L65">    {</span>
+<span class="fc" id="L66">        this.monitor = monitor;</span>
+<span class="fc" id="L67">    }</span>
+
+    public void throwIfHasErrors()
+            throws MetadataErrorException
+    {
+<span class="pc bpc" id="L72" title="1 of 2 branches missed.">        if (!errors.isEmpty()) {</span>
+<span class="nc" id="L73">            MetadataErrorException exception = new MetadataErrorException(</span>
+                    &quot;Metadata extraction encountered %s errors and %s warnings&quot;,
+                    errors.size(),
+                    warnings.size()
+            );
+<span class="nc bnc" id="L78" title="All 2 branches missed.">            for (MetadataErrorException error : errors) {</span>
+<span class="nc" id="L79">                exception.addSuppressed(error);</span>
+<span class="nc" id="L80">            }</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">            for (MetadataWarningException warning : warnings) {</span>
+<span class="nc" id="L82">                exception.addSuppressed(warning);</span>
+<span class="nc" id="L83">            }</span>
+<span class="nc" id="L84">            throw exception;</span>
+        }
+<span class="fc" id="L86">    }</span>
+
+    public List&lt;MetadataErrorException&gt; getErrors()
+    {
+<span class="fc" id="L90">        return ImmutableList.copyOf(errors);</span>
+    }
+
+    public void addError(String format, Object... params)
+    {
+<span class="fc" id="L95">        MetadataErrorException message = new MetadataErrorException(format, params);</span>
+<span class="fc" id="L96">        errors.add(message);</span>
+<span class="fc" id="L97">        monitor.onError(message);</span>
+<span class="fc" id="L98">    }</span>
+
+    public void addError(Throwable e, String format, Object... params)
+    {
+<span class="nc" id="L102">        MetadataErrorException message = new MetadataErrorException(e, format, params);</span>
+<span class="nc" id="L103">        errors.add(message);</span>
+<span class="nc" id="L104">        monitor.onError(message);</span>
+<span class="nc" id="L105">    }</span>
+
+    public List&lt;MetadataWarningException&gt; getWarnings()
+    {
+<span class="fc" id="L109">        return ImmutableList.copyOf(warnings);</span>
+    }
+
+    public void addWarning(String format, Object... params)
+    {
+<span class="fc" id="L114">        MetadataWarningException message = new MetadataWarningException(format, params);</span>
+<span class="fc" id="L115">        warnings.add(message);</span>
+<span class="fc" id="L116">        monitor.onWarning(message);</span>
+<span class="fc" id="L117">    }</span>
+
+    public void addWarning(Throwable e, String format, Object... params)
+    {
+<span class="nc" id="L121">        MetadataWarningException message = new MetadataWarningException(e, format, params);</span>
+<span class="nc" id="L122">        warnings.add(message);</span>
+<span class="nc" id="L123">        monitor.onWarning(message);</span>
+<span class="nc" id="L124">    }</span>
+
+    public String toString()
+    {
+<span class="nc" id="L128">        StringBuilder builder = new StringBuilder();</span>
+<span class="nc bnc" id="L129" title="All 2 branches missed.">        for (MetadataErrorException error : errors) {</span>
+<span class="nc" id="L130">            builder.append(error.getMessage()).append('\n');</span>
+<span class="nc" id="L131">        }</span>
+<span class="nc bnc" id="L132" title="All 2 branches missed.">        for (MetadataWarningException warning : warnings) {</span>
+<span class="nc" id="L133">            builder.append(warning.getMessage()).append('\n');</span>
+<span class="nc" id="L134">        }</span>
+<span class="nc" id="L135">        return builder.toString();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

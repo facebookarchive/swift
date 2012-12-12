@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>DefaultJavaCoercions.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-codec</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.codec.internal.coercion</a> &gt; <span class="el_source">DefaultJavaCoercions.java</span></div><h1>DefaultJavaCoercions.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.codec.internal.coercion;
+
+import javax.annotation.concurrent.Immutable;
+import java.nio.ByteBuffer;
+
+import static com.google.common.base.Charsets.UTF_8;
+
+@Immutable
+public final class DefaultJavaCoercions
+{
+    private DefaultJavaCoercions()
+<span class="nc" id="L27">    {</span>
+<span class="nc" id="L28">    }</span>
+
+    @FromThrift
+    public static Boolean booleanToBoxedBoolean(boolean value)
+    {
+<span class="fc" id="L33">        return value;</span>
+    }
+
+    @ToThrift
+    public static boolean boxedBooleanToBoolean(Boolean value)
+    {
+<span class="fc" id="L39">        return value;</span>
+    }
+
+    @FromThrift
+    public static Byte byteToBoxedByte(byte value)
+    {
+<span class="fc" id="L45">        return value;</span>
+    }
+
+    @ToThrift
+    public static byte boxedByteToByte(Byte value)
+    {
+<span class="fc" id="L51">        return value;</span>
+    }
+
+    @FromThrift
+    public static Short shortToBoxedShort(short value)
+    {
+<span class="fc" id="L57">        return value;</span>
+    }
+
+    @ToThrift
+    public static short boxedShortToShort(Short value)
+    {
+<span class="fc" id="L63">        return value;</span>
+    }
+
+    @FromThrift
+    public static Integer integerToBoxedInteger(int value)
+    {
+<span class="fc" id="L69">        return value;</span>
+    }
+
+    @ToThrift
+    public static int boxedIntegerToInteger(Integer value)
+    {
+<span class="fc" id="L75">        return value;</span>
+    }
+
+    @FromThrift
+    public static Long longToBoxedLong(long value)
+    {
+<span class="fc" id="L81">        return value;</span>
+    }
+
+    @ToThrift
+    public static long boxedLongToLong(Long value)
+    {
+<span class="fc" id="L87">        return value;</span>
+    }
+
+    @FromThrift
+    public static float doubleToPrimitiveFloat(double value)
+    {
+<span class="fc" id="L93">        return (float) value;</span>
+    }
+
+    @ToThrift
+    public static double primitiveFloatToDouble(float value)
+    {
+<span class="fc" id="L99">        return value;</span>
+    }
+
+    @FromThrift
+    public static Float doubleToBoxedFloat(double value)
+    {
+<span class="fc" id="L105">        return (float) value;</span>
+    }
+
+    @ToThrift
+    public static double boxedFloatToDouble(Float value)
+    {
+<span class="fc" id="L111">        return value;</span>
+    }
+
+    @FromThrift
+    public static Double doubleToBoxedDouble(double value)
+    {
+<span class="fc" id="L117">        return value;</span>
+    }
+
+    @ToThrift
+    public static double boxedDoubleToDouble(Double value)
+    {
+<span class="fc" id="L123">        return value;</span>
+    }
+
+    @FromThrift
+    public static String byteBufferToString(ByteBuffer value)
+    {
+<span class="pc bpc" id="L129" title="1 of 2 branches missed.">        if (value == null) {</span>
+<span class="nc" id="L130">            return null;</span>
+        }
+<span class="fc" id="L132">        return UTF_8.decode(value.duplicate()).toString();</span>
+    }
+
+    @ToThrift
+    public static ByteBuffer stringToByteBuffer(String value)
+    {
+<span class="pc bpc" id="L138" title="1 of 2 branches missed.">        if (value == null) {</span>
+<span class="nc" id="L139">            return null;</span>
+        }
+<span class="fc" id="L141">        return UTF_8.encode(value);</span>
+    }
+
+    @FromThrift
+    public static byte[] byteBufferToByteArray(ByteBuffer buffer)
+    {
+<span class="nc" id="L147">        byte[] result = new byte[buffer.remaining()];</span>
+<span class="nc" id="L148">        buffer.duplicate().get(result);</span>
+<span class="nc" id="L149">        return result;</span>
+    }
+
+    @ToThrift
+    public static ByteBuffer byteArrayToByteBuffer(byte[] value)
+    {
+<span class="nc" id="L155">        return ByteBuffer.wrap(value);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

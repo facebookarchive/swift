@@ -1,0 +1,366 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>TProtocolReader.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-codec</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.codec.internal</a> &gt; <span class="el_source">TProtocolReader.java</span></div><h1>TProtocolReader.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.codec.internal;
+
+import com.facebook.swift.codec.ThriftCodec;
+import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TField;
+import org.apache.thrift.protocol.TList;
+import org.apache.thrift.protocol.TMap;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.protocol.TProtocolUtil;
+import org.apache.thrift.protocol.TSet;
+import org.apache.thrift.protocol.TType;
+
+import javax.annotation.concurrent.NotThreadSafe;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+
+import static com.google.common.base.Preconditions.checkState;
+
+@NotThreadSafe
+public class TProtocolReader
+{
+    private final TProtocol protocol;
+    private TField currentField;
+
+    public TProtocolReader(TProtocol protocol)
+<span class="fc" id="L47">    {</span>
+<span class="fc" id="L48">        this.protocol = protocol;</span>
+<span class="fc" id="L49">    }</span>
+
+    public TProtocol getProtocol()
+    {
+<span class="nc" id="L53">        return protocol;</span>
+    }
+
+    public void readStructBegin()
+            throws TException
+    {
+<span class="fc" id="L59">        protocol.readStructBegin();</span>
+<span class="fc" id="L60">        currentField = null;</span>
+<span class="fc" id="L61">    }</span>
+
+    public void readStructEnd()
+            throws TException
+    {
+<span class="pc bpc" id="L66" title="2 of 4 branches missed.">        if (currentField == null || currentField.id != TType.STOP) {</span>
+<span class="nc" id="L67">            throw new IllegalStateException(&quot;Some fields have not been consumed&quot;);</span>
+        }
+
+<span class="fc" id="L70">        currentField = null;</span>
+<span class="fc" id="L71">        protocol.readStructEnd();</span>
+<span class="fc" id="L72">    }</span>
+
+    public boolean nextField()
+            throws TException
+    {
+        // if the current field is a stop record, the caller must call readStructEnd.
+<span class="pc bpc" id="L78" title="3 of 4 branches missed.">        if (currentField != null &amp;&amp; currentField.id == TType.STOP) {</span>
+<span class="nc" id="L79">            throw new NoSuchElementException();</span>
+        }
+<span class="pc bpc" id="L81" title="1 of 2 branches missed.">        checkState(currentField == null, &quot;Current field was not read&quot;);</span>
+
+        // advance to the next field
+<span class="fc" id="L84">        currentField = protocol.readFieldBegin();</span>
+
+<span class="fc bfc" id="L86" title="All 2 branches covered.">        return currentField.type != TType.STOP;</span>
+    }
+
+    public short getFieldId()
+    {
+<span class="pc bpc" id="L91" title="1 of 2 branches missed.">        checkState(currentField != null, &quot;No current field&quot;);</span>
+<span class="fc" id="L92">        return currentField.id;</span>
+    }
+
+    public byte getFieldType()
+    {
+<span class="nc bnc" id="L97" title="All 2 branches missed.">        checkState(currentField != null, &quot;No current field&quot;);</span>
+<span class="nc" id="L98">        return currentField.type;</span>
+    }
+
+    public void skipFieldData()
+            throws TException
+    {
+<span class="nc" id="L104">        TProtocolUtil.skip(protocol, currentField.type);</span>
+<span class="nc" id="L105">        protocol.readFieldEnd();</span>
+<span class="nc" id="L106">        currentField = null;</span>
+<span class="nc" id="L107">    }</span>
+
+    public Object readField(ThriftCodec&lt;?&gt; codec)
+            throws Exception
+    {
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">        if (!checkReadState(codec.getType().getProtocolType().getType())) {</span>
+<span class="nc" id="L113">            return null;</span>
+        }
+<span class="fc" id="L115">        currentField = null;</span>
+<span class="fc" id="L116">        return codec.read(protocol);</span>
+    }
+
+    public ByteBuffer readBinaryField()
+            throws TException
+    {
+<span class="pc bpc" id="L122" title="1 of 2 branches missed.">        if (!checkReadState(TType.STRING)) {</span>
+<span class="nc" id="L123">            return null;</span>
+        }
+
+<span class="fc" id="L126">        ByteBuffer value = protocol.readBinary();</span>
+<span class="fc" id="L127">        currentField = null;</span>
+<span class="fc" id="L128">        return value;</span>
+    }
+
+    public boolean readBoolField()
+            throws TException
+    {
+<span class="pc bpc" id="L134" title="1 of 2 branches missed.">        if (!checkReadState(TType.BOOL)) {</span>
+<span class="nc" id="L135">            return false;</span>
+        }
+<span class="fc" id="L137">        currentField = null;</span>
+<span class="fc" id="L138">        return protocol.readBool();</span>
+    }
+
+    public byte readByteField()
+            throws TException
+    {
+<span class="pc bpc" id="L144" title="1 of 2 branches missed.">        if (!checkReadState(TType.BYTE)) {</span>
+<span class="nc" id="L145">            return 0;</span>
+        }
+<span class="fc" id="L147">        currentField = null;</span>
+<span class="fc" id="L148">        return protocol.readByte();</span>
+    }
+
+    public double readDoubleField()
+            throws TException
+    {
+<span class="pc bpc" id="L154" title="1 of 2 branches missed.">        if (!checkReadState(TType.DOUBLE)) {</span>
+<span class="nc" id="L155">            return 0;</span>
+        }
+<span class="fc" id="L157">        currentField = null;</span>
+<span class="fc" id="L158">        return protocol.readDouble();</span>
+    }
+
+    public short readI16Field()
+            throws TException
+    {
+<span class="pc bpc" id="L164" title="1 of 2 branches missed.">        if (!checkReadState(TType.I16)) {</span>
+<span class="nc" id="L165">            return 0;</span>
+        }
+<span class="fc" id="L167">        currentField = null;</span>
+<span class="fc" id="L168">        return protocol.readI16();</span>
+    }
+
+    public int readI32Field()
+            throws TException
+    {
+<span class="pc bpc" id="L174" title="1 of 2 branches missed.">        if (!checkReadState(TType.I32)) {</span>
+<span class="nc" id="L175">            return 0;</span>
+        }
+<span class="fc" id="L177">        currentField = null;</span>
+<span class="fc" id="L178">        return protocol.readI32();</span>
+    }
+
+    public long readI64Field()
+            throws TException
+    {
+<span class="pc bpc" id="L184" title="1 of 2 branches missed.">        if (!checkReadState(TType.I64)) {</span>
+<span class="nc" id="L185">            return 0;</span>
+        }
+<span class="fc" id="L187">        currentField = null;</span>
+<span class="fc" id="L188">        return protocol.readI64();</span>
+    }
+
+    public String readStringField()
+            throws TException
+    {
+<span class="pc bpc" id="L194" title="1 of 2 branches missed.">        if (!checkReadState(TType.STRING)) {</span>
+<span class="nc" id="L195">            return null;</span>
+        }
+<span class="fc" id="L197">        currentField = null;</span>
+<span class="fc" id="L198">        return protocol.readString();</span>
+    }
+
+    public &lt;T&gt; T readStructField(ThriftCodec&lt;T&gt; codec)
+            throws Exception
+    {
+<span class="pc bpc" id="L204" title="1 of 2 branches missed.">        if (!checkReadState(TType.STRUCT)) {</span>
+<span class="nc" id="L205">            return null;</span>
+        }
+<span class="fc" id="L207">        currentField = null;</span>
+<span class="fc" id="L208">        return codec.read(protocol);</span>
+    }
+
+    public &lt;E&gt; Set&lt;E&gt; readSetField(ThriftCodec&lt;Set&lt;E&gt;&gt; setCodec)
+            throws Exception
+    {
+<span class="pc bpc" id="L214" title="1 of 2 branches missed.">        if (!checkReadState(TType.SET)) {</span>
+<span class="nc" id="L215">            return null;</span>
+        }
+<span class="fc" id="L217">        currentField = null;</span>
+<span class="fc" id="L218">        return setCodec.read(protocol);</span>
+    }
+
+    public &lt;E&gt; List&lt;E&gt; readListField(ThriftCodec&lt;List&lt;E&gt;&gt; listCodec)
+            throws Exception
+    {
+<span class="pc bpc" id="L224" title="1 of 2 branches missed.">        if (!checkReadState(TType.LIST)) {</span>
+<span class="nc" id="L225">            return null;</span>
+        }
+<span class="fc" id="L227">        currentField = null;</span>
+<span class="fc" id="L228">        return listCodec.read(protocol);</span>
+    }
+
+    public &lt;K, V&gt; Map&lt;K, V&gt; readMapField(ThriftCodec&lt;Map&lt;K, V&gt;&gt; mapCodec)
+            throws Exception
+    {
+<span class="pc bpc" id="L234" title="1 of 2 branches missed.">        if (!checkReadState(TType.MAP)) {</span>
+<span class="nc" id="L235">            return null;</span>
+        }
+<span class="fc" id="L237">        currentField = null;</span>
+<span class="fc" id="L238">        return mapCodec.read(protocol);</span>
+    }
+
+    public &lt;T extends Enum&lt;T&gt;&gt; T readEnumField(ThriftCodec&lt;T&gt; enumCodec)
+            throws Exception
+    {
+<span class="pc bpc" id="L244" title="1 of 2 branches missed.">        if (!checkReadState(TType.I32)) {</span>
+<span class="nc" id="L245">            return null;</span>
+        }
+<span class="fc" id="L247">        currentField = null;</span>
+<span class="fc" id="L248">        return enumCodec.read(protocol);</span>
+    }
+
+    public ByteBuffer readBinary()
+            throws TException
+    {
+<span class="nc" id="L254">        return protocol.readBinary();</span>
+    }
+
+    public boolean readBool()
+            throws TException
+    {
+<span class="nc" id="L260">        return protocol.readBool();</span>
+    }
+
+    public byte readByte()
+            throws TException
+    {
+<span class="nc" id="L266">        return protocol.readByte();</span>
+    }
+
+    public short readI16()
+            throws TException
+    {
+<span class="nc" id="L272">        return protocol.readI16();</span>
+    }
+
+    public int readI32()
+            throws TException
+    {
+<span class="nc" id="L278">        return protocol.readI32();</span>
+    }
+
+    public long readI64()
+            throws TException
+    {
+<span class="nc" id="L284">        return protocol.readI64();</span>
+    }
+
+    public double readDouble()
+            throws TException
+    {
+<span class="nc" id="L290">        return protocol.readDouble();</span>
+    }
+
+    public String readString()
+            throws TException
+    {
+<span class="nc" id="L296">        return protocol.readString();</span>
+    }
+
+    public &lt;E&gt; Set&lt;E&gt; readSet(ThriftCodec&lt;E&gt; elementCodec)
+            throws Exception
+    {
+<span class="fc" id="L302">        TSet tSet = protocol.readSetBegin();</span>
+<span class="fc" id="L303">        Set&lt;E&gt; set = new HashSet&lt;&gt;();</span>
+<span class="fc bfc" id="L304" title="All 2 branches covered.">        for (int i = 0; i &lt; tSet.size; i++) {</span>
+<span class="fc" id="L305">            E element = elementCodec.read(protocol);</span>
+<span class="fc" id="L306">            set.add(element);</span>
+        }
+<span class="fc" id="L308">        protocol.readSetEnd();</span>
+<span class="fc" id="L309">        return set;</span>
+    }
+
+    public &lt;E&gt; List&lt;E&gt; readList(ThriftCodec&lt;E&gt; elementCodec)
+            throws Exception
+    {
+<span class="fc" id="L315">        TList tList = protocol.readListBegin();</span>
+<span class="fc" id="L316">        List&lt;E&gt; list = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L317" title="All 2 branches covered.">        for (int i = 0; i &lt; tList.size; i++) {</span>
+<span class="fc" id="L318">            E element = elementCodec.read(protocol);</span>
+<span class="fc" id="L319">            list.add(element);</span>
+        }
+<span class="fc" id="L321">        protocol.readListEnd();</span>
+<span class="fc" id="L322">        return list;</span>
+    }
+
+
+    public &lt;K, V&gt; Map&lt;K, V&gt; readMap(ThriftCodec&lt;K&gt; keyCodec, ThriftCodec&lt;V&gt; valueCodec)
+            throws Exception
+    {
+
+<span class="fc" id="L330">        TMap tMap = protocol.readMapBegin();</span>
+<span class="fc" id="L331">        Map&lt;K, V&gt; map = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L332" title="All 2 branches covered.">        for (int i = 0; i &lt; tMap.size; i++) {</span>
+<span class="fc" id="L333">            K key = keyCodec.read(protocol);</span>
+<span class="fc" id="L334">            V value = valueCodec.read(protocol);</span>
+<span class="fc" id="L335">            map.put(key, value);</span>
+        }
+<span class="fc" id="L337">        protocol.readMapEnd();</span>
+<span class="fc" id="L338">        return map;</span>
+    }
+
+    private boolean checkReadState(byte expectedType)
+            throws TException
+    {
+<span class="pc bpc" id="L344" title="1 of 2 branches missed.">        checkState(currentField != null, &quot;No current field&quot;);</span>
+
+<span class="pc bpc" id="L346" title="1 of 2 branches missed.">        if (currentField.type != expectedType) {</span>
+<span class="nc" id="L347">            TProtocolUtil.skip(protocol, currentField.type);</span>
+<span class="nc" id="L348">            protocol.readFieldEnd();</span>
+<span class="nc" id="L349">            currentField = null;</span>
+<span class="nc" id="L350">            return false;</span>
+        }
+
+<span class="fc" id="L353">        return true;</span>
+    }
+
+    @Override
+    public String toString()
+    {
+<span class="nc" id="L359">        final StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L360">        sb.append(&quot;TProtocolReader&quot;);</span>
+<span class="nc" id="L361">        sb.append(&quot;{currentField=&quot;).append(currentField);</span>
+<span class="nc" id="L362">        sb.append('}');</span>
+<span class="nc" id="L363">        return sb.toString();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

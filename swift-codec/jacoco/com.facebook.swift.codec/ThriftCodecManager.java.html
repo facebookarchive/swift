@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ThriftCodecManager.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-codec</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.codec</a> &gt; <span class="el_source">ThriftCodecManager.java</span></div><h1>ThriftCodecManager.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.codec;
+
+import com.facebook.swift.codec.internal.EnumThriftCodec;
+import com.facebook.swift.codec.internal.ThriftCodecFactory;
+import com.facebook.swift.codec.internal.builtin.BooleanThriftCodec;
+import com.facebook.swift.codec.internal.builtin.ByteBufferThriftCodec;
+import com.facebook.swift.codec.internal.builtin.ByteThriftCodec;
+import com.facebook.swift.codec.internal.builtin.DoubleThriftCodec;
+import com.facebook.swift.codec.internal.builtin.IntegerThriftCodec;
+import com.facebook.swift.codec.internal.builtin.ListThriftCodec;
+import com.facebook.swift.codec.internal.builtin.LongThriftCodec;
+import com.facebook.swift.codec.internal.builtin.MapThriftCodec;
+import com.facebook.swift.codec.internal.builtin.SetThriftCodec;
+import com.facebook.swift.codec.internal.builtin.ShortThriftCodec;
+import com.facebook.swift.codec.internal.builtin.VoidThriftCodec;
+import com.facebook.swift.codec.internal.coercion.CoercionThriftCodec;
+import com.facebook.swift.codec.internal.compiler.CompilerThriftCodecFactory;
+import com.facebook.swift.codec.metadata.ThriftCatalog;
+import com.facebook.swift.codec.metadata.ThriftType;
+import com.facebook.swift.codec.metadata.TypeCoercion;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.reflect.TypeToken;
+import com.google.inject.Inject;
+import org.apache.thrift.protocol.TProtocol;
+
+import javax.annotation.concurrent.ThreadSafe;
+import java.lang.reflect.Type;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+
+/**
+ * ThriftCodecManager contains an index of all known ThriftCodec and can create codecs for
+ * unknown types as needed.  Since codec creation can be very expensive only one instance of this
+ * class should be created.
+ */
+@ThreadSafe
+public class ThriftCodecManager
+{
+    private final ThriftCatalog catalog;
+    private final LoadingCache&lt;ThriftType, ThriftCodec&lt;?&gt;&gt; typeCodecs;
+
+    public ThriftCodecManager(ThriftCodec&lt;?&gt;... codecs)
+    {
+<span class="nc" id="L64">        this(new CompilerThriftCodecFactory(), codecs);</span>
+<span class="nc" id="L65">    }</span>
+
+    @Inject
+    public ThriftCodecManager(@InternalThriftCodec Set&lt;ThriftCodec&lt;?&gt;&gt; codecs)
+    {
+<span class="fc" id="L70">        this(new CompilerThriftCodecFactory(), codecs);</span>
+<span class="fc" id="L71">    }</span>
+
+    public ThriftCodecManager(ThriftCodecFactory factory, ThriftCodec&lt;?&gt;... codecs)
+    {
+<span class="fc" id="L75">        this(factory, new ThriftCatalog(), ImmutableSet.copyOf(codecs));</span>
+<span class="fc" id="L76">    }</span>
+
+    public ThriftCodecManager(ThriftCodecFactory factory, Set&lt;ThriftCodec&lt;?&gt;&gt; codecs)
+    {
+<span class="fc" id="L80">        this(factory, new ThriftCatalog(), codecs);</span>
+<span class="fc" id="L81">    }</span>
+
+    public ThriftCodecManager(final ThriftCodecFactory factory, final ThriftCatalog catalog, Set&lt;ThriftCodec&lt;?&gt;&gt; codecs)
+<span class="fc" id="L84">    {</span>
+<span class="fc" id="L85">        Preconditions.checkNotNull(factory, &quot;factory is null&quot;);</span>
+<span class="fc" id="L86">        Preconditions.checkNotNull(catalog, &quot;catalog is null&quot;);</span>
+
+<span class="fc" id="L88">        this.catalog = catalog;</span>
+
+<span class="fc" id="L90">        typeCodecs = CacheBuilder.newBuilder().build(new CacheLoader&lt;ThriftType, ThriftCodec&lt;?&gt;&gt;()</span>
+<span class="fc" id="L91">        {</span>
+            public ThriftCodec&lt;?&gt; load(ThriftType type)
+                    throws Exception
+            {
+<span class="pc bfc" id="L95" title="All 6 branches covered.">                switch (type.getProtocolType()) {</span>
+                    case STRUCT: {
+<span class="fc" id="L97">                        return factory.generateThriftTypeCodec(ThriftCodecManager.this, type.getStructMetadata());</span>
+                    }
+                    case MAP: {
+<span class="fc" id="L100">                        ThriftCodec&lt;?&gt; keyCodec = typeCodecs.get(type.getKeyType());</span>
+<span class="fc" id="L101">                        ThriftCodec&lt;?&gt; valueCodec = typeCodecs.get(type.getValueType());</span>
+<span class="fc" id="L102">                        return new MapThriftCodec&lt;&gt;(type, keyCodec, valueCodec);</span>
+                    }
+                    case SET: {
+<span class="fc" id="L105">                        ThriftCodec&lt;?&gt; elementCodec = typeCodecs.get(type.getValueType());</span>
+<span class="fc" id="L106">                        return new SetThriftCodec&lt;&gt;(type, elementCodec);</span>
+                    }
+                    case LIST: {
+<span class="fc" id="L109">                        ThriftCodec&lt;?&gt; elementCodec = typeCodecs.get(type.getValueType());</span>
+<span class="fc" id="L110">                        return new ListThriftCodec&lt;&gt;(type, elementCodec);</span>
+                    }
+                    case ENUM: {
+<span class="fc" id="L113">                        return new EnumThriftCodec&lt;&gt;(type);</span>
+                    }
+                    default:
+<span class="pc bpc" id="L116" title="1 of 2 branches missed.">                        if (type.isCoerced()) {</span>
+<span class="fc" id="L117">                            ThriftCodec&lt;?&gt; codec = getCodec(type.getUncoercedType());</span>
+<span class="fc" id="L118">                            TypeCoercion coercion = catalog.getDefaultCoercion(type.getJavaType());</span>
+<span class="fc" id="L119">                            return new CoercionThriftCodec&lt;&gt;(codec, coercion);</span>
+                        }
+<span class="nc" id="L121">                        throw new IllegalArgumentException(&quot;Unsupported Thrift type &quot; + type);</span>
+                }
+            }
+        });
+
+<span class="fc" id="L126">        addBuiltinCodec(new BooleanThriftCodec());</span>
+<span class="fc" id="L127">        addBuiltinCodec(new ByteThriftCodec());</span>
+<span class="fc" id="L128">        addBuiltinCodec(new ShortThriftCodec());</span>
+<span class="fc" id="L129">        addBuiltinCodec(new IntegerThriftCodec());</span>
+<span class="fc" id="L130">        addBuiltinCodec(new LongThriftCodec());</span>
+<span class="fc" id="L131">        addBuiltinCodec(new DoubleThriftCodec());</span>
+<span class="fc" id="L132">        addBuiltinCodec(new ByteBufferThriftCodec());</span>
+<span class="fc" id="L133">        addBuiltinCodec(new VoidThriftCodec());</span>
+
+<span class="fc bfc" id="L135" title="All 2 branches covered.">        for (ThriftCodec&lt;?&gt; codec : codecs) {</span>
+<span class="fc" id="L136">            addCodec(codec);</span>
+<span class="fc" id="L137">        }</span>
+<span class="fc" id="L138">    }</span>
+
+    public ThriftCodec&lt;?&gt; getCodec(Type javaType)
+    {
+<span class="fc" id="L142">        ThriftType thriftType = catalog.getThriftType(javaType);</span>
+<span class="pc bpc" id="L143" title="1 of 2 branches missed.">        Preconditions.checkArgument(thriftType != null, &quot;Unsupported java type %s&quot;, javaType);</span>
+<span class="fc" id="L144">        return getCodec(thriftType);</span>
+    }
+
+    public &lt;T&gt; ThriftCodec&lt;T&gt; getCodec(Class&lt;T&gt; javaType)
+    {
+<span class="fc" id="L149">        ThriftType thriftType = catalog.getThriftType(javaType);</span>
+<span class="pc bpc" id="L150" title="1 of 2 branches missed.">        Preconditions.checkArgument(thriftType != null, &quot;Unsupported java type %s&quot;, javaType.getName());</span>
+<span class="fc" id="L151">        return (ThriftCodec&lt;T&gt;) getCodec(thriftType);</span>
+    }
+
+    public ThriftCodec&lt;?&gt; getCodec(ThriftType type)
+    {
+        try {
+<span class="fc" id="L157">            ThriftCodec&lt;?&gt; thriftCodec = typeCodecs.get(type);</span>
+<span class="fc" id="L158">            return thriftCodec;</span>
+        }
+<span class="nc" id="L160">        catch (ExecutionException e) {</span>
+<span class="nc" id="L161">            throw Throwables.propagate(e);</span>
+        }
+    }
+
+    public &lt;T&gt; ThriftCodec&lt;T&gt; getCodec(TypeToken&lt;T&gt; type)
+    {
+<span class="nc" id="L167">        return (ThriftCodec&lt;T&gt;) getCodec(type.getType());</span>
+    }
+
+    /**
+     * Adds or replaces the codec associated with the type contained in the codec.  This does not
+     * replace any current users of the existing codec associated with the type.
+     */
+    public void addCodec(ThriftCodec&lt;?&gt; codec)
+    {
+<span class="fc" id="L176">        catalog.addThriftType(codec.getType());</span>
+<span class="fc" id="L177">        typeCodecs.put(codec.getType(), codec);</span>
+<span class="fc" id="L178">    }</span>
+
+    /**
+     * Adds a ThriftCodec to the codec map, but does not register it with the catalog since builtins
+     * should already be registered
+     */
+    private void addBuiltinCodec(ThriftCodec&lt;?&gt; codec)
+    {
+<span class="fc" id="L186">        typeCodecs.put(codec.getType(), codec);</span>
+<span class="fc" id="L187">    }</span>
+
+    public ThriftCatalog getCatalog()
+    {
+<span class="fc" id="L191">        return catalog;</span>
+    }
+
+    public &lt;T&gt; T read(Class&lt;T&gt; type, TProtocol protocol)
+            throws Exception
+    {
+<span class="fc" id="L197">        return getCodec(type).read(protocol);</span>
+    }
+
+    public Object read(ThriftType type, TProtocol protocol)
+            throws Exception
+    {
+<span class="fc" id="L203">        ThriftCodec&lt;?&gt; codec = getCodec(type);</span>
+<span class="fc" id="L204">        return codec.read(protocol);</span>
+    }
+
+    public &lt;T&gt; void write(Class&lt;T&gt; type, T value, TProtocol protocol)
+            throws Exception
+    {
+<span class="fc" id="L210">        getCodec(type).write(value, protocol);</span>
+<span class="fc" id="L211">    }</span>
+
+    public void write(ThriftType type, Object value, TProtocol protocol)
+            throws Exception
+    {
+<span class="fc" id="L216">        ThriftCodec&lt;Object&gt; codec = (ThriftCodec&lt;Object&gt;) getCodec(type);</span>
+<span class="fc" id="L217">        codec.write(value, protocol);</span>
+<span class="fc" id="L218">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

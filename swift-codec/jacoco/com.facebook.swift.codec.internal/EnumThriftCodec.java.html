@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>EnumThriftCodec.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-codec</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.codec.internal</a> &gt; <span class="el_source">EnumThriftCodec.java</span></div><h1>EnumThriftCodec.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.codec.internal;
+
+import com.facebook.swift.codec.ThriftCodec;
+import com.facebook.swift.codec.metadata.ThriftEnumMetadata;
+import com.facebook.swift.codec.metadata.ThriftType;
+import com.google.common.base.Preconditions;
+import org.apache.thrift.protocol.TProtocol;
+
+import javax.annotation.concurrent.Immutable;
+
+/**
+ * EnumThriftCodec is a codec for Java enum types.  An enum is encoded as an I32 in Thrift, and this
+ * class handles converting this vale to a Java enum constant.
+ */
+@Immutable
+public class EnumThriftCodec&lt;T extends Enum&lt;T&gt;&gt; implements ThriftCodec&lt;T&gt;
+{
+    private final ThriftType type;
+    private final ThriftEnumMetadata&lt;T&gt; enumMetadata;
+
+    public EnumThriftCodec(ThriftType type)
+<span class="fc" id="L37">    {</span>
+<span class="fc" id="L38">        this.type = type;</span>
+<span class="fc" id="L39">        enumMetadata = (ThriftEnumMetadata&lt;T&gt;) type.getEnumMetadata();</span>
+<span class="fc" id="L40">    }</span>
+
+    @Override
+    public ThriftType getType()
+    {
+<span class="fc" id="L45">        return type;</span>
+    }
+
+    @Override
+    public T read(TProtocol protocol)
+            throws Exception
+    {
+<span class="fc" id="L52">        int enumValue = protocol.readI32();</span>
+<span class="pc bpc" id="L53" title="1 of 2 branches missed.">        if (enumValue &gt;= 0) {</span>
+<span class="fc bfc" id="L54" title="All 2 branches covered.">            if (enumMetadata.hasExplicitThriftValue()) {</span>
+<span class="fc" id="L55">                T enumConstant = enumMetadata.getByEnumValue().get(enumValue);</span>
+<span class="pc bpc" id="L56" title="1 of 2 branches missed.">                if (enumConstant != null) {</span>
+<span class="fc" id="L57">                    return enumConstant;</span>
+                }
+<span class="nc" id="L59">            }</span>
+            else {
+<span class="fc" id="L61">                T[] enumConstants = enumMetadata.getEnumClass().getEnumConstants();</span>
+<span class="pc bpc" id="L62" title="1 of 2 branches missed.">                if (enumValue &lt; enumConstants.length) {</span>
+<span class="fc" id="L63">                    return enumConstants[enumValue];</span>
+                }
+            }
+        }
+<span class="nc" id="L67">        throw new IllegalArgumentException(</span>
+                String.format(
+                        &quot;Enum %s does not have a value for %s&quot;,
+                        enumMetadata.getEnumClass(),
+                        enumValue
+                )
+        );
+    }
+
+    @Override
+    public void write(T enumConstant, TProtocol protocol)
+            throws Exception
+    {
+<span class="fc" id="L80">        Preconditions.checkNotNull(enumConstant, &quot;enumConstant is null&quot;);</span>
+
+        int enumValue;
+<span class="fc bfc" id="L83" title="All 2 branches covered.">        if (enumMetadata.hasExplicitThriftValue()) {</span>
+<span class="fc" id="L84">            enumValue = enumMetadata.getByEnumConstant().get(enumConstant);</span>
+        }
+        else {
+<span class="fc" id="L87">            enumValue = enumConstant.ordinal();</span>
+        }
+<span class="fc" id="L89">        protocol.writeI32(enumValue);</span>
+<span class="fc" id="L90">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

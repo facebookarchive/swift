@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FieldDefinition.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-codec</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.codec.internal.compiler.byteCode</a> &gt; <span class="el_source">FieldDefinition.java</span></div><h1>FieldDefinition.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.codec.internal.compiler.byteCode;
+
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+import org.objectweb.asm.tree.FieldNode;
+
+import javax.annotation.concurrent.Immutable;
+import java.util.EnumSet;
+
+import static com.facebook.swift.codec.internal.compiler.byteCode.Access.toAccessModifier;
+
+@Immutable
+public class FieldDefinition
+{
+    private final ImmutableSet&lt;Access&gt; access;
+    private final String name;
+    private final ParameterizedType type;
+
+    public FieldDefinition(EnumSet&lt;Access&gt; access, String name, ParameterizedType type)
+<span class="fc" id="L35">    {</span>
+<span class="fc" id="L36">        this.access = Sets.immutableEnumSet(access);</span>
+<span class="fc" id="L37">        this.name = name;</span>
+<span class="fc" id="L38">        this.type = type;</span>
+<span class="fc" id="L39">    }</span>
+
+    public ImmutableSet&lt;Access&gt; getAccess()
+    {
+<span class="fc" id="L43">        return access;</span>
+    }
+
+    public String getName()
+    {
+<span class="fc" id="L48">        return name;</span>
+    }
+
+    public ParameterizedType getType()
+    {
+<span class="fc" id="L53">        return type;</span>
+    }
+
+    public FieldNode getFieldNode()
+    {
+<span class="fc" id="L58">        return new FieldNode(</span>
+                toAccessModifier(access),
+                name,
+                type.getType(),
+                type.getGenericSignature(),
+                null);
+    }
+
+    @Override
+    public String toString()
+    {
+<span class="nc" id="L69">        final StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L70">        sb.append(&quot;FieldDefinition&quot;);</span>
+<span class="nc" id="L71">        sb.append(&quot;{access=&quot;).append(access);</span>
+<span class="nc" id="L72">        sb.append(&quot;, name='&quot;).append(name).append('\'');</span>
+<span class="nc" id="L73">        sb.append(&quot;, type=&quot;).append(type);</span>
+<span class="nc" id="L74">        sb.append('}');</span>
+<span class="nc" id="L75">        return sb.toString();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

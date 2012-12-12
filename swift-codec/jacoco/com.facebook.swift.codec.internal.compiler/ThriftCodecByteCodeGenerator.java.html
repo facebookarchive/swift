@@ -1,0 +1,839 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ThriftCodecByteCodeGenerator.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-codec</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.codec.internal.compiler</a> &gt; <span class="el_source">ThriftCodecByteCodeGenerator.java</span></div><h1>ThriftCodecByteCodeGenerator.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.codec.internal.compiler;
+
+import com.facebook.swift.codec.ThriftCodec;
+import com.facebook.swift.codec.ThriftCodecManager;
+import com.facebook.swift.codec.ThriftProtocolType;
+import com.facebook.swift.codec.internal.TProtocolReader;
+import com.facebook.swift.codec.internal.TProtocolWriter;
+import com.facebook.swift.codec.internal.compiler.byteCode.CaseStatement;
+import com.facebook.swift.codec.internal.compiler.byteCode.ClassDefinition;
+import com.facebook.swift.codec.internal.compiler.byteCode.FieldDefinition;
+import com.facebook.swift.codec.internal.compiler.byteCode.LocalVariableDefinition;
+import com.facebook.swift.codec.internal.compiler.byteCode.MethodDefinition;
+import com.facebook.swift.codec.internal.compiler.byteCode.NamedParameterDefinition;
+import com.facebook.swift.codec.internal.compiler.byteCode.ParameterizedType;
+import com.facebook.swift.codec.metadata.ThriftConstructorInjection;
+import com.facebook.swift.codec.metadata.ThriftExtraction;
+import com.facebook.swift.codec.metadata.ThriftFieldExtractor;
+import com.facebook.swift.codec.metadata.ThriftFieldInjection;
+import com.facebook.swift.codec.metadata.ThriftFieldMetadata;
+import com.facebook.swift.codec.metadata.ThriftInjection;
+import com.facebook.swift.codec.metadata.ThriftMethodExtractor;
+import com.facebook.swift.codec.metadata.ThriftMethodInjection;
+import com.facebook.swift.codec.metadata.ThriftParameterInjection;
+import com.facebook.swift.codec.metadata.ThriftStructMetadata;
+import com.facebook.swift.codec.metadata.ThriftType;
+import com.google.common.base.Function;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.reflect.TypeToken;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.apache.thrift.protocol.TProtocol;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.util.CheckClassAdapter;
+
+import java.io.PrintWriter;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+
+import javax.annotation.concurrent.NotThreadSafe;
+
+import static com.facebook.swift.codec.ThriftProtocolType.BOOL;
+import static com.facebook.swift.codec.ThriftProtocolType.BYTE;
+import static com.facebook.swift.codec.ThriftProtocolType.DOUBLE;
+import static com.facebook.swift.codec.ThriftProtocolType.ENUM;
+import static com.facebook.swift.codec.ThriftProtocolType.I16;
+import static com.facebook.swift.codec.ThriftProtocolType.I32;
+import static com.facebook.swift.codec.ThriftProtocolType.I64;
+import static com.facebook.swift.codec.ThriftProtocolType.LIST;
+import static com.facebook.swift.codec.ThriftProtocolType.MAP;
+import static com.facebook.swift.codec.ThriftProtocolType.SET;
+import static com.facebook.swift.codec.ThriftProtocolType.STRING;
+import static com.facebook.swift.codec.ThriftProtocolType.STRUCT;
+import static com.facebook.swift.codec.internal.compiler.byteCode.Access.BRIDGE;
+import static com.facebook.swift.codec.internal.compiler.byteCode.Access.FINAL;
+import static com.facebook.swift.codec.internal.compiler.byteCode.Access.PRIVATE;
+import static com.facebook.swift.codec.internal.compiler.byteCode.Access.PUBLIC;
+import static com.facebook.swift.codec.internal.compiler.byteCode.Access.SUPER;
+import static com.facebook.swift.codec.internal.compiler.byteCode.Access.SYNTHETIC;
+import static com.facebook.swift.codec.internal.compiler.byteCode.Access.a;
+import static com.facebook.swift.codec.internal.compiler.byteCode.CaseStatement.caseStatement;
+import static com.facebook.swift.codec.internal.compiler.byteCode.NamedParameterDefinition.arg;
+import static com.facebook.swift.codec.internal.compiler.byteCode.ParameterizedType.type;
+
+@NotThreadSafe
+public class ThriftCodecByteCodeGenerator&lt;T&gt;
+{
+    private static final String PACKAGE = &quot;$wift&quot;;
+
+    private static final Map&lt;ThriftProtocolType, Method&gt; READ_METHODS;
+    private static final Map&lt;ThriftProtocolType, Method&gt; WRITE_METHODS;
+
+    private final ThriftCodecManager codecManager;
+    private final ThriftStructMetadata&lt;T&gt; metadata;
+    private final ParameterizedType structType;
+    private final ParameterizedType codecType;
+
+    private final ClassDefinition classDefinition;
+
+<span class="fc" id="L102">    private final ConstructorParameters parameters = new ConstructorParameters();</span>
+
+    private final FieldDefinition typeField;
+    private final Map&lt;Short, FieldDefinition&gt; codecFields;
+
+    private final ThriftCodec&lt;T&gt; thriftCodec;
+
+    @SuppressFBWarnings(&quot;DM_DEFAULT_ENCODING&quot;)
+    public ThriftCodecByteCodeGenerator(
+            ThriftCodecManager codecManager,
+            ThriftStructMetadata&lt;T&gt; metadata,
+            DynamicClassLoader classLoader,
+            boolean debug
+    )
+<span class="fc" id="L116">    {</span>
+<span class="fc" id="L117">        this.codecManager = codecManager;</span>
+<span class="fc" id="L118">        this.metadata = metadata;</span>
+
+<span class="fc" id="L120">        structType = type(metadata.getStructClass());</span>
+<span class="fc" id="L121">        codecType = toCodecType(metadata);</span>
+
+<span class="fc" id="L123">        classDefinition = new ClassDefinition(</span>
+                a(PUBLIC, SUPER),
+                codecType.getClassName(),
+                type(Object.class),
+                type(ThriftCodec.class, structType)
+        );
+
+        // declare the class fields
+<span class="fc" id="L131">        typeField = declareTypeField();</span>
+<span class="fc" id="L132">        codecFields = declareCodecFields();</span>
+
+        // declare methods
+<span class="fc" id="L135">        defineConstructor();</span>
+<span class="fc" id="L136">        defineGetTypeMethod();</span>
+<span class="fc" id="L137">        defineReadMethod();</span>
+<span class="fc" id="L138">        defineWriteMethod();</span>
+
+        // add the non-generic bridge read and write methods
+<span class="fc" id="L141">        defineReadBridgeMethod();</span>
+<span class="fc" id="L142">        defineWriteBridgeMethod();</span>
+
+        // generate the byte code
+<span class="fc" id="L145">        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);</span>
+<span class="fc" id="L146">        classDefinition.getClassNode().accept(cw);</span>
+<span class="fc" id="L147">        byte[] byteCode = cw.toByteArray();</span>
+
+        // Run the asm verifier only in debug mode (prints a ton of info)
+<span class="fc bfc" id="L150" title="All 2 branches covered.">        if (debug) {</span>
+<span class="fc" id="L151">            ClassReader reader = new ClassReader(byteCode);</span>
+<span class="fc" id="L152">            CheckClassAdapter.verify(reader, classLoader, true, new PrintWriter(System.out));</span>
+        }
+
+        // load the class
+<span class="fc" id="L156">        Class&lt;?&gt; codecClass = classLoader.defineClass(codecType.getClassName().replace('/', '.'), byteCode);</span>
+        try {
+<span class="fc" id="L158">            Class&lt;?&gt;[] types = parameters.getTypes();</span>
+<span class="fc" id="L159">            Constructor&lt;?&gt; constructor = codecClass.getConstructor(types);</span>
+<span class="fc" id="L160">            thriftCodec = (ThriftCodec&lt;T&gt;) constructor.newInstance(parameters.getValues());</span>
+        }
+<span class="nc" id="L162">        catch (Exception e) {</span>
+<span class="nc" id="L163">            throw new IllegalStateException(&quot;Generated class is invalid&quot;, e);</span>
+<span class="fc" id="L164">        }</span>
+<span class="fc" id="L165">    }</span>
+
+    public ThriftCodec&lt;T&gt; getThriftCodec()
+    {
+<span class="fc" id="L169">        return thriftCodec;</span>
+    }
+
+    /**
+     * Declares the private ThriftType field type.
+     */
+    private FieldDefinition declareTypeField()
+    {
+<span class="fc" id="L177">        FieldDefinition typeField = new FieldDefinition(a(PRIVATE, FINAL), &quot;type&quot;, type(ThriftType.class));</span>
+<span class="fc" id="L178">        classDefinition.addField(typeField);</span>
+
+        // add constructor parameter to initialize this field
+<span class="fc" id="L181">        parameters.add(typeField, ThriftType.struct(metadata));</span>
+
+<span class="fc" id="L183">        return typeField;</span>
+    }
+
+    /**
+     * Declares a field for each delegate codec
+     *
+     * @return a map from field id to the codec for the field
+     */
+    private Map&lt;Short, FieldDefinition&gt; declareCodecFields()
+    {
+<span class="fc" id="L193">        Map&lt;Short, FieldDefinition&gt; codecFields = new TreeMap&lt;&gt;();</span>
+<span class="fc bfc" id="L194" title="All 2 branches covered.">        for (ThriftFieldMetadata fieldMetadata : metadata.getFields()) {</span>
+<span class="fc bfc" id="L195" title="All 2 branches covered.">            if (needsCodec(fieldMetadata)) {</span>
+
+<span class="fc" id="L197">                ThriftCodec&lt;?&gt; codec = codecManager.getCodec(fieldMetadata.getType());</span>
+<span class="fc" id="L198">                String fieldName = fieldMetadata.getName() + &quot;Codec&quot;;</span>
+
+<span class="fc" id="L200">                FieldDefinition codecField = new FieldDefinition(a(PRIVATE, FINAL), fieldName, type(codec.getClass()));</span>
+<span class="fc" id="L201">                classDefinition.addField(codecField);</span>
+<span class="fc" id="L202">                codecFields.put(fieldMetadata.getId(), codecField);</span>
+
+<span class="fc" id="L204">                parameters.add(codecField, codec);</span>
+            }
+<span class="fc" id="L206">        }</span>
+<span class="fc" id="L207">        return codecFields;</span>
+    }
+
+    /**
+     * Defines the constructor with a parameter for the ThriftType and the delegate codecs.  The
+     * constructor simply assigns these parameters to the class fields.
+     */
+    private void defineConstructor()
+    {
+        //
+        // declare the constructor
+<span class="fc" id="L218">        MethodDefinition constructor = new MethodDefinition(</span>
+                a(PUBLIC),
+                &quot;&lt;init&gt;&quot;,
+                type(void.class),
+                parameters.getParameters()
+        );
+
+        // invoke super (Object) constructor
+<span class="fc" id="L226">        constructor.loadThis().invokeConstructor(type(Object.class));</span>
+
+        // this.foo = foo;
+<span class="fc bfc" id="L229" title="All 2 branches covered.">        for (FieldDefinition fieldDefinition : parameters.getFields()) {</span>
+<span class="fc" id="L230">            constructor.loadThis()</span>
+                    .loadVariable(fieldDefinition.getName())
+                    .putField(codecType, fieldDefinition);
+<span class="fc" id="L233">        }</span>
+
+        // return; (implicit)
+<span class="fc" id="L236">        constructor.ret();</span>
+
+<span class="fc" id="L238">        classDefinition.addMethod(constructor);</span>
+<span class="fc" id="L239">    }</span>
+
+    /**
+     * Defines the getType method which simply returns the value of the type field.
+     */
+    private void defineGetTypeMethod()
+    {
+<span class="fc" id="L246">        classDefinition.addMethod(</span>
+                new MethodDefinition(a(PUBLIC), &quot;getType&quot;, type(ThriftType.class))
+                        .loadThis()
+                        .getField(codecType, typeField)
+                        .retObject()
+        );
+<span class="fc" id="L252">    }</span>
+
+    /**
+     * Defines the read method.
+     */
+    private void defineReadMethod()
+    {
+<span class="fc" id="L259">        MethodDefinition read = new MethodDefinition(</span>
+                a(PUBLIC),
+                &quot;read&quot;,
+                structType,
+                arg(&quot;protocol&quot;, TProtocol.class)
+        ).addException(Exception.class);
+
+        // TProtocolReader reader = new TProtocolReader(protocol);
+<span class="fc" id="L267">        read.addLocalVariable(type(TProtocolReader.class), &quot;reader&quot;);</span>
+<span class="fc" id="L268">        read.newObject(TProtocolReader.class);</span>
+<span class="fc" id="L269">        read.dup();</span>
+<span class="fc" id="L270">        read.loadVariable(&quot;protocol&quot;);</span>
+<span class="fc" id="L271">        read.invokeConstructor(type(TProtocolReader.class), type(TProtocol.class));</span>
+<span class="fc" id="L272">        read.storeVariable(&quot;reader&quot;);</span>
+
+        // read all of the data in to local variables
+<span class="fc" id="L275">        Map&lt;Short, LocalVariableDefinition&gt; structData = readFieldValues(read);</span>
+
+        // build the struct
+<span class="fc" id="L278">        buildStruct(read, structData);</span>
+<span class="fc" id="L279">    }</span>
+
+    /**
+     * Defines the code to read all of the data from the protocol into local variables.
+     */
+    private Map&lt;Short, LocalVariableDefinition&gt; readFieldValues(MethodDefinition read)
+    {
+<span class="fc" id="L286">        LocalVariableDefinition protocol = read.getLocalVariable(&quot;reader&quot;);</span>
+
+        // declare and init local variables here
+<span class="fc" id="L289">        Map&lt;Short, LocalVariableDefinition&gt; structData = new TreeMap&lt;&gt;();</span>
+<span class="fc bfc" id="L290" title="All 2 branches covered.">        for (ThriftFieldMetadata field : metadata.getFields()) {</span>
+<span class="fc" id="L291">            LocalVariableDefinition variable = read.addInitializedLocalVariable(</span>
+                    toParameterizedType(field.getType()),
+                    &quot;f_&quot; + field.getName()
+            );
+<span class="fc" id="L295">            structData.put(field.getId(), variable);</span>
+<span class="fc" id="L296">        }</span>
+
+        // protocol.readStructBegin();
+<span class="fc" id="L299">        read.loadVariable(protocol).invokeVirtual(</span>
+                TProtocolReader.class,
+                &quot;readStructBegin&quot;,
+                void.class
+        );
+
+        // while (protocol.nextField())
+<span class="fc" id="L306">        read.visitLabel(&quot;while-begin&quot;);</span>
+<span class="fc" id="L307">        read.loadVariable(protocol).invokeVirtual(TProtocolReader.class, &quot;nextField&quot;, boolean.class);</span>
+<span class="fc" id="L308">        read.ifZeroGoto(&quot;while-end&quot;);</span>
+
+        // switch (protocol.getFieldId())
+<span class="fc" id="L311">        read.loadVariable(protocol).invokeVirtual(TProtocolReader.class, &quot;getFieldId&quot;, short.class);</span>
+<span class="fc" id="L312">        List&lt;CaseStatement&gt; cases = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L313" title="All 2 branches covered.">        for (ThriftFieldMetadata field : metadata.getFields()) {</span>
+<span class="fc" id="L314">            cases.add(caseStatement(field.getId(), field.getName() + &quot;-field&quot;));</span>
+<span class="fc" id="L315">        }</span>
+<span class="fc" id="L316">        read.switchStatement(&quot;default&quot;, cases);</span>
+
+<span class="fc bfc" id="L318" title="All 2 branches covered.">        for (ThriftFieldMetadata field : metadata.getFields()) {</span>
+            // case field.id:
+<span class="fc" id="L320">            read.visitLabel(field.getName() + &quot;-field&quot;);</span>
+
+            // push protocol
+<span class="fc" id="L323">            read.loadVariable(protocol);</span>
+
+            // push ThriftTypeCodec for this field
+<span class="fc" id="L326">            FieldDefinition codecField = codecFields.get(field.getId());</span>
+<span class="fc bfc" id="L327" title="All 2 branches covered.">            if (codecField != null) {</span>
+<span class="fc" id="L328">                read.loadThis().getField(codecType, codecField);</span>
+            }
+
+            // read value
+<span class="fc" id="L332">            Method readMethod = READ_METHODS.get(field.getType().getProtocolType());</span>
+<span class="pc bpc" id="L333" title="1 of 2 branches missed.">            if (readMethod == null) {</span>
+<span class="nc" id="L334">                throw new IllegalArgumentException(&quot;Unsupported field type &quot; + field.getType().getProtocolType());</span>
+            }
+<span class="fc" id="L336">            read.invokeVirtual(readMethod);</span>
+
+            // todo this cast should be based on readMethod return type and fieldType (or coercion type)
+            // add cast if necessary
+<span class="fc bfc" id="L340" title="All 2 branches covered.">            if (needsCastAfterRead(field, readMethod)) {</span>
+<span class="fc" id="L341">                read.checkCast(toParameterizedType(field.getType()));</span>
+            }
+
+            // coerce the type
+<span class="fc bfc" id="L345" title="All 2 branches covered.">            if (field.getCoercion() != null) {</span>
+<span class="fc" id="L346">                read.invokeStatic(field.getCoercion().getFromThrift());</span>
+            }
+
+            // store protocol value
+<span class="fc" id="L350">            read.storeVariable(structData.get(field.getId()));</span>
+
+            // go back to top of loop
+<span class="fc" id="L353">            read.gotoLabel(&quot;while-begin&quot;);</span>
+<span class="fc" id="L354">        }</span>
+
+        // default case
+<span class="fc" id="L357">        read.visitLabel(&quot;default&quot;)</span>
+                .loadVariable(protocol)
+                .invokeVirtual(TProtocolReader.class, &quot;skipFieldData&quot;, void.class)
+                .gotoLabel(&quot;while-begin&quot;);
+
+        // end of while loop
+<span class="fc" id="L363">        read.visitLabel(&quot;while-end&quot;);</span>
+
+        // protocol.readStructEnd();
+<span class="fc" id="L366">        read.loadVariable(protocol)</span>
+                .invokeVirtual(TProtocolReader.class, &quot;readStructEnd&quot;, void.class);
+<span class="fc" id="L368">        return structData;</span>
+    }
+
+    /**
+     * Defines the code to build the struct instance using the data in the local variables.
+     */
+    private void buildStruct(MethodDefinition read, Map&lt;Short, LocalVariableDefinition&gt; structData)
+    {
+
+        // construct the instance and store it in the instance local variable
+<span class="fc" id="L378">        LocalVariableDefinition instance = constructInstance(read, structData);</span>
+
+        // inject fields
+<span class="fc" id="L381">        injectFields(read, instance, structData);</span>
+
+        // inject methods
+<span class="fc" id="L384">        injectMethods(read, instance, structData);</span>
+
+        // invoke factory method if present
+<span class="fc" id="L387">        invokeFactoryMethod(read, structData, instance);</span>
+
+        // push instance on stack, and return it
+<span class="fc" id="L390">        read.loadVariable(instance)</span>
+                .retObject();
+
+<span class="fc" id="L393">        classDefinition.addMethod(read);</span>
+<span class="fc" id="L394">    }</span>
+
+    /**
+     * Defines the code to construct the struct (or builder) instance and stores it in a local
+     * variable.
+     */
+    private LocalVariableDefinition constructInstance(MethodDefinition read, Map&lt;Short, LocalVariableDefinition&gt; structData)
+    {
+<span class="fc" id="L402">        LocalVariableDefinition instance = read.addLocalVariable(structType, &quot;instance&quot;);</span>
+
+        // create the new instance (or builder)
+<span class="fc bfc" id="L405" title="All 2 branches covered.">        if (metadata.getBuilderClass() == null) {</span>
+<span class="fc" id="L406">            read.newObject(structType).dup();</span>
+        }
+        else {
+<span class="fc" id="L409">            read.newObject(metadata.getBuilderClass()).dup();</span>
+        }
+
+        // invoke constructor
+<span class="fc" id="L413">        ThriftConstructorInjection constructor = metadata.getConstructor();</span>
+        // push parameters on stack
+<span class="fc bfc" id="L415" title="All 2 branches covered.">        for (ThriftParameterInjection parameter : constructor.getParameters()) {</span>
+<span class="fc" id="L416">            read.loadVariable(structData.get(parameter.getId()));</span>
+<span class="fc" id="L417">        }</span>
+        // invoke constructor
+<span class="fc" id="L419">        read.invokeConstructor(constructor.getConstructor())</span>
+                .storeVariable(instance);
+<span class="fc" id="L421">        return instance;</span>
+    }
+
+    /**
+     * Defines the code to inject data into the struct public fields.
+     */
+    private void injectFields(MethodDefinition read, LocalVariableDefinition instance, Map&lt;Short, LocalVariableDefinition&gt; structData)
+    {
+<span class="fc bfc" id="L429" title="All 2 branches covered.">        for (ThriftFieldMetadata field : metadata.getFields()) {</span>
+<span class="fc bfc" id="L430" title="All 2 branches covered.">            for (ThriftInjection injection : field.getInjections()) {</span>
+<span class="fc bfc" id="L431" title="All 2 branches covered.">                if (injection instanceof ThriftFieldInjection) {</span>
+
+<span class="fc" id="L433">                    ThriftFieldInjection fieldInjection = (ThriftFieldInjection) injection;</span>
+
+                    // if field is an Object &amp;&amp; field != null
+<span class="fc bfc" id="L436" title="All 2 branches covered.">                    if (!isProtocolTypeJavaPrimitive(field)) {</span>
+<span class="fc" id="L437">                        read.loadVariable(structData.get(field.getId()))</span>
+                                .ifNullGoto(&quot;field_is_null_&quot; + field.getName());
+                    }
+
+                    // write value
+<span class="fc" id="L442">                    read.loadVariable(instance)</span>
+                            .loadVariable(structData.get(field.getId()))
+                            .putField(fieldInjection.getField());
+
+                    // else do nothing
+<span class="fc bfc" id="L447" title="All 2 branches covered.">                    if (!isProtocolTypeJavaPrimitive(field)) {</span>
+<span class="fc" id="L448">                        read.visitLabel(&quot;field_is_null_&quot; + field.getName());</span>
+                    }
+                }
+<span class="fc" id="L451">            }</span>
+<span class="fc" id="L452">        }</span>
+<span class="fc" id="L453">    }</span>
+
+    /**
+     * Defines the code to inject data into the struct methods.
+     */
+    private void injectMethods(MethodDefinition read, LocalVariableDefinition instance, Map&lt;Short, LocalVariableDefinition&gt; structData)
+    {
+<span class="fc bfc" id="L460" title="All 2 branches covered.">        for (ThriftMethodInjection methodInjection : metadata.getMethodInjections()) {</span>
+            // if any parameter is non-null, invoke the method
+<span class="fc bfc" id="L462" title="All 2 branches covered.">            for (ThriftParameterInjection parameter : methodInjection.getParameters()) {</span>
+<span class="fc bfc" id="L463" title="All 2 branches covered.">                if (!isParameterTypeJavaPrimitive(parameter)) {</span>
+<span class="fc" id="L464">                    read.loadVariable(structData.get(parameter.getId()));</span>
+<span class="fc" id="L465">                    read.ifNotNullGoto(&quot;invoke_&quot; + methodInjection.getMethod().toGenericString());</span>
+                }
+                else {
+<span class="fc" id="L468">                    read.gotoLabel(&quot;invoke_&quot; + methodInjection.getMethod().toGenericString());</span>
+                }
+<span class="fc" id="L470">            }</span>
+<span class="fc" id="L471">            read.gotoLabel(&quot;skip_invoke_&quot; + methodInjection.getMethod().toGenericString());</span>
+
+            // invoke the method
+<span class="fc" id="L474">            read.visitLabel(&quot;invoke_&quot; + methodInjection.getMethod().toGenericString());</span>
+<span class="fc" id="L475">            read.loadVariable(instance);</span>
+
+            // push parameters on stack
+<span class="fc bfc" id="L478" title="All 2 branches covered.">            for (ThriftParameterInjection parameter : methodInjection.getParameters()) {</span>
+<span class="fc" id="L479">                read.loadVariable(structData.get(parameter.getId()));</span>
+<span class="fc" id="L480">            }</span>
+
+            // invoke the method
+<span class="fc" id="L483">            read.invokeVirtual(methodInjection.getMethod());</span>
+
+            // if method has a return, we need to pop it off the stack
+<span class="fc bfc" id="L486" title="All 2 branches covered.">            if (methodInjection.getMethod().getReturnType() != void.class) {</span>
+<span class="fc" id="L487">                read.pop();</span>
+            }
+
+            // skip invocation
+<span class="fc" id="L491">            read.visitLabel(&quot;skip_invoke_&quot; + methodInjection.getMethod().toGenericString());</span>
+<span class="fc" id="L492">        }</span>
+<span class="fc" id="L493">    }</span>
+
+    /**
+     * Defines the code that calls the builder factory method.
+     */
+    private void invokeFactoryMethod(MethodDefinition read, Map&lt;Short, LocalVariableDefinition&gt; structData, LocalVariableDefinition instance)
+    {
+<span class="fc" id="L500">        ThriftMethodInjection builderMethod = metadata.getBuilderMethod();</span>
+<span class="fc bfc" id="L501" title="All 2 branches covered.">        if (builderMethod != null) {</span>
+<span class="fc" id="L502">            read.loadVariable(instance);</span>
+
+            // push parameters on stack
+<span class="pc bpc" id="L505" title="1 of 2 branches missed.">            for (ThriftParameterInjection parameter : builderMethod.getParameters()) {</span>
+<span class="nc" id="L506">                read.loadVariable(structData.get(parameter.getId()));</span>
+<span class="nc" id="L507">            }</span>
+
+            // invoke the method
+<span class="fc" id="L510">            read.invokeVirtual(builderMethod.getMethod())</span>
+                    .storeVariable(instance);
+        }
+<span class="fc" id="L513">    }</span>
+
+    /**
+     * Define the write method.
+     */
+    private void defineWriteMethod()
+    {
+<span class="fc" id="L520">        MethodDefinition write = new MethodDefinition(</span>
+                a(PUBLIC),
+                &quot;write&quot;,
+                null,
+                arg(&quot;struct&quot;, structType),
+                arg(&quot;protocol&quot;, TProtocol.class)
+        );
+<span class="fc" id="L527">        classDefinition.addMethod(write);</span>
+
+        // TProtocolReader reader = new TProtocolReader(protocol);
+<span class="fc" id="L530">        write.addLocalVariable(type(TProtocolWriter.class), &quot;writer&quot;);</span>
+<span class="fc" id="L531">        write.newObject(TProtocolWriter.class);</span>
+<span class="fc" id="L532">        write.dup();</span>
+<span class="fc" id="L533">        write.loadVariable(&quot;protocol&quot;);</span>
+<span class="fc" id="L534">        write.invokeConstructor(type(TProtocolWriter.class), type(TProtocol.class));</span>
+<span class="fc" id="L535">        write.storeVariable(&quot;writer&quot;);</span>
+
+
+<span class="fc" id="L538">        LocalVariableDefinition protocol = write.getLocalVariable(&quot;writer&quot;);</span>
+
+        // protocol.writeStructBegin(&quot;bonk&quot;);
+<span class="fc" id="L541">        write.loadVariable(protocol)</span>
+                .loadConstant(metadata.getStructName())
+                .invokeVirtual(TProtocolWriter.class, &quot;writeStructBegin&quot;, void.class, String.class);
+
+        // write fields
+<span class="fc bfc" id="L546" title="All 2 branches covered.">        for (ThriftFieldMetadata field : metadata.getFields()) {</span>
+            // push protocol
+<span class="fc" id="L548">            write.loadVariable(protocol);</span>
+
+            // push (String) field.name
+<span class="fc" id="L551">            write.loadConstant(field.getName());</span>
+
+            // push (short) field.id
+<span class="fc" id="L554">            write.loadConstant(field.getId());</span>
+
+            // push ThriftTypeCodec for this field
+<span class="fc" id="L557">            FieldDefinition codecField = codecFields.get(field.getId());</span>
+<span class="fc bfc" id="L558" title="All 2 branches covered.">            if (codecField != null) {</span>
+<span class="fc" id="L559">                write.loadThis().getField(codecType, codecField);</span>
+            }
+
+            // push field value
+<span class="fc" id="L563">            loadFieldValue(write, field);</span>
+
+            // if field value is null, don't coerce or write the field
+<span class="fc bfc" id="L566" title="All 2 branches covered.">            if (!isFieldTypeJavaPrimitive(field)) {</span>
+                // ifNullGoto consumes the top of the stack, so we need to duplicate the value
+<span class="fc" id="L568">                write.dup();</span>
+<span class="fc" id="L569">                write.ifNullGoto(&quot;field_is_null_&quot; + field.getName());</span>
+            }
+
+            // coerce value
+<span class="fc bfc" id="L573" title="All 2 branches covered.">            if (field.getCoercion() != null) {</span>
+<span class="fc" id="L574">                write.invokeStatic(field.getCoercion().getToThrift());</span>
+
+                // if coerced value is null, don't write the field
+<span class="fc bfc" id="L577" title="All 2 branches covered.">                if (!isProtocolTypeJavaPrimitive(field)) {</span>
+<span class="fc" id="L578">                    write.dup();</span>
+<span class="fc" id="L579">                    write.ifNullGoto(&quot;field_is_null_&quot; + field.getName());</span>
+                }
+            }
+
+            // write value
+<span class="fc" id="L584">            Method writeMethod = WRITE_METHODS.get(field.getType().getProtocolType());</span>
+<span class="pc bpc" id="L585" title="1 of 2 branches missed.">            if (writeMethod == null) {</span>
+<span class="nc" id="L586">                throw new IllegalArgumentException(</span>
+                        &quot;Unsupported field type &quot; + field.getType().getProtocolType()
+                );
+            }
+<span class="fc" id="L590">            write.invokeVirtual(writeMethod);</span>
+
+            //
+            // If not written because of a null, clean-up the stack
+<span class="fc bfc" id="L594" title="All 4 branches covered.">            if (!isProtocolTypeJavaPrimitive(field) || !isFieldTypeJavaPrimitive(field)) {</span>
+
+                // value was written so skip cleanup
+<span class="fc" id="L597">                write.gotoLabel(&quot;field_end_&quot; + field.getName());</span>
+
+                // cleanup stack for null field value
+<span class="fc" id="L600">                write.visitLabel(&quot;field_is_null_&quot; + field.getName());</span>
+                // pop value
+<span class="fc" id="L602">                write.pop();</span>
+                // pop codec
+<span class="fc bfc" id="L604" title="All 2 branches covered.">                if (codecField != null) {</span>
+<span class="fc" id="L605">                    write.pop();</span>
+                }
+                // pop id
+<span class="fc" id="L608">                write.pop();</span>
+                // pop name
+<span class="fc" id="L610">                write.pop();</span>
+                // pop protocol
+<span class="fc" id="L612">                write.pop();</span>
+
+<span class="fc" id="L614">                write.visitLabel(&quot;field_end_&quot; + field.getName());</span>
+            }
+<span class="fc" id="L616">        }</span>
+
+<span class="fc" id="L618">        write.loadVariable(protocol)</span>
+                .invokeVirtual(TProtocolWriter.class, &quot;writeStructEnd&quot;, void.class);
+
+<span class="fc" id="L621">        write.ret();</span>
+<span class="fc" id="L622">    }</span>
+
+    private void loadFieldValue(MethodDefinition write, ThriftFieldMetadata field)
+    {
+<span class="fc" id="L626">        write.loadVariable(&quot;struct&quot;);</span>
+<span class="fc" id="L627">        ThriftExtraction extraction = field.getExtraction();</span>
+<span class="fc bfc" id="L628" title="All 2 branches covered.">        if (extraction instanceof ThriftFieldExtractor) {</span>
+<span class="fc" id="L629">            ThriftFieldExtractor fieldExtractor = (ThriftFieldExtractor) extraction;</span>
+<span class="fc" id="L630">            write.getField(fieldExtractor.getField());</span>
+<span class="fc" id="L631">        }</span>
+<span class="pc bpc" id="L632" title="1 of 2 branches missed.">        else if (extraction instanceof ThriftMethodExtractor) {</span>
+<span class="fc" id="L633">            ThriftMethodExtractor methodExtractor = (ThriftMethodExtractor) extraction;</span>
+<span class="fc" id="L634">            write.invokeVirtual(methodExtractor.getMethod());</span>
+        }
+<span class="fc" id="L636">    }</span>
+
+    /**
+     * Defines the generics bridge method with untyped args to the type specific read method.
+     */
+    private void defineReadBridgeMethod()
+    {
+<span class="fc" id="L643">        classDefinition.addMethod(</span>
+                new MethodDefinition(a(PUBLIC, BRIDGE, SYNTHETIC), &quot;read&quot;, type(Object.class), arg(&quot;protocol&quot;, TProtocol.class))
+                        .addException(Exception.class)
+                        .loadThis()
+                        .loadVariable(&quot;protocol&quot;)
+                        .invokeVirtual(codecType, &quot;read&quot;, structType, type(TProtocol.class))
+                        .retObject()
+        );
+<span class="fc" id="L651">    }</span>
+
+    /**
+     * Defines the generics bridge method with untyped args to the type specific write method.
+     */
+    private void defineWriteBridgeMethod()
+    {
+<span class="fc" id="L658">        classDefinition.addMethod(</span>
+                new MethodDefinition(a(PUBLIC, BRIDGE, SYNTHETIC), &quot;write&quot;, null, arg(&quot;struct&quot;, Object.class), arg(&quot;protocol&quot;, TProtocol.class))
+                        .addException(Exception.class)
+                        .loadThis()
+                        .loadVariable(&quot;struct&quot;, structType)
+                        .loadVariable(&quot;protocol&quot;)
+                        .invokeVirtual(
+                                codecType,
+                                &quot;write&quot;,
+                                type(void.class),
+                                structType,
+                                type(TProtocol.class)
+                        )
+                        .ret()
+        );
+<span class="fc" id="L673">    }</span>
+
+    private boolean isParameterTypeJavaPrimitive(ThriftParameterInjection parameter)
+    {
+<span class="fc" id="L677">        return isJavaPrimitive(TypeToken.of(parameter.getJavaType()));</span>
+    }
+
+    private boolean isFieldTypeJavaPrimitive(ThriftFieldMetadata field)
+    {
+<span class="fc" id="L682">        return isJavaPrimitive(TypeToken.of(field.getType().getJavaType()));</span>
+    }
+
+    private boolean isProtocolTypeJavaPrimitive(ThriftFieldMetadata field)
+    {
+<span class="fc bfc" id="L687" title="All 2 branches covered.">        if (field.getType().isCoerced()) {</span>
+<span class="fc" id="L688">            return isJavaPrimitive(TypeToken.of(field.getType().getUncoercedType().getJavaType()));</span>
+        }
+        else {
+<span class="fc" id="L691">            return isJavaPrimitive(TypeToken.of(field.getType().getJavaType()));</span>
+        }
+    }
+
+    private boolean isJavaPrimitive(TypeToken&lt;?&gt; typeToken)
+    {
+<span class="fc" id="L697">        return typeToken</span>
+                .getRawType()
+                .isPrimitive();
+    }
+
+    private static boolean needsCastAfterRead(ThriftFieldMetadata field, Method readMethod)
+    {
+<span class="fc" id="L704">        Class&lt;?&gt; methodReturn = readMethod.getReturnType();</span>
+        Class&lt;?&gt; fieldType;
+<span class="fc bfc" id="L706" title="All 2 branches covered.">        if (field.getCoercion() != null) {</span>
+<span class="fc" id="L707">            fieldType = field.getCoercion().getFromThrift().getParameterTypes()[0];</span>
+        }
+        else {
+<span class="fc" id="L710">            fieldType = TypeToken.of(field.getType().getJavaType()).getRawType();</span>
+        }
+<span class="fc bfc" id="L712" title="All 2 branches covered.">        boolean needsCast = !fieldType.isAssignableFrom(methodReturn);</span>
+<span class="fc" id="L713">        return needsCast;</span>
+    }
+
+    private boolean needsCodec(ThriftFieldMetadata fieldMetadata)
+    {
+<span class="fc" id="L718">        ThriftProtocolType protocolType = fieldMetadata.getType().getProtocolType();</span>
+<span class="fc bfc" id="L719" title="All 10 branches covered.">        return protocolType == ENUM ||</span>
+                protocolType == STRUCT ||
+                protocolType == SET ||
+                protocolType == LIST ||
+                protocolType == MAP;
+    }
+
+    private ParameterizedType toCodecType(ThriftStructMetadata&lt;?&gt; metadata)
+    {
+<span class="fc" id="L728">        return type(PACKAGE + &quot;/&quot; + type(metadata.getStructClass()).getClassName() + &quot;Codec&quot;);</span>
+    }
+
+<span class="fc" id="L731">    private static class ConstructorParameters</span>
+    {
+<span class="fc" id="L733">        private final List&lt;FieldDefinition&gt; fields = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L734">        private final List&lt;Object&gt; values = new ArrayList&lt;&gt;();</span>
+
+        private void add(FieldDefinition field, Object value)
+        {
+<span class="fc" id="L738">            fields.add(field);</span>
+<span class="fc" id="L739">            values.add(value);</span>
+<span class="fc" id="L740">        }</span>
+
+        public List&lt;FieldDefinition&gt; getFields()
+        {
+<span class="fc" id="L744">            return fields;</span>
+        }
+
+        public Object[] getValues()
+        {
+<span class="fc" id="L749">            return values.toArray(new Object[values.size()]);</span>
+        }
+
+        public List&lt;NamedParameterDefinition&gt; getParameters()
+        {
+<span class="fc" id="L754">            return Lists.transform(fields, new Function&lt;FieldDefinition, NamedParameterDefinition&gt;()</span>
+<span class="fc" id="L755">            {</span>
+                public NamedParameterDefinition apply(FieldDefinition field)
+                {
+<span class="fc" id="L758">                    return arg(field.getName(), field.getType());</span>
+                }
+            });
+        }
+
+        public Class&lt;?&gt;[] getTypes()
+        {
+<span class="fc" id="L765">            List&lt;Class&lt;?&gt;&gt; types = Lists.transform(values, new Function&lt;Object, Class&lt;?&gt;&gt;()</span>
+<span class="fc" id="L766">            {</span>
+                public Class&lt;?&gt; apply(Object value)
+                {
+<span class="fc" id="L769">                    return value.getClass();</span>
+                }
+            });
+
+<span class="fc" id="L773">            return types.toArray(new Class&lt;?&gt;[types.size()]);</span>
+        }
+    }
+
+    public static ParameterizedType toParameterizedType(ThriftType type)
+    {
+<span class="pc bpc" id="L779" title="1 of 5 branches missed.">        switch (type.getProtocolType()) {</span>
+            case BOOL:
+            case BYTE:
+            case DOUBLE:
+            case I16:
+            case I32:
+            case I64:
+            case STRING:
+            case STRUCT:
+            case ENUM:
+<span class="fc" id="L789">                return type((Class&lt;?&gt;) type.getJavaType());</span>
+            case MAP:
+<span class="fc" id="L791">                return type(Map.class, toParameterizedType(type.getKeyType()), toParameterizedType(type.getValueType()));</span>
+            case SET:
+<span class="fc" id="L793">                return type(Set.class, toParameterizedType(type.getValueType()));</span>
+            case LIST:
+<span class="fc" id="L795">                return type(List.class, toParameterizedType(type.getValueType()));</span>
+            default:
+<span class="nc" id="L797">                throw new IllegalArgumentException(&quot;Unsupported thrift field type &quot; + type);</span>
+        }
+    }
+
+    static {
+<span class="fc" id="L802">        ImmutableMap.Builder&lt;ThriftProtocolType, Method&gt; writeBuilder = ImmutableMap.builder();</span>
+<span class="fc" id="L803">        ImmutableMap.Builder&lt;ThriftProtocolType, Method&gt; readBuilder = ImmutableMap.builder();</span>
+
+        try {
+<span class="fc" id="L806">            writeBuilder.put(BOOL, TProtocolWriter.class.getMethod(&quot;writeBoolField&quot;, String.class, short.class, boolean.class));</span>
+<span class="fc" id="L807">            writeBuilder.put(BYTE, TProtocolWriter.class.getMethod(&quot;writeByteField&quot;, String.class, short.class, byte.class));</span>
+<span class="fc" id="L808">            writeBuilder.put(DOUBLE, TProtocolWriter.class.getMethod(&quot;writeDoubleField&quot;, String.class, short.class, double.class));</span>
+<span class="fc" id="L809">            writeBuilder.put(I16, TProtocolWriter.class.getMethod(&quot;writeI16Field&quot;, String.class, short.class, short.class));</span>
+<span class="fc" id="L810">            writeBuilder.put(I32, TProtocolWriter.class.getMethod(&quot;writeI32Field&quot;, String.class, short.class, int.class));</span>
+<span class="fc" id="L811">            writeBuilder.put(I64, TProtocolWriter.class.getMethod(&quot;writeI64Field&quot;, String.class, short.class, long.class));</span>
+<span class="fc" id="L812">            writeBuilder.put(STRING, TProtocolWriter.class.getMethod(&quot;writeBinaryField&quot;, String.class, short.class, ByteBuffer.class));</span>
+<span class="fc" id="L813">            writeBuilder.put(STRUCT, TProtocolWriter.class.getMethod(&quot;writeStructField&quot;, String.class, short.class, ThriftCodec.class, Object.class));</span>
+<span class="fc" id="L814">            writeBuilder.put(MAP, TProtocolWriter.class.getMethod(&quot;writeMapField&quot;, String.class, short.class, ThriftCodec.class, Map.class));</span>
+<span class="fc" id="L815">            writeBuilder.put(SET, TProtocolWriter.class.getMethod(&quot;writeSetField&quot;, String.class, short.class, ThriftCodec.class, Set.class));</span>
+<span class="fc" id="L816">            writeBuilder.put(LIST, TProtocolWriter.class.getMethod(&quot;writeListField&quot;, String.class, short.class, ThriftCodec.class, List.class));</span>
+<span class="fc" id="L817">            writeBuilder.put(ENUM, TProtocolWriter.class.getMethod(&quot;writeEnumField&quot;, String.class, short.class, ThriftCodec.class, Enum.class));</span>
+
+<span class="fc" id="L819">            readBuilder.put(BOOL, TProtocolReader.class.getMethod(&quot;readBoolField&quot;));</span>
+<span class="fc" id="L820">            readBuilder.put(BYTE, TProtocolReader.class.getMethod(&quot;readByteField&quot;));</span>
+<span class="fc" id="L821">            readBuilder.put(DOUBLE, TProtocolReader.class.getMethod(&quot;readDoubleField&quot;));</span>
+<span class="fc" id="L822">            readBuilder.put(I16, TProtocolReader.class.getMethod(&quot;readI16Field&quot;));</span>
+<span class="fc" id="L823">            readBuilder.put(I32, TProtocolReader.class.getMethod(&quot;readI32Field&quot;));</span>
+<span class="fc" id="L824">            readBuilder.put(I64, TProtocolReader.class.getMethod(&quot;readI64Field&quot;));</span>
+<span class="fc" id="L825">            readBuilder.put(STRING, TProtocolReader.class.getMethod(&quot;readBinaryField&quot;));</span>
+<span class="fc" id="L826">            readBuilder.put(STRUCT, TProtocolReader.class.getMethod(&quot;readStructField&quot;, ThriftCodec.class));</span>
+<span class="fc" id="L827">            readBuilder.put(MAP, TProtocolReader.class.getMethod(&quot;readMapField&quot;, ThriftCodec.class));</span>
+<span class="fc" id="L828">            readBuilder.put(SET, TProtocolReader.class.getMethod(&quot;readSetField&quot;, ThriftCodec.class));</span>
+<span class="fc" id="L829">            readBuilder.put(LIST, TProtocolReader.class.getMethod(&quot;readListField&quot;, ThriftCodec.class));</span>
+<span class="fc" id="L830">            readBuilder.put(ENUM, TProtocolReader.class.getMethod(&quot;readEnumField&quot;, ThriftCodec.class));</span>
+        }
+<span class="nc" id="L832">        catch (NoSuchMethodException e) {</span>
+<span class="nc" id="L833">            throw Throwables.propagate(e);</span>
+<span class="fc" id="L834">        }</span>
+<span class="fc" id="L835">        WRITE_METHODS = writeBuilder.build();</span>
+<span class="fc" id="L836">        READ_METHODS = readBuilder.build();</span>
+<span class="fc" id="L837">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

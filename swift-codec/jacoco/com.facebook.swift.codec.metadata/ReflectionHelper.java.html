@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ReflectionHelper.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-codec</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.codec.metadata</a> &gt; <span class="el_source">ReflectionHelper.java</span></div><h1>ReflectionHelper.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.codec.metadata;
+
+import com.facebook.swift.codec.ThriftField;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.reflect.TypeToken;
+import com.thoughtworks.paranamer.AdaptiveParanamer;
+import com.thoughtworks.paranamer.AnnotationParanamer;
+import com.thoughtworks.paranamer.CachingParanamer;
+import com.thoughtworks.paranamer.Paranamer;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Future;
+
+import static java.lang.reflect.Modifier.isStatic;
+
+public final class ReflectionHelper
+{
+    private ReflectionHelper()
+<span class="nc" id="L47">    {</span>
+<span class="nc" id="L48">    }</span>
+
+    private static final Type MAP_KEY_TYPE;
+    private static final Type MAP_VALUE_TYPE;
+    private static final Type ITERATOR_TYPE;
+    private static final Type ITERATOR_ELEMENT_TYPE;
+    private static final Type FUTURE_RETURN_TYPE;
+
+    static {
+        try {
+<span class="fc" id="L58">            Method mapPutMethod = Map.class.getMethod(&quot;put&quot;, Object.class, Object.class);</span>
+<span class="fc" id="L59">            MAP_KEY_TYPE = mapPutMethod.getGenericParameterTypes()[0];</span>
+<span class="fc" id="L60">            MAP_VALUE_TYPE = mapPutMethod.getGenericParameterTypes()[1];</span>
+
+<span class="fc" id="L62">            ITERATOR_TYPE = Iterable.class.getMethod(&quot;iterator&quot;).getGenericReturnType();</span>
+<span class="fc" id="L63">            ITERATOR_ELEMENT_TYPE = Iterator.class.getMethod(&quot;next&quot;).getGenericReturnType();</span>
+
+<span class="fc" id="L65">            Method futureGetMethod = Future.class.getMethod(&quot;get&quot;);</span>
+<span class="fc" id="L66">            FUTURE_RETURN_TYPE = futureGetMethod.getGenericReturnType();</span>
+        }
+<span class="nc" id="L68">        catch (Exception e) {</span>
+<span class="nc" id="L69">            throw Throwables.propagate(e);</span>
+<span class="fc" id="L70">        }</span>
+    }
+
+    public static Type getMapKeyType(Type type)
+    {
+<span class="fc" id="L75">        return TypeToken.of(type).resolveType(MAP_KEY_TYPE).getType();</span>
+    }
+
+    public static Type getMapValueType(Type type)
+    {
+<span class="fc" id="L80">        return TypeToken.of(type).resolveType(MAP_VALUE_TYPE).getType();</span>
+    }
+
+    public static Type getIterableType(Type type)
+    {
+<span class="fc" id="L85">        return TypeToken.of(type).resolveType(ITERATOR_TYPE).resolveType(ITERATOR_ELEMENT_TYPE).getType();</span>
+    }
+
+    public static Type getFutureReturnType(Type type)
+    {
+<span class="nc" id="L90">        return TypeToken.of(type).resolveType(FUTURE_RETURN_TYPE).getType();</span>
+    }
+
+    public static &lt;T extends Annotation&gt; Set&lt;T&gt; getAllClassAnnotations(Class&lt;?&gt; type, Class&lt;T&gt; annotation)
+    {
+        // if the class is directly annotated, it is considered the only annotation
+<span class="nc bnc" id="L96" title="All 2 branches missed.">        if (type.isAnnotationPresent(annotation)) {</span>
+<span class="nc" id="L97">            return ImmutableSet.of(type.getAnnotation(annotation));</span>
+        }
+
+        // otherwise find all annotations from all super classes and interfaces
+<span class="nc" id="L101">        ImmutableSet.Builder&lt;T&gt; builder = ImmutableSet.builder();</span>
+<span class="nc" id="L102">        addAllClassAnnotations(type, annotation, builder);</span>
+<span class="nc" id="L103">        return builder.build();</span>
+    }
+
+    private static &lt;T extends Annotation&gt; void addAllClassAnnotations(Class&lt;?&gt; type, Class&lt;T&gt; annotation, ImmutableSet.Builder&lt;T&gt; builder)
+    {
+<span class="nc bnc" id="L108" title="All 2 branches missed.">        if (type.isAnnotationPresent(annotation)) {</span>
+<span class="nc" id="L109">            builder.add(type.getAnnotation(annotation));</span>
+        }
+<span class="nc bnc" id="L111" title="All 2 branches missed.">        if (type.getSuperclass() != null) {</span>
+<span class="nc" id="L112">            addAllClassAnnotations(type.getSuperclass(), annotation, builder);</span>
+        }
+<span class="nc bnc" id="L114" title="All 2 branches missed.">        for (Class&lt;?&gt; anInterface : type.getInterfaces()) {</span>
+<span class="nc" id="L115">            addAllClassAnnotations(anInterface, annotation, builder);</span>
+        }
+<span class="nc" id="L117">    }</span>
+
+    public static Iterable&lt;Method&gt; getAllDeclaredMethods(Class&lt;?&gt; type)
+    {
+<span class="fc" id="L121">        ImmutableList.Builder&lt;Method&gt; methods = ImmutableList.builder();</span>
+
+<span class="pc bpc" id="L123" title="1 of 4 branches missed.">        for (Class&lt;?&gt; clazz = type; (clazz != null) &amp;&amp; !clazz.equals(Object.class); clazz = clazz.getSuperclass()) {</span>
+<span class="fc" id="L124">            methods.addAll(ImmutableList.copyOf(clazz.getDeclaredMethods()));</span>
+        }
+<span class="fc" id="L126">        return methods.build();</span>
+    }
+
+    public static Iterable&lt;Field&gt; getAllDeclaredFields(Class&lt;?&gt; type)
+    {
+<span class="fc" id="L131">        ImmutableList.Builder&lt;Field&gt; fields = ImmutableList.builder();</span>
+<span class="pc bpc" id="L132" title="1 of 4 branches missed.">        for (Class&lt;?&gt; clazz = type; (clazz != null) &amp;&amp; !clazz.equals(Object.class); clazz = clazz.getSuperclass()) {</span>
+<span class="fc" id="L133">            fields.addAll(ImmutableList.copyOf(clazz.getDeclaredFields()));</span>
+        }
+<span class="fc" id="L135">        return fields.build();</span>
+    }
+
+    /**
+     * Find methods that are tagged with a given annotation somewhere in the hierarchy
+     */
+    public static Collection&lt;Method&gt; findAnnotatedMethods(Class&lt;?&gt; type, Class&lt;? extends Annotation&gt; annotation)
+    {
+<span class="fc" id="L143">        List&lt;Method&gt; result = new ArrayList&lt;&gt;();</span>
+
+        // gather all publicly available methods
+        // this returns everything, even if it's declared in a parent
+<span class="fc bfc" id="L147" title="All 2 branches covered.">        for (Method method : type.getMethods()) {</span>
+            // skip methods that are used internally by the vm for implementing covariance, etc
+<span class="pc bpc" id="L149" title="2 of 6 branches missed.">            if (method.isSynthetic() || method.isBridge() || isStatic(method.getModifiers())) {</span>
+<span class="fc" id="L150">                continue;</span>
+            }
+
+            // look for annotations recursively in super-classes or interfaces
+<span class="fc" id="L154">            Method managedMethod = findAnnotatedMethod(</span>
+                    type,
+                    annotation,
+                    method.getName(),
+                    method.getParameterTypes());
+<span class="fc bfc" id="L159" title="All 2 branches covered.">            if (managedMethod != null) {</span>
+<span class="fc" id="L160">                result.add(managedMethod);</span>
+            }
+        }
+
+<span class="fc" id="L164">        return result;</span>
+    }
+
+    @SuppressWarnings(&quot;PMD.EmptyCatchBlock&quot;)
+    public static Method findAnnotatedMethod(Class&lt;?&gt; configClass, Class&lt;? extends Annotation&gt; annotation, String methodName, Class&lt;?&gt;... paramTypes)
+    {
+        try {
+<span class="fc" id="L171">            Method method = configClass.getDeclaredMethod(methodName, paramTypes);</span>
+<span class="pc bpc" id="L172" title="1 of 4 branches missed.">            if (method != null &amp;&amp; method.isAnnotationPresent(annotation)) {</span>
+<span class="fc" id="L173">                return method;</span>
+            }
+        }
+<span class="fc" id="L176">        catch (NoSuchMethodException e) {</span>
+            // ignore
+<span class="fc" id="L178">        }</span>
+
+<span class="fc bfc" id="L180" title="All 2 branches covered.">        if (configClass.getSuperclass() != null) {</span>
+<span class="fc" id="L181">            Method managedMethod = findAnnotatedMethod(</span>
+                    configClass.getSuperclass(),
+                    annotation,
+                    methodName,
+                    paramTypes);
+<span class="pc bpc" id="L186" title="1 of 2 branches missed.">            if (managedMethod != null) {</span>
+<span class="nc" id="L187">                return managedMethod;</span>
+            }
+        }
+
+<span class="pc bpc" id="L191" title="1 of 2 branches missed.">        for (Class&lt;?&gt; iface : configClass.getInterfaces()) {</span>
+<span class="nc" id="L192">            Method managedMethod = findAnnotatedMethod(iface, annotation, methodName, paramTypes);</span>
+<span class="nc bnc" id="L193" title="All 2 branches missed.">            if (managedMethod != null) {</span>
+<span class="nc" id="L194">                return managedMethod;</span>
+            }
+        }
+
+<span class="fc" id="L198">        return null;</span>
+    }
+
+    public static Collection&lt;Field&gt; findAnnotatedFields(Class&lt;?&gt; type, Class&lt;? extends Annotation&gt; annotation)
+    {
+<span class="fc" id="L203">        List&lt;Field&gt; result = new ArrayList&lt;&gt;();</span>
+
+        // gather all publicly available methods
+        // this returns everything, even if it's declared in a parent
+<span class="fc bfc" id="L207" title="All 2 branches covered.">        for (Field field : type.getFields()) {</span>
+<span class="pc bpc" id="L208" title="2 of 4 branches missed.">            if (field.isSynthetic() || isStatic(field.getModifiers())) {</span>
+<span class="nc" id="L209">                continue;</span>
+            }
+
+<span class="fc bfc" id="L212" title="All 2 branches covered.">            if (field.isAnnotationPresent(annotation)) {</span>
+<span class="fc" id="L213">                result.add(field);</span>
+            }
+        }
+
+<span class="fc" id="L217">        return result;</span>
+    }
+
+<span class="fc" id="L220">    private static final Paranamer PARANAMER = new CachingParanamer(</span>
+            new AdaptiveParanamer(
+                    new ThriftFieldParanamer(),
+                    new BytecodeReadingParanamer(),
+                    new GeneralParanamer()));
+
+    public static String[] extractParameterNames(AccessibleObject methodOrConstructor)
+    {
+<span class="fc" id="L228">        String[] names = PARANAMER.lookupParameterNames(methodOrConstructor);</span>
+<span class="fc" id="L229">        return names;</span>
+    }
+
+<span class="fc" id="L232">    private static class ThriftFieldParanamer extends AnnotationParanamer</span>
+    {
+        @Override
+        protected String getNamedValue(Annotation annotation)
+        {
+<span class="pc bpc" id="L237" title="1 of 2 branches missed.">            if (annotation instanceof ThriftField) {</span>
+<span class="fc" id="L238">                String name = ((ThriftField) annotation).name();</span>
+<span class="pc bpc" id="L239" title="1 of 2 branches missed.">                if (!name.isEmpty()) {</span>
+<span class="fc" id="L240">                    return name;</span>
+                }
+            }
+<span class="nc" id="L243">            return super.getNamedValue(annotation);</span>
+        }
+
+        @Override
+        protected boolean isNamed(Annotation annotation)
+        {
+<span class="pc bpc" id="L249" title="3 of 4 branches missed.">            return (annotation instanceof ThriftField) || super.isNamed(annotation);</span>
+        }
+    }
+
+<span class="fc" id="L253">    private static class GeneralParanamer implements Paranamer</span>
+    {
+        @Override
+        public String[] lookupParameterNames(AccessibleObject methodOrConstructor)
+        {
+            String[] names;
+<span class="pc bpc" id="L259" title="1 of 2 branches missed.">            if (methodOrConstructor instanceof Method) {</span>
+<span class="fc" id="L260">                Method method = (Method) methodOrConstructor;</span>
+<span class="fc" id="L261">                names = new String[method.getParameterTypes().length];</span>
+<span class="fc" id="L262">            }</span>
+<span class="nc bnc" id="L263" title="All 2 branches missed.">            else if (methodOrConstructor instanceof Constructor&lt;?&gt;) {</span>
+<span class="nc" id="L264">                Constructor&lt;?&gt; constructor = (Constructor&lt;?&gt;) methodOrConstructor;</span>
+<span class="nc" id="L265">                names = new String[constructor.getParameterTypes().length];</span>
+<span class="nc" id="L266">            }</span>
+            else {
+<span class="nc" id="L268">                throw new IllegalArgumentException(&quot;methodOrConstructor is not an instance of Method or Constructor but is &quot; + methodOrConstructor.getClass().getName());</span>
+            }
+<span class="pc bpc" id="L270" title="1 of 2 branches missed.">            for (int i = 0; i &lt; names.length; i++) {</span>
+<span class="nc" id="L271">                names[i] = &quot;arg&quot; + i;</span>
+            }
+<span class="fc" id="L273">            return names;</span>
+        }
+
+        @Override
+        public String[] lookupParameterNames(AccessibleObject methodOrConstructor, boolean throwExceptionIfMissing)
+        {
+<span class="fc" id="L279">            return lookupParameterNames(methodOrConstructor);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

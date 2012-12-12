@@ -1,0 +1,691 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>MethodDefinition.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-codec</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.codec.internal.compiler.byteCode</a> &gt; <span class="el_source">MethodDefinition.java</span></div><h1>MethodDefinition.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.codec.internal.compiler.byteCode;
+
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.LookupSwitchInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TypeInsnNode;
+import org.objectweb.asm.tree.VarInsnNode;
+
+import javax.annotation.concurrent.NotThreadSafe;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+import static com.facebook.swift.codec.internal.compiler.byteCode.Access.STATIC;
+import static com.facebook.swift.codec.internal.compiler.byteCode.Access.toAccessModifier;
+import static com.facebook.swift.codec.internal.compiler.byteCode.NamedParameterDefinition.getNamedParameterType;
+import static com.facebook.swift.codec.internal.compiler.byteCode.ParameterizedType.getParameterType;
+import static com.facebook.swift.codec.internal.compiler.byteCode.ParameterizedType.toParameterizedType;
+import static com.facebook.swift.codec.internal.compiler.byteCode.ParameterizedType.type;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.collect.Iterables.any;
+import static com.google.common.collect.Iterables.transform;
+import static org.objectweb.asm.Opcodes.*;
+
+@NotThreadSafe
+public class MethodDefinition
+{
+    private final EnumSet&lt;Access&gt; access;
+    private final String name;
+    private final ParameterizedType returnType;
+    private final List&lt;ParameterizedType&gt; parameters;
+<span class="fc" id="L65">    private final List&lt;ParameterizedType&gt; exceptions = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L66">    private final InsnList instructionList = new InsnList();</span>
+
+<span class="fc" id="L68">    private final Map&lt;String, LocalVariableDefinition&gt; localVariables = new TreeMap&lt;&gt;();</span>
+<span class="fc" id="L69">    private final Map&lt;String, Label&gt; labels = new TreeMap&lt;&gt;();</span>
+
+    private int nextSlot;
+
+    public MethodDefinition(
+            EnumSet&lt;Access&gt; access,
+            String name,
+            ParameterizedType returnType,
+            NamedParameterDefinition... parameters)
+    {
+<span class="fc" id="L79">        this(access, name, returnType, ImmutableList.copyOf(parameters));</span>
+<span class="fc" id="L80">    }</span>
+
+    public MethodDefinition(
+            EnumSet&lt;Access&gt; access,
+            String name,
+            ParameterizedType returnType,
+            List&lt;NamedParameterDefinition&gt; parameters)
+<span class="fc" id="L87">    {</span>
+<span class="fc" id="L88">        this.access = access;</span>
+<span class="fc" id="L89">        this.name = name;</span>
+<span class="fc bfc" id="L90" title="All 2 branches covered.">        if (returnType != null) {</span>
+<span class="fc" id="L91">            this.returnType = returnType;</span>
+        }
+        else {
+<span class="fc" id="L94">            this.returnType = type(void.class);</span>
+        }
+<span class="fc" id="L96">        this.parameters = Lists.transform(parameters, getNamedParameterType());</span>
+
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">        if (!access.contains(STATIC)) {</span>
+<span class="fc" id="L99">            localVariables.put(&quot;this&quot;, new LocalVariableDefinition(&quot;this&quot;, 0, type(Object.class)));</span>
+<span class="fc" id="L100">            nextSlot++;</span>
+        }
+<span class="fc" id="L102">        int argId = 0;</span>
+<span class="fc bfc" id="L103" title="All 2 branches covered.">        for (NamedParameterDefinition parameter : parameters) {</span>
+<span class="fc" id="L104">            String parameterName = parameter.getName();</span>
+<span class="pc bpc" id="L105" title="1 of 2 branches missed.">            if (parameterName == null) {</span>
+<span class="nc" id="L106">                parameterName = &quot;arg&quot; + argId;</span>
+            }
+<span class="fc" id="L108">            addLocalVariable(parameter.getType(), parameterName);</span>
+<span class="fc" id="L109">            argId++;</span>
+<span class="fc" id="L110">        }</span>
+<span class="fc" id="L111">    }</span>
+
+    public MethodDefinition addException(Class&lt;? extends Throwable&gt; exceptionClass)
+    {
+<span class="fc" id="L115">        exceptions.add(type(exceptionClass));</span>
+<span class="fc" id="L116">        return this;</span>
+    }
+
+    public LocalVariableDefinition addLocalVariable(ParameterizedType type, String name)
+    {
+<span class="fc" id="L121">        Preconditions.checkNotNull(name, &quot;name is null&quot;);</span>
+<span class="pc bpc" id="L122" title="1 of 2 branches missed.">        checkArgument(!localVariables.containsKey(name), &quot;There is already a local variable named %s&quot;, name);</span>
+
+<span class="fc" id="L124">        LocalVariableDefinition variable = new LocalVariableDefinition(name, nextSlot, type);</span>
+<span class="fc" id="L125">        nextSlot += Type.getType(type.getType()).getSize();</span>
+
+<span class="fc" id="L127">        localVariables.put(name, variable);</span>
+<span class="fc" id="L128">        return variable;</span>
+    }
+
+    public LocalVariableDefinition addInitializedLocalVariable(ParameterizedType type, String name)
+    {
+<span class="fc" id="L133">        LocalVariableDefinition variable = addLocalVariable(type, name);</span>
+<span class="fc" id="L134">        initializeLocalVariable(variable);</span>
+<span class="fc" id="L135">        return variable;</span>
+    }
+
+    public LocalVariableDefinition getLocalVariable(String name)
+    {
+<span class="fc" id="L140">        LocalVariableDefinition localVariableDefinition = localVariables.get(name);</span>
+<span class="pc bpc" id="L141" title="1 of 2 branches missed.">        Preconditions.checkArgument(localVariableDefinition != null, &quot;No local variable %s&quot;, name);</span>
+<span class="fc" id="L142">        return localVariableDefinition;</span>
+    }
+
+    public MethodDefinition visitLabel(String name)
+    {
+<span class="fc" id="L147">        instructionList.add(getLabel(name));</span>
+<span class="fc" id="L148">        return this;</span>
+    }
+
+    public MethodDefinition gotoLabel(String name)
+    {
+<span class="fc" id="L153">        instructionList.add(new JumpInsnNode(GOTO, getLabel(name)));</span>
+<span class="fc" id="L154">        return this;</span>
+    }
+
+    public MethodDefinition ifZeroGoto(String name)
+    {
+<span class="fc" id="L159">        instructionList.add(new JumpInsnNode(IFEQ, getLabel(name)));</span>
+<span class="fc" id="L160">        return this;</span>
+    }
+
+    public MethodDefinition ifNullGoto(String name)
+    {
+<span class="fc" id="L165">        instructionList.add(new JumpInsnNode(IFNULL, getLabel(name)));</span>
+<span class="fc" id="L166">        return this;</span>
+    }
+
+    public MethodDefinition ifNotNullGoto(String name)
+    {
+<span class="fc" id="L171">        instructionList.add(new JumpInsnNode(IFNONNULL, getLabel(name)));</span>
+<span class="fc" id="L172">        return this;</span>
+    }
+
+    private LabelNode getLabel(String name)
+    {
+<span class="fc" id="L177">        Label label = labels.get(name);</span>
+<span class="fc bfc" id="L178" title="All 2 branches covered.">        if (label == null) {</span>
+<span class="fc" id="L179">            label = new Label();</span>
+<span class="fc" id="L180">            labels.put(name, label);</span>
+        }
+<span class="fc" id="L182">        return new LabelNode(label);</span>
+    }
+
+    public MethodDefinition switchStatement(String defaultCase, CaseStatement... cases)
+    {
+<span class="nc" id="L187">        switchStatement(defaultCase, ImmutableList.copyOf(cases));</span>
+<span class="nc" id="L188">        return this;</span>
+    }
+
+    public MethodDefinition switchStatement(String defaultCase, List&lt;CaseStatement&gt; cases)
+    {
+<span class="fc" id="L193">        LabelNode defaultLabel = getLabel(defaultCase);</span>
+
+<span class="fc" id="L195">        int[] keys = new int[cases.size()];</span>
+<span class="fc" id="L196">        LabelNode[] labels = new LabelNode[cases.size()];</span>
+<span class="fc bfc" id="L197" title="All 2 branches covered.">        for (int i = 0; i &lt; cases.size(); i++) {</span>
+<span class="fc" id="L198">            keys[i] = cases.get(i).getKey();</span>
+<span class="fc" id="L199">            labels[i] = getLabel(cases.get(i).getLabel());</span>
+        }
+
+<span class="fc" id="L202">        instructionList.add(new LookupSwitchInsnNode(defaultLabel, keys, labels));</span>
+<span class="fc" id="L203">        return this;</span>
+    }
+
+    public MethodNode getMethodNode()
+    {
+<span class="fc" id="L208">        MethodNode methodNode = new MethodNode();</span>
+<span class="fc" id="L209">        methodNode.access = toAccessModifier(access);</span>
+<span class="fc" id="L210">        methodNode.name = name;</span>
+<span class="fc" id="L211">        methodNode.desc = methodDescription(returnType, parameters);</span>
+
+        // add generic signature if return type or any parameter is generic
+<span class="pc bpc" id="L214" title="2 of 4 branches missed.">        if (returnType.isGeneric() || any(parameters, ParameterizedType.isGenericType())) {</span>
+<span class="nc" id="L215">            methodNode.signature = genericMethodSignature(returnType, parameters);</span>
+        }
+
+<span class="fc" id="L218">        methodNode.exceptions = new ArrayList&lt;String&gt;();</span>
+<span class="fc bfc" id="L219" title="All 2 branches covered.">        for (ParameterizedType exception : exceptions) {</span>
+<span class="fc" id="L220">            methodNode.exceptions.add(exception.getClassName());</span>
+<span class="fc" id="L221">        }</span>
+<span class="fc" id="L222">        methodNode.instructions.add(instructionList);</span>
+<span class="fc" id="L223">        return methodNode;</span>
+    }
+
+    public static String methodDescription(Class&lt;?&gt; returnType, Class&lt;?&gt;... parameterTypes)
+    {
+<span class="fc" id="L228">        return methodDescription(returnType, ImmutableList.copyOf(parameterTypes));</span>
+    }
+
+    public static String methodDescription(Class&lt;?&gt; returnType, List&lt;Class&lt;?&gt;&gt; parameterTypes)
+    {
+<span class="fc" id="L233">        return methodDescription(type(returnType), Lists.transform(parameterTypes, toParameterizedType()));</span>
+    }
+
+    public static String methodDescription(ParameterizedType returnType, ParameterizedType... parameterTypes)
+    {
+<span class="fc" id="L238">        return methodDescription(returnType, ImmutableList.copyOf(parameterTypes));</span>
+    }
+
+    public static String methodDescription(ParameterizedType returnType, List&lt;ParameterizedType&gt; parameterTypes)
+    {
+<span class="fc" id="L243">        StringBuilder sb = new StringBuilder();</span>
+<span class="fc" id="L244">        sb.append(&quot;(&quot;);</span>
+<span class="fc" id="L245">        Joiner.on(&quot;&quot;).appendTo(sb, transform(parameterTypes, getParameterType()));</span>
+<span class="fc" id="L246">        sb.append(&quot;)&quot;);</span>
+<span class="fc" id="L247">        sb.append(returnType.getType());</span>
+<span class="fc" id="L248">        return sb.toString();</span>
+    }
+
+    public static String genericMethodSignature(ParameterizedType returnType, ParameterizedType... parameterTypes)
+    {
+<span class="nc" id="L253">        return genericMethodSignature(returnType, ImmutableList.copyOf(parameterTypes));</span>
+    }
+
+    public static String genericMethodSignature(ParameterizedType returnType, List&lt;ParameterizedType&gt; parameterTypes)
+    {
+<span class="nc" id="L258">        StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L259">        sb.append(&quot;(&quot;);</span>
+<span class="nc" id="L260">        Joiner.on(&quot;&quot;).appendTo(sb, parameterTypes);</span>
+<span class="nc" id="L261">        sb.append(&quot;)&quot;);</span>
+<span class="nc" id="L262">        sb.append(returnType);</span>
+<span class="nc" id="L263">        return sb.toString();</span>
+    }
+
+    public MethodDefinition loadThis()
+    {
+<span class="fc" id="L268">        loadObject(0);</span>
+<span class="fc" id="L269">        return this;</span>
+    }
+
+    public MethodDefinition loadObject(int slot)
+    {
+<span class="fc" id="L274">        instructionList.add(new VarInsnNode(ALOAD, slot));</span>
+<span class="fc" id="L275">        return this;</span>
+    }
+
+    public MethodDefinition loadObject(int slot, ParameterizedType type)
+    {
+<span class="nc" id="L280">        loadObject(slot);</span>
+<span class="nc" id="L281">        checkCast(type);</span>
+<span class="nc" id="L282">        return this;</span>
+    }
+
+    public MethodDefinition checkCast(ParameterizedType type)
+    {
+<span class="fc" id="L287">        instructionList.add(new TypeInsnNode(CHECKCAST, type.getClassName()));</span>
+<span class="fc" id="L288">        return this;</span>
+    }
+
+    public MethodDefinition invokeConstructor(Constructor&lt;?&gt; constructor)
+    {
+<span class="fc" id="L293">        return invokeConstructor(constructor.getDeclaringClass(), constructor.getParameterTypes());</span>
+    }
+
+    public MethodDefinition invokeConstructor(Class&lt;?&gt; type, Class&lt;?&gt;... parameterTypes)
+    {
+<span class="fc" id="L298">        invokeConstructor(</span>
+                type(type),
+                Lists.transform(ImmutableList.copyOf(parameterTypes), toParameterizedType())
+        );
+<span class="fc" id="L302">        return this;</span>
+    }
+
+    public MethodDefinition invokeConstructor(ParameterizedType type, ParameterizedType... parameterTypes)
+    {
+<span class="fc" id="L307">        invokeConstructor(type, ImmutableList.copyOf(parameterTypes));</span>
+<span class="fc" id="L308">        return this;</span>
+    }
+
+    public MethodDefinition invokeConstructor(ParameterizedType type, List&lt;ParameterizedType&gt; parameterTypes)
+    {
+<span class="fc" id="L313">        invokeSpecial(type, &quot;&lt;init&gt;&quot;, type(void.class), parameterTypes);</span>
+<span class="fc" id="L314">        return this;</span>
+    }
+
+    public MethodDefinition invokeSpecial(
+            ParameterizedType type,
+            String name,
+            ParameterizedType returnType,
+            List&lt;ParameterizedType&gt; parameterTypes
+    )
+    {
+<span class="fc" id="L324">        instructionList.add(</span>
+                new MethodInsnNode(
+                        INVOKESPECIAL,
+                        type.getClassName(),
+                        name,
+                        methodDescription(returnType, parameterTypes)
+                )
+        );
+<span class="fc" id="L332">        return this;</span>
+    }
+
+    public MethodDefinition invokeStatic(Method method)
+    {
+<span class="fc" id="L337">        instructionList.add(</span>
+                new MethodInsnNode(
+                        INVOKESTATIC,
+                        Type.getInternalName(method.getDeclaringClass()),
+                        method.getName(),
+                        Type.getMethodDescriptor(method)
+                )
+        );
+<span class="fc" id="L345">        return this;</span>
+    }
+
+    public MethodDefinition invokeVirtual(Method method)
+    {
+<span class="fc" id="L350">        instructionList.add(</span>
+                new MethodInsnNode(
+                        INVOKEVIRTUAL,
+                        Type.getInternalName(method.getDeclaringClass()),
+                        method.getName(),
+                        Type.getMethodDescriptor(method)
+                )
+        );
+<span class="fc" id="L358">        return this;</span>
+    }
+
+    public MethodDefinition invokeVirtual(
+            Class&lt;?&gt; type,
+            String name,
+            Class&lt;?&gt; returnType,
+            Class&lt;?&gt;... parameterTypes
+    )
+    {
+<span class="fc" id="L368">        instructionList.add(</span>
+                new MethodInsnNode(
+                        INVOKEVIRTUAL,
+                        type(type).getClassName(),
+                        name,
+                        methodDescription(returnType, parameterTypes)
+                )
+        );
+<span class="fc" id="L376">        return this;</span>
+    }
+
+    public MethodDefinition invokeVirtual(
+            ParameterizedType type,
+            String name,
+            ParameterizedType returnType,
+            ParameterizedType... parameterTypes
+    )
+    {
+<span class="fc" id="L386">        instructionList.add(</span>
+                new MethodInsnNode(
+                        INVOKEVIRTUAL,
+                        type.getClassName(),
+                        name,
+                        methodDescription(returnType, parameterTypes)
+                )
+        );
+<span class="fc" id="L394">        return this;</span>
+    }
+
+    public MethodDefinition ret()
+    {
+<span class="fc" id="L399">        instructionList.add(new InsnNode(RETURN));</span>
+<span class="fc" id="L400">        return this;</span>
+    }
+
+    public MethodDefinition retObject()
+    {
+<span class="fc" id="L405">        instructionList.add(new InsnNode(ARETURN));</span>
+<span class="fc" id="L406">        return this;</span>
+    }
+
+    public MethodDefinition newObject(Class&lt;?&gt; type)
+    {
+<span class="fc" id="L411">        instructionList.add(new TypeInsnNode(NEW, type(type).getClassName()));</span>
+<span class="fc" id="L412">        return this;</span>
+    }
+
+    public MethodDefinition newObject(ParameterizedType type)
+    {
+<span class="fc" id="L417">        instructionList.add(new TypeInsnNode(NEW, type.getClassName()));</span>
+<span class="fc" id="L418">        return this;</span>
+    }
+
+    public MethodDefinition dup()
+    {
+<span class="fc" id="L423">        instructionList.add(new InsnNode(DUP));</span>
+<span class="fc" id="L424">        return this;</span>
+    }
+
+    public MethodDefinition pop()
+    {
+<span class="fc" id="L429">        instructionList.add(new InsnNode(POP));</span>
+<span class="fc" id="L430">        return this;</span>
+    }
+
+    public MethodDefinition swap()
+    {
+<span class="nc" id="L435">        instructionList.add(new InsnNode(SWAP));</span>
+<span class="nc" id="L436">        return this;</span>
+    }
+
+    public MethodDefinition getField(Field field)
+    {
+<span class="fc" id="L441">        return getField(field.getDeclaringClass(), field.getName(), field.getType());</span>
+    }
+
+    public MethodDefinition getField(Class&lt;?&gt; target, FieldDefinition field)
+    {
+<span class="nc" id="L446">        getField(type(target), field.getName(), field.getType());</span>
+<span class="nc" id="L447">        return this;</span>
+    }
+
+    public MethodDefinition getField(ParameterizedType target, FieldDefinition field)
+    {
+<span class="fc" id="L452">        getField(target, field.getName(), field.getType());</span>
+<span class="fc" id="L453">        return this;</span>
+    }
+
+    public MethodDefinition getField(Class&lt;?&gt; target, String fieldName, Class&lt;?&gt; fieldType)
+    {
+<span class="fc" id="L458">        getField(type(target), fieldName, type(fieldType));</span>
+<span class="fc" id="L459">        return this;</span>
+    }
+
+    public MethodDefinition getField(ParameterizedType target, String fieldName, ParameterizedType fieldType)
+    {
+<span class="fc" id="L464">        instructionList.add(</span>
+                new FieldInsnNode(
+                        GETFIELD,
+                        target.getClassName(),
+                        fieldName,
+                        fieldType.getType()
+                )
+        );
+<span class="fc" id="L472">        return this;</span>
+    }
+
+    public MethodDefinition getStaticField(ParameterizedType target, FieldDefinition field)
+    {
+<span class="nc" id="L477">        checkArgument(field.getAccess().contains(STATIC), &quot;Field is not static: %s&quot;, field);</span>
+<span class="nc" id="L478">        getStaticField(target, field.getName(), field.getType());</span>
+<span class="nc" id="L479">        return this;</span>
+    }
+
+    public MethodDefinition getStaticField(ParameterizedType target, String fieldName, ParameterizedType fieldType)
+    {
+<span class="nc" id="L484">        instructionList.add(</span>
+                new FieldInsnNode(
+                        GETSTATIC,
+                        target.getClassName(),
+                        fieldName,
+                        fieldType.getType()
+                )
+        );
+<span class="nc" id="L492">        return this;</span>
+    }
+
+    public MethodDefinition putStaticField(ParameterizedType target, FieldDefinition field)
+    {
+<span class="nc" id="L497">        checkArgument(field.getAccess().contains(STATIC), &quot;Field is not static: %s&quot;, field);</span>
+<span class="nc" id="L498">        putStaticField(target, field.getName(), field.getType());</span>
+<span class="nc" id="L499">        return this;</span>
+    }
+
+    public MethodDefinition putStaticField(ParameterizedType target, String fieldName, ParameterizedType fieldType)
+    {
+<span class="nc" id="L504">        instructionList.add(</span>
+                new FieldInsnNode(
+                        PUTSTATIC,
+                        target.getClassName(),
+                        fieldName,
+                        fieldType.getType()
+                )
+        );
+<span class="nc" id="L512">        return this;</span>
+    }
+
+    public MethodDefinition putField(Field field)
+    {
+<span class="fc" id="L517">        return putField(field.getDeclaringClass(), field.getName(), field.getType());</span>
+    }
+
+    public MethodDefinition putField(Class&lt;?&gt; target, FieldDefinition field)
+    {
+<span class="nc" id="L522">        return putField(type(target), field);</span>
+    }
+
+    public MethodDefinition putField(Class&lt;?&gt; target, String fieldName, Class&lt;?&gt; fieldType)
+    {
+<span class="fc" id="L527">        this.putField(type(target), fieldName, type(fieldType));</span>
+<span class="fc" id="L528">        return this;</span>
+    }
+
+    public MethodDefinition putField(ParameterizedType target, FieldDefinition field)
+    {
+<span class="pc bpc" id="L533" title="1 of 2 branches missed.">        checkArgument(!field.getAccess().contains(STATIC), &quot;Field is static: %s&quot;, field);</span>
+
+<span class="fc" id="L535">        instructionList.add(</span>
+                new FieldInsnNode(
+                        PUTFIELD,
+                        target.getClassName(),
+                        field.getName(),
+                        field.getType().getType()
+                )
+        );
+<span class="fc" id="L543">        return this;</span>
+    }
+
+    public MethodDefinition putField(ParameterizedType target, String fieldName, ParameterizedType fieldType)
+    {
+<span class="fc" id="L548">        instructionList.add(</span>
+                new FieldInsnNode(
+                        PUTFIELD,
+                        target.getClassName(),
+                        fieldName,
+                        fieldType.getType()
+                )
+        );
+<span class="fc" id="L556">        return this;</span>
+    }
+
+    public MethodDefinition loadNull()
+    {
+<span class="nc" id="L561">        instructionList.add(new InsnNode(ACONST_NULL));</span>
+<span class="nc" id="L562">        return this;</span>
+    }
+
+    public MethodDefinition addInstruction(AbstractInsnNode node)
+    {
+<span class="nc" id="L567">        instructionList.add(node);</span>
+<span class="nc" id="L568">        return this;</span>
+    }
+
+    public MethodDefinition loadConstant(Class&lt;?&gt; type)
+    {
+<span class="nc" id="L573">        instructionList.add(new LdcInsnNode(Type.getType(type)));</span>
+<span class="nc" id="L574">        return this;</span>
+    }
+
+    public MethodDefinition loadConstant(ParameterizedType type)
+    {
+<span class="nc" id="L579">        instructionList.add(new LdcInsnNode(Type.getType(type.getType())));</span>
+<span class="nc" id="L580">        return this;</span>
+    }
+
+    public MethodDefinition loadConstant(String value)
+    {
+<span class="fc" id="L585">        instructionList.add(new LdcInsnNode(value));</span>
+<span class="fc" id="L586">        return this;</span>
+    }
+
+    public MethodDefinition loadConstant(int value)
+    {
+<span class="pc bpc" id="L591" title="2 of 8 branches missed.">        switch (value) {</span>
+            case -1:
+<span class="nc" id="L593">                instructionList.add(new InsnNode(ICONST_M1));</span>
+<span class="nc" id="L594">                break;</span>
+            case 0:
+<span class="nc" id="L596">                instructionList.add(new InsnNode(ICONST_0));</span>
+<span class="nc" id="L597">                break;</span>
+            case 1:
+<span class="fc" id="L599">                instructionList.add(new InsnNode(ICONST_1));</span>
+<span class="fc" id="L600">                break;</span>
+            case 2:
+<span class="fc" id="L602">                instructionList.add(new InsnNode(ICONST_2));</span>
+<span class="fc" id="L603">                break;</span>
+            case 3:
+<span class="fc" id="L605">                instructionList.add(new InsnNode(ICONST_3));</span>
+<span class="fc" id="L606">                break;</span>
+            case 4:
+<span class="fc" id="L608">                instructionList.add(new InsnNode(ICONST_4));</span>
+<span class="fc" id="L609">                break;</span>
+            case 5:
+<span class="fc" id="L611">                instructionList.add(new InsnNode(ICONST_5));</span>
+<span class="fc" id="L612">                break;</span>
+            default:
+<span class="fc" id="L614">                instructionList.add(new LdcInsnNode(value));</span>
+                break;
+        }
+<span class="fc" id="L617">        return this;</span>
+    }
+
+    public MethodDefinition loadVariable(String name)
+    {
+<span class="fc" id="L622">        LocalVariableDefinition variable = localVariables.get(name);</span>
+<span class="pc bpc" id="L623" title="1 of 2 branches missed.">        checkArgument(variable != null, &quot;unknown variable %s&quot; + name);</span>
+<span class="fc" id="L624">        loadVariable(variable);</span>
+<span class="fc" id="L625">        return this;</span>
+    }
+
+    public MethodDefinition loadVariable(String name, ParameterizedType type)
+    {
+<span class="fc" id="L630">        loadVariable(name);</span>
+<span class="fc" id="L631">        checkCast(type);</span>
+<span class="fc" id="L632">        return this;</span>
+    }
+
+    public MethodDefinition initializeLocalVariable(LocalVariableDefinition variable)
+    {
+<span class="fc" id="L637">        ParameterizedType type = variable.getType();</span>
+<span class="fc bfc" id="L638" title="All 2 branches covered.">        if (type.getType().length() == 1) {</span>
+<span class="pc bpc" id="L639" title="1 of 5 branches missed.">            switch (type.getType().charAt(0)) {</span>
+                case 'B':
+                case 'Z':
+                case 'S':
+                case 'C':
+                case 'I':
+<span class="fc" id="L645">                    instructionList.add(new InsnNode(ICONST_0));</span>
+<span class="fc" id="L646">                    break;</span>
+                case 'F':
+<span class="fc" id="L648">                    instructionList.add(new InsnNode(FCONST_0));</span>
+<span class="fc" id="L649">                    break;</span>
+                case 'D':
+<span class="fc" id="L651">                    instructionList.add(new InsnNode(DCONST_0));</span>
+<span class="fc" id="L652">                    break;</span>
+                case 'J':
+<span class="fc" id="L654">                    instructionList.add(new InsnNode(LCONST_0));</span>
+<span class="fc" id="L655">                    break;</span>
+                default:
+<span class="nc" id="L657">                    checkArgument(false, &quot;Unknown type '%s'&quot;, variable.getType());</span>
+            }
+        }
+        else {
+<span class="fc" id="L661">            instructionList.add(new InsnNode(ACONST_NULL));</span>
+        }
+
+<span class="fc" id="L664">        instructionList.add(new VarInsnNode(Type.getType(type.getType()).getOpcode(ISTORE), variable.getSlot()));</span>
+
+<span class="fc" id="L666">        return this;</span>
+    }
+
+    public MethodDefinition loadVariable(LocalVariableDefinition variable)
+    {
+<span class="fc" id="L671">        ParameterizedType type = variable.getType();</span>
+<span class="fc" id="L672">        instructionList.add(new VarInsnNode(Type.getType(type.getType()).getOpcode(ILOAD), variable.getSlot()));</span>
+<span class="fc" id="L673">        return this;</span>
+    }
+
+    public MethodDefinition storeVariable(String name)
+    {
+<span class="fc" id="L678">        LocalVariableDefinition variable = localVariables.get(name);</span>
+<span class="pc bpc" id="L679" title="1 of 2 branches missed.">        checkArgument(variable != null, &quot;unknown variable %s&quot; + name);</span>
+<span class="fc" id="L680">        storeVariable(variable);</span>
+<span class="fc" id="L681">        return this;</span>
+    }
+
+    public MethodDefinition storeVariable(LocalVariableDefinition variable)
+    {
+<span class="fc" id="L686">        ParameterizedType type = variable.getType();</span>
+<span class="fc" id="L687">        instructionList.add(new VarInsnNode(Type.getType(type.getType()).getOpcode(ISTORE), variable.getSlot()));</span>
+<span class="fc" id="L688">        return this;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

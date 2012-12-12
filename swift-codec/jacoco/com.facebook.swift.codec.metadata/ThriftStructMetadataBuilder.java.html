@@ -1,0 +1,1103 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ThriftStructMetadataBuilder.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-codec</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.codec.metadata</a> &gt; <span class="el_source">ThriftStructMetadataBuilder.java</span></div><h1>ThriftStructMetadataBuilder.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.codec.metadata;
+
+import com.facebook.swift.codec.ThriftConstructor;
+import com.facebook.swift.codec.ThriftField;
+import com.facebook.swift.codec.ThriftStruct;
+import com.google.common.base.Function;
+import com.google.common.base.Optional;
+import com.google.common.base.Predicates;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
+import com.google.common.reflect.TypeToken;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
+
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.NotThreadSafe;
+
+import static com.facebook.swift.codec.metadata.ReflectionHelper.extractParameterNames;
+import static com.facebook.swift.codec.metadata.ReflectionHelper.findAnnotatedMethods;
+import static com.facebook.swift.codec.metadata.ReflectionHelper.getAllDeclaredFields;
+import static com.facebook.swift.codec.metadata.ReflectionHelper.getAllDeclaredMethods;
+import static com.facebook.swift.codec.metadata.ThriftStructMetadataBuilder.FieldMetadata.extractThriftFieldName;
+import static com.facebook.swift.codec.metadata.ThriftStructMetadataBuilder.FieldMetadata.getOrExtractThriftFieldName;
+import static com.facebook.swift.codec.metadata.ThriftStructMetadataBuilder.FieldMetadata.getThriftFieldId;
+import static com.facebook.swift.codec.metadata.ThriftStructMetadataBuilder.FieldMetadata.getThriftFieldName;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Predicates.notNull;
+import static com.google.common.collect.Iterables.filter;
+import static com.google.common.collect.Iterables.transform;
+import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Lists.newArrayListWithCapacity;
+import static com.google.common.collect.Sets.newTreeSet;
+import static java.util.Arrays.asList;
+
+@NotThreadSafe
+public class ThriftStructMetadataBuilder&lt;T&gt;
+{
+    private final String structName;
+    private final Class&lt;T&gt; structClass;
+    private final Class&lt;?&gt; builderClass;
+
+<span class="fc" id="L72">    private final List&lt;FieldMetadata&gt; fields = newArrayList();</span>
+
+    // readers
+<span class="fc" id="L75">    private final List&lt;Extractor&gt; extractors = newArrayList();</span>
+
+    // writers
+<span class="fc" id="L78">    private final List&lt;MethodInjection&gt; builderMethodInjections = newArrayList();</span>
+<span class="fc" id="L79">    private final List&lt;ConstructorInjection&gt; constructorInjections = newArrayList();</span>
+<span class="fc" id="L80">    private final List&lt;FieldInjection&gt; fieldInjections = newArrayList();</span>
+<span class="fc" id="L81">    private final List&lt;MethodInjection&gt; methodInjections = newArrayList();</span>
+
+    private final ThriftCatalog catalog;
+    private final MetadataErrors metadataErrors;
+
+    public ThriftStructMetadataBuilder(ThriftCatalog catalog, Class&lt;T&gt; structClass)
+<span class="fc" id="L87">    {</span>
+<span class="fc" id="L88">        this.catalog = checkNotNull(catalog, &quot;catalog is null&quot;);</span>
+<span class="fc" id="L89">        this.structClass = checkNotNull(structClass, &quot;structClass is null&quot;);</span>
+<span class="fc" id="L90">        this.metadataErrors = new MetadataErrors(catalog.getMonitor());</span>
+
+        // verify the class is public and has the correct annotations
+<span class="fc" id="L93">        verifyStructClass();</span>
+
+        // assign the struct name from the annotation or from the Java class
+<span class="fc" id="L96">        structName = extractStructName();</span>
+        // get the builder class from the annotation or from the Java class
+<span class="fc" id="L98">        builderClass = extractBuilderClass();</span>
+        // extract all of the annotated constructor and report an error if
+        // there is more than one or none
+        // also extract thrift fields from the annotated parameters and verify
+<span class="fc" id="L102">        extractFromConstructors();</span>
+        // extract thrift fields from the annotated fields and verify
+<span class="fc" id="L104">        extractFromFields();</span>
+        // extract thrift fields from the annotated methods (and parameters) and verify
+<span class="fc" id="L106">        extractFromMethods();</span>
+
+        // finally normalize the field metadata using things like
+<span class="fc" id="L109">        normalizeThriftFields(catalog);</span>
+<span class="fc" id="L110">    }</span>
+
+    public MetadataErrors getMetadataErrors()
+    {
+<span class="fc" id="L114">        return metadataErrors;</span>
+    }
+
+    private void verifyStructClass()
+    {
+        // Verify struct class is public and not abstract
+<span class="pc bpc" id="L120" title="1 of 2 branches missed.">        if (Modifier.isAbstract(structClass.getModifiers())) {</span>
+<span class="nc" id="L121">            metadataErrors.addError(&quot;Struct class [%s] is abstract&quot;, structClass.getName());</span>
+        }
+<span class="pc bpc" id="L123" title="1 of 2 branches missed.">        if (!Modifier.isPublic(structClass.getModifiers())) {</span>
+<span class="nc" id="L124">            metadataErrors.addError(&quot;Struct class [%s] is not public&quot;, structClass.getName());</span>
+        }
+
+<span class="pc bpc" id="L127" title="1 of 2 branches missed.">        if (!structClass.isAnnotationPresent(ThriftStruct.class)) {</span>
+<span class="nc" id="L128">            metadataErrors.addError(&quot;Struct class [%s] does not have a @ThriftStruct annotation&quot;, structClass.getName());</span>
+        }
+<span class="fc" id="L130">    }</span>
+
+    private String extractStructName()
+    {
+<span class="fc" id="L134">        ThriftStruct annotation = structClass.getAnnotation(ThriftStruct.class);</span>
+<span class="pc bpc" id="L135" title="1 of 2 branches missed.">        if (annotation == null) {</span>
+<span class="nc" id="L136">            return structClass.getSimpleName();</span>
+        }
+<span class="fc bfc" id="L138" title="All 2 branches covered.">        else if (!annotation.value().isEmpty()) {</span>
+<span class="fc" id="L139">            return annotation.value();</span>
+        }
+        else {
+<span class="fc" id="L142">            return structClass.getSimpleName();</span>
+        }
+    }
+
+    private Class&lt;?&gt; extractBuilderClass()
+    {
+<span class="fc" id="L148">        ThriftStruct annotation = structClass.getAnnotation(ThriftStruct.class);</span>
+<span class="pc bpc" id="L149" title="1 of 4 branches missed.">        if (annotation != null &amp;&amp; !annotation.builder().equals(void.class)) {</span>
+<span class="fc" id="L150">            return annotation.builder();</span>
+        }
+        else {
+<span class="fc" id="L153">            return null;</span>
+        }
+    }
+
+    private void extractFromConstructors()
+    {
+<span class="fc bfc" id="L159" title="All 2 branches covered.">        if (builderClass == null) {</span>
+            // struct class must have a valid constructor
+<span class="fc" id="L161">            addConstructors(structClass);</span>
+        }
+        else {
+            // builder class must have a valid constructor
+<span class="fc" id="L165">            addConstructors(builderClass);</span>
+
+            // builder class must have a build method annotated with @ThriftConstructor
+<span class="fc" id="L168">            addBuilderMethods();</span>
+
+            // verify struct class does not have @ThriftConstructors
+<span class="fc bfc" id="L171" title="All 2 branches covered.">            for (Constructor&lt;?&gt; constructor : structClass.getConstructors()) {</span>
+<span class="pc bpc" id="L172" title="1 of 2 branches missed.">                if (constructor.isAnnotationPresent(ThriftConstructor.class)) {</span>
+<span class="nc" id="L173">                    metadataErrors.addWarning(&quot;Struct class [%s] has a builder class, but constructor %s annotated with @ThriftConstructor&quot;, structClass.getName(), constructor);</span>
+                }
+            }
+        }
+<span class="fc" id="L177">    }</span>
+
+    private void addConstructors(Class&lt;?&gt; clazz)
+    {
+<span class="fc bfc" id="L181" title="All 2 branches covered.">        for (Constructor&lt;?&gt; constructor : clazz.getConstructors()) {</span>
+<span class="pc bpc" id="L182" title="1 of 2 branches missed.">            if (constructor.isSynthetic()) {</span>
+<span class="nc" id="L183">                continue;</span>
+            }
+<span class="fc bfc" id="L185" title="All 2 branches covered.">            if (!constructor.isAnnotationPresent(ThriftConstructor.class)) {</span>
+<span class="fc" id="L186">                continue;</span>
+            }
+
+<span class="pc bpc" id="L189" title="1 of 2 branches missed.">            if (!Modifier.isPublic(constructor.getModifiers())) {</span>
+<span class="nc" id="L190">                metadataErrors.addError(&quot;@ThriftConstructor [%s] is not public&quot;, constructor.toGenericString());</span>
+<span class="nc" id="L191">                continue;</span>
+            }
+
+<span class="fc" id="L194">            List&lt;ParameterInjection&gt; parameters = getParameterInjections(</span>
+                    constructor.getParameterAnnotations(),
+                    constructor.getGenericParameterTypes(),
+                    extractParameterNames(constructor));
+<span class="pc bpc" id="L198" title="1 of 2 branches missed.">            if (parameters != null) {</span>
+<span class="fc" id="L199">                fields.addAll(parameters);</span>
+<span class="fc" id="L200">                constructorInjections.add(new ConstructorInjection(constructor, parameters));</span>
+            }
+        }
+
+        // add the default constructor
+<span class="fc bfc" id="L205" title="All 2 branches covered.">        if (constructorInjections.isEmpty()) {</span>
+            try {
+<span class="fc" id="L207">                Constructor&lt;?&gt; constructor = clazz.getDeclaredConstructor();</span>
+<span class="pc bpc" id="L208" title="1 of 2 branches missed.">                if (!Modifier.isPublic(constructor.getModifiers())) {</span>
+<span class="nc" id="L209">                    metadataErrors.addError(&quot;Default constructor [%s] is not public&quot;, constructor.toGenericString());</span>
+                }
+<span class="fc" id="L211">                constructorInjections.add(new ConstructorInjection(constructor));</span>
+            }
+<span class="nc" id="L213">            catch (NoSuchMethodException e) {</span>
+<span class="nc" id="L214">                metadataErrors.addError(&quot;Struct class [%s] does not have a public no-arg constructor&quot;, clazz.getName());</span>
+<span class="fc" id="L215">            }</span>
+        }
+
+<span class="pc bpc" id="L218" title="1 of 2 branches missed.">        if (constructorInjections.size() &gt; 1) {</span>
+<span class="nc" id="L219">            metadataErrors.addError(&quot;Multiple constructors are annotated with @ThriftConstructor &quot;, constructorInjections);</span>
+        }
+<span class="fc" id="L221">    }</span>
+
+    private void addBuilderMethods()
+    {
+<span class="fc bfc" id="L225" title="All 2 branches covered.">        for (Method method : findAnnotatedMethods(builderClass, ThriftConstructor.class)) {</span>
+<span class="fc" id="L226">            List&lt;ParameterInjection&gt; parameters = getParameterInjections(</span>
+                    method.getParameterAnnotations(),
+                    method.getGenericParameterTypes(),
+                    extractParameterNames(method));
+
+            // parameters are null if the method is misconfigured
+<span class="pc bpc" id="L232" title="1 of 2 branches missed.">            if (parameters != null) {</span>
+<span class="fc" id="L233">                fields.addAll(parameters);</span>
+<span class="fc" id="L234">                builderMethodInjections.add(new MethodInjection(method, parameters));</span>
+            }
+<span class="fc" id="L236">        }</span>
+
+        // find invalid methods not skipped by findAnnotatedMethods()
+<span class="fc bfc" id="L239" title="All 2 branches covered.">        for (Method method : getAllDeclaredMethods(builderClass)) {</span>
+<span class="pc bpc" id="L240" title="1 of 4 branches missed.">            if (method.isAnnotationPresent(ThriftConstructor.class) || hasThriftFieldAnnotation(method)) {</span>
+<span class="pc bpc" id="L241" title="1 of 2 branches missed.">                if (!Modifier.isPublic(method.getModifiers())) {</span>
+<span class="nc" id="L242">                    metadataErrors.addError(&quot;@ThriftConstructor method [%s] is not public&quot;, method.toGenericString());</span>
+                }
+<span class="pc bpc" id="L244" title="1 of 2 branches missed.">                if (Modifier.isStatic(method.getModifiers())) {</span>
+<span class="nc" id="L245">                    metadataErrors.addError(&quot;@ThriftConstructor method [%s] is static&quot;, method.toGenericString());</span>
+                }
+            }
+<span class="fc" id="L248">        }</span>
+
+<span class="pc bpc" id="L250" title="1 of 2 branches missed.">        if (builderMethodInjections.isEmpty()) {</span>
+<span class="nc" id="L251">            metadataErrors.addError(&quot;Struct builder class [%s] does not have a public builder method annotated with @ThriftConstructor&quot;, builderClass.getName());</span>
+        }
+<span class="pc bpc" id="L253" title="1 of 2 branches missed.">        if (builderMethodInjections.size() &gt; 1) {</span>
+<span class="nc" id="L254">            metadataErrors.addError(&quot;Multiple builder methods are annotated with @ThriftConstructor &quot;, builderMethodInjections);</span>
+        }
+<span class="fc" id="L256">    }</span>
+
+    private void extractFromFields()
+    {
+<span class="fc bfc" id="L260" title="All 2 branches covered.">        if (builderClass == null) {</span>
+            // struct fields are readable and writable
+<span class="fc" id="L262">            addFields(structClass, true, true);</span>
+        }
+        else {
+            // builder fields are writable
+<span class="fc" id="L266">            addFields(builderClass, false, true);</span>
+            // struct fields are readable
+<span class="fc" id="L268">            addFields(structClass, true, false);</span>
+        }
+<span class="fc" id="L270">    }</span>
+
+    private void addFields(Class&lt;?&gt; clazz, boolean allowReaders, boolean allowWriters)
+    {
+<span class="fc bfc" id="L274" title="All 2 branches covered.">        for (Field fieldField : ReflectionHelper.findAnnotatedFields(clazz, ThriftField.class)) {</span>
+<span class="fc" id="L275">            addField(fieldField, allowReaders, allowWriters);</span>
+<span class="fc" id="L276">        }</span>
+
+        // find invalid fields not skipped by findAnnotatedFields()
+<span class="fc bfc" id="L279" title="All 2 branches covered.">        for (Field field : getAllDeclaredFields(clazz)) {</span>
+<span class="fc bfc" id="L280" title="All 2 branches covered.">            if (field.isAnnotationPresent(ThriftField.class)) {</span>
+<span class="pc bpc" id="L281" title="1 of 2 branches missed.">                if (!Modifier.isPublic(field.getModifiers())) {</span>
+<span class="nc" id="L282">                    metadataErrors.addError(&quot;@ThriftField field [%s] is not public&quot;, field.toGenericString());</span>
+                }
+<span class="pc bpc" id="L284" title="1 of 2 branches missed.">                if (Modifier.isStatic(field.getModifiers())) {</span>
+<span class="nc" id="L285">                    metadataErrors.addError(&quot;@ThriftField field [%s] is static&quot;, field.toGenericString());</span>
+                }
+            }
+<span class="fc" id="L288">        }</span>
+<span class="fc" id="L289">    }</span>
+
+    private void addField(Field fieldField, boolean allowReaders, boolean allowWriters)
+    {
+<span class="fc" id="L293">        checkArgument(fieldField.isAnnotationPresent(ThriftField.class));</span>
+
+<span class="fc" id="L295">        ThriftField annotation = fieldField.getAnnotation(ThriftField.class);</span>
+<span class="pc bpc" id="L296" title="1 of 2 branches missed.">        if (allowReaders) {</span>
+<span class="fc" id="L297">            FieldExtractor fieldExtractor = new FieldExtractor(fieldField, annotation);</span>
+<span class="fc" id="L298">            fields.add(fieldExtractor);</span>
+<span class="fc" id="L299">            extractors.add(fieldExtractor);</span>
+        }
+<span class="pc bpc" id="L301" title="1 of 2 branches missed.">        if (allowWriters) {</span>
+<span class="fc" id="L302">            FieldInjection fieldInjection = new FieldInjection(fieldField, annotation);</span>
+<span class="fc" id="L303">            fields.add(fieldInjection);</span>
+<span class="fc" id="L304">            fieldInjections.add(fieldInjection);</span>
+        }
+<span class="fc" id="L306">    }</span>
+
+    private void extractFromMethods()
+    {
+<span class="fc bfc" id="L310" title="All 2 branches covered.">        if (builderClass != null) {</span>
+            // builder methods are writable
+<span class="fc" id="L312">            addMethods(builderClass, false, true);</span>
+            // struct methods are readable
+<span class="fc" id="L314">            addMethods(structClass, true, false);</span>
+        }
+        else {
+            // struct methods are readable and writable
+<span class="fc" id="L318">            addMethods(structClass, true, true);</span>
+        }
+<span class="fc" id="L320">    }</span>
+
+    private void addMethods(Class&lt;?&gt; clazz, boolean allowReaders, boolean allowWriters)
+    {
+<span class="fc bfc" id="L324" title="All 2 branches covered.">        for (Method fieldMethod : findAnnotatedMethods(clazz, ThriftField.class)) {</span>
+<span class="fc" id="L325">            addMethod(clazz, fieldMethod, allowReaders, allowWriters);</span>
+<span class="fc" id="L326">        }</span>
+
+        // find invalid methods not skipped by findAnnotatedMethods()
+<span class="fc bfc" id="L329" title="All 2 branches covered.">        for (Method method : getAllDeclaredMethods(clazz)) {</span>
+<span class="pc bpc" id="L330" title="1 of 4 branches missed.">            if (method.isAnnotationPresent(ThriftField.class) || hasThriftFieldAnnotation(method)) {</span>
+<span class="pc bpc" id="L331" title="1 of 2 branches missed.">                if (!Modifier.isPublic(method.getModifiers())) {</span>
+<span class="nc" id="L332">                    metadataErrors.addError(&quot;@ThriftField method [%s] is not public&quot;, method.toGenericString());</span>
+                }
+<span class="pc bpc" id="L334" title="1 of 2 branches missed.">                if (Modifier.isStatic(method.getModifiers())) {</span>
+<span class="nc" id="L335">                    metadataErrors.addError(&quot;@ThriftField method [%s] is static&quot;, method.toGenericString());</span>
+                }
+            }
+<span class="fc" id="L338">        }</span>
+<span class="fc" id="L339">    }</span>
+
+    private void addMethod(Class&lt;?&gt; clazz, Method method, boolean allowReaders, boolean allowWriters)
+    {
+<span class="fc" id="L343">        checkArgument(method.isAnnotationPresent(ThriftField.class));</span>
+
+<span class="fc" id="L345">        ThriftField annotation = method.getAnnotation(ThriftField.class);</span>
+
+        // verify parameters
+<span class="fc bfc" id="L348" title="All 2 branches covered.">        if (isValidateGetter(method)) {</span>
+<span class="pc bpc" id="L349" title="1 of 2 branches missed.">            if (allowReaders) {</span>
+<span class="fc" id="L350">                MethodExtractor methodExtractor = new MethodExtractor(method, annotation);</span>
+<span class="fc" id="L351">                fields.add(methodExtractor);</span>
+<span class="fc" id="L352">                extractors.add(methodExtractor);</span>
+<span class="fc" id="L353">            }</span>
+            else {
+<span class="nc" id="L355">                metadataErrors.addError(&quot;Reader method %s.%s is not allowed on a builder class&quot;, clazz.getName(), method.getName());</span>
+            }
+        }
+<span class="pc bpc" id="L358" title="1 of 2 branches missed.">        else if (isValidateSetter(method)) {</span>
+<span class="pc bpc" id="L359" title="1 of 2 branches missed.">            if (allowWriters) {</span>
+                List&lt;ParameterInjection&gt; parameters;
+<span class="pc bpc" id="L361" title="1 of 4 branches missed.">                if (method.getParameterTypes().length &gt; 1 || Iterables.any(asList(method.getParameterAnnotations()[0]), Predicates.instanceOf(ThriftField.class))) {</span>
+<span class="fc" id="L362">                    parameters = getParameterInjections(</span>
+                            method.getParameterAnnotations(),
+                            method.getGenericParameterTypes(),
+                            extractParameterNames(method));
+<span class="pc bpc" id="L366" title="1 of 2 branches missed.">                    if (annotation.value() != Short.MIN_VALUE) {</span>
+<span class="nc" id="L367">                        metadataErrors.addError(&quot;A method with annotated parameters can not have a field id specified: %s.%s &quot;, clazz.getName(), method.getName());</span>
+                    }
+<span class="pc bpc" id="L369" title="1 of 2 branches missed.">                    if (!annotation.name().isEmpty()) {</span>
+<span class="nc" id="L370">                        metadataErrors.addError(&quot;A method with annotated parameters can not have a field name specified: %s.%s &quot;, clazz.getName(), method.getName());</span>
+                    }
+<span class="pc bpc" id="L372" title="1 of 2 branches missed.">                    if (annotation.required()) {</span>
+<span class="nc" id="L373">                        metadataErrors.addError(&quot;A method with annotated parameters can not be marked as required: %s.%s &quot;, clazz.getName(), method.getName());</span>
+                    }
+                }
+                else {
+<span class="fc" id="L377">                    parameters = ImmutableList.of(new ParameterInjection(0, annotation, extractFieldName(method), method.getGenericParameterTypes()[0]));</span>
+                }
+<span class="fc" id="L379">                fields.addAll(parameters);</span>
+<span class="fc" id="L380">                methodInjections.add(new MethodInjection(method, parameters));</span>
+<span class="fc" id="L381">            }</span>
+            else {
+<span class="nc" id="L383">                metadataErrors.addError(&quot;Inject method %s.%s is not allowed on struct class, since struct has a builder&quot;, clazz.getName(), method.getName());</span>
+            }
+        }
+        else {
+<span class="nc" id="L387">            metadataErrors.addError(&quot;Method %s.%s is not a supported getter or setter&quot;, clazz.getName(), method.getName());</span>
+        }
+<span class="fc" id="L389">    }</span>
+
+    private boolean hasThriftFieldAnnotation(Method method)
+    {
+<span class="fc bfc" id="L393" title="All 2 branches covered.">        for (Annotation[] parameterAnnotations : method.getParameterAnnotations()) {</span>
+<span class="pc bpc" id="L394" title="1 of 2 branches missed.">            for (Annotation parameterAnnotation : parameterAnnotations) {</span>
+<span class="nc bnc" id="L395" title="All 2 branches missed.">                if (parameterAnnotation instanceof ThriftField) {</span>
+<span class="nc" id="L396">                    return true;</span>
+                }
+            }
+        }
+<span class="fc" id="L400">        return false;</span>
+    }
+
+    private static String extractFieldName(Method method)
+    {
+<span class="fc" id="L405">        checkNotNull(method, &quot;method is null&quot;);</span>
+<span class="fc" id="L406">        String methodName = method.getName();</span>
+<span class="pc bpc" id="L407" title="2 of 6 branches missed.">        if ((methodName.startsWith(&quot;get&quot;) || methodName.startsWith(&quot;set&quot;)) &amp;&amp; methodName.length() &gt; 3) {</span>
+<span class="fc" id="L408">            String name = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);</span>
+<span class="fc" id="L409">            return name;</span>
+        }
+<span class="nc bnc" id="L411" title="All 4 branches missed.">        else if (methodName.startsWith(&quot;is&quot;) &amp;&amp; methodName.length() &gt; 2) {</span>
+<span class="nc" id="L412">            String name = Character.toLowerCase(methodName.charAt(2)) + methodName.substring(3);</span>
+<span class="nc" id="L413">            return name;</span>
+        }
+        else {
+<span class="nc" id="L416">            return methodName;</span>
+        }
+
+    }
+
+    private boolean isValidateGetter(Method method)
+    {
+<span class="pc bpc" id="L423" title="1 of 4 branches missed.">        return method.getParameterTypes().length == 0 &amp;&amp; method.getReturnType() != void.class;</span>
+    }
+
+    private boolean isValidateSetter(Method method)
+    {
+<span class="pc bpc" id="L428" title="1 of 2 branches missed.">        return method.getParameterTypes().length &gt;= 1;</span>
+    }
+
+    private List&lt;ParameterInjection&gt; getParameterInjections(Annotation[][] parameterAnnotations, Type[] parameterTypes, String[] parameterNames)
+    {
+<span class="fc" id="L433">        List&lt;ParameterInjection&gt; parameters = newArrayListWithCapacity(parameterAnnotations.length);</span>
+<span class="fc bfc" id="L434" title="All 2 branches covered.">        for (int parameterIndex = 0; parameterIndex &lt; parameterAnnotations.length; parameterIndex++) {</span>
+<span class="fc" id="L435">            Annotation[] annotations = parameterAnnotations[parameterIndex];</span>
+<span class="fc" id="L436">            Type parameterType = parameterTypes[parameterIndex];</span>
+
+<span class="fc" id="L438">            ThriftField thriftField = null;</span>
+<span class="pc bpc" id="L439" title="1 of 2 branches missed.">            for (Annotation annotation : annotations) {</span>
+<span class="nc bnc" id="L440" title="All 2 branches missed.">                if (annotation instanceof ThriftField) {</span>
+<span class="nc" id="L441">                    thriftField = (ThriftField) annotation;</span>
+                }
+            }
+
+<span class="fc" id="L445">            ParameterInjection parameterInjection = new ParameterInjection(</span>
+                    parameterIndex,
+                    thriftField,
+                    parameterNames[parameterIndex],
+                    parameterType
+            );
+
+<span class="fc" id="L452">            parameters.add(parameterInjection);</span>
+        }
+<span class="fc" id="L454">        return parameters;</span>
+    }
+
+
+    private void normalizeThriftFields(ThriftCatalog catalog)
+    {
+        // assign all fields an id (if possible)
+<span class="fc" id="L461">        Set&lt;String&gt; fieldsWithConflictingIds = inferThriftFieldIds();</span>
+
+        // group fields by id
+<span class="fc" id="L464">        Multimap&lt;Optional&lt;Short&gt;, FieldMetadata&gt; fieldsById = Multimaps.index(fields, getThriftFieldId());</span>
+<span class="fc bfc" id="L465" title="All 2 branches covered.">        for (Entry&lt;Optional&lt;Short&gt;, Collection&lt;FieldMetadata&gt;&gt; entry : fieldsById.asMap().entrySet()) {</span>
+<span class="fc" id="L466">            Collection&lt;FieldMetadata&gt; fields = entry.getValue();</span>
+
+            // fields must have an id
+<span class="fc bfc" id="L469" title="All 2 branches covered.">            if (!entry.getKey().isPresent()) {</span>
+<span class="fc bfc" id="L470" title="All 2 branches covered.">                for (String fieldName : newTreeSet(transform(fields, getOrExtractThriftFieldName()))) {</span>
+                    // only report errors for fields that don't have conflicting ids
+<span class="pc bpc" id="L472" title="1 of 2 branches missed.">                    if (!fieldsWithConflictingIds.contains(fieldName)) {</span>
+<span class="fc" id="L473">                        metadataErrors.addError(&quot;ThriftStruct %s fields %s do not have an id&quot;, structName, newTreeSet(transform(fields, getOrExtractThriftFieldName())));</span>
+                    }
+<span class="fc" id="L475">                }</span>
+<span class="fc" id="L476">                continue;</span>
+            }
+<span class="fc" id="L478">            short fieldId = entry.getKey().get();</span>
+
+            // assure all fields for this ID have the same name
+<span class="fc" id="L481">            String fieldName = extractFieldName(fieldId, fields);</span>
+<span class="fc bfc" id="L482" title="All 2 branches covered.">            for (FieldMetadata field : fields) {</span>
+<span class="fc" id="L483">                field.setName(fieldName);</span>
+<span class="fc" id="L484">            }</span>
+
+            // verify fields have a supported java type and all fields
+            // for this ID have the same thrift type
+<span class="fc" id="L488">            verifyFieldType(fieldId, fieldName, fields, catalog);</span>
+<span class="fc" id="L489">        }</span>
+<span class="fc" id="L490">    }</span>
+
+    /**
+     * Assigns all fields an id if possible.  Fields are grouped by name and for each group, if there
+     * is a single id, all fields in the group are assigned this id.  If the group has multiple ids,
+     * an error is reported.
+     */
+    private Set&lt;String&gt; inferThriftFieldIds()
+    {
+<span class="fc" id="L499">        Set&lt;String&gt; fieldsWithConflictingIds = new HashSet&lt;&gt;();</span>
+
+        // group fields by explicit name or by name extracted from field, method or property
+<span class="fc" id="L502">        Multimap&lt;String, FieldMetadata&gt; fieldsByExplicitOrExtractedName = Multimaps.index(fields, getOrExtractThriftFieldName());</span>
+<span class="fc" id="L503">        inferThriftFieldIds(fieldsByExplicitOrExtractedName, fieldsWithConflictingIds);</span>
+
+        // group fields by name extracted from field, method or property
+        // this allows thrift name to be set explicitly without having to duplicate the name on getters and setters
+        // todo should this be the only way this works?
+<span class="fc" id="L508">        Multimap&lt;String, FieldMetadata&gt; fieldsByExtractedName = Multimaps.index(fields, extractThriftFieldName());</span>
+<span class="fc" id="L509">        inferThriftFieldIds(fieldsByExtractedName, fieldsWithConflictingIds);</span>
+
+<span class="fc" id="L511">        return fieldsWithConflictingIds;</span>
+    }
+
+    private void inferThriftFieldIds(Multimap&lt;String, FieldMetadata&gt; fieldsByName, Set&lt;String&gt; fieldsWithConflictingIds)
+    {
+        // for each name group, set the ids on the fields without ids
+<span class="fc bfc" id="L517" title="All 2 branches covered.">        for (Entry&lt;String, Collection&lt;FieldMetadata&gt;&gt; entry : fieldsByName.asMap().entrySet()) {</span>
+<span class="fc" id="L518">            Collection&lt;FieldMetadata&gt; fields = entry.getValue();</span>
+
+            // skip all entries without a name or singleton groups... we'll deal with these later
+<span class="fc bfc" id="L521" title="All 2 branches covered.">            if (fields.size() &lt;= 1) {</span>
+<span class="fc" id="L522">                continue;</span>
+            }
+
+            // all ids used by this named field
+<span class="fc" id="L526">            Set&lt;Short&gt; ids = ImmutableSet.copyOf(Optional.presentInstances(transform(fields, getThriftFieldId())));</span>
+
+            // multiple conflicting ids
+<span class="fc bfc" id="L529" title="All 2 branches covered.">            if (ids.size() &gt; 1) {</span>
+<span class="fc" id="L530">                String fieldName = entry.getKey();</span>
+<span class="pc bpc" id="L531" title="1 of 2 branches missed.">                if (!fieldsWithConflictingIds.contains(fieldName)) {</span>
+<span class="fc" id="L532">                    metadataErrors.addError(&quot;ThriftStruct '%s' field '%s' has multiple ids: %s&quot;, structName, fieldName, ids);</span>
+<span class="fc" id="L533">                    fieldsWithConflictingIds.add(fieldName);</span>
+                }
+                continue;
+            }
+
+            // single id, so set on all fields in this group (groups with no id are handled later)
+<span class="fc bfc" id="L539" title="All 2 branches covered.">            if (ids.size() == 1) {</span>
+                // propagate the id to all fields in this group
+<span class="fc" id="L541">                short id = Iterables.getOnlyElement(ids);</span>
+<span class="fc bfc" id="L542" title="All 2 branches covered.">                for (FieldMetadata field : fields) {</span>
+<span class="fc" id="L543">                    field.setId(id);</span>
+<span class="fc" id="L544">                }</span>
+            }
+<span class="fc" id="L546">        }</span>
+<span class="fc" id="L547">    }</span>
+
+    private String extractFieldName(short id, Collection&lt;FieldMetadata&gt; fields)
+    {
+        // get the names used by these fields
+<span class="fc" id="L552">        Set&lt;String&gt; names = ImmutableSet.copyOf(filter(transform(fields, getThriftFieldName()), notNull()));</span>
+
+        String name;
+<span class="fc bfc" id="L555" title="All 2 branches covered.">        if (!names.isEmpty()) {</span>
+<span class="fc bfc" id="L556" title="All 2 branches covered.">            if (names.size() &gt; 1) {</span>
+<span class="fc" id="L557">                metadataErrors.addWarning(&quot;ThriftStruct %s field %s has multiple names %s&quot;, structName, id, names);</span>
+            }
+<span class="fc" id="L559">            name = names.iterator().next();</span>
+        }
+        else {
+            // pick a name for this field
+<span class="fc" id="L563">            name = Iterables.find(transform(fields, extractThriftFieldName()), notNull());</span>
+        }
+<span class="fc" id="L565">        return name;</span>
+    }
+
+    /**
+     * Verifies that the the fields all have a supported Java type and that all fields map to the
+     * exact same ThriftType.
+     */
+    private void verifyFieldType(short id, String name, Collection&lt;FieldMetadata&gt; fields, ThriftCatalog catalog)
+    {
+<span class="fc" id="L574">        boolean isSupportedType = true;</span>
+<span class="fc bfc" id="L575" title="All 2 branches covered.">        for (FieldMetadata field : fields) {</span>
+<span class="fc bfc" id="L576" title="All 2 branches covered.">            if (!catalog.isSupportedStructFieldType(field.getJavaType())) {</span>
+<span class="fc" id="L577">                metadataErrors.addError(&quot;ThriftStruct %s field %s(%s) type %s is not a supported Java type&quot;, structName, name, id, TypeToken.of(field.getJavaType()));</span>
+<span class="fc" id="L578">                isSupportedType = false;</span>
+                // only report the error once
+<span class="fc" id="L580">                break;</span>
+            }
+<span class="fc" id="L582">        }</span>
+
+        // fields must have the same type
+<span class="fc bfc" id="L585" title="All 2 branches covered.">        if (isSupportedType) {</span>
+<span class="fc" id="L586">            Set&lt;ThriftType&gt; types = new HashSet&lt;&gt;();</span>
+<span class="fc bfc" id="L587" title="All 2 branches covered.">            for (FieldMetadata field : fields) {</span>
+<span class="fc" id="L588">                types.add(catalog.getThriftType(field.getJavaType()));</span>
+<span class="fc" id="L589">            }</span>
+<span class="fc bfc" id="L590" title="All 2 branches covered.">            if (types.size() &gt; 1) {</span>
+<span class="fc" id="L591">                metadataErrors.addWarning(&quot;ThriftStruct %s field %s(%s) has multiple types %s&quot;, structName, name, id, types);</span>
+            }
+        }
+<span class="fc" id="L594">    }</span>
+
+    //
+    // Build final metadata
+    //
+
+    public ThriftStructMetadata&lt;T&gt; build()
+    {
+        // this code assumes that metadata is clean
+<span class="fc" id="L603">        metadataErrors.throwIfHasErrors();</span>
+
+        // builder constructor injection
+<span class="fc" id="L606">        ThriftMethodInjection builderMethodInjection = buildBuilderConstructorInjections();</span>
+
+        // constructor injection (or factory method for builder)
+<span class="fc" id="L609">        ThriftConstructorInjection constructorInjection = buildConstructorInjections();</span>
+
+        // fields injections
+<span class="fc" id="L612">        Iterable&lt;ThriftFieldMetadata&gt; fieldsMetadata = buildFieldInjections();</span>
+
+        // methods injections
+<span class="fc" id="L615">        List&lt;ThriftMethodInjection&gt; methodInjections = buildMethodInjections();</span>
+
+<span class="fc" id="L617">        return new ThriftStructMetadata&lt;&gt;(</span>
+                structName,
+                structClass,
+                builderClass,
+                builderMethodInjection,
+                ImmutableList.copyOf(fieldsMetadata),
+                constructorInjection,
+                methodInjections
+        );
+    }
+
+    private ThriftMethodInjection buildBuilderConstructorInjections()
+    {
+<span class="fc" id="L630">        ThriftMethodInjection builderMethodInjection = null;</span>
+<span class="fc bfc" id="L631" title="All 2 branches covered.">        if (builderClass != null) {</span>
+<span class="fc" id="L632">            MethodInjection builderMethod = builderMethodInjections.get(0);</span>
+<span class="fc" id="L633">            builderMethodInjection = new ThriftMethodInjection(builderMethod.getMethod(), buildParameterInjections(builderMethod.getParameters()));</span>
+        }
+<span class="fc" id="L635">        return builderMethodInjection;</span>
+    }
+
+    private ThriftConstructorInjection buildConstructorInjections()
+    {
+<span class="fc" id="L640">        ConstructorInjection constructor = constructorInjections.get(0);</span>
+<span class="fc" id="L641">        return new ThriftConstructorInjection(constructor.getConstructor(), buildParameterInjections(constructor.getParameters()));</span>
+    }
+
+    private Iterable&lt;ThriftFieldMetadata&gt; buildFieldInjections()
+    {
+<span class="fc" id="L646">        Multimap&lt;Optional&lt;Short&gt;, FieldMetadata&gt; fieldsById = Multimaps.index(fields, getThriftFieldId());</span>
+<span class="fc" id="L647">        return Iterables.transform(fieldsById.asMap().values(), new Function&lt;Collection&lt;FieldMetadata&gt;, ThriftFieldMetadata&gt;()</span>
+<span class="fc" id="L648">        {</span>
+            @Override
+            public ThriftFieldMetadata apply(Collection&lt;FieldMetadata&gt; input)
+            {
+<span class="pc bpc" id="L652" title="1 of 2 branches missed.">                checkArgument(!input.isEmpty(), &quot;input is empty&quot;);</span>
+<span class="fc" id="L653">                return buildField(input);</span>
+            }
+        });
+    }
+
+    private ThriftFieldMetadata buildField(Collection&lt;FieldMetadata&gt; input)
+    {
+<span class="fc" id="L660">        short id = -1;</span>
+<span class="fc" id="L661">        String name = null;</span>
+<span class="fc" id="L662">        ThriftType type = null;</span>
+
+        // process field injections and extractions
+<span class="fc" id="L665">        ImmutableList.Builder&lt;ThriftInjection&gt; injections = ImmutableList.builder();</span>
+<span class="fc" id="L666">        ThriftExtraction extraction = null;</span>
+<span class="fc bfc" id="L667" title="All 2 branches covered.">        for (FieldMetadata fieldMetadata : input) {</span>
+<span class="fc" id="L668">            id = fieldMetadata.getId();</span>
+<span class="fc" id="L669">            name = fieldMetadata.getName();</span>
+<span class="fc" id="L670">            type = catalog.getThriftType(fieldMetadata.getJavaType());</span>
+
+<span class="fc bfc" id="L672" title="All 2 branches covered.">            if (fieldMetadata instanceof FieldInjection) {</span>
+<span class="fc" id="L673">                FieldInjection fieldInjection = (FieldInjection) fieldMetadata;</span>
+<span class="fc" id="L674">                injections.add(new ThriftFieldInjection(fieldInjection.getId(), fieldInjection.getName(), fieldInjection.getField()));</span>
+<span class="fc" id="L675">            }</span>
+<span class="fc bfc" id="L676" title="All 2 branches covered.">            else if (fieldMetadata instanceof ParameterInjection) {</span>
+<span class="fc" id="L677">                ParameterInjection parameterInjection = (ParameterInjection) fieldMetadata;</span>
+<span class="fc" id="L678">                injections.add(new ThriftParameterInjection(</span>
+                        parameterInjection.getId(),
+                        parameterInjection.getName(),
+                        parameterInjection.getParameterIndex(),
+                        fieldMetadata.getJavaType()
+                ));
+<span class="fc" id="L684">            }</span>
+<span class="fc bfc" id="L685" title="All 2 branches covered.">            else if (fieldMetadata instanceof FieldExtractor) {</span>
+<span class="fc" id="L686">                FieldExtractor fieldExtractor = (FieldExtractor) fieldMetadata;</span>
+<span class="fc" id="L687">                extraction = new ThriftFieldExtractor(fieldExtractor.getId(), fieldExtractor.getName(), fieldExtractor.getField());</span>
+<span class="fc" id="L688">            }</span>
+<span class="pc bpc" id="L689" title="1 of 2 branches missed.">            else if (fieldMetadata instanceof MethodExtractor) {</span>
+<span class="fc" id="L690">                MethodExtractor methodExtractor = (MethodExtractor) fieldMetadata;</span>
+<span class="fc" id="L691">                extraction = new ThriftMethodExtractor(methodExtractor.getId(), methodExtractor.getName(), methodExtractor.getMethod());</span>
+            }
+<span class="fc" id="L693">        }</span>
+
+        // add type coercion
+<span class="fc" id="L696">        TypeCoercion coercion = null;</span>
+<span class="fc bfc" id="L697" title="All 2 branches covered.">        if (type.isCoerced()) {</span>
+<span class="fc" id="L698">            coercion = catalog.getDefaultCoercion(type.getJavaType());</span>
+        }
+
+<span class="fc" id="L701">        ThriftFieldMetadata thriftFieldMetadata = new ThriftFieldMetadata(</span>
+                id,
+                type,
+                name,
+                injections.build(),
+                extraction,
+                coercion
+        );
+<span class="fc" id="L709">        return thriftFieldMetadata;</span>
+    }
+
+    private List&lt;ThriftMethodInjection&gt; buildMethodInjections()
+    {
+<span class="fc" id="L714">        return Lists.transform(methodInjections, new Function&lt;MethodInjection, ThriftMethodInjection&gt;()</span>
+<span class="fc" id="L715">        {</span>
+            @Override
+            public ThriftMethodInjection apply(MethodInjection injection)
+            {
+<span class="fc" id="L719">                return new ThriftMethodInjection(injection.getMethod(), buildParameterInjections(injection.getParameters()));</span>
+            }
+        });
+    }
+
+    private List&lt;ThriftParameterInjection&gt; buildParameterInjections(List&lt;ParameterInjection&gt; parameters)
+    {
+<span class="fc" id="L726">        return Lists.transform(parameters, new Function&lt;ParameterInjection, ThriftParameterInjection&gt;()</span>
+<span class="fc" id="L727">        {</span>
+            @Override
+            public ThriftParameterInjection apply(ParameterInjection injection)
+            {
+<span class="fc" id="L731">                return new ThriftParameterInjection(</span>
+                        injection.getId(),
+                        injection.getName(),
+                        injection.getParameterIndex(),
+                        injection.getJavaType()
+                );
+            }
+        });
+    }
+
+    static abstract class FieldMetadata
+    {
+        private Short id;
+        private String name;
+
+        private FieldMetadata(ThriftField annotation)
+<span class="fc" id="L747">        {</span>
+<span class="fc bfc" id="L748" title="All 2 branches covered.">            if (annotation != null) {</span>
+<span class="fc bfc" id="L749" title="All 2 branches covered.">                if (annotation.value() != Short.MIN_VALUE) {</span>
+<span class="fc" id="L750">                    id = annotation.value();</span>
+                }
+<span class="fc bfc" id="L752" title="All 2 branches covered.">                if (!annotation.name().isEmpty()) {</span>
+<span class="fc" id="L753">                    name = annotation.name();</span>
+                }
+            }
+<span class="fc" id="L756">        }</span>
+
+        public Short getId()
+        {
+<span class="fc" id="L760">            return id;</span>
+        }
+
+        public void setId(short id)
+        {
+<span class="fc" id="L765">            this.id = id;</span>
+<span class="fc" id="L766">        }</span>
+
+        public String getName()
+        {
+<span class="fc" id="L770">            return name;</span>
+        }
+
+        public void setName(String name)
+        {
+<span class="fc" id="L775">            this.name = name;</span>
+<span class="fc" id="L776">        }</span>
+
+        public abstract Type getJavaType();
+
+        public abstract String extractName();
+
+        static &lt;T extends FieldMetadata&gt; Function&lt;T, Optional&lt;Short&gt;&gt; getThriftFieldId()
+        {
+<span class="fc" id="L784">            return new Function&lt;T, Optional&lt;Short&gt;&gt;()</span>
+<span class="fc" id="L785">            {</span>
+                @Override
+                public Optional&lt;Short&gt; apply(@Nullable T input)
+                {
+<span class="pc bpc" id="L789" title="1 of 2 branches missed.">                    if (input == null) {</span>
+<span class="nc" id="L790">                        return Optional.absent();</span>
+                    }
+<span class="fc" id="L792">                    Short value = input.getId();</span>
+<span class="fc" id="L793">                    return Optional.fromNullable(value);</span>
+                }
+            };
+        }
+
+        static &lt;T extends FieldMetadata&gt; Function&lt;T, String&gt; getThriftFieldName()
+        {
+<span class="fc" id="L800">            return new Function&lt;T, String&gt;()</span>
+<span class="fc" id="L801">            {</span>
+                @Override
+                public String apply(@Nullable T input)
+                {
+<span class="pc bpc" id="L805" title="1 of 2 branches missed.">                    if (input == null) {</span>
+<span class="nc" id="L806">                        return null;</span>
+                    }
+<span class="fc" id="L808">                    return input.getName();</span>
+                }
+            };
+        }
+
+        static &lt;T extends FieldMetadata&gt; Function&lt;T, String&gt; getOrExtractThriftFieldName()
+        {
+<span class="fc" id="L815">            return new Function&lt;T, String&gt;()</span>
+<span class="fc" id="L816">            {</span>
+                @Override
+                public String apply(@Nullable T input)
+                {
+<span class="pc bpc" id="L820" title="1 of 2 branches missed.">                    if (input == null) {</span>
+<span class="nc" id="L821">                        return null;</span>
+                    }
+<span class="fc" id="L823">                    String name = input.getName();</span>
+<span class="fc bfc" id="L824" title="All 2 branches covered.">                    if (name == null) {</span>
+<span class="fc" id="L825">                        name = input.extractName();</span>
+                    }
+<span class="pc bpc" id="L827" title="1 of 2 branches missed.">                    if (name == null) {</span>
+<span class="nc" id="L828">                        throw new NullPointerException(String.valueOf(&quot;name is null&quot;));</span>
+                    }
+<span class="fc" id="L830">                    return name;</span>
+                }
+            };
+        }
+
+        static &lt;T extends FieldMetadata&gt; Function&lt;T, String&gt; extractThriftFieldName()
+        {
+<span class="fc" id="L837">            return new Function&lt;T, String&gt;()</span>
+<span class="fc" id="L838">            {</span>
+                @Override
+                public String apply(@Nullable T input)
+                {
+<span class="pc bpc" id="L842" title="1 of 2 branches missed.">                    if (input == null) {</span>
+<span class="nc" id="L843">                        return null;</span>
+                    }
+<span class="fc" id="L845">                    return input.extractName();</span>
+                }
+            };
+        }
+    }
+
+    private static abstract class Extractor extends FieldMetadata
+    {
+        protected Extractor(ThriftField annotation)
+        {
+<span class="fc" id="L855">            super(annotation);</span>
+<span class="fc" id="L856">        }</span>
+    }
+
+    private static class FieldExtractor extends Extractor
+    {
+        private final Field field;
+
+        private FieldExtractor(Field field, ThriftField annotation)
+        {
+<span class="fc" id="L865">            super(annotation);</span>
+<span class="fc" id="L866">            this.field = field;</span>
+<span class="fc" id="L867">        }</span>
+
+        public Field getField()
+        {
+<span class="fc" id="L871">            return field;</span>
+        }
+
+        @Override
+        public String extractName()
+        {
+<span class="fc" id="L877">            return field.getName();</span>
+        }
+
+        @Override
+        public Type getJavaType()
+        {
+<span class="fc" id="L883">            return field.getGenericType();</span>
+        }
+
+        @Override
+        public String toString()
+        {
+<span class="nc" id="L889">            final StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L890">            sb.append(&quot;FieldExtractor&quot;);</span>
+<span class="nc" id="L891">            sb.append(&quot;{field=&quot;).append(field);</span>
+<span class="nc" id="L892">            sb.append('}');</span>
+<span class="nc" id="L893">            return sb.toString();</span>
+        }
+    }
+
+    public static class MethodExtractor extends Extractor
+    {
+        private final Method method;
+
+        public MethodExtractor(Method method, ThriftField annotation)
+        {
+<span class="fc" id="L903">            super(annotation);</span>
+<span class="fc" id="L904">            this.method = method;</span>
+<span class="fc" id="L905">        }</span>
+
+        public Method getMethod()
+        {
+<span class="fc" id="L909">            return method;</span>
+        }
+
+        @Override
+        public String extractName()
+        {
+<span class="fc" id="L915">            return extractFieldName(method);</span>
+        }
+
+        @Override
+        public Type getJavaType()
+        {
+<span class="fc" id="L921">            return method.getGenericReturnType();</span>
+        }
+
+        @Override
+        public String toString()
+        {
+<span class="nc" id="L927">            final StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L928">            sb.append(&quot;MethodExtractor&quot;);</span>
+<span class="nc" id="L929">            sb.append(&quot;{method=&quot;).append(method);</span>
+<span class="nc" id="L930">            sb.append('}');</span>
+<span class="nc" id="L931">            return sb.toString();</span>
+        }
+    }
+
+    private static abstract class Injection extends FieldMetadata
+    {
+        protected Injection(ThriftField annotation)
+        {
+<span class="fc" id="L939">            super(annotation);</span>
+<span class="fc" id="L940">        }</span>
+    }
+
+    private static class FieldInjection extends Injection
+    {
+        private final Field field;
+
+        private FieldInjection(Field field, ThriftField annotation)
+        {
+<span class="fc" id="L949">            super(annotation);</span>
+<span class="fc" id="L950">            this.field = field;</span>
+<span class="fc" id="L951">        }</span>
+
+        public Field getField()
+        {
+<span class="fc" id="L955">            return field;</span>
+        }
+
+        @Override
+        public String extractName()
+        {
+<span class="fc" id="L961">            return field.getName();</span>
+        }
+
+        @Override
+        public Type getJavaType()
+        {
+<span class="fc" id="L967">            return field.getGenericType();</span>
+        }
+
+        @Override
+        public String toString()
+        {
+<span class="nc" id="L973">            final StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L974">            sb.append(&quot;FieldInjection&quot;);</span>
+<span class="nc" id="L975">            sb.append(&quot;{field=&quot;).append(field);</span>
+<span class="nc" id="L976">            sb.append('}');</span>
+<span class="nc" id="L977">            return sb.toString();</span>
+        }
+    }
+
+    public class ConstructorInjection
+    {
+        private final Constructor&lt;?&gt; constructor;
+        private final List&lt;ParameterInjection&gt; parameters;
+
+        public ConstructorInjection(Constructor&lt;?&gt; constructor, List&lt;ParameterInjection&gt; parameters)
+<span class="fc" id="L987">        {</span>
+<span class="fc" id="L988">            this.constructor = constructor;</span>
+<span class="fc" id="L989">            this.parameters = ImmutableList.copyOf(parameters);</span>
+<span class="fc" id="L990">        }</span>
+
+        public ConstructorInjection(Constructor&lt;?&gt; constructor, ParameterInjection... parameters)
+<span class="fc" id="L993">        {</span>
+<span class="fc" id="L994">            this.constructor = constructor;</span>
+<span class="fc" id="L995">            this.parameters = ImmutableList.copyOf(parameters);</span>
+<span class="fc" id="L996">        }</span>
+
+        public Constructor&lt;?&gt; getConstructor()
+        {
+<span class="fc" id="L1000">            return constructor;</span>
+        }
+
+        public List&lt;ParameterInjection&gt; getParameters()
+        {
+<span class="fc" id="L1005">            return parameters;</span>
+        }
+
+        @Override
+        public String toString()
+        {
+<span class="nc" id="L1011">            final StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L1012">            sb.append(&quot;ConstructorInjection&quot;);</span>
+<span class="nc" id="L1013">            sb.append(&quot;{constructor=&quot;).append(constructor);</span>
+<span class="nc" id="L1014">            sb.append(&quot;, parameters=&quot;).append(parameters);</span>
+<span class="nc" id="L1015">            sb.append('}');</span>
+<span class="nc" id="L1016">            return sb.toString();</span>
+        }
+    }
+
+    public class MethodInjection
+    {
+        private final Method method;
+        private final List&lt;ParameterInjection&gt; parameters;
+
+        public MethodInjection(Method method, List&lt;ParameterInjection&gt; parameters)
+<span class="fc" id="L1026">        {</span>
+<span class="fc" id="L1027">            this.method = method;</span>
+<span class="fc" id="L1028">            this.parameters = ImmutableList.copyOf(parameters);</span>
+<span class="fc" id="L1029">        }</span>
+
+        public Method getMethod()
+        {
+<span class="fc" id="L1033">            return method;</span>
+        }
+
+        public List&lt;ParameterInjection&gt; getParameters()
+        {
+<span class="fc" id="L1038">            return parameters;</span>
+        }
+
+        @Override
+        public String toString()
+        {
+<span class="nc" id="L1044">            final StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L1045">            sb.append(&quot;MethodInjection&quot;);</span>
+<span class="nc" id="L1046">            sb.append(&quot;{method=&quot;).append(method);</span>
+<span class="nc" id="L1047">            sb.append(&quot;, parameters=&quot;).append(parameters);</span>
+<span class="nc" id="L1048">            sb.append('}');</span>
+<span class="nc" id="L1049">            return sb.toString();</span>
+        }
+    }
+
+    private static class ParameterInjection extends Injection
+    {
+        private final int parameterIndex;
+        private final String extractedName;
+        private final Type parameterJavaType;
+
+        private ParameterInjection(int parameterIndex, ThriftField annotation, String extractedName, Type parameterJavaType)
+        {
+<span class="fc" id="L1061">            super(annotation);</span>
+<span class="fc" id="L1062">            checkNotNull(parameterJavaType, &quot;parameterJavaType is null&quot;);</span>
+
+<span class="fc" id="L1064">            this.parameterIndex = parameterIndex;</span>
+<span class="fc" id="L1065">            this.extractedName = extractedName;</span>
+<span class="fc" id="L1066">            this.parameterJavaType = parameterJavaType;</span>
+<span class="pc bpc" id="L1067" title="1 of 2 branches missed.">            if (void.class.equals(parameterJavaType)) {</span>
+<span class="nc" id="L1068">                throw new AssertionError();</span>
+            }
+<span class="pc bpc" id="L1070" title="1 of 4 branches missed.">            checkArgument(getName() != null || extractedName != null, &quot;Parameter must have an explicit name or an extractedName&quot;);</span>
+<span class="fc" id="L1071">        }</span>
+
+        public int getParameterIndex()
+        {
+<span class="fc" id="L1075">            return parameterIndex;</span>
+        }
+
+        @Override
+        public String extractName()
+        {
+<span class="fc" id="L1081">            return extractedName;</span>
+        }
+
+        @Override
+        public Type getJavaType()
+        {
+<span class="fc" id="L1087">            return parameterJavaType;</span>
+        }
+
+        @Override
+        public String toString()
+        {
+<span class="nc" id="L1093">            final StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L1094">            sb.append(&quot;ParameterInjection&quot;);</span>
+<span class="nc" id="L1095">            sb.append(&quot;{parameterIndex=&quot;).append(parameterIndex);</span>
+<span class="nc" id="L1096">            sb.append(&quot;, extractedName='&quot;).append(extractedName).append('\'');</span>
+<span class="nc" id="L1097">            sb.append(&quot;, parameterJavaType=&quot;).append(parameterJavaType);</span>
+<span class="nc" id="L1098">            sb.append('}');</span>
+<span class="nc" id="L1099">            return sb.toString();</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

@@ -1,0 +1,394 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ThriftCatalog.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-codec</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.codec.metadata</a> &gt; <span class="el_source">ThriftCatalog.java</span></div><h1>ThriftCatalog.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.codec.metadata;
+
+import com.facebook.swift.codec.ThriftStruct;
+import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
+import com.facebook.swift.codec.internal.coercion.FromThrift;
+import com.facebook.swift.codec.internal.coercion.ToThrift;
+import com.facebook.swift.codec.metadata.MetadataErrors.Monitor;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
+import com.google.common.reflect.TypeToken;
+import com.google.common.util.concurrent.ListenableFuture;
+
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+import javax.annotation.concurrent.ThreadSafe;
+
+import static com.facebook.swift.codec.metadata.ReflectionHelper.getFutureReturnType;
+import static com.facebook.swift.codec.metadata.ReflectionHelper.getIterableType;
+import static com.facebook.swift.codec.metadata.ReflectionHelper.getMapKeyType;
+import static com.facebook.swift.codec.metadata.ReflectionHelper.getMapValueType;
+import static com.facebook.swift.codec.metadata.ThriftType.BOOL;
+import static com.facebook.swift.codec.metadata.ThriftType.BYTE;
+import static com.facebook.swift.codec.metadata.ThriftType.DOUBLE;
+import static com.facebook.swift.codec.metadata.ThriftType.I16;
+import static com.facebook.swift.codec.metadata.ThriftType.I32;
+import static com.facebook.swift.codec.metadata.ThriftType.I64;
+import static com.facebook.swift.codec.metadata.ThriftType.STRING;
+import static com.facebook.swift.codec.metadata.ThriftType.VOID;
+import static com.facebook.swift.codec.metadata.ThriftType.enumType;
+import static com.facebook.swift.codec.metadata.ThriftType.list;
+import static com.facebook.swift.codec.metadata.ThriftType.map;
+import static com.facebook.swift.codec.metadata.ThriftType.set;
+import static com.facebook.swift.codec.metadata.ThriftType.struct;
+import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.Iterables.concat;
+import static com.google.common.collect.Iterables.transform;
+import static java.lang.reflect.Modifier.isStatic;
+
+/**
+ * ThriftCatalog contains the metadata for all known structs, enums and type coercions.  Since,
+ * metadata extraction can be very expensive, and only single instance of the catalog should be
+ * created.
+ */
+@ThreadSafe
+public class ThriftCatalog
+{
+    private final MetadataErrors.Monitor monitor;
+<span class="fc" id="L76">    private final ConcurrentMap&lt;Class&lt;?&gt;, ThriftStructMetadata&lt;?&gt;&gt; structs = new ConcurrentHashMap&lt;&gt;();</span>
+<span class="fc" id="L77">    private final ConcurrentMap&lt;Class&lt;?&gt;, ThriftEnumMetadata&lt;?&gt;&gt; enums = new ConcurrentHashMap&lt;&gt;();</span>
+<span class="fc" id="L78">    private final ConcurrentMap&lt;Type, TypeCoercion&gt; coercions = new ConcurrentHashMap&lt;&gt;();</span>
+<span class="fc" id="L79">    private final ConcurrentMap&lt;Class&lt;?&gt;, ThriftType&gt; manualTypes = new ConcurrentHashMap&lt;&gt;();</span>
+
+<span class="fc" id="L81">    private final ThreadLocal&lt;Deque&lt;Class&lt;?&gt;&gt;&gt; stack = new ThreadLocal&lt;Deque&lt;Class&lt;?&gt;&gt;&gt;()</span>
+<span class="fc" id="L82">    {</span>
+        @Override
+        protected Deque&lt;Class&lt;?&gt;&gt; initialValue()
+        {
+<span class="fc" id="L86">            return new ArrayDeque&lt;&gt;();</span>
+        }
+    };
+
+    public ThriftCatalog()
+    {
+<span class="fc" id="L92">        this(MetadataErrors.NULL_MONITOR);</span>
+<span class="fc" id="L93">    }</span>
+
+    @VisibleForTesting
+    public ThriftCatalog(Monitor monitor)
+<span class="fc" id="L97">    {</span>
+<span class="fc" id="L98">        this.monitor = monitor;</span>
+<span class="fc" id="L99">        addDefaultCoercions(DefaultJavaCoercions.class);</span>
+<span class="fc" id="L100">    }</span>
+
+    @VisibleForTesting
+    Monitor getMonitor()
+    {
+<span class="fc" id="L105">        return monitor;</span>
+    }
+
+    public void addThriftType(ThriftType thriftType)
+    {
+<span class="fc" id="L110">        manualTypes.put(TypeToken.of(thriftType.getJavaType()).getRawType(), thriftType);</span>
+<span class="fc" id="L111">    }</span>
+
+    /**
+     * Add the @ToThrift and @FromThrift coercions in the specified class to this catalog.  All
+     * coercions must be symmetrical, so ever @ToThrift method must have a corresponding @FromThrift
+     * method.
+     */
+    public void addDefaultCoercions(Class&lt;?&gt; coercionsClass)
+    {
+<span class="fc" id="L120">        Preconditions.checkNotNull(coercionsClass, &quot;coercionsClass is null&quot;);</span>
+<span class="fc" id="L121">        Map&lt;ThriftType, Method&gt; toThriftCoercions = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L122">        Map&lt;ThriftType, Method&gt; fromThriftCoercions = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L123" title="All 2 branches covered.">        for (Method method : coercionsClass.getDeclaredMethods()) {</span>
+<span class="fc bfc" id="L124" title="All 2 branches covered.">            if (method.isAnnotationPresent(ToThrift.class)) {</span>
+<span class="fc" id="L125">                verifyCoercionMethod(method);</span>
+<span class="fc" id="L126">                ThriftType thriftType = getThriftType(method.getGenericReturnType());</span>
+<span class="fc" id="L127">                ThriftType coercedType = thriftType.coerceTo(method.getGenericParameterTypes()[0]);</span>
+
+<span class="fc" id="L129">                Method oldValue = toThriftCoercions.put(coercedType, method);</span>
+<span class="pc bpc" id="L130" title="1 of 2 branches missed.">                Preconditions.checkArgument(</span>
+                        oldValue == null,
+                        &quot;Coercion class two @ToThrift methods (%s and %s) for type %s&quot;,
+                        coercionsClass.getName(),
+                        method,
+                        oldValue,
+                        coercedType);
+<span class="fc" id="L137">            }</span>
+<span class="fc bfc" id="L138" title="All 2 branches covered.">            else if (method.isAnnotationPresent(FromThrift.class)) {</span>
+<span class="fc" id="L139">                verifyCoercionMethod(method);</span>
+<span class="fc" id="L140">                ThriftType thriftType = getThriftType(method.getGenericParameterTypes()[0]);</span>
+<span class="fc" id="L141">                ThriftType coercedType = thriftType.coerceTo(method.getGenericReturnType());</span>
+
+<span class="fc" id="L143">                Method oldValue = fromThriftCoercions.put(coercedType, method);</span>
+<span class="pc bpc" id="L144" title="1 of 2 branches missed.">                Preconditions.checkArgument(</span>
+                        oldValue == null,
+                        &quot;Coercion class two @FromThrift methods (%s and %s) for type %s&quot;,
+                        coercionsClass.getName(),
+                        method,
+                        oldValue,
+                        coercedType);
+            }
+        }
+
+        // assure coercions are symmetric
+<span class="fc" id="L155">        Set&lt;ThriftType&gt; difference = Sets.symmetricDifference(toThriftCoercions.keySet(), fromThriftCoercions.keySet());</span>
+<span class="fc" id="L156">        Preconditions.checkArgument(</span>
+                difference.isEmpty(),
+                &quot;Coercion class %s does not have matched @ToThrift and @FromThrift methods for types %s&quot;,
+                coercionsClass.getName(),
+                difference);
+
+        // add the coercions
+<span class="fc" id="L163">        Map&lt;Type, TypeCoercion&gt; coercions = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L164" title="All 2 branches covered.">        for (Map.Entry&lt;ThriftType, Method&gt; entry : toThriftCoercions.entrySet()) {</span>
+<span class="fc" id="L165">            ThriftType type = entry.getKey();</span>
+<span class="fc" id="L166">            Method toThriftMethod = entry.getValue();</span>
+<span class="fc" id="L167">            Method fromThriftMethod = fromThriftCoercions.get(type);</span>
+            // this should never happen due to the difference check above, but be careful
+<span class="pc bpc" id="L169" title="1 of 2 branches missed.">            Preconditions.checkState(</span>
+                    fromThriftMethod != null,
+                    &quot;Coercion class %s does not have matched @ToThrift and @FromThrift methods for type %s&quot;,
+                    coercionsClass.getName(),
+                    type);
+<span class="fc" id="L174">            TypeCoercion coercion = new TypeCoercion(type, toThriftMethod, fromThriftMethod);</span>
+<span class="fc" id="L175">            coercions.put(type.getJavaType(), coercion);</span>
+<span class="fc" id="L176">        }</span>
+<span class="fc" id="L177">        this.coercions.putAll(coercions);</span>
+<span class="fc" id="L178">    }</span>
+
+    private void verifyCoercionMethod(Method method)
+    {
+<span class="fc" id="L182">        Preconditions.checkArgument(isStatic(method.getModifiers()), &quot;Method %s is not static&quot;, method.toGenericString());</span>
+<span class="pc bpc" id="L183" title="1 of 2 branches missed.">        Preconditions.checkArgument(method.getParameterTypes().length == 1, &quot;Method %s must have exactly one parameter&quot;, method.toGenericString());</span>
+<span class="pc bpc" id="L184" title="1 of 2 branches missed.">        Preconditions.checkArgument(method.getReturnType() != void.class, &quot;Method %s must have a return value&quot;, method.toGenericString());</span>
+<span class="fc" id="L185">    }</span>
+
+    /**
+     * Gets the default TypeCoercion (and associated ThriftType) for the specified Java type.
+     */
+    public TypeCoercion getDefaultCoercion(Type type)
+    {
+<span class="fc" id="L192">        return coercions.get(type);</span>
+    }
+
+    /**
+     * Gets the ThriftType for the specified Java type.  The native Thrift type for the Java type will
+     * be inferred from the Java type, and if necessary type coercions will be applied.
+     *
+     * @return the ThriftType for the specified java type; never null
+     * @throws IllegalArgumentException if the Java Type can not be coerced to a ThriftType
+     */
+    public ThriftType getThriftType(Type javaType)
+            throws IllegalArgumentException
+    {
+<span class="fc" id="L205">        Class&lt;?&gt; rawType = TypeToken.of(javaType).getRawType();</span>
+<span class="fc" id="L206">        ThriftType manualType = manualTypes.get(rawType);</span>
+<span class="fc bfc" id="L207" title="All 2 branches covered.">        if (manualType != null) {</span>
+<span class="fc" id="L208">            return manualType;</span>
+        }
+<span class="fc bfc" id="L210" title="All 2 branches covered.">        if (boolean.class == rawType) {</span>
+<span class="fc" id="L211">            return BOOL;</span>
+        }
+<span class="fc bfc" id="L213" title="All 2 branches covered.">        if (byte.class == rawType) {</span>
+<span class="fc" id="L214">            return BYTE;</span>
+        }
+<span class="fc bfc" id="L216" title="All 2 branches covered.">        if (short.class == rawType) {</span>
+<span class="fc" id="L217">            return I16;</span>
+        }
+<span class="fc bfc" id="L219" title="All 2 branches covered.">        if (int.class == rawType) {</span>
+<span class="fc" id="L220">            return I32;</span>
+        }
+<span class="fc bfc" id="L222" title="All 2 branches covered.">        if (long.class == rawType) {</span>
+<span class="fc" id="L223">            return I64;</span>
+        }
+<span class="fc bfc" id="L225" title="All 2 branches covered.">        if (double.class == rawType) {</span>
+<span class="fc" id="L226">            return DOUBLE;</span>
+        }
+<span class="fc bfc" id="L228" title="All 2 branches covered.">        if (ByteBuffer.class.isAssignableFrom(rawType)) {</span>
+<span class="fc" id="L229">            return STRING;</span>
+        }
+<span class="fc bfc" id="L231" title="All 2 branches covered.">        if (Enum.class.isAssignableFrom(rawType)) {</span>
+<span class="fc" id="L232">            Class&lt;?&gt; enumClass = TypeToken.of(javaType).getRawType();</span>
+<span class="fc" id="L233">            ThriftEnumMetadata&lt;? extends Enum&lt;?&gt;&gt; thriftEnumMetadata = getThriftEnumMetadata(enumClass);</span>
+<span class="fc" id="L234">            return enumType(thriftEnumMetadata);</span>
+        }
+<span class="fc bfc" id="L236" title="All 2 branches covered.">        if (Map.class.isAssignableFrom(rawType)) {</span>
+<span class="fc" id="L237">            Type mapKeyType = getMapKeyType(javaType);</span>
+<span class="fc" id="L238">            Type mapValueType = getMapValueType(javaType);</span>
+<span class="fc" id="L239">            return map(getThriftType(mapKeyType), getThriftType(mapValueType));</span>
+        }
+<span class="fc bfc" id="L241" title="All 2 branches covered.">        if (Set.class.isAssignableFrom(rawType)) {</span>
+<span class="fc" id="L242">            Type elementType = getIterableType(javaType);</span>
+<span class="fc" id="L243">            return set(getThriftType(elementType));</span>
+        }
+<span class="fc bfc" id="L245" title="All 2 branches covered.">        if (Iterable.class.isAssignableFrom(rawType)) {</span>
+<span class="fc" id="L246">            Type elementType = getIterableType(javaType);</span>
+<span class="fc" id="L247">            return list(getThriftType(elementType));</span>
+        }
+        // The void type is used by service methods and is encoded as an empty struct
+<span class="pc bpc" id="L250" title="2 of 4 branches missed.">        if (void.class.isAssignableFrom(rawType) || Void.class.isAssignableFrom(rawType)) {</span>
+<span class="nc" id="L251">            return VOID;</span>
+        }
+<span class="fc bfc" id="L253" title="All 2 branches covered.">        if (rawType.isAnnotationPresent(ThriftStruct.class)) {</span>
+<span class="fc" id="L254">            ThriftStructMetadata&lt;?&gt; structMetadata = getThriftStructMetadata(rawType);</span>
+<span class="fc" id="L255">            return struct(structMetadata);</span>
+        }
+
+<span class="pc bpc" id="L258" title="1 of 2 branches missed.">        if (ListenableFuture.class.isAssignableFrom(rawType)) {</span>
+<span class="nc" id="L259">            Type returnType = getFutureReturnType(javaType);</span>
+<span class="nc" id="L260">            return getThriftType(returnType);</span>
+        }
+
+        // coerce the type if possible
+<span class="fc" id="L264">        TypeCoercion coercion = coercions.get(javaType);</span>
+<span class="pc bpc" id="L265" title="1 of 2 branches missed.">        if (coercion != null) {</span>
+<span class="fc" id="L266">            return coercion.getThriftType();</span>
+        }
+<span class="nc" id="L268">        throw new IllegalArgumentException(&quot;Type can not be coerced to a Thrift type: &quot; + javaType);</span>
+    }
+
+    public boolean isSupportedStructFieldType(Type javaType)
+    {
+<span class="fc" id="L273">        Class&lt;?&gt; rawType = TypeToken.of(javaType).getRawType();</span>
+<span class="fc bfc" id="L274" title="All 2 branches covered.">        if (boolean.class == rawType) {</span>
+<span class="fc" id="L275">            return true;</span>
+        }
+<span class="fc bfc" id="L277" title="All 2 branches covered.">        if (byte.class == rawType) {</span>
+<span class="fc" id="L278">            return true;</span>
+        }
+<span class="fc bfc" id="L280" title="All 2 branches covered.">        if (short.class == rawType) {</span>
+<span class="fc" id="L281">            return true;</span>
+        }
+<span class="fc bfc" id="L283" title="All 2 branches covered.">        if (int.class == rawType) {</span>
+<span class="fc" id="L284">            return true;</span>
+        }
+<span class="fc bfc" id="L286" title="All 2 branches covered.">        if (long.class == rawType) {</span>
+<span class="fc" id="L287">            return true;</span>
+        }
+<span class="fc bfc" id="L289" title="All 2 branches covered.">        if (double.class == rawType) {</span>
+<span class="fc" id="L290">            return true;</span>
+        }
+<span class="fc bfc" id="L292" title="All 2 branches covered.">        if (ByteBuffer.class.isAssignableFrom(rawType)) {</span>
+<span class="fc" id="L293">            return true;</span>
+        }
+<span class="fc bfc" id="L295" title="All 2 branches covered.">        if (Enum.class.isAssignableFrom(rawType)) {</span>
+<span class="fc" id="L296">            return true;</span>
+        }
+<span class="fc bfc" id="L298" title="All 2 branches covered.">        if (Map.class.isAssignableFrom(rawType)) {</span>
+<span class="fc" id="L299">            Type mapKeyType = getMapKeyType(javaType);</span>
+<span class="fc" id="L300">            Type mapValueType = getMapValueType(javaType);</span>
+<span class="pc bpc" id="L301" title="2 of 4 branches missed.">            return isSupportedStructFieldType(mapKeyType) &amp;&amp; isSupportedStructFieldType(mapValueType);</span>
+        }
+<span class="fc bfc" id="L303" title="All 2 branches covered.">        if (Set.class.isAssignableFrom(rawType)) {</span>
+<span class="fc" id="L304">            Type elementType = getIterableType(javaType);</span>
+<span class="fc" id="L305">            return isSupportedStructFieldType(elementType);</span>
+        }
+<span class="fc bfc" id="L307" title="All 2 branches covered.">        if (Iterable.class.isAssignableFrom(rawType)) {</span>
+<span class="fc" id="L308">            Type elementType = getIterableType(javaType);</span>
+<span class="fc" id="L309">            return isSupportedStructFieldType(elementType);</span>
+        }
+<span class="fc bfc" id="L311" title="All 2 branches covered.">        if (rawType.isAnnotationPresent(ThriftStruct.class)) {</span>
+<span class="fc" id="L312">            return true;</span>
+        }
+
+        // NOTE: void is not a supported struct type
+
+        // coerce the type if possible
+<span class="fc" id="L318">        TypeCoercion coercion = coercions.get(javaType);</span>
+<span class="fc bfc" id="L319" title="All 2 branches covered.">        if (coercion != null) {</span>
+<span class="fc" id="L320">            return true;</span>
+        }
+<span class="fc" id="L322">        return false;</span>
+    }
+
+    /**
+     * Gets the ThriftEnumMetadata for the specified enum class.  If the enum class contains a method
+     * annotated with @ThriftEnumValue, the value of this method will be used for the encoded thrift
+     * value; otherwise the Enum.ordinal() method will be used.
+     */
+    public &lt;T extends Enum&lt;T&gt;&gt; ThriftEnumMetadata&lt;?&gt; getThriftEnumMetadata(Class&lt;?&gt; enumClass)
+    {
+<span class="fc" id="L332">        ThriftEnumMetadata&lt;?&gt; enumMetadata = enums.get(enumClass);</span>
+<span class="fc bfc" id="L333" title="All 2 branches covered.">        if (enumMetadata == null) {</span>
+<span class="fc" id="L334">            enumMetadata = new ThriftEnumMetadata&lt;&gt;((Class&lt;T&gt;) enumClass);</span>
+
+<span class="fc" id="L336">            ThriftEnumMetadata&lt;?&gt; current = enums.putIfAbsent(enumClass, enumMetadata);</span>
+<span class="pc bpc" id="L337" title="1 of 2 branches missed.">            if (current != null) {</span>
+<span class="nc" id="L338">                enumMetadata = current;</span>
+            }
+        }
+<span class="fc" id="L341">        return enumMetadata;</span>
+    }
+
+    /**
+     * Gets the ThriftStructMetadata for the specified struct class.  The struct class must be
+     * annotated with @ThriftStruct.
+     */
+    public &lt;T&gt; ThriftStructMetadata&lt;T&gt; getThriftStructMetadata(Class&lt;T&gt; structClass)
+    {
+<span class="fc" id="L350">        ThriftStructMetadata&lt;?&gt; structMetadata = structs.get(structClass);</span>
+<span class="fc bfc" id="L351" title="All 2 branches covered.">        if (structMetadata == null) {</span>
+<span class="fc" id="L352">            structMetadata = extractThriftStructMetadata(structClass);</span>
+
+<span class="fc" id="L354">            ThriftStructMetadata&lt;?&gt; current = structs.putIfAbsent(structClass, structMetadata);</span>
+<span class="pc bpc" id="L355" title="1 of 2 branches missed.">            if (current != null) {</span>
+<span class="nc" id="L356">                structMetadata = current;</span>
+            }
+        }
+<span class="fc" id="L359">        return (ThriftStructMetadata&lt;T&gt;) structMetadata;</span>
+    }
+
+    private &lt;T&gt; ThriftStructMetadata&lt;T&gt; extractThriftStructMetadata(Class&lt;T&gt; structClass)
+    {
+<span class="fc" id="L364">        Preconditions.checkNotNull(structClass, &quot;structClass is null&quot;);</span>
+
+<span class="fc" id="L366">        Deque&lt;Class&lt;?&gt;&gt; stack = this.stack.get();</span>
+<span class="pc bpc" id="L367" title="1 of 2 branches missed.">        if (stack.contains(structClass)) {</span>
+<span class="nc" id="L368">            String path = Joiner.on(&quot;-&gt;&quot;).join(transform(concat(stack, ImmutableList.of(structClass)), new Function&lt;Class&lt;?&gt;, Object&gt;()</span>
+<span class="nc" id="L369">            {</span>
+                @Override
+                public Object apply(Class&lt;?&gt; input)
+                {
+<span class="nc" id="L373">                    return input.getName();</span>
+                }
+            }));
+<span class="nc" id="L376">            throw new IllegalArgumentException(&quot;Circular references are not allowed: &quot; + path);</span>
+        }
+
+<span class="fc" id="L379">        stack.push(structClass);</span>
+        try {
+<span class="fc" id="L381">            ThriftStructMetadataBuilder&lt;T&gt; builder = new ThriftStructMetadataBuilder&lt;&gt;(this, structClass);</span>
+<span class="fc" id="L382">            ThriftStructMetadata&lt;T&gt; structMetadata = builder.build();</span>
+<span class="fc" id="L383">            return structMetadata;</span>
+        }
+        finally {
+<span class="pc" id="L386">            Class&lt;?&gt; top = stack.pop();</span>
+<span class="pc" id="L387">            checkState(structClass.equals(top),</span>
+                    &quot;ThriftCatalog circularity detection stack is corrupt: expected %s, but got %s&quot;,
+                    structClass,
+                    top);
+<span class="pc" id="L391">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

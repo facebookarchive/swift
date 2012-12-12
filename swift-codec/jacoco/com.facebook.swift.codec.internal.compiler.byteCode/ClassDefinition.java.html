@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ClassDefinition.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-codec</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.codec.internal.compiler.byteCode</a> &gt; <span class="el_source">ClassDefinition.java</span></div><h1>ClassDefinition.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.codec.internal.compiler.byteCode;
+
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
+import org.objectweb.asm.tree.ClassNode;
+
+import javax.annotation.concurrent.NotThreadSafe;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+
+import static com.facebook.swift.codec.internal.compiler.byteCode.Access.toAccessModifier;
+import static com.google.common.collect.Iterables.any;
+import static com.google.common.collect.Iterables.concat;
+import static org.objectweb.asm.Opcodes.V1_6;
+
+@NotThreadSafe
+public class ClassDefinition
+{
+    private final int access;
+    private final String name;
+    private final ParameterizedType superClass;
+<span class="fc" id="L38">    private final List&lt;ParameterizedType&gt; interfaces = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L39">    private final List&lt;FieldDefinition&gt; fields = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L40">    private final List&lt;MethodDefinition&gt; methods = new ArrayList&lt;&gt;();</span>
+
+    public ClassDefinition(
+            EnumSet&lt;Access&gt; access,
+            String name,
+            ParameterizedType superClass,
+            ParameterizedType... interfaces)
+<span class="fc" id="L47">    {</span>
+<span class="fc" id="L48">        this.access = toAccessModifier(access);</span>
+<span class="fc" id="L49">        this.name = name;</span>
+<span class="fc" id="L50">        this.superClass = superClass;</span>
+<span class="fc" id="L51">        this.interfaces.addAll(ImmutableList.copyOf(interfaces));</span>
+<span class="fc" id="L52">    }</span>
+
+    public ClassNode getClassNode()
+    {
+<span class="fc" id="L56">        ClassNode classNode = new ClassNode();</span>
+<span class="fc" id="L57">        classNode.version = V1_6;</span>
+
+<span class="fc" id="L59">        classNode.access = access;</span>
+
+<span class="fc" id="L61">        classNode.name = name;</span>
+
+<span class="fc" id="L63">        classNode.superName = superClass.getClassName();</span>
+<span class="fc bfc" id="L64" title="All 2 branches covered.">        for (ParameterizedType interfaceType : interfaces) {</span>
+<span class="fc" id="L65">            classNode.interfaces.add(interfaceType.getClassName());</span>
+<span class="fc" id="L66">        }</span>
+
+        // add generic signature if super class or any interface is generic
+<span class="pc bpc" id="L69" title="2 of 4 branches missed.">        if (superClass.isGeneric() || any(interfaces, ParameterizedType.isGenericType())) {</span>
+<span class="fc" id="L70">            classNode.signature = genericClassSignature(superClass, interfaces);</span>
+        }
+
+<span class="fc bfc" id="L73" title="All 2 branches covered.">        for (FieldDefinition field : fields) {</span>
+<span class="fc" id="L74">            classNode.fields.add(field.getFieldNode());</span>
+<span class="fc" id="L75">        }</span>
+
+<span class="fc bfc" id="L77" title="All 2 branches covered.">        for (MethodDefinition method : methods) {</span>
+<span class="fc" id="L78">            classNode.methods.add(method.getMethodNode());</span>
+<span class="fc" id="L79">        }</span>
+
+<span class="fc" id="L81">        return classNode;</span>
+    }
+
+    public ClassDefinition addField(EnumSet&lt;Access&gt; access, String name, ParameterizedType type)
+    {
+<span class="nc" id="L86">        fields.add(new FieldDefinition(access, name, type));</span>
+<span class="nc" id="L87">        return this;</span>
+    }
+
+    public ClassDefinition addField(FieldDefinition field)
+    {
+<span class="fc" id="L92">        fields.add(field);</span>
+<span class="fc" id="L93">        return this;</span>
+    }
+
+    public ClassDefinition addMethod(MethodDefinition method)
+    {
+<span class="fc" id="L98">        methods.add(method);</span>
+<span class="fc" id="L99">        return this;</span>
+    }
+
+    public static String genericClassSignature(
+            ParameterizedType classType,
+            ParameterizedType... interfaceTypes
+    )
+    {
+<span class="nc" id="L107">        return Joiner.on(&quot;&quot;).join(</span>
+                concat(ImmutableList.of(classType), ImmutableList.copyOf(interfaceTypes))
+        );
+    }
+
+    public static String genericClassSignature(
+            ParameterizedType classType,
+            List&lt;ParameterizedType&gt; interfaceTypes
+    )
+    {
+<span class="fc" id="L117">        return Joiner.on(&quot;&quot;).join(concat(ImmutableList.of(classType), interfaceTypes));</span>
+    }
+
+    @Override
+    public String toString()
+    {
+<span class="nc" id="L123">        final StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L124">        sb.append(&quot;ClassDefinition&quot;);</span>
+<span class="nc" id="L125">        sb.append(&quot;{access=&quot;).append(access);</span>
+<span class="nc" id="L126">        sb.append(&quot;, name='&quot;).append(name).append('\'');</span>
+<span class="nc" id="L127">        sb.append('}');</span>
+<span class="nc" id="L128">        return sb.toString();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

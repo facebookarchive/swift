@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ListThriftCodec.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-codec</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.codec.internal.builtin</a> &gt; <span class="el_source">ListThriftCodec.java</span></div><h1>ListThriftCodec.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.codec.internal.builtin;
+
+import com.facebook.swift.codec.ThriftCodec;
+import com.facebook.swift.codec.internal.TProtocolReader;
+import com.facebook.swift.codec.internal.TProtocolWriter;
+import com.facebook.swift.codec.metadata.ThriftType;
+import com.google.common.base.Preconditions;
+import org.apache.thrift.protocol.TProtocol;
+
+import javax.annotation.concurrent.Immutable;
+import java.util.List;
+
+@Immutable
+public class ListThriftCodec&lt;T&gt; implements ThriftCodec&lt;List&lt;T&gt;&gt;
+{
+    private final ThriftCodec&lt;T&gt; elementCodec;
+    private final ThriftType type;
+
+    public ListThriftCodec(ThriftType type, ThriftCodec&lt;T&gt; elementCodec)
+<span class="fc" id="L35">    {</span>
+<span class="fc" id="L36">        Preconditions.checkNotNull(type, &quot;type is null&quot;);</span>
+<span class="fc" id="L37">        Preconditions.checkNotNull(elementCodec, &quot;elementCodec is null&quot;);</span>
+
+<span class="fc" id="L39">        this.type = type;</span>
+<span class="fc" id="L40">        this.elementCodec = elementCodec;</span>
+<span class="fc" id="L41">    }</span>
+
+    @Override
+    public ThriftType getType()
+    {
+<span class="fc" id="L46">        return type;</span>
+    }
+
+    @Override
+    public List&lt;T&gt; read(TProtocol protocol)
+            throws Exception
+    {
+<span class="fc" id="L53">        Preconditions.checkNotNull(protocol, &quot;protocol is null&quot;);</span>
+<span class="fc" id="L54">        return new TProtocolReader(protocol).readList(elementCodec);</span>
+    }
+
+    @Override
+    public void write(List&lt;T&gt; value, TProtocol protocol)
+            throws Exception
+    {
+<span class="fc" id="L61">        Preconditions.checkNotNull(value, &quot;value is null&quot;);</span>
+<span class="fc" id="L62">        Preconditions.checkNotNull(protocol, &quot;protocol is null&quot;);</span>
+<span class="fc" id="L63">        new TProtocolWriter(protocol).writeList(elementCodec, value);</span>
+<span class="fc" id="L64">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ThriftType.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-codec</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.codec.metadata</a> &gt; <span class="el_source">ThriftType.java</span></div><h1>ThriftType.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.codec.metadata;
+
+import com.facebook.swift.codec.ThriftProtocolType;
+import com.google.common.base.Preconditions;
+import com.google.common.reflect.TypeParameter;
+import com.google.common.reflect.TypeToken;
+
+import javax.annotation.concurrent.Immutable;
+import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static com.facebook.swift.codec.ThriftProtocolType.ENUM;
+import static com.facebook.swift.codec.ThriftProtocolType.STRUCT;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
+/**
+ * ThriftType contains all metadata necessary for converting the java type to and from Thrift.
+ */
+@Immutable
+public class ThriftType
+{
+<span class="fc" id="L41">    public static final ThriftType BOOL = new ThriftType(ThriftProtocolType.BOOL, boolean.class);</span>
+<span class="fc" id="L42">    public static final ThriftType BYTE = new ThriftType(ThriftProtocolType.BYTE, byte.class);</span>
+<span class="fc" id="L43">    public static final ThriftType DOUBLE = new ThriftType(ThriftProtocolType.DOUBLE, double.class);</span>
+<span class="fc" id="L44">    public static final ThriftType I16 = new ThriftType(ThriftProtocolType.I16, short.class);</span>
+<span class="fc" id="L45">    public static final ThriftType I32 = new ThriftType(ThriftProtocolType.I32, int.class);</span>
+<span class="fc" id="L46">    public static final ThriftType I64 = new ThriftType(ThriftProtocolType.I64, long.class);</span>
+<span class="fc" id="L47">    public static final ThriftType STRING = new ThriftType(ThriftProtocolType.STRING, ByteBuffer.class);</span>
+<span class="fc" id="L48">    public static final ThriftType VOID = new ThriftType(ThriftProtocolType.STRUCT, void.class);</span>
+
+    public static ThriftType struct(ThriftStructMetadata&lt;?&gt; structMetadata)
+    {
+<span class="fc" id="L52">        return new ThriftType(structMetadata);</span>
+    }
+
+    public static &lt;K, V&gt; ThriftType map(ThriftType keyType, ThriftType valueType)
+    {
+<span class="fc" id="L57">        checkNotNull(keyType, &quot;keyType is null&quot;);</span>
+<span class="fc" id="L58">        checkNotNull(valueType, &quot;valueType is null&quot;);</span>
+
+        @SuppressWarnings(&quot;serial&quot;)
+<span class="fc" id="L61">        Type javaType = new TypeToken&lt;Map&lt;K, V&gt;&gt;(){}</span>
+<span class="fc" id="L62">                .where(new TypeParameter&lt;K&gt;(){}, (TypeToken&lt;K&gt;) TypeToken.of(keyType.getJavaType()))</span>
+<span class="fc" id="L63">                .where(new TypeParameter&lt;V&gt;(){}, (TypeToken&lt;V&gt;) TypeToken.of(valueType.getJavaType()))</span>
+                .getType();
+<span class="fc" id="L65">        return new ThriftType(ThriftProtocolType.MAP, javaType, keyType, valueType);</span>
+    }
+
+    public static &lt;E&gt; ThriftType set(ThriftType valueType)
+    {
+<span class="fc" id="L70">        Preconditions.checkNotNull(valueType, &quot;valueType is null&quot;);</span>
+
+        @SuppressWarnings(&quot;serial&quot;)
+<span class="fc" id="L73">        Type javaType = new TypeToken&lt;Set&lt;E&gt;&gt;(){}</span>
+<span class="fc" id="L74">                .where(new TypeParameter&lt;E&gt;(){}, (TypeToken&lt;E&gt;) TypeToken.of(valueType.getJavaType()))</span>
+                .getType();
+<span class="fc" id="L76">        return new ThriftType(ThriftProtocolType.SET, javaType, null, valueType);</span>
+    }
+
+    public static &lt;E&gt; ThriftType list(ThriftType valueType)
+    {
+<span class="fc" id="L81">        checkNotNull(valueType, &quot;valueType is null&quot;);</span>
+
+        @SuppressWarnings(&quot;serial&quot;)
+<span class="fc" id="L84">        Type javaType = new TypeToken&lt;List&lt;E&gt;&gt;(){}</span>
+<span class="fc" id="L85">                .where(new TypeParameter&lt;E&gt;(){}, (TypeToken&lt;E&gt;) TypeToken.of(valueType.getJavaType()))</span>
+                .getType();
+<span class="fc" id="L87">        return new ThriftType(ThriftProtocolType.LIST, javaType, null, valueType);</span>
+    }
+
+    public static ThriftType enumType(ThriftEnumMetadata&lt;?&gt; enumMetadata)
+    {
+<span class="fc" id="L92">        checkNotNull(enumMetadata, &quot;enumMetadata is null&quot;);</span>
+<span class="fc" id="L93">        return new ThriftType(enumMetadata);</span>
+    }
+
+    private final ThriftProtocolType protocolType;
+    private final Type javaType;
+    private final ThriftType keyType;
+    private final ThriftType valueType;
+    private final ThriftStructMetadata&lt;?&gt; structMetadata;
+    private final ThriftEnumMetadata&lt;?&gt; enumMetadata;
+    private final ThriftType uncoercedType;
+
+    private ThriftType(ThriftProtocolType protocolType, Type javaType)
+<span class="fc" id="L105">    {</span>
+<span class="fc" id="L106">        Preconditions.checkNotNull(protocolType, &quot;protocolType is null&quot;);</span>
+<span class="fc" id="L107">        Preconditions.checkNotNull(javaType, &quot;javaType is null&quot;);</span>
+
+<span class="fc" id="L109">        this.protocolType = protocolType;</span>
+<span class="fc" id="L110">        this.javaType = javaType;</span>
+<span class="fc" id="L111">        keyType = null;</span>
+<span class="fc" id="L112">        valueType = null;</span>
+<span class="fc" id="L113">        structMetadata = null;</span>
+<span class="fc" id="L114">        enumMetadata = null;</span>
+<span class="fc" id="L115">        uncoercedType = null;</span>
+<span class="fc" id="L116">    }</span>
+
+    private ThriftType(ThriftProtocolType protocolType, Type javaType, ThriftType keyType, ThriftType valueType)
+<span class="fc" id="L119">    {</span>
+<span class="fc" id="L120">        Preconditions.checkNotNull(protocolType, &quot;protocolType is null&quot;);</span>
+<span class="fc" id="L121">        Preconditions.checkNotNull(javaType, &quot;javaType is null&quot;);</span>
+<span class="fc" id="L122">        Preconditions.checkNotNull(valueType, &quot;valueType is null&quot;);</span>
+
+<span class="fc" id="L124">        this.protocolType = protocolType;</span>
+<span class="fc" id="L125">        this.javaType = javaType;</span>
+<span class="fc" id="L126">        this.keyType = keyType;</span>
+<span class="fc" id="L127">        this.valueType = valueType;</span>
+<span class="fc" id="L128">        this.structMetadata = null;</span>
+<span class="fc" id="L129">        this.enumMetadata = null;</span>
+<span class="fc" id="L130">        this.uncoercedType = null;</span>
+<span class="fc" id="L131">    }</span>
+
+    private ThriftType(ThriftStructMetadata&lt;?&gt; structMetadata)
+<span class="fc" id="L134">    {</span>
+<span class="fc" id="L135">        Preconditions.checkNotNull(structMetadata, &quot;structMetadata is null&quot;);</span>
+
+<span class="fc" id="L137">        this.protocolType = STRUCT;</span>
+<span class="fc" id="L138">        this.javaType = structMetadata.getStructClass();</span>
+<span class="fc" id="L139">        keyType = null;</span>
+<span class="fc" id="L140">        valueType = null;</span>
+<span class="fc" id="L141">        this.structMetadata = structMetadata;</span>
+<span class="fc" id="L142">        this.enumMetadata = null;</span>
+<span class="fc" id="L143">        this.uncoercedType = null;</span>
+<span class="fc" id="L144">    }</span>
+
+    private ThriftType(ThriftEnumMetadata&lt;?&gt; enumMetadata)
+<span class="fc" id="L147">    {</span>
+<span class="fc" id="L148">        Preconditions.checkNotNull(enumMetadata, &quot;enumMetadata is null&quot;);</span>
+
+<span class="fc" id="L150">        this.protocolType = ENUM;</span>
+<span class="fc" id="L151">        this.javaType = enumMetadata.getEnumClass();</span>
+<span class="fc" id="L152">        keyType = null;</span>
+<span class="fc" id="L153">        valueType = null;</span>
+<span class="fc" id="L154">        this.structMetadata = null;</span>
+<span class="fc" id="L155">        this.enumMetadata = enumMetadata;</span>
+<span class="fc" id="L156">        this.uncoercedType = null;</span>
+<span class="fc" id="L157">    }</span>
+
+    public ThriftType(ThriftType uncoercedType, Type javaType)
+<span class="fc" id="L160">    {</span>
+<span class="fc" id="L161">        this.javaType = javaType;</span>
+<span class="fc" id="L162">        this.uncoercedType = uncoercedType;</span>
+
+<span class="fc" id="L164">        this.protocolType = uncoercedType.getProtocolType();</span>
+<span class="fc" id="L165">        keyType = null;</span>
+<span class="fc" id="L166">        valueType = null;</span>
+<span class="fc" id="L167">        structMetadata = null;</span>
+<span class="fc" id="L168">        enumMetadata = null;</span>
+<span class="fc" id="L169">    }</span>
+
+    public Type getJavaType()
+    {
+<span class="fc" id="L173">        return javaType;</span>
+    }
+
+    public ThriftProtocolType getProtocolType()
+    {
+<span class="fc" id="L178">        return protocolType;</span>
+    }
+
+    public ThriftType getKeyType()
+    {
+<span class="pc bpc" id="L183" title="1 of 2 branches missed.">        checkState(keyType != null, &quot;%s does not have a key&quot;, protocolType);</span>
+<span class="fc" id="L184">        return keyType;</span>
+    }
+
+    public ThriftType getValueType()
+    {
+<span class="pc bpc" id="L189" title="1 of 2 branches missed.">        checkState(valueType != null, &quot;%s does not have a value&quot;, protocolType);</span>
+<span class="fc" id="L190">        return valueType;</span>
+    }
+
+    public ThriftStructMetadata&lt;?&gt; getStructMetadata()
+    {
+<span class="pc bpc" id="L195" title="1 of 2 branches missed.">        checkState(structMetadata != null, &quot;%s does not have struct metadata&quot;, protocolType);</span>
+<span class="fc" id="L196">        return structMetadata;</span>
+    }
+
+    public ThriftEnumMetadata&lt;?&gt; getEnumMetadata()
+    {
+<span class="pc bpc" id="L201" title="1 of 2 branches missed.">        checkState(enumMetadata != null, &quot;%s does not have enum metadata&quot;, protocolType);</span>
+<span class="fc" id="L202">        return enumMetadata;</span>
+    }
+
+    public boolean isCoerced()
+    {
+<span class="fc bfc" id="L207" title="All 2 branches covered.">        return uncoercedType != null;</span>
+    }
+
+    public ThriftType coerceTo(Type javaType)
+    {
+<span class="pc bpc" id="L212" title="1 of 2 branches missed.">        if (javaType == this.javaType) {</span>
+<span class="nc" id="L213">            return this;</span>
+        }
+
+<span class="pc bpc" id="L216" title="4 of 8 branches missed.">        Preconditions.checkState(</span>
+                protocolType != ThriftProtocolType.STRUCT &amp;&amp;
+                protocolType != ThriftProtocolType.SET &amp;&amp;
+                protocolType != ThriftProtocolType.LIST &amp;&amp;
+                protocolType != ThriftProtocolType.MAP,
+                &quot;Coercion is not supported for %s&quot;, protocolType
+        );
+<span class="fc" id="L223">        return new ThriftType(this, javaType);</span>
+    }
+
+    public ThriftType getUncoercedType()
+    {
+<span class="fc" id="L228">        return uncoercedType;</span>
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+<span class="pc bpc" id="L234" title="1 of 2 branches missed.">        if (this == o) {</span>
+<span class="nc" id="L235">            return true;</span>
+        }
+<span class="pc bpc" id="L237" title="2 of 4 branches missed.">        if (o == null || getClass() != o.getClass()) {</span>
+<span class="nc" id="L238">            return false;</span>
+        }
+
+<span class="fc" id="L241">        final ThriftType that = (ThriftType) o;</span>
+
+<span class="pc bpc" id="L243" title="4 of 6 branches missed.">        if (javaType != null ? !javaType.equals(that.javaType) : that.javaType != null) {</span>
+<span class="nc" id="L244">            return false;</span>
+        }
+<span class="pc bpc" id="L246" title="1 of 2 branches missed.">        if (protocolType != that.protocolType) {</span>
+<span class="nc" id="L247">            return false;</span>
+        }
+
+<span class="fc" id="L250">        return true;</span>
+    }
+
+    @Override
+    public int hashCode()
+    {
+<span class="pc bpc" id="L256" title="1 of 2 branches missed.">        int result = protocolType != null ? protocolType.hashCode() : 0;</span>
+<span class="pc bpc" id="L257" title="1 of 2 branches missed.">        result = 31 * result + (javaType != null ? javaType.hashCode() : 0);</span>
+<span class="fc" id="L258">        return result;</span>
+    }
+
+    @Override
+    public String toString()
+    {
+<span class="fc" id="L264">        final StringBuilder sb = new StringBuilder();</span>
+<span class="fc" id="L265">        sb.append(&quot;ThriftType&quot;);</span>
+<span class="fc" id="L266">        sb.append(&quot;{&quot;);</span>
+<span class="fc" id="L267">        sb.append(protocolType).append(&quot; &quot;).append(javaType);</span>
+<span class="pc bpc" id="L268" title="1 of 2 branches missed.">        if (structMetadata != null) {</span>
+<span class="nc" id="L269">            sb.append(&quot; &quot;).append(structMetadata.getStructClass().getName());</span>
+        }
+<span class="pc bpc" id="L271" title="1 of 2 branches missed.">        else if (keyType != null) {</span>
+<span class="nc" id="L272">            sb.append(&quot; keyType=&quot;).append(keyType);</span>
+<span class="nc" id="L273">            sb.append(&quot;, valueType=&quot;).append(valueType);</span>
+        }
+<span class="pc bpc" id="L275" title="1 of 2 branches missed.">        else if (valueType != null) {</span>
+<span class="nc" id="L276">            sb.append(&quot; valueType=&quot;).append(valueType);</span>
+        }
+<span class="fc" id="L278">        sb.append('}');</span>
+<span class="fc" id="L279">        return sb.toString();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>TProtocolWriter.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-codec</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.codec.internal</a> &gt; <span class="el_source">TProtocolWriter.java</span></div><h1>TProtocolWriter.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.codec.internal;
+
+import com.facebook.swift.codec.ThriftCodec;
+import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TField;
+import org.apache.thrift.protocol.TList;
+import org.apache.thrift.protocol.TMap;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.protocol.TSet;
+import org.apache.thrift.protocol.TStruct;
+import org.apache.thrift.protocol.TType;
+
+import javax.annotation.concurrent.NotThreadSafe;
+import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+@NotThreadSafe
+public class TProtocolWriter
+{
+    private final TProtocol protocol;
+
+    public TProtocolWriter(TProtocol protocol)
+<span class="fc" id="L40">    {</span>
+<span class="fc" id="L41">        this.protocol = protocol;</span>
+<span class="fc" id="L42">    }</span>
+
+    public void writeStructBegin(String name)
+            throws TException
+    {
+<span class="fc" id="L47">        protocol.writeStructBegin(new TStruct(name));</span>
+<span class="fc" id="L48">    }</span>
+
+    public void writeStructEnd()
+            throws TException
+    {
+<span class="fc" id="L53">        protocol.writeFieldStop();</span>
+<span class="fc" id="L54">        protocol.writeStructEnd();</span>
+<span class="fc" id="L55">    }</span>
+
+    public &lt;T&gt; void writeField(String name, short id, ThriftCodec&lt;T&gt; codec, T value)
+            throws Exception
+    {
+<span class="pc bpc" id="L60" title="1 of 2 branches missed.">        if (value == null) {</span>
+<span class="nc" id="L61">            return;</span>
+        }
+
+<span class="fc" id="L64">        protocol.writeFieldBegin(new TField(name, codec.getType().getProtocolType().getType(), id));</span>
+<span class="fc" id="L65">        codec.write(value, protocol);</span>
+<span class="fc" id="L66">        protocol.writeFieldEnd();</span>
+<span class="fc" id="L67">    }</span>
+
+    public void writeBinaryField(String name, short id, ByteBuffer buf)
+            throws TException
+    {
+<span class="pc bpc" id="L72" title="1 of 2 branches missed.">        if (buf == null) {</span>
+<span class="nc" id="L73">            return;</span>
+        }
+<span class="fc" id="L75">        protocol.writeFieldBegin(new TField(name, TType.STRING, id));</span>
+<span class="fc" id="L76">        protocol.writeBinary(buf);</span>
+<span class="fc" id="L77">        protocol.writeFieldEnd();</span>
+<span class="fc" id="L78">    }</span>
+
+    public void writeBoolField(String name, short id, boolean b)
+            throws TException
+    {
+<span class="fc" id="L83">        protocol.writeFieldBegin(new TField(name, TType.BOOL, id));</span>
+<span class="fc" id="L84">        protocol.writeBool(b);</span>
+<span class="fc" id="L85">        protocol.writeFieldEnd();</span>
+<span class="fc" id="L86">    }</span>
+
+    public void writeByteField(String name, short id, byte b)
+            throws TException
+    {
+<span class="fc" id="L91">        protocol.writeFieldBegin(new TField(name, TType.BYTE, id));</span>
+<span class="fc" id="L92">        protocol.writeByte(b);</span>
+<span class="fc" id="L93">        protocol.writeFieldEnd();</span>
+<span class="fc" id="L94">    }</span>
+
+    public void writeDoubleField(String name, short id, double dub)
+            throws TException
+    {
+<span class="fc" id="L99">        protocol.writeFieldBegin(new TField(name, TType.DOUBLE, id));</span>
+<span class="fc" id="L100">        protocol.writeDouble(dub);</span>
+<span class="fc" id="L101">        protocol.writeFieldEnd();</span>
+<span class="fc" id="L102">    }</span>
+
+    public void writeI16Field(String name, short id, short i16)
+            throws TException
+    {
+<span class="fc" id="L107">        protocol.writeFieldBegin(new TField(name, TType.I16, id));</span>
+<span class="fc" id="L108">        protocol.writeI16(i16);</span>
+<span class="fc" id="L109">        protocol.writeFieldEnd();</span>
+<span class="fc" id="L110">    }</span>
+
+    public void writeI32Field(String name, short id, int i32)
+            throws TException
+    {
+<span class="fc" id="L115">        protocol.writeFieldBegin(new TField(name, TType.I32, id));</span>
+<span class="fc" id="L116">        protocol.writeI32(i32);</span>
+<span class="fc" id="L117">        protocol.writeFieldEnd();</span>
+<span class="fc" id="L118">    }</span>
+
+    public void writeI64Field(String name, short id, long i64)
+            throws TException
+    {
+<span class="fc" id="L123">        protocol.writeFieldBegin(new TField(name, TType.I64, id));</span>
+<span class="fc" id="L124">        protocol.writeI64(i64);</span>
+<span class="fc" id="L125">        protocol.writeFieldEnd();</span>
+<span class="fc" id="L126">    }</span>
+
+    public void writeStringField(String name, short id, String string)
+            throws TException
+    {
+<span class="pc bpc" id="L131" title="1 of 2 branches missed.">        if (string == null) {</span>
+<span class="nc" id="L132">            return;</span>
+        }
+
+<span class="fc" id="L135">        protocol.writeFieldBegin(new TField(name, TType.STRING, id));</span>
+<span class="fc" id="L136">        protocol.writeString(string);</span>
+<span class="fc" id="L137">        protocol.writeFieldEnd();</span>
+<span class="fc" id="L138">    }</span>
+
+    public &lt;T&gt; void writeStructField(String name, short id, ThriftCodec&lt;T&gt; codec, T struct)
+            throws Exception
+    {
+<span class="pc bpc" id="L143" title="1 of 2 branches missed.">        if (struct == null) {</span>
+<span class="nc" id="L144">            return;</span>
+        }
+
+<span class="fc" id="L147">        protocol.writeFieldBegin(new TField(name, TType.STRUCT, id));</span>
+<span class="fc" id="L148">        codec.write(struct, protocol);</span>
+<span class="fc" id="L149">        protocol.writeFieldEnd();</span>
+<span class="fc" id="L150">    }</span>
+
+    public &lt;E&gt; void writeSetField(String name, short id, ThriftCodec&lt;Set&lt;E&gt;&gt; codec, Set&lt;E&gt; set)
+            throws Exception
+    {
+<span class="pc bpc" id="L155" title="1 of 2 branches missed.">        if (set == null) {</span>
+<span class="nc" id="L156">            return;</span>
+        }
+
+<span class="fc" id="L159">        protocol.writeFieldBegin(new TField(name, TType.SET, id));</span>
+<span class="fc" id="L160">        codec.write(set, protocol);</span>
+<span class="fc" id="L161">        protocol.writeFieldEnd();</span>
+<span class="fc" id="L162">    }</span>
+
+    public &lt;E&gt; void writeListField(String name, short id, ThriftCodec&lt;List&lt;E&gt;&gt; codec, List&lt;E&gt; list)
+            throws Exception
+    {
+<span class="pc bpc" id="L167" title="1 of 2 branches missed.">        if (list == null) {</span>
+<span class="nc" id="L168">            return;</span>
+        }
+
+<span class="fc" id="L171">        protocol.writeFieldBegin(new TField(name, TType.LIST, id));</span>
+<span class="fc" id="L172">        codec.write(list, protocol);</span>
+<span class="fc" id="L173">        protocol.writeFieldEnd();</span>
+<span class="fc" id="L174">    }</span>
+
+    public &lt;K, V&gt; void writeMapField(String name, short id, ThriftCodec&lt;Map&lt;K, V&gt;&gt; codec, Map&lt;K, V&gt; map)
+            throws Exception
+    {
+<span class="pc bpc" id="L179" title="1 of 2 branches missed.">        if (map == null) {</span>
+<span class="nc" id="L180">            return;</span>
+        }
+
+<span class="fc" id="L183">        protocol.writeFieldBegin(new TField(name, TType.MAP, id));</span>
+<span class="fc" id="L184">        codec.write(map, protocol);</span>
+<span class="fc" id="L185">        protocol.writeFieldEnd();</span>
+<span class="fc" id="L186">    }</span>
+
+    public &lt;T extends Enum&lt;T&gt;&gt; void writeEnumField(String name, short id, ThriftCodec&lt;T&gt; codec, T enumValue)
+            throws Exception
+    {
+
+<span class="pc bpc" id="L192" title="1 of 2 branches missed.">        if (enumValue == null) {</span>
+<span class="nc" id="L193">            return;</span>
+        }
+
+<span class="fc" id="L196">        protocol.writeFieldBegin(new TField(name, TType.I32, id));</span>
+<span class="fc" id="L197">        codec.write(enumValue, protocol);</span>
+<span class="fc" id="L198">        protocol.writeFieldEnd();</span>
+<span class="fc" id="L199">    }</span>
+
+    public void writeBinary(ByteBuffer buf)
+            throws TException
+    {
+<span class="nc bnc" id="L204" title="All 2 branches missed.">        if (buf == null) {</span>
+<span class="nc" id="L205">            return;</span>
+        }
+<span class="nc" id="L207">        protocol.writeBinary(buf);</span>
+<span class="nc" id="L208">    }</span>
+
+    public void writeBool(boolean b)
+            throws TException
+    {
+<span class="nc" id="L213">        protocol.writeBool(b);</span>
+<span class="nc" id="L214">    }</span>
+
+    public void writeByte(byte b)
+            throws TException
+    {
+<span class="nc" id="L219">        protocol.writeByte(b);</span>
+<span class="nc" id="L220">    }</span>
+
+    public void writeI16(short i16)
+            throws TException
+    {
+<span class="nc" id="L225">        protocol.writeI16(i16);</span>
+<span class="nc" id="L226">    }</span>
+
+    public void writeI32(int i32)
+            throws TException
+    {
+<span class="nc" id="L231">        protocol.writeI32(i32);</span>
+<span class="nc" id="L232">    }</span>
+
+    public void writeI64(long i64)
+            throws TException
+    {
+<span class="nc" id="L237">        protocol.writeI64(i64);</span>
+<span class="nc" id="L238">    }</span>
+
+    public void writeDouble(double dub)
+            throws TException
+    {
+<span class="nc" id="L243">        protocol.writeDouble(dub);</span>
+<span class="nc" id="L244">    }</span>
+
+    public void writeString(String string)
+            throws TException
+    {
+<span class="nc bnc" id="L249" title="All 2 branches missed.">        if (string == null) {</span>
+<span class="nc" id="L250">            return;</span>
+        }
+<span class="nc" id="L252">        protocol.writeString(string);</span>
+<span class="nc" id="L253">    }</span>
+
+    public &lt;T&gt; void writeSet(ThriftCodec&lt;T&gt; elementCodec, Set&lt;T&gt; set)
+            throws Exception
+    {
+<span class="pc bpc" id="L258" title="1 of 2 branches missed.">        if (set == null) {</span>
+<span class="nc" id="L259">            return;</span>
+        }
+
+<span class="fc" id="L262">        protocol.writeSetBegin(new TSet(elementCodec.getType().getProtocolType().getType(), set.size()));</span>
+
+<span class="fc bfc" id="L264" title="All 2 branches covered.">        for (T element : set) {</span>
+<span class="fc" id="L265">            elementCodec.write(element, protocol);</span>
+<span class="fc" id="L266">        }</span>
+
+<span class="fc" id="L268">        protocol.writeSetEnd();</span>
+<span class="fc" id="L269">    }</span>
+
+    public &lt;T&gt; void writeList(ThriftCodec&lt;T&gt; elementCodec, List&lt;T&gt; list)
+            throws Exception
+    {
+<span class="pc bpc" id="L274" title="1 of 2 branches missed.">        if (list == null) {</span>
+<span class="nc" id="L275">            return;</span>
+        }
+
+<span class="fc" id="L278">        protocol.writeListBegin(new TList(elementCodec.getType().getProtocolType().getType(), list.size()));</span>
+
+<span class="fc bfc" id="L280" title="All 2 branches covered.">        for (T element : list) {</span>
+<span class="fc" id="L281">            elementCodec.write(element, protocol);</span>
+<span class="fc" id="L282">        }</span>
+
+<span class="fc" id="L284">        protocol.writeListEnd();</span>
+<span class="fc" id="L285">    }</span>
+
+    public &lt;K, V&gt; void writeMap(ThriftCodec&lt;K&gt; keyCodec, ThriftCodec&lt;V&gt; valueCodec, Map&lt;K, V&gt; map)
+            throws Exception
+    {
+
+<span class="pc bpc" id="L291" title="1 of 2 branches missed.">        if (map == null) {</span>
+<span class="nc" id="L292">            return;</span>
+        }
+
+<span class="fc" id="L295">        protocol.writeMapBegin(new TMap(keyCodec.getType().getProtocolType().getType(), valueCodec.getType().getProtocolType().getType(), map.size()));</span>
+
+<span class="fc bfc" id="L297" title="All 2 branches covered.">        for (Map.Entry&lt;K, V&gt; entry : map.entrySet()) {</span>
+<span class="fc" id="L298">            keyCodec.write(entry.getKey(), protocol);</span>
+<span class="fc" id="L299">            valueCodec.write(entry.getValue(), protocol);</span>
+<span class="fc" id="L300">        }</span>
+
+<span class="fc" id="L302">        protocol.writeMapEnd();</span>
+<span class="fc" id="L303">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

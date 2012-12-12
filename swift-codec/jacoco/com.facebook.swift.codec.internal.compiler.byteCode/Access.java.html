@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>Access.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-codec</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.codec.internal.compiler.byteCode</a> &gt; <span class="el_source">Access.java</span></div><h1>Access.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.codec.internal.compiler.byteCode;
+
+import com.google.common.collect.ImmutableList;
+
+import java.util.EnumSet;
+
+import static org.objectweb.asm.Opcodes.ACC_ABSTRACT;
+import static org.objectweb.asm.Opcodes.ACC_ANNOTATION;
+import static org.objectweb.asm.Opcodes.ACC_BRIDGE;
+import static org.objectweb.asm.Opcodes.ACC_ENUM;
+import static org.objectweb.asm.Opcodes.ACC_FINAL;
+import static org.objectweb.asm.Opcodes.ACC_INTERFACE;
+import static org.objectweb.asm.Opcodes.ACC_NATIVE;
+import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
+import static org.objectweb.asm.Opcodes.ACC_PROTECTED;
+import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static org.objectweb.asm.Opcodes.ACC_STATIC;
+import static org.objectweb.asm.Opcodes.ACC_STRICT;
+import static org.objectweb.asm.Opcodes.ACC_SUPER;
+import static org.objectweb.asm.Opcodes.ACC_SYNCHRONIZED;
+import static org.objectweb.asm.Opcodes.ACC_SYNTHETIC;
+import static org.objectweb.asm.Opcodes.ACC_TRANSIENT;
+import static org.objectweb.asm.Opcodes.ACC_VARARGS;
+import static org.objectweb.asm.Opcodes.ACC_VOLATILE;
+
+<span class="pc" id="L41">public enum Access</span>
+{
+<span class="fc" id="L43">    PUBLIC(ACC_PUBLIC),</span>
+<span class="fc" id="L44">    PRIVATE(ACC_PRIVATE),</span>
+<span class="fc" id="L45">    PROTECTED(ACC_PROTECTED),</span>
+<span class="fc" id="L46">    STATIC(ACC_STATIC),</span>
+<span class="fc" id="L47">    FINAL(ACC_FINAL),</span>
+<span class="fc" id="L48">    SUPER(ACC_SUPER),</span>
+<span class="fc" id="L49">    SYNCHRONIZED(ACC_SYNCHRONIZED),</span>
+<span class="fc" id="L50">    VOLATILE(ACC_VOLATILE),</span>
+<span class="fc" id="L51">    BRIDGE(ACC_BRIDGE),</span>
+<span class="fc" id="L52">    VARARGS(ACC_VARARGS),</span>
+<span class="fc" id="L53">    TRANSIENT(ACC_TRANSIENT),</span>
+<span class="fc" id="L54">    NATIVE(ACC_NATIVE),</span>
+<span class="fc" id="L55">    INTERFACE(ACC_INTERFACE),</span>
+<span class="fc" id="L56">    ABSTRACT(ACC_ABSTRACT),</span>
+<span class="fc" id="L57">    STRICT(ACC_STRICT),</span>
+<span class="fc" id="L58">    SYNTHETIC(ACC_SYNTHETIC),</span>
+<span class="fc" id="L59">    ANNOTATION(ACC_ANNOTATION),</span>
+<span class="fc" id="L60">    ENUM(ACC_ENUM);</span>
+
+    private int modifier;
+
+    Access(int modifier)
+<span class="fc" id="L65">    {</span>
+<span class="fc" id="L66">        this.modifier = modifier;</span>
+<span class="fc" id="L67">    }</span>
+
+    public int getModifier()
+    {
+<span class="fc" id="L71">        return modifier;</span>
+    }
+
+    public static EnumSet&lt;Access&gt; a(Access... access)
+    {
+<span class="fc" id="L76">        return EnumSet.copyOf(ImmutableList.copyOf(access));</span>
+    }
+
+    public static int toAccessModifier(Iterable&lt;Access&gt; accesses)
+    {
+<span class="fc" id="L81">        int modifier = 0;</span>
+<span class="fc bfc" id="L82" title="All 2 branches covered.">        for (Access access : accesses) {</span>
+<span class="fc" id="L83">            modifier += access.getModifier();</span>
+<span class="fc" id="L84">        }</span>
+<span class="fc" id="L85">        return modifier;</span>
+    }
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

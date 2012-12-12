@@ -1,0 +1,1173 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>BytecodeReaderParanamer.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-codec</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.codec.metadata</a> &gt; <span class="el_source">BytecodeReaderParanamer.java</span></div><h1>BytecodeReaderParanamer.java</h1><pre class="source lang-java linenums">/*
+ * Portions Copyright (c) 2007 Paul Hammant
+ * Portions copyright (c) 2000-2007 INRIA, France Telecom
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the copyright holders nor the names of its
+ *    contributors may be used to endorse or promote products derived from
+ *    this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+package com.facebook.swift.codec.metadata;
+
+import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Closeables;
+import com.thoughtworks.paranamer.ParameterNamesNotFoundException;
+import com.thoughtworks.paranamer.Paranamer;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.Map;
+
+
+/**
+ * An ASM-based implementation of Paranamer. It relies on debug information compiled
+ * with the &quot;-g&quot; javac option to retrieve parameter names.
+ * &lt;p/&gt;
+ * Portions of this source file are a fork of ASM.
+ * &lt;p/&gt;
+ * Identical to &lt;a href=&quot;http://svn.codehaus.org/paranamer/tags/paranamer-1.5/paranamer/src/java/com/thoughtworks/paranamer/BytecodeReadingParanamer.java&quot;&gt;com.thoughtworks.paranamer.BytecodeReadingParanamer&lt;/a&gt;
+ * but with fix for &lt;a href=&quot;http://jira.codehaus.org/browse/PARANAMER-22&quot;&gt;PARANAMER-22 BytecodeReadingParanamer doesn't work if method has byte[] or short[] parameter&lt;/a&gt;
+ *
+ * @author Guilherme Silveira
+ * @author Paul Hammant
+ */
+<span class="fc" id="L59">class BytecodeReadingParanamer implements Paranamer {</span>
+
+    private static final Map&lt;String, String&gt; primitives;
+
+    static {
+<span class="fc" id="L64">        final ImmutableMap.Builder&lt;String, String&gt; builder = ImmutableMap.builder();</span>
+<span class="fc" id="L65">        primitives = builder.put(&quot;int&quot;,&quot;I&quot;)</span>
+                            .put(&quot;boolean&quot;,&quot;Z&quot;)
+                            .put(&quot;char&quot;,&quot;C&quot;)
+                            .put(&quot;byte&quot;,&quot;B&quot;) // fix PARANAMER-22
+                            .put(&quot;short&quot;,&quot;S&quot;) // fix PARANAMER-22
+                            .put(&quot;float&quot;,&quot;F&quot;)
+                            .put(&quot;long&quot;,&quot;J&quot;)
+                            .put(&quot;double&quot;,&quot;D&quot;)
+                            .build();
+<span class="fc" id="L74">    }</span>
+
+    public String[] lookupParameterNames(AccessibleObject methodOrConstructor) {
+<span class="fc" id="L77">        return lookupParameterNames(methodOrConstructor, true);</span>
+    }
+
+    public String[] lookupParameterNames(AccessibleObject methodOrCtor, boolean throwExceptionIfMissing) {
+
+<span class="fc" id="L82">        Class&lt;?&gt;[] types = null;</span>
+<span class="fc" id="L83">        Class&lt;?&gt; declaringClass = null;</span>
+<span class="fc" id="L84">        String name = null;</span>
+<span class="fc bfc" id="L85" title="All 2 branches covered.">        if (methodOrCtor instanceof Method) {</span>
+<span class="fc" id="L86">            Method method = (Method) methodOrCtor;</span>
+<span class="fc" id="L87">            types = method.getParameterTypes();</span>
+<span class="fc" id="L88">            name = method.getName();</span>
+<span class="fc" id="L89">            declaringClass = method.getDeclaringClass();</span>
+<span class="pc bpc" id="L90" title="1 of 2 branches missed.">        } else if (methodOrCtor instanceof Constructor&lt;?&gt;) {</span>
+<span class="fc" id="L91">            Constructor&lt;?&gt; constructor = (Constructor&lt;?&gt;) methodOrCtor;</span>
+<span class="fc" id="L92">            types = constructor.getParameterTypes();</span>
+<span class="fc" id="L93">            declaringClass = constructor.getDeclaringClass();</span>
+<span class="fc" id="L94">            name = &quot;&lt;init&gt;&quot;;</span>
+<span class="fc" id="L95">        }</span>
+        else {
+<span class="nc" id="L97">            throw new IllegalStateException(String.format(&quot;%s is neither method nor c'tor!&quot;, methodOrCtor.getClass().getSimpleName()));</span>
+        }
+
+<span class="fc bfc" id="L100" title="All 2 branches covered.">        if (types.length == 0) {</span>
+<span class="fc" id="L101">            return EMPTY_NAMES;</span>
+        }
+<span class="fc" id="L103">        InputStream byteCodeStream = getClassAsStream(declaringClass);</span>
+<span class="pc bpc" id="L104" title="1 of 2 branches missed.">        if (byteCodeStream == null) {</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">            if (throwExceptionIfMissing) {</span>
+<span class="nc" id="L106">                throw new ParameterNamesNotFoundException(&quot;Unable to get class bytes&quot;);</span>
+            } else {
+<span class="nc" id="L108">                return Paranamer.EMPTY_NAMES;</span>
+            }
+        }
+        try {
+<span class="fc" id="L112">            ClassReader reader = new ClassReader(byteCodeStream);</span>
+<span class="fc" id="L113">            TypeCollector visitor = new TypeCollector(name, types, throwExceptionIfMissing);</span>
+<span class="fc" id="L114">            reader.accept(visitor);</span>
+<span class="fc" id="L115">            String[] parameterNamesForMethod = visitor.getParameterNamesForMethod();</span>
+<span class="fc" id="L116">            Closeables.closeQuietly(byteCodeStream);</span>
+<span class="fc" id="L117">            return parameterNamesForMethod;</span>
+<span class="nc" id="L118">        } catch (IOException e) {</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">            if (throwExceptionIfMissing) {</span>
+<span class="nc" id="L120">                throw new ParameterNamesNotFoundException(&quot;IoException while reading class bytes&quot;, e);</span>
+            } else {
+<span class="nc" id="L122">                return Paranamer.EMPTY_NAMES;</span>
+            }
+        }
+    }
+
+    private InputStream getClassAsStream(Class&lt;?&gt; clazz) {
+<span class="fc" id="L128">        ClassLoader classLoader = clazz.getClassLoader();</span>
+<span class="pc bpc" id="L129" title="1 of 2 branches missed.">        if (classLoader == null) {</span>
+<span class="nc" id="L130">            classLoader = ClassLoader.getSystemClassLoader();</span>
+        }
+<span class="fc" id="L132">        return getClassAsStream(classLoader, clazz.getName());</span>
+    }
+
+    private InputStream getClassAsStream(ClassLoader classLoader, String className) {
+<span class="fc" id="L136">        String name = className.replace('.', '/') + &quot;.class&quot;;</span>
+        // better pre-cache all methods otherwise this content will be loaded
+        // multiple times
+<span class="fc" id="L139">        InputStream asStream = classLoader.getResourceAsStream(name);</span>
+<span class="pc bpc" id="L140" title="1 of 2 branches missed.">        if (asStream == null) {</span>
+<span class="nc" id="L141">            asStream = BytecodeReadingParanamer.class.getResourceAsStream(name);</span>
+        }
+<span class="fc" id="L143">        return asStream;</span>
+    }
+
+    /**
+     * The type collector waits for an specific method in order to start a method
+     * collector.
+     *
+     * @author Guilherme Silveira
+     */
+    private static class TypeCollector {
+
+        private static final String COMMA = &quot;,&quot;;
+
+        private final String methodName;
+
+        private final Class&lt;?&gt;[] parameterTypes;
+        private final boolean throwExceptionIfMissing;
+
+        private MethodCollector collector;
+
+<span class="fc" id="L163">        private TypeCollector(String methodName, Class&lt;?&gt;[] parameterTypes, boolean throwExceptionIfMissing) {</span>
+<span class="fc" id="L164">            this.methodName = methodName;</span>
+<span class="fc" id="L165">            this.parameterTypes = parameterTypes;</span>
+<span class="fc" id="L166">            this.throwExceptionIfMissing = throwExceptionIfMissing;</span>
+<span class="fc" id="L167">            this.collector = null;</span>
+<span class="fc" id="L168">        }</span>
+
+        public MethodCollector visitMethod(int access, String name, String desc) {
+            // already found the method, skip any processing
+<span class="fc bfc" id="L172" title="All 2 branches covered.">            if (collector != null) {</span>
+<span class="fc" id="L173">                return null;</span>
+            }
+            // not the same name
+<span class="fc bfc" id="L176" title="All 2 branches covered.">            if (!name.equals(methodName)) {</span>
+<span class="fc" id="L177">                return null;</span>
+            }
+<span class="fc" id="L179">            Type[] argumentTypes = Type.getArgumentTypes(desc);</span>
+<span class="fc" id="L180">            int longOrDoubleQuantity = 0;</span>
+<span class="fc bfc" id="L181" title="All 2 branches covered.">            for (Type t : argumentTypes) {</span>
+<span class="fc bfc" id="L182" title="All 4 branches covered.">                if (t.getClassName().equals(&quot;long&quot;)</span>
+                        || t.getClassName().equals(&quot;double&quot;)) {
+<span class="fc" id="L184">                    longOrDoubleQuantity++;</span>
+                }
+            }
+<span class="fc" id="L187">            int paramCount = argumentTypes.length;</span>
+            // not the same quantity of parameters
+<span class="pc bpc" id="L189" title="1 of 2 branches missed.">            if (paramCount != this.parameterTypes.length) {</span>
+<span class="nc" id="L190">                return null;</span>
+            }
+<span class="fc bfc" id="L192" title="All 2 branches covered.">            for (int i = 0; i &lt; argumentTypes.length; i++) {</span>
+<span class="pc bpc" id="L193" title="1 of 2 branches missed.">                if (!correctTypeName(argumentTypes, i).equals(</span>
+                        this.parameterTypes[i].getName())) {
+<span class="nc" id="L195">                    return null;</span>
+                }
+            }
+<span class="fc bfc" id="L198" title="All 2 branches covered.">            this.collector = new MethodCollector((Modifier.isStatic(access) ? 0 : 1),</span>
+                    argumentTypes.length + longOrDoubleQuantity);
+<span class="fc" id="L200">            return collector;</span>
+        }
+
+//        {
+//           String s = argumentTypes[i].getClassName();
+//           // array notation needs cleanup.
+//           if (s.endsWith(&quot;[]&quot;)) {
+//               String prefix = s.substring(0, s.length() - 2);
+//
+//               // adufilie: added brackets variable and while loop to fix bug with multi-dimensional arrays.
+//               String brackets = &quot;[&quot;;
+//               while (prefix.endsWith(&quot;[]&quot;))
+//               {
+//                   prefix = prefix.substring(0, prefix.length() - 2);
+//                   brackets += &quot;[&quot;;
+//               }
+//
+//               if (primitives.containsKey(prefix)) {
+//                   s = brackets + primitives.get(prefix);
+//               } else {
+//                   s = brackets + &quot;L&quot; + prefix + &quot;;&quot;;
+//               }
+//           }
+//           return s;        }
+
+        private String correctTypeName(Type[] argumentTypes, int i) {
+<span class="fc" id="L226">            String s = argumentTypes[i].getClassName();</span>
+            // array notation needs cleanup.
+<span class="fc" id="L228">            StringBuilder braces = new StringBuilder();</span>
+<span class="fc bfc" id="L229" title="All 2 branches covered.">            while (s.endsWith(&quot;[]&quot;)) {</span>
+<span class="fc" id="L230">                braces.append(&quot;[&quot;);</span>
+<span class="fc" id="L231">                s = s.substring(0, s.length() - 2);</span>
+            }
+<span class="fc bfc" id="L233" title="All 2 branches covered.">            if (braces.length() != 0) {</span>
+<span class="fc bfc" id="L234" title="All 2 branches covered.">                if (primitives.containsKey(s)) {</span>
+<span class="fc" id="L235">                    s = braces.toString() + primitives.get(s);</span>
+                } else {
+<span class="fc" id="L237">                s = braces + &quot;L&quot; + s + &quot;;&quot;;</span>
+                }
+            }
+<span class="fc" id="L240">            return s;</span>
+        }
+
+        private String[] getParameterNamesForMethod() {
+<span class="pc bpc" id="L244" title="1 of 2 branches missed.">            if (collector == null) {</span>
+<span class="nc" id="L245">                return Paranamer.EMPTY_NAMES;</span>
+            }
+<span class="pc bpc" id="L247" title="1 of 2 branches missed.">            if (!collector.isDebugInfoPresent()) {</span>
+<span class="nc bnc" id="L248" title="All 2 branches missed.">                if (throwExceptionIfMissing) {</span>
+<span class="nc" id="L249">                    throw new ParameterNamesNotFoundException(&quot;Parameter names not found for &quot; + methodName);</span>
+                } else {
+<span class="nc" id="L251">                    return Paranamer.EMPTY_NAMES;</span>
+                }
+            }
+<span class="fc" id="L254">            return collector.getResult().split(COMMA);</span>
+        }
+
+    }
+
+    /**
+     * Objects of this class collects information from a specific method.
+     *
+     * @author Guilherme Silveira
+     */
+    private static class MethodCollector {
+
+        private final int paramCount;
+
+        private final int ignoreCount;
+
+        private int currentParameter;
+
+        private final StringBuffer result;
+
+        private boolean debugInfoPresent;
+
+<span class="fc" id="L276">        private MethodCollector(int ignoreCount, int paramCount) {</span>
+<span class="fc" id="L277">            this.ignoreCount = ignoreCount;</span>
+<span class="fc" id="L278">            this.paramCount = paramCount;</span>
+<span class="fc" id="L279">            this.result = new StringBuffer();</span>
+<span class="fc" id="L280">            this.currentParameter = 0;</span>
+            // if there are 0 parameters, there is no need for debug info
+<span class="pc bpc" id="L282" title="1 of 2 branches missed.">            this.debugInfoPresent = paramCount == 0;</span>
+<span class="fc" id="L283">        }</span>
+
+        public void visitLocalVariable(String name, int index) {
+<span class="pc bpc" id="L286" title="1 of 4 branches missed.">            if (index &gt;= ignoreCount &amp;&amp; index &lt; ignoreCount + paramCount) {</span>
+<span class="pc bpc" id="L287" title="1 of 2 branches missed.">                if (!name.equals(&quot;arg&quot; + currentParameter)) {</span>
+<span class="fc" id="L288">                    debugInfoPresent = true;</span>
+                }
+<span class="fc" id="L290">                result.append(',');</span>
+<span class="fc" id="L291">                result.append(name);</span>
+<span class="fc" id="L292">                currentParameter++;</span>
+            }
+<span class="fc" id="L294">        }</span>
+
+        private String getResult() {
+<span class="pc bpc" id="L297" title="1 of 2 branches missed.">            return result.length() != 0 ? result.substring(1) : &quot;&quot;;</span>
+        }
+
+        private boolean isDebugInfoPresent() {
+<span class="fc" id="L301">            return debugInfoPresent;</span>
+        }
+
+    }
+
+/***
+ * Portions Copyright (c) 2007 Paul Hammant
+ * Portions copyright (c) 2000-2007 INRIA, France Telecom
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the copyright holders nor the names of its
+ *    contributors may be used to endorse or promote products derived from
+ *    this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+    /**
+     * A Java class parser to make a Class Visitor visit an existing class.
+     * This class parses a byte array conforming to the Java class file format and
+     * calls the appropriate visit methods of a given class visitor for each field,
+     * method and bytecode instruction encountered.
+     *
+     * @author Eric Bruneton
+     * @author Eugene Kuleshov
+     */
+    private static class ClassReader {
+
+        /**
+         * The class to be parsed. &lt;i&gt;The content of this array must not be
+         * modified. This field is intended for Attribute sub classes, and
+         * is normally not needed by class generators or adapters.&lt;/i&gt;
+         */
+        public final byte[] b;
+
+        /**
+         * The start index of each constant pool item in {@link #b b}, plus one.
+         * The one byte offset skips the constant pool item tag that indicates its
+         * type.
+         */
+        private final int[] items;
+
+        /**
+         * The String objects corresponding to the CONSTANT_Utf8 items. This cache
+         * avoids multiple parsing of a given CONSTANT_Utf8 constant pool item,
+         * which GREATLY improves performances (by a factor 2 to 3). This caching
+         * strategy could be extended to all constant pool items, but its benefit
+         * would not be so great for these items (because they are much less
+         * expensive to parse than CONSTANT_Utf8 items).
+         */
+        private final String[] strings;
+
+        /**
+         * Maximum length of the strings contained in the constant pool of the
+         * class.
+         */
+        private final int maxStringLength;
+
+        /**
+         * Start index of the class header information (access, name...) in
+         * {@link #b b}.
+         */
+        public final int header;
+
+
+        /**
+         * The type of CONSTANT_Fieldref constant pool items.
+         */
+        final static int FIELD = 9;
+
+        /**
+         * The type of CONSTANT_Methodref constant pool items.
+         */
+        final static int METH = 10;
+
+        /**
+         * The type of CONSTANT_InterfaceMethodref constant pool items.
+         */
+        final static int IMETH = 11;
+
+        /**
+         * The type of CONSTANT_Integer constant pool items.
+         */
+        final static int INT = 3;
+
+        /**
+         * The type of CONSTANT_Float constant pool items.
+         */
+        final static int FLOAT = 4;
+
+        /**
+         * The type of CONSTANT_Long constant pool items.
+         */
+        final static int LONG = 5;
+
+        /**
+         * The type of CONSTANT_Double constant pool items.
+         */
+        final static int DOUBLE = 6;
+
+        /**
+         * The type of CONSTANT_NameAndType constant pool items.
+         */
+        final static int NAME_TYPE = 12;
+
+        /**
+         * The type of CONSTANT_Utf8 constant pool items.
+         */
+        final static int UTF8 = 1;
+
+        // ------------------------------------------------------------------------
+        // Constructors
+        // ------------------------------------------------------------------------
+
+        /**
+         * Constructs a new {@link ClassReader} object.
+         *
+         * @param b the bytecode of the class to be read.
+         */
+        private ClassReader(final byte[] b) {
+<span class="fc" id="L440">            this(b, 0);</span>
+<span class="fc" id="L441">        }</span>
+
+        /**
+         * Constructs a new {@link ClassReader} object.
+         *
+         * @param b   the bytecode of the class to be read.
+         * @param off the start offset of the class data.
+         */
+<span class="fc" id="L449">        private ClassReader(final byte[] b, final int off) {</span>
+<span class="fc" id="L450">            this.b = b;</span>
+            // parses the constant pool
+<span class="fc" id="L452">            items = new int[readUnsignedShort(off + 8)];</span>
+<span class="fc" id="L453">            int n = items.length;</span>
+<span class="fc" id="L454">            strings = new String[n];</span>
+<span class="fc" id="L455">            int max = 0;</span>
+<span class="fc" id="L456">            int index = off + 10;</span>
+<span class="fc bfc" id="L457" title="All 2 branches covered.">            for (int i = 1; i &lt; n; ++i) {</span>
+<span class="fc" id="L458">                items[i] = index + 1;</span>
+                int size;
+<span class="pc bpc" id="L460" title="1 of 4 branches missed.">                switch (b[index]) {</span>
+                    case FIELD:
+                    case METH:
+                    case IMETH:
+                    case INT:
+                    case FLOAT:
+                    case NAME_TYPE:
+<span class="fc" id="L467">                        size = 5;</span>
+<span class="fc" id="L468">                        break;</span>
+                    case LONG:
+                    case DOUBLE:
+<span class="nc" id="L471">                        size = 9;</span>
+<span class="nc" id="L472">                        ++i;</span>
+<span class="nc" id="L473">                        break;</span>
+                    case UTF8:
+<span class="fc" id="L475">                        size = 3 + readUnsignedShort(index + 1);</span>
+<span class="fc bfc" id="L476" title="All 2 branches covered.">                        if (size &gt; max) {</span>
+<span class="fc" id="L477">                            max = size;</span>
+                        }
+                        break;
+                        // case HamConstants.CLASS:
+                        // case HamConstants.STR:
+                    default:
+<span class="fc" id="L483">                        size = 3;</span>
+                        break;
+                }
+<span class="fc" id="L486">                index += size;</span>
+            }
+<span class="fc" id="L488">            maxStringLength = max;</span>
+            // the class header information starts just after the constant pool
+<span class="fc" id="L490">            header = index;</span>
+<span class="fc" id="L491">        }</span>
+
+
+        /**
+         * Constructs a new {@link ClassReader} object.
+         *
+         * @param is an input stream from which to read the class.
+         * @throws IOException if a problem occurs during reading.
+         */
+        private ClassReader(final InputStream is) throws IOException {
+<span class="fc" id="L501">            this(readClass(is));</span>
+<span class="fc" id="L502">        }</span>
+
+        /**
+         * Reads the bytecode of a class.
+         *
+         * @param is an input stream from which to read the class.
+         * @return the bytecode read from the given input stream.
+         * @throws IOException if a problem occurs during reading.
+         */
+        private static byte[] readClass(final InputStream is) throws IOException {
+<span class="pc bpc" id="L512" title="1 of 2 branches missed.">            if (is == null) {</span>
+<span class="nc" id="L513">                throw new IOException(&quot;Class not found&quot;);</span>
+            }
+            try {
+<span class="fc" id="L516">                  byte[] b = new byte[is.available()];</span>
+<span class="fc" id="L517">                  int len = 0;</span>
+                  while (true) {
+<span class="fc" id="L519">                      int n = is.read(b, len, b.length - len);</span>
+<span class="pc bpc" id="L520" title="1 of 2 branches missed.">                      if (n == -1) {</span>
+<span class="nc bnc" id="L521" title="All 2 branches missed.">                          if (len &lt; b.length) {</span>
+<span class="nc" id="L522">                              byte[] c = new byte[len];</span>
+<span class="nc" id="L523">                              System.arraycopy(b, 0, c, 0, len);</span>
+<span class="nc" id="L524">                              b = c;</span>
+                          }
+<span class="nc" id="L526">                          return b;</span>
+                      }
+<span class="fc" id="L528">                      len += n;</span>
+<span class="pc bpc" id="L529" title="1 of 2 branches missed.">                      if (len == b.length) {</span>
+<span class="fc" id="L530">                          int last = is.read();</span>
+<span class="pc bpc" id="L531" title="1 of 2 branches missed.">                          if (last &lt; 0) {</span>
+<span class="fc" id="L532">                              return b;</span>
+                          }
+<span class="nc" id="L534">                          byte[] c = new byte[b.length + 1000];</span>
+<span class="nc" id="L535">                          System.arraycopy(b, 0, c, 0, len);</span>
+<span class="nc" id="L536">                          c[len++] = (byte) last;</span>
+<span class="nc" id="L537">                          b = c;</span>
+                      }
+<span class="nc" id="L539">                  }</span>
+            } finally {
+<span class="pc" id="L541">                Closeables.closeQuietly(is);</span>
+            }
+        }
+
+        // ------------------------------------------------------------------------
+        // Public methods
+        // ------------------------------------------------------------------------
+
+        /**
+         * Makes the given visitor visit the Java class of this {@link ClassReader}.
+         * This class is the one specified in the constructor (see
+         * {@link #ClassReader(byte[]) ClassReader}).
+         *
+         * @param classVisitor the visitor that must visit this class.
+         */
+        private void accept(final TypeCollector classVisitor) {
+<span class="fc" id="L557">            char[] c = new char[maxStringLength]; // buffer used to read strings</span>
+            int i, j, k; // loop variables
+            int u, v, w; // indexes in b
+
+            String attrName;
+<span class="fc" id="L562">            int anns = 0;</span>
+<span class="fc" id="L563">            int ianns = 0;</span>
+
+            // visits the header
+<span class="fc" id="L566">            u = header;</span>
+<span class="fc" id="L567">            v = items[readUnsignedShort(u + 4)];</span>
+<span class="fc" id="L568">            int len = readUnsignedShort(u + 6);</span>
+<span class="fc" id="L569">            w = 0;</span>
+<span class="fc" id="L570">            u += 8;</span>
+<span class="pc bpc" id="L571" title="1 of 2 branches missed.">            for (i = 0; i &lt; len; ++i) {</span>
+<span class="nc" id="L572">                u += 2;</span>
+            }
+<span class="fc" id="L574">            v = u;</span>
+<span class="fc" id="L575">            i = readUnsignedShort(v);</span>
+<span class="fc" id="L576">            v += 2;</span>
+<span class="fc bfc" id="L577" title="All 2 branches covered.">            for (; i &gt; 0; --i) {</span>
+<span class="fc" id="L578">                j = readUnsignedShort(v + 6);</span>
+<span class="fc" id="L579">                v += 8;</span>
+<span class="pc bpc" id="L580" title="1 of 2 branches missed.">                for (; j &gt; 0; --j) {</span>
+<span class="nc" id="L581">                    v += 6 + readInt(v + 2);</span>
+                }
+            }
+<span class="fc" id="L584">            i = readUnsignedShort(v);</span>
+<span class="fc" id="L585">            v += 2;</span>
+<span class="fc bfc" id="L586" title="All 2 branches covered.">            for (; i &gt; 0; --i) {</span>
+<span class="fc" id="L587">                j = readUnsignedShort(v + 6);</span>
+<span class="fc" id="L588">                v += 8;</span>
+<span class="fc bfc" id="L589" title="All 2 branches covered.">                for (; j &gt; 0; --j) {</span>
+<span class="fc" id="L590">                    v += 6 + readInt(v + 2);</span>
+                }
+            }
+
+<span class="fc" id="L594">            i = readUnsignedShort(v);</span>
+<span class="fc" id="L595">            v += 2;</span>
+<span class="fc bfc" id="L596" title="All 2 branches covered.">            for (; i &gt; 0; --i) {</span>
+<span class="fc" id="L597">                v += 6 + readInt(v + 2);</span>
+            }
+
+            //annotations not needed.
+
+            // visits the fields
+<span class="fc" id="L603">            i = readUnsignedShort(u);</span>
+<span class="fc" id="L604">            u += 2;</span>
+<span class="fc bfc" id="L605" title="All 2 branches covered.">            for (; i &gt; 0; --i) {</span>
+<span class="fc" id="L606">                j = readUnsignedShort(u + 6);</span>
+<span class="fc" id="L607">                u += 8;</span>
+<span class="pc bpc" id="L608" title="1 of 2 branches missed.">                for (; j &gt; 0; --j) {</span>
+<span class="nc" id="L609">                    u += 6 + readInt(u + 2);</span>
+                }
+            }
+
+            // visits the methods
+<span class="fc" id="L614">            i = readUnsignedShort(u);</span>
+<span class="fc" id="L615">            u += 2;</span>
+<span class="fc bfc" id="L616" title="All 2 branches covered.">            for (; i &gt; 0; --i) {</span>
+                // inlined in original ASM source, now a method call
+<span class="fc" id="L618">                u = readMethod(classVisitor, c, u);</span>
+            }
+
+<span class="fc" id="L621">        }</span>
+
+        private int readMethod(TypeCollector classVisitor, char[] c, int u) {
+            int v;
+            int w;
+            int j;
+            String attrName;
+            int k;
+<span class="fc" id="L629">            int access = readUnsignedShort(u);</span>
+<span class="fc" id="L630">            String name = readUTF8(u + 2, c);</span>
+<span class="fc" id="L631">            String desc = readUTF8(u + 4, c);</span>
+<span class="fc" id="L632">            v = 0;</span>
+<span class="fc" id="L633">            w = 0;</span>
+
+            // looks for Code and Exceptions attributes
+<span class="fc" id="L636">            j = readUnsignedShort(u + 6);</span>
+<span class="fc" id="L637">            u += 8;</span>
+<span class="fc bfc" id="L638" title="All 2 branches covered.">            for (; j &gt; 0; --j) {</span>
+<span class="fc" id="L639">                attrName = readUTF8(u, c);</span>
+<span class="fc" id="L640">                int attrSize = readInt(u + 2);</span>
+<span class="fc" id="L641">                u += 6;</span>
+                // tests are sorted in decreasing frequency order
+                // (based on frequencies observed on typical classes)
+<span class="fc bfc" id="L644" title="All 2 branches covered.">                if (attrName.equals(&quot;Code&quot;)) {</span>
+<span class="fc" id="L645">                    v = u;</span>
+                }
+<span class="fc" id="L647">                u += attrSize;</span>
+            }
+            // reads declared exceptions
+<span class="pc bpc" id="L650" title="1 of 2 branches missed.">            if (w != 0) {</span>
+<span class="nc" id="L651">                w += 2;</span>
+<span class="nc bnc" id="L652" title="All 2 branches missed.">                for (j = 0; j &lt; readUnsignedShort(w); ++j) {</span>
+<span class="nc" id="L653">                    w += 2;</span>
+                }
+            }
+
+            // visits the method's code, if any
+<span class="fc" id="L658">            MethodCollector mv = classVisitor.visitMethod(access, name, desc);</span>
+
+<span class="pc bpc" id="L660" title="1 of 4 branches missed.">            if (mv != null &amp;&amp; v != 0) {</span>
+<span class="fc" id="L661">                int codeLength = readInt(v + 4);</span>
+<span class="fc" id="L662">                v += 8;</span>
+
+<span class="fc" id="L664">                int codeStart = v;</span>
+<span class="fc" id="L665">                int codeEnd = v + codeLength;</span>
+<span class="fc" id="L666">                v = codeEnd;</span>
+
+<span class="fc" id="L668">                j = readUnsignedShort(v);</span>
+<span class="fc" id="L669">                v += 2;</span>
+<span class="pc bpc" id="L670" title="1 of 2 branches missed.">                for (; j &gt; 0; --j) {</span>
+<span class="nc" id="L671">                    v += 8;</span>
+                }
+                // parses the local variable, line number tables, and code
+                // attributes
+<span class="fc" id="L675">                int varTable = 0;</span>
+<span class="fc" id="L676">                int varTypeTable = 0;</span>
+<span class="fc" id="L677">                j = readUnsignedShort(v);</span>
+<span class="fc" id="L678">                v += 2;</span>
+<span class="fc bfc" id="L679" title="All 2 branches covered.">                for (; j &gt; 0; --j) {</span>
+<span class="fc" id="L680">                    attrName = readUTF8(v, c);</span>
+<span class="fc bfc" id="L681" title="All 2 branches covered.">                    if (attrName.equals(&quot;LocalVariableTable&quot;)) {</span>
+<span class="fc" id="L682">                        varTable = v + 6;</span>
+<span class="pc bpc" id="L683" title="1 of 2 branches missed.">                    } else if (attrName.equals(&quot;LocalVariableTypeTable&quot;)) {</span>
+<span class="nc" id="L684">                        varTypeTable = v + 6;</span>
+                    }
+<span class="fc" id="L686">                    v += 6 + readInt(v + 2);</span>
+                }
+
+<span class="fc" id="L689">                v = codeStart;</span>
+                // visits the local variable tables
+<span class="pc bpc" id="L691" title="1 of 2 branches missed.">                if (varTable != 0) {</span>
+<span class="pc bpc" id="L692" title="1 of 2 branches missed.">                    if (varTypeTable != 0) {</span>
+<span class="nc" id="L693">                        k = readUnsignedShort(varTypeTable) * 3;</span>
+<span class="nc" id="L694">                        w = varTypeTable + 2;</span>
+<span class="nc" id="L695">                        int[] typeTable = new int[k];</span>
+<span class="nc bnc" id="L696" title="All 2 branches missed.">                        while (k &gt; 0) {</span>
+<span class="nc" id="L697">                            typeTable[--k] = w + 6; // signature</span>
+<span class="nc" id="L698">                            typeTable[--k] = readUnsignedShort(w + 8); // index</span>
+<span class="nc" id="L699">                            typeTable[--k] = readUnsignedShort(w); // start</span>
+<span class="nc" id="L700">                            w += 10;</span>
+                        }
+                    }
+<span class="fc" id="L703">                    k = readUnsignedShort(varTable);</span>
+<span class="fc" id="L704">                    w = varTable + 2;</span>
+<span class="fc bfc" id="L705" title="All 2 branches covered.">                    for (; k &gt; 0; --k) {</span>
+<span class="fc" id="L706">                        int index = readUnsignedShort(w + 8);</span>
+<span class="fc" id="L707">                        mv.visitLocalVariable(readUTF8(w + 4, c), index);</span>
+<span class="fc" id="L708">                        w += 10;</span>
+                    }
+                }
+            }
+<span class="fc" id="L712">            return u;</span>
+        }
+
+        /**
+         * Reads an unsigned short value in {@link #b b}. &lt;i&gt;This method is
+         * intended for Attribute sub classes, and is normally not needed by
+         * class generators or adapters.&lt;/i&gt;
+         *
+         * @param index the start index of the value to be read in {@link #b b}.
+         * @return the read value.
+         */
+        private int readUnsignedShort(final int index) {
+<span class="fc" id="L724">            byte[] b = this.b;</span>
+<span class="fc" id="L725">            return ((b[index] &amp; 0xFF) &lt;&lt; 8) | (b[index + 1] &amp; 0xFF);</span>
+        }
+
+        /**
+         * Reads a signed int value in {@link #b b}. &lt;i&gt;This method is intended for
+         * Attribute sub classes, and is normally not needed by class
+         * generators or adapters.&lt;/i&gt;
+         *
+         * @param index the start index of the value to be read in {@link #b b}.
+         * @return the read value.
+         */
+        private int readInt(final int index) {
+<span class="fc" id="L737">            byte[] b = this.b;</span>
+<span class="fc" id="L738">            return ((b[index] &amp; 0xFF) &lt;&lt; 24) | ((b[index + 1] &amp; 0xFF) &lt;&lt; 16)</span>
+                    | ((b[index + 2] &amp; 0xFF) &lt;&lt; 8) | (b[index + 3] &amp; 0xFF);
+        }
+
+        /**
+         * Reads an UTF8 string constant pool item in {@link #b b}. &lt;i&gt;This method
+         * is intended for Attribute sub classes, and is normally not needed
+         * by class generators or adapters.&lt;/i&gt;
+         *
+         * @param index the start index of an unsigned short value in {@link #b b},
+         *              whose value is the index of an UTF8 constant pool item.
+         * @param buf   buffer to be used to read the item. This buffer must be
+         *              sufficiently large. It is not automatically resized.
+         * @return the String corresponding to the specified UTF8 item.
+         */
+        private String readUTF8(int index, final char[] buf) {
+<span class="fc" id="L754">            int item = readUnsignedShort(index);</span>
+<span class="fc" id="L755">            String s = strings[item];</span>
+<span class="fc bfc" id="L756" title="All 2 branches covered.">            if (s != null) {</span>
+<span class="fc" id="L757">                return s;</span>
+            }
+<span class="fc" id="L759">            index = items[item];</span>
+<span class="fc" id="L760">            return strings[item] = readUTF(index + 2, readUnsignedShort(index), buf);</span>
+        }
+
+        /**
+         * Reads UTF8 string in {@link #b b}.
+         *
+         * @param index  start offset of the UTF8 string to be read.
+         * @param utfLen length of the UTF8 string to be read.
+         * @param buf    buffer to be used to read the string. This buffer must be
+         *               sufficiently large. It is not automatically resized.
+         * @return the String corresponding to the specified UTF8 string.
+         */
+        private String readUTF(int index, final int utfLen, final char[] buf) {
+<span class="fc" id="L773">            int endIndex = index + utfLen;</span>
+<span class="fc" id="L774">            byte[] b = this.b;</span>
+<span class="fc" id="L775">            int strLen = 0;</span>
+            int c;
+<span class="fc" id="L777">            int st = 0;</span>
+<span class="fc" id="L778">            char cc = 0;</span>
+<span class="fc bfc" id="L779" title="All 2 branches covered.">            while (index &lt; endIndex) {</span>
+<span class="fc" id="L780">                c = b[index++];</span>
+<span class="pc bpc" id="L781" title="3 of 4 branches missed.">                switch (st) {</span>
+                    case 0:
+<span class="fc" id="L783">                        c = c &amp; 0xFF;</span>
+<span class="pc bpc" id="L784" title="1 of 2 branches missed.">                        if (c &lt; 0x80) {  // 0xxxxxxx</span>
+<span class="fc" id="L785">                            buf[strLen++] = (char) c;</span>
+<span class="nc bnc" id="L786" title="All 4 branches missed.">                        } else if (c &lt; 0xE0 &amp;&amp; c &gt; 0xBF) {  // 110x xxxx 10xx xxxx</span>
+<span class="nc" id="L787">                            cc = (char) (c &amp; 0x1F);</span>
+<span class="nc" id="L788">                            st = 1;</span>
+                        } else {  // 1110 xxxx 10xx xxxx 10xx xxxx
+<span class="nc" id="L790">                            cc = (char) (c &amp; 0x0F);</span>
+<span class="nc" id="L791">                            st = 2;</span>
+                        }
+<span class="nc" id="L793">                        break;</span>
+
+                    case 1:  // byte 2 of 2-byte char or byte 3 of 3-byte char
+<span class="nc" id="L796">                        buf[strLen++] = (char) ((cc &lt;&lt; 6) | (c &amp; 0x3F));</span>
+<span class="nc" id="L797">                        st = 0;</span>
+<span class="nc" id="L798">                        break;</span>
+
+                    case 2:  // byte 2 of 3-byte char
+<span class="nc" id="L801">                        cc = (char) ((cc &lt;&lt; 6) | (c &amp; 0x3F));</span>
+<span class="nc" id="L802">                        st = 1;</span>
+<span class="nc" id="L803">                        break;</span>
+                    default:
+<span class="nc" id="L805">                        break;</span>
+                }
+            }
+<span class="fc" id="L808">            return new String(buf, 0, strLen);</span>
+        }
+
+    }
+
+/***
+ * Portions Copyright (c) 2007 Paul Hammant
+ * Portions copyright (c) 2000-2007 INRIA, France Telecom
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the copyright holders nor the names of its
+ *    contributors may be used to endorse or promote products derived from
+ *    this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+    /**
+     * A Java type. This class can be used to make it easier to manipulate type and
+     * method descriptors.
+     *
+     * @author Eric Bruneton
+     * @author Chris Nokleberg
+     */
+<span class="fc" id="L850">    private static class Type {</span>
+
+        /**
+         * The sort of the &lt;tt&gt;void&lt;/tt&gt; type.
+         */
+        private final static int VOID = 0;
+
+        /**
+         * The sort of the &lt;tt&gt;boolean&lt;/tt&gt; type.
+         */
+        private final static int BOOLEAN = 1;
+
+        /**
+         * The sort of the &lt;tt&gt;char&lt;/tt&gt; type.
+         */
+        private final static int CHAR = 2;
+
+        /**
+         * The sort of the &lt;tt&gt;byte&lt;/tt&gt; type.
+         */
+        private final static int BYTE = 3;
+
+        /**
+         * The sort of the &lt;tt&gt;short&lt;/tt&gt; type.
+         */
+        private final static int SHORT = 4;
+
+        /**
+         * The sort of the &lt;tt&gt;int&lt;/tt&gt; type.
+         */
+        private final static int INT = 5;
+
+        /**
+         * The sort of the &lt;tt&gt;float&lt;/tt&gt; type.
+         */
+        private final static int FLOAT = 6;
+
+        /**
+         * The sort of the &lt;tt&gt;long&lt;/tt&gt; type.
+         */
+        private final static int LONG = 7;
+
+        /**
+         * The sort of the &lt;tt&gt;double&lt;/tt&gt; type.
+         */
+        private final static int DOUBLE = 8;
+
+        /**
+         * The sort of array reference types.
+         */
+        private final static int ARRAY = 9;
+
+        /**
+         * The sort of object reference type.
+         */
+        private final static int OBJECT = 10;
+
+        /**
+         * The &lt;tt&gt;void&lt;/tt&gt; type.
+         */
+<span class="fc" id="L910">        private final static Type VOID_TYPE = new Type(VOID, null, ('V' &lt;&lt; 24)</span>
+            | (5 &lt;&lt; 16) | (0 &lt;&lt; 8) | 0, 1);
+
+        /**
+         * The &lt;tt&gt;boolean&lt;/tt&gt; type.
+         */
+<span class="fc" id="L916">        private final static Type BOOLEAN_TYPE = new Type(BOOLEAN, null, ('Z' &lt;&lt; 24)</span>
+            | (0 &lt;&lt; 16) | (5 &lt;&lt; 8) | 1, 1);
+
+        /**
+         * The &lt;tt&gt;char&lt;/tt&gt; type.
+         */
+<span class="fc" id="L922">        private final static Type CHAR_TYPE = new Type(CHAR, null, ('C' &lt;&lt; 24)</span>
+            | (0 &lt;&lt; 16) | (6 &lt;&lt; 8) | 1, 1);
+
+        /**
+         * The &lt;tt&gt;byte&lt;/tt&gt; type.
+         */
+<span class="fc" id="L928">        private final static Type BYTE_TYPE = new Type(BYTE, null, ('B' &lt;&lt; 24)</span>
+            | (0 &lt;&lt; 16) | (5 &lt;&lt; 8) | 1, 1);
+
+        /**
+         * The &lt;tt&gt;short&lt;/tt&gt; type.
+         */
+<span class="fc" id="L934">        private final static Type SHORT_TYPE = new Type(SHORT, null, ('S' &lt;&lt; 24)</span>
+            | (0 &lt;&lt; 16) | (7 &lt;&lt; 8) | 1, 1);
+
+        /**
+         * The &lt;tt&gt;int&lt;/tt&gt; type.
+         */
+<span class="fc" id="L940">        private final static Type INT_TYPE = new Type(INT, null, ('I' &lt;&lt; 24)</span>
+            | (0 &lt;&lt; 16) | (0 &lt;&lt; 8) | 1, 1);
+
+        /**
+         * The &lt;tt&gt;float&lt;/tt&gt; type.
+         */
+<span class="fc" id="L946">        private final static Type FLOAT_TYPE = new Type(FLOAT, null, ('F' &lt;&lt; 24)</span>
+            | (2 &lt;&lt; 16) | (2 &lt;&lt; 8) | 1, 1);
+
+        /**
+         * The &lt;tt&gt;long&lt;/tt&gt; type.
+         */
+<span class="fc" id="L952">        private final static Type LONG_TYPE = new Type(LONG, null, ('J' &lt;&lt; 24)</span>
+            | (1 &lt;&lt; 16) | (1 &lt;&lt; 8) | 2, 1);
+
+        /**
+         * The &lt;tt&gt;double&lt;/tt&gt; type.
+         */
+<span class="fc" id="L958">        private final static Type DOUBLE_TYPE = new Type(DOUBLE, null, ('D' &lt;&lt; 24)</span>
+            | (3 &lt;&lt; 16) | (3 &lt;&lt; 8) | 2, 1);
+
+        // ------------------------------------------------------------------------
+        // Fields
+        // ------------------------------------------------------------------------
+
+        /**
+         * The sort of this Java type.
+         */
+        private final int sort;
+
+        /**
+         * A buffer containing the internal name of this Java type. This field is
+         * only used for reference types.
+         */
+        private char[] buf;
+
+        /**
+         * The offset of the internal name of this Java type in {@link #buf buf} or,
+         * for primitive types, the size, descriptor and getOpcode offsets for this
+         * type (byte 0 contains the size, byte 1 the descriptor, byte 2 the offset
+         * for IALOAD or IASTORE, byte 3 the offset for all other instructions).
+         */
+        private int off;
+
+        /**
+         * The length of the internal name of this Java type.
+         */
+        private final int len;
+
+        // ------------------------------------------------------------------------
+        // Constructors
+        // ------------------------------------------------------------------------
+
+        /**
+         * Constructs a primitive type.
+         *
+         * @param sort the sort of the primitive type to be constructed.
+         */
+<span class="nc" id="L998">        private Type(final int sort) {</span>
+<span class="nc" id="L999">            this.sort = sort;</span>
+<span class="nc" id="L1000">            this.len = 1;</span>
+<span class="nc" id="L1001">        }</span>
+
+        /**
+         * Constructs a reference type.
+         *
+         * @param sort the sort of the reference type to be constructed.
+         * @param buf  a buffer containing the descriptor of the previous type.
+         * @param off  the offset of this descriptor in the previous buffer.
+         * @param len  the length of this descriptor.
+         */
+<span class="fc" id="L1011">        private Type(final int sort, final char[] buf, final int off, final int len) {</span>
+<span class="fc" id="L1012">            this.sort = sort;</span>
+<span class="fc" id="L1013">            this.buf = buf;</span>
+<span class="fc" id="L1014">            this.off = off;</span>
+<span class="fc" id="L1015">            this.len = len;</span>
+<span class="fc" id="L1016">        }</span>
+
+
+        /**
+         * Returns the Java types corresponding to the argument types of the given
+         * method descriptor.
+         *
+         * @param methodDescriptor a method descriptor.
+         * @return the Java types corresponding to the argument types of the given
+         *         method descriptor.
+         */
+        @SuppressWarnings(&quot;PMD.EmptyWhileStmt&quot;)
+        private static Type[] getArgumentTypes(final String methodDescriptor) {
+<span class="fc" id="L1029">            char[] buf = methodDescriptor.toCharArray();</span>
+<span class="fc" id="L1030">            int off = 1;</span>
+<span class="fc" id="L1031">            int size = 0;</span>
+            while (true) {
+<span class="fc" id="L1033">                char car = buf[off++];</span>
+<span class="fc bfc" id="L1034" title="All 2 branches covered.">                if (car == ')') {</span>
+<span class="fc" id="L1035">                    break;</span>
+<span class="fc bfc" id="L1036" title="All 2 branches covered.">                } else if (car == 'L') {</span>
+<span class="fc bfc" id="L1037" title="All 2 branches covered.">                    while (buf[off++] != ';') {</span>
+                    }
+<span class="fc" id="L1039">                    ++size;</span>
+<span class="fc bfc" id="L1040" title="All 2 branches covered.">                } else if (car != '[') {</span>
+<span class="fc" id="L1041">                    ++size;</span>
+                }
+<span class="fc" id="L1043">            }</span>
+
+<span class="fc" id="L1045">            Type[] args = new Type[size];</span>
+<span class="fc" id="L1046">            off = 1;</span>
+<span class="fc" id="L1047">            size = 0;</span>
+<span class="fc bfc" id="L1048" title="All 2 branches covered.">            while (buf[off] != ')') {</span>
+<span class="fc" id="L1049">                args[size] = getType(buf, off);</span>
+<span class="fc bfc" id="L1050" title="All 2 branches covered.">                off += args[size].len + (args[size].sort == OBJECT ? 2 : 0);</span>
+<span class="fc" id="L1051">                size += 1;</span>
+            }
+<span class="fc" id="L1053">            return args;</span>
+        }
+
+
+        /**
+         * Returns the Java type corresponding to the given type descriptor.
+         *
+         * @param buf a buffer containing a type descriptor.
+         * @param off the offset of this descriptor in the previous buffer.
+         * @return the Java type corresponding to the given type descriptor.
+         */
+        private static Type getType(final char[] buf, final int off) {
+            int len;
+<span class="pc bpc" id="L1066" title="1 of 11 branches missed.">            switch (buf[off]) {</span>
+                case 'V':
+<span class="nc" id="L1068">                    return VOID_TYPE;</span>
+                case 'Z':
+<span class="fc" id="L1070">                    return BOOLEAN_TYPE;</span>
+                case 'C':
+<span class="fc" id="L1072">                    return CHAR_TYPE;</span>
+                case 'B':
+<span class="fc" id="L1074">                    return BYTE_TYPE;</span>
+                case 'S':
+<span class="fc" id="L1076">                    return SHORT_TYPE;</span>
+                case 'I':
+<span class="fc" id="L1078">                    return INT_TYPE;</span>
+                case 'F':
+<span class="fc" id="L1080">                    return FLOAT_TYPE;</span>
+                case 'J':
+<span class="fc" id="L1082">                    return LONG_TYPE;</span>
+                case 'D':
+<span class="fc" id="L1084">                    return DOUBLE_TYPE;</span>
+                case '[':
+<span class="fc" id="L1086">                    len = 1;</span>
+<span class="pc bpc" id="L1087" title="1 of 2 branches missed.">                    while (buf[off + len] == '[') {</span>
+<span class="nc" id="L1088">                        ++len;</span>
+                    }
+<span class="fc bfc" id="L1090" title="All 2 branches covered.">                    if (buf[off + len] == 'L') {</span>
+<span class="fc" id="L1091">                        ++len;</span>
+<span class="fc bfc" id="L1092" title="All 2 branches covered.">                        while (buf[off + len] != ';') {</span>
+<span class="fc" id="L1093">                            ++len;</span>
+                        }
+                    }
+<span class="fc" id="L1096">                    return new Type(ARRAY, buf, off, len + 1);</span>
+                    // case 'L':
+                default:
+<span class="fc" id="L1099">                    len = 1;</span>
+<span class="fc bfc" id="L1100" title="All 2 branches covered.">                    while (buf[off + len] != ';') {</span>
+<span class="fc" id="L1101">                        ++len;</span>
+                    }
+<span class="fc" id="L1103">                    return new Type(OBJECT, buf, off + 1, len - 1);</span>
+            }
+        }
+
+        // ------------------------------------------------------------------------
+        // Accessors
+        // ------------------------------------------------------------------------
+
+        /**
+         * Returns the number of dimensions of this array type. This method should
+         * only be used for an array type.
+         *
+         * @return the number of dimensions of this array type.
+         */
+        private int getDimensions() {
+<span class="fc" id="L1118">            int i = 1;</span>
+<span class="pc bpc" id="L1119" title="1 of 2 branches missed.">            while (buf[off + i] == '[') {</span>
+<span class="nc" id="L1120">                ++i;</span>
+            }
+<span class="fc" id="L1122">            return i;</span>
+        }
+
+        /**
+         * Returns the type of the elements of this array type. This method should
+         * only be used for an array type.
+         *
+         * @return Returns the type of the elements of this array type.
+         */
+        private Type getElementType() {
+<span class="fc" id="L1132">            return getType(buf, off + getDimensions());</span>
+        }
+
+        /**
+         * Returns the name of the class corresponding to this type.
+         *
+         * @return the fully qualified name of the class corresponding to this type.
+         */
+        private String getClassName() {
+<span class="pc bpc" id="L1141" title="1 of 11 branches missed.">            switch (sort) {</span>
+                case VOID:
+<span class="nc" id="L1143">                    return &quot;void&quot;;</span>
+                case BOOLEAN:
+<span class="fc" id="L1145">                    return &quot;boolean&quot;;</span>
+                case CHAR:
+<span class="fc" id="L1147">                    return &quot;char&quot;;</span>
+                case BYTE:
+<span class="fc" id="L1149">                    return &quot;byte&quot;;</span>
+                case SHORT:
+<span class="fc" id="L1151">                    return &quot;short&quot;;</span>
+                case INT:
+<span class="fc" id="L1153">                    return &quot;int&quot;;</span>
+                case FLOAT:
+<span class="fc" id="L1155">                    return &quot;float&quot;;</span>
+                case LONG:
+<span class="fc" id="L1157">                    return &quot;long&quot;;</span>
+                case DOUBLE:
+<span class="fc" id="L1159">                    return &quot;double&quot;;</span>
+                case ARRAY:
+<span class="fc" id="L1161">                    StringBuffer b = new StringBuffer(getElementType().getClassName());</span>
+<span class="fc bfc" id="L1162" title="All 2 branches covered.">                    for (int i = getDimensions(); i &gt; 0; --i) {</span>
+<span class="fc" id="L1163">                        b.append(&quot;[]&quot;);</span>
+                    }
+<span class="fc" id="L1165">                    return b.toString();</span>
+                    // case OBJECT:
+                default:
+<span class="fc" id="L1168">                    return new String(buf, off, len).replace('/', '.');</span>
+            }
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>

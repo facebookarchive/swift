@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ThriftProtocolType.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-codec</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.codec</a> &gt; <span class="el_source">ThriftProtocolType.java</span></div><h1>ThriftProtocolType.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.codec;
+
+<span class="pc" id="L18">public enum ThriftProtocolType</span>
+{
+<span class="fc" id="L20">    UNKNOWN((byte) 0),</span>
+<span class="fc" id="L21">    BOOL((byte) 2),</span>
+<span class="fc" id="L22">    BYTE((byte) 3),</span>
+<span class="fc" id="L23">    DOUBLE((byte) 4),</span>
+<span class="fc" id="L24">    I16((byte) 6),</span>
+<span class="fc" id="L25">    I32((byte) 8),</span>
+<span class="fc" id="L26">    I64((byte) 10),</span>
+<span class="fc" id="L27">    STRING((byte) 11),</span>
+<span class="fc" id="L28">    STRUCT((byte) 12),</span>
+<span class="fc" id="L29">    MAP((byte) 13),</span>
+<span class="fc" id="L30">    SET((byte) 14),</span>
+<span class="fc" id="L31">    LIST((byte) 15),</span>
+<span class="fc" id="L32">    ENUM((byte) 8); // same as I32 type</span>
+
+    private final byte type;
+
+    private ThriftProtocolType(byte type)
+<span class="fc" id="L37">    {</span>
+<span class="fc" id="L38">        this.type = type;</span>
+<span class="fc" id="L39">    }</span>
+
+    public byte getType()
+    {
+<span class="fc" id="L43">        return type;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>
