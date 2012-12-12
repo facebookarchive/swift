@@ -1,0 +1,329 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>ThriftMethodProcessor xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../stylesheet.css" />
+</head>
+<body>
+<div id="overview"><a href="../../../../../apidocs/com/facebook/swift/service/ThriftMethodProcessor.html">View Javadoc</a></div><pre>
+
+<a class="jxr_linenumber" name="1" href="#1">1</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="2" href="#2">2</a>   <em class="jxr_comment"> * Copyright (C) 2012 Facebook, Inc.</em>
+<a class="jxr_linenumber" name="3" href="#3">3</a>   <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="4" href="#4">4</a>   <em class="jxr_comment"> * Licensed under the Apache License, Version 2.0 (the "License"); you may</em>
+<a class="jxr_linenumber" name="5" href="#5">5</a>   <em class="jxr_comment"> * not use this file except in compliance with the License. You may obtain</em>
+<a class="jxr_linenumber" name="6" href="#6">6</a>   <em class="jxr_comment"> * a copy of the License at</em>
+<a class="jxr_linenumber" name="7" href="#7">7</a>   <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="8" href="#8">8</a>   <em class="jxr_comment"> *     <a href="http://www.apache.org/licenses/LICENSE-2.0" target="alexandria_uri">http://www.apache.org/licenses/LICENSE-2.0</a></em>
+<a class="jxr_linenumber" name="9" href="#9">9</a>   <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="10" href="#10">10</a>  <em class="jxr_comment"> * Unless required by applicable law or agreed to in writing, software</em>
+<a class="jxr_linenumber" name="11" href="#11">11</a>  <em class="jxr_comment"> * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT</em>
+<a class="jxr_linenumber" name="12" href="#12">12</a>  <em class="jxr_comment"> * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the</em>
+<a class="jxr_linenumber" name="13" href="#13">13</a>  <em class="jxr_comment"> * License for the specific language governing permissions and limitations</em>
+<a class="jxr_linenumber" name="14" href="#14">14</a>  <em class="jxr_comment"> * under the License.</em>
+<a class="jxr_linenumber" name="15" href="#15">15</a>  <em class="jxr_comment"> */</em>
+<a class="jxr_linenumber" name="16" href="#16">16</a>  <strong class="jxr_keyword">package</strong> com.facebook.swift.service;
+<a class="jxr_linenumber" name="17" href="#17">17</a>  
+<a class="jxr_linenumber" name="18" href="#18">18</a>  <strong class="jxr_keyword">import</strong> com.facebook.swift.codec.ThriftCodec;
+<a class="jxr_linenumber" name="19" href="#19">19</a>  <strong class="jxr_keyword">import</strong> com.facebook.swift.codec.ThriftCodecManager;
+<a class="jxr_linenumber" name="20" href="#20">20</a>  <strong class="jxr_keyword">import</strong> com.facebook.swift.codec.internal.TProtocolReader;
+<a class="jxr_linenumber" name="21" href="#21">21</a>  <strong class="jxr_keyword">import</strong> com.facebook.swift.codec.internal.TProtocolWriter;
+<a class="jxr_linenumber" name="22" href="#22">22</a>  <strong class="jxr_keyword">import</strong> com.facebook.swift.codec.metadata.ThriftFieldMetadata;
+<a class="jxr_linenumber" name="23" href="#23">23</a>  <strong class="jxr_keyword">import</strong> com.facebook.swift.codec.metadata.ThriftType;
+<a class="jxr_linenumber" name="24" href="#24">24</a>  <strong class="jxr_keyword">import</strong> com.facebook.swift.service.metadata.ThriftMethodMetadata;
+<a class="jxr_linenumber" name="25" href="#25">25</a>  <strong class="jxr_keyword">import</strong> com.google.common.base.Defaults;
+<a class="jxr_linenumber" name="26" href="#26">26</a>  <strong class="jxr_keyword">import</strong> com.google.common.base.Throwables;
+<a class="jxr_linenumber" name="27" href="#27">27</a>  <strong class="jxr_keyword">import</strong> com.google.common.collect.ImmutableList;
+<a class="jxr_linenumber" name="28" href="#28">28</a>  <strong class="jxr_keyword">import</strong> com.google.common.collect.ImmutableMap;
+<a class="jxr_linenumber" name="29" href="#29">29</a>  <strong class="jxr_keyword">import</strong> com.google.common.primitives.Primitives;
+<a class="jxr_linenumber" name="30" href="#30">30</a>  <strong class="jxr_keyword">import</strong> com.google.common.reflect.TypeToken;
+<a class="jxr_linenumber" name="31" href="#31">31</a>  <strong class="jxr_keyword">import</strong> org.apache.thrift.TApplicationException;
+<a class="jxr_linenumber" name="32" href="#32">32</a>  <strong class="jxr_keyword">import</strong> org.apache.thrift.protocol.TMessage;
+<a class="jxr_linenumber" name="33" href="#33">33</a>  <strong class="jxr_keyword">import</strong> org.apache.thrift.protocol.TMessageType;
+<a class="jxr_linenumber" name="34" href="#34">34</a>  <strong class="jxr_keyword">import</strong> org.apache.thrift.protocol.TProtocol;
+<a class="jxr_linenumber" name="35" href="#35">35</a>  <strong class="jxr_keyword">import</strong> org.apache.thrift.protocol.TProtocolException;
+<a class="jxr_linenumber" name="36" href="#36">36</a>  <strong class="jxr_keyword">import</strong> org.weakref.jmx.Flatten;
+<a class="jxr_linenumber" name="37" href="#37">37</a>  <strong class="jxr_keyword">import</strong> org.weakref.jmx.Managed;
+<a class="jxr_linenumber" name="38" href="#38">38</a>  
+<a class="jxr_linenumber" name="39" href="#39">39</a>  <strong class="jxr_keyword">import</strong> javax.annotation.concurrent.ThreadSafe;
+<a class="jxr_linenumber" name="40" href="#40">40</a>  <strong class="jxr_keyword">import</strong> java.lang.reflect.InvocationTargetException;
+<a class="jxr_linenumber" name="41" href="#41">41</a>  <strong class="jxr_keyword">import</strong> java.lang.reflect.Method;
+<a class="jxr_linenumber" name="42" href="#42">42</a>  <strong class="jxr_keyword">import</strong> java.lang.reflect.Type;
+<a class="jxr_linenumber" name="43" href="#43">43</a>  <strong class="jxr_keyword">import</strong> java.util.Map;
+<a class="jxr_linenumber" name="44" href="#44">44</a>  <strong class="jxr_keyword">import</strong> java.util.concurrent.Future;
+<a class="jxr_linenumber" name="45" href="#45">45</a>  
+<a class="jxr_linenumber" name="46" href="#46">46</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> io.airlift.units.Duration.nanosSince;
+<a class="jxr_linenumber" name="47" href="#47">47</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.apache.thrift.TApplicationException.INTERNAL_ERROR;
+<a class="jxr_linenumber" name="48" href="#48">48</a>  
+<a class="jxr_linenumber" name="49" href="#49">49</a>  @ThreadSafe
+<a class="jxr_linenumber" name="50" href="#50">50</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> <a href="../../../../com/facebook/swift/service/ThriftMethodProcessor.html">ThriftMethodProcessor</a>
+<a class="jxr_linenumber" name="51" href="#51">51</a>  {
+<a class="jxr_linenumber" name="52" href="#52">52</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> String name;
+<a class="jxr_linenumber" name="53" href="#53">53</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> Object service;
+<a class="jxr_linenumber" name="54" href="#54">54</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> Method method;
+<a class="jxr_linenumber" name="55" href="#55">55</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> String resultStructName;
+<a class="jxr_linenumber" name="56" href="#56">56</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">boolean</strong> oneway;
+<a class="jxr_linenumber" name="57" href="#57">57</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> ImmutableList&lt;ThriftFieldMetadata&gt; parameters;
+<a class="jxr_linenumber" name="58" href="#58">58</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> Map&lt;Short, ThriftCodec&lt;?&gt;&gt; parameterCodecs;
+<a class="jxr_linenumber" name="59" href="#59">59</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> Map&lt;Short, Short&gt; thriftParameterIdToJavaArgumentListPositionMap;
+<a class="jxr_linenumber" name="60" href="#60">60</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> ThriftCodec&lt;Object&gt; successCodec;
+<a class="jxr_linenumber" name="61" href="#61">61</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> Map&lt;Class&lt;?&gt;, ExceptionProcessor&gt; exceptionCodecs;
+<a class="jxr_linenumber" name="62" href="#62">62</a>  
+<a class="jxr_linenumber" name="63" href="#63">63</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> <a href="../../../../com/facebook/swift/service/ThriftMethodStats.html">ThriftMethodStats</a> stats = <strong class="jxr_keyword">new</strong> <a href="../../../../com/facebook/swift/service/ThriftMethodStats.html">ThriftMethodStats</a>();
+<a class="jxr_linenumber" name="64" href="#64">64</a>  
+<a class="jxr_linenumber" name="65" href="#65">65</a>      <strong class="jxr_keyword">public</strong> <a href="../../../../com/facebook/swift/service/ThriftMethodProcessor.html">ThriftMethodProcessor</a>(
+<a class="jxr_linenumber" name="66" href="#66">66</a>              Object service,
+<a class="jxr_linenumber" name="67" href="#67">67</a>              <a href="../../../../com/facebook/swift/service/metadata/ThriftMethodMetadata.html">ThriftMethodMetadata</a> methodMetadata,
+<a class="jxr_linenumber" name="68" href="#68">68</a>              ThriftCodecManager codecManager
+<a class="jxr_linenumber" name="69" href="#69">69</a>      )
+<a class="jxr_linenumber" name="70" href="#70">70</a>      {
+<a class="jxr_linenumber" name="71" href="#71">71</a>          <strong class="jxr_keyword">this</strong>.service = service;
+<a class="jxr_linenumber" name="72" href="#72">72</a>  
+<a class="jxr_linenumber" name="73" href="#73">73</a>          name = methodMetadata.getName();
+<a class="jxr_linenumber" name="74" href="#74">74</a>          resultStructName = name + <span class="jxr_string">"_result"</span>;
+<a class="jxr_linenumber" name="75" href="#75">75</a>  
+<a class="jxr_linenumber" name="76" href="#76">76</a>          method = methodMetadata.getMethod();
+<a class="jxr_linenumber" name="77" href="#77">77</a>          oneway = methodMetadata.getOneway();
+<a class="jxr_linenumber" name="78" href="#78">78</a>  
+<a class="jxr_linenumber" name="79" href="#79">79</a>          parameters = ImmutableList.copyOf(methodMetadata.getParameters());
+<a class="jxr_linenumber" name="80" href="#80">80</a>  
+<a class="jxr_linenumber" name="81" href="#81">81</a>          ImmutableMap.Builder&lt;Short, ThriftCodec&lt;?&gt;&gt; builder = ImmutableMap.builder();
+<a class="jxr_linenumber" name="82" href="#82">82</a>          <strong class="jxr_keyword">for</strong> (ThriftFieldMetadata fieldMetadata : methodMetadata.getParameters()) {
+<a class="jxr_linenumber" name="83" href="#83">83</a>              builder.put(fieldMetadata.getId(), codecManager.getCodec(fieldMetadata.getType()));
+<a class="jxr_linenumber" name="84" href="#84">84</a>          }
+<a class="jxr_linenumber" name="85" href="#85">85</a>          parameterCodecs = builder.build();
+<a class="jxr_linenumber" name="86" href="#86">86</a>  
+<a class="jxr_linenumber" name="87" href="#87">87</a>          <em class="jxr_comment">// Build a mapping from thrift parameter ID to a position in the formal argument list</em>
+<a class="jxr_linenumber" name="88" href="#88">88</a>          ImmutableMap.Builder&lt;Short, Short&gt; parameterOrderingBuilder = ImmutableMap.builder();
+<a class="jxr_linenumber" name="89" href="#89">89</a>          <strong class="jxr_keyword">short</strong> javaArgumentPosition = 0;
+<a class="jxr_linenumber" name="90" href="#90">90</a>          <strong class="jxr_keyword">for</strong> (ThriftFieldMetadata fieldMetadata : methodMetadata.getParameters()) {
+<a class="jxr_linenumber" name="91" href="#91">91</a>              parameterOrderingBuilder.put(fieldMetadata.getId(), javaArgumentPosition++);
+<a class="jxr_linenumber" name="92" href="#92">92</a>          }
+<a class="jxr_linenumber" name="93" href="#93">93</a>          thriftParameterIdToJavaArgumentListPositionMap = parameterOrderingBuilder.build();
+<a class="jxr_linenumber" name="94" href="#94">94</a>  
+<a class="jxr_linenumber" name="95" href="#95">95</a>          ImmutableMap.Builder&lt;Class&lt;?&gt;, ExceptionProcessor&gt; exceptions = ImmutableMap.builder();
+<a class="jxr_linenumber" name="96" href="#96">96</a>          <strong class="jxr_keyword">for</strong> (Map.Entry&lt;Short, ThriftType&gt; entry : methodMetadata.getExceptions().entrySet()) {
+<a class="jxr_linenumber" name="97" href="#97">97</a>              Class&lt;?&gt; type = TypeToken.of(entry.getValue().getJavaType()).getRawType();
+<a class="jxr_linenumber" name="98" href="#98">98</a>              <a href="../../../../com/facebook/swift/service/ThriftMethodProcessor.html">ExceptionProcessor</a> processor = <strong class="jxr_keyword">new</strong> <a href="../../../../com/facebook/swift/service/ThriftMethodProcessor.html">ExceptionProcessor</a>(entry.getKey(), codecManager.getCodec(entry.getValue()));
+<a class="jxr_linenumber" name="99" href="#99">99</a>              exceptions.put(type, processor);
+<a class="jxr_linenumber" name="100" href="#100">100</a>         }
+<a class="jxr_linenumber" name="101" href="#101">101</a>         exceptionCodecs = exceptions.build();
+<a class="jxr_linenumber" name="102" href="#102">102</a> 
+<a class="jxr_linenumber" name="103" href="#103">103</a>         successCodec = (ThriftCodec&lt;Object&gt;) codecManager.getCodec(methodMetadata.getReturnType());
+<a class="jxr_linenumber" name="104" href="#104">104</a>     }
+<a class="jxr_linenumber" name="105" href="#105">105</a> 
+<a class="jxr_linenumber" name="106" href="#106">106</a>     @Managed
+<a class="jxr_linenumber" name="107" href="#107">107</a>     <strong class="jxr_keyword">public</strong> String getName()
+<a class="jxr_linenumber" name="108" href="#108">108</a>     {
+<a class="jxr_linenumber" name="109" href="#109">109</a>         <strong class="jxr_keyword">return</strong> name;
+<a class="jxr_linenumber" name="110" href="#110">110</a>     }
+<a class="jxr_linenumber" name="111" href="#111">111</a> 
+<a class="jxr_linenumber" name="112" href="#112">112</a>     <strong class="jxr_keyword">public</strong> Class&lt;?&gt; getServiceClass() {
+<a class="jxr_linenumber" name="113" href="#113">113</a>         <strong class="jxr_keyword">return</strong> service.getClass();
+<a class="jxr_linenumber" name="114" href="#114">114</a>     }
+<a class="jxr_linenumber" name="115" href="#115">115</a> 
+<a class="jxr_linenumber" name="116" href="#116">116</a>     @Managed
+<a class="jxr_linenumber" name="117" href="#117">117</a>     @Flatten
+<a class="jxr_linenumber" name="118" href="#118">118</a>     <strong class="jxr_keyword">public</strong> <a href="../../../../com/facebook/swift/service/ThriftMethodStats.html">ThriftMethodStats</a> getStats()
+<a class="jxr_linenumber" name="119" href="#119">119</a>     {
+<a class="jxr_linenumber" name="120" href="#120">120</a>         <strong class="jxr_keyword">return</strong> stats;
+<a class="jxr_linenumber" name="121" href="#121">121</a>     }
+<a class="jxr_linenumber" name="122" href="#122">122</a> 
+<a class="jxr_linenumber" name="123" href="#123">123</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> process(TProtocol in, TProtocol out, <strong class="jxr_keyword">int</strong> sequenceId)
+<a class="jxr_linenumber" name="124" href="#124">124</a>             <strong class="jxr_keyword">throws</strong> Exception
+<a class="jxr_linenumber" name="125" href="#125">125</a>     {
+<a class="jxr_linenumber" name="126" href="#126">126</a>         <strong class="jxr_keyword">long</strong> start = System.nanoTime();
+<a class="jxr_linenumber" name="127" href="#127">127</a> 
+<a class="jxr_linenumber" name="128" href="#128">128</a>         <em class="jxr_comment">// read args</em>
+<a class="jxr_linenumber" name="129" href="#129">129</a>         Object[] args = readArguments(in);
+<a class="jxr_linenumber" name="130" href="#130">130</a> 
+<a class="jxr_linenumber" name="131" href="#131">131</a>         <em class="jxr_comment">// invoke method</em>
+<a class="jxr_linenumber" name="132" href="#132">132</a>         Object result;
+<a class="jxr_linenumber" name="133" href="#133">133</a>         <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="134" href="#134">134</a>             result = invokeMethod(args);
+<a class="jxr_linenumber" name="135" href="#135">135</a> 
+<a class="jxr_linenumber" name="136" href="#136">136</a>             <strong class="jxr_keyword">if</strong> (!oneway) {
+<a class="jxr_linenumber" name="137" href="#137">137</a>                 <em class="jxr_comment">// write success reply</em>
+<a class="jxr_linenumber" name="138" href="#138">138</a>                 writeResponse(out,
+<a class="jxr_linenumber" name="139" href="#139">139</a>                               sequenceId,
+<a class="jxr_linenumber" name="140" href="#140">140</a>                               TMessageType.REPLY,
+<a class="jxr_linenumber" name="141" href="#141">141</a>                               <span class="jxr_string">"success"</span>,
+<a class="jxr_linenumber" name="142" href="#142">142</a>                               (<strong class="jxr_keyword">short</strong>) 0,
+<a class="jxr_linenumber" name="143" href="#143">143</a>                               successCodec,
+<a class="jxr_linenumber" name="144" href="#144">144</a>                               result);
+<a class="jxr_linenumber" name="145" href="#145">145</a>             }
+<a class="jxr_linenumber" name="146" href="#146">146</a> 
+<a class="jxr_linenumber" name="147" href="#147">147</a>             stats.addSuccessTime(nanosSince(start));
+<a class="jxr_linenumber" name="148" href="#148">148</a>         }
+<a class="jxr_linenumber" name="149" href="#149">149</a>         <strong class="jxr_keyword">catch</strong> (Exception e) {
+<a class="jxr_linenumber" name="150" href="#150">150</a>             <strong class="jxr_keyword">if</strong> (!oneway) {
+<a class="jxr_linenumber" name="151" href="#151">151</a>                 <a href="../../../../com/facebook/swift/service/ThriftMethodProcessor.html">ExceptionProcessor</a> exceptionCodec = exceptionCodecs.get(e.getClass());
+<a class="jxr_linenumber" name="152" href="#152">152</a>                 <strong class="jxr_keyword">if</strong> (exceptionCodec != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="153" href="#153">153</a>                     <em class="jxr_comment">// write expected exception response</em>
+<a class="jxr_linenumber" name="154" href="#154">154</a>                     writeResponse(out,
+<a class="jxr_linenumber" name="155" href="#155">155</a>                                   sequenceId,
+<a class="jxr_linenumber" name="156" href="#156">156</a>                                   TMessageType.REPLY,
+<a class="jxr_linenumber" name="157" href="#157">157</a>                                   <span class="jxr_string">"exception"</span>,
+<a class="jxr_linenumber" name="158" href="#158">158</a>                                   exceptionCodec.getId(),
+<a class="jxr_linenumber" name="159" href="#159">159</a>                                   exceptionCodec.getCodec(),
+<a class="jxr_linenumber" name="160" href="#160">160</a>                                   e);
+<a class="jxr_linenumber" name="161" href="#161">161</a>                     stats.addErrorTime(nanosSince(start));
+<a class="jxr_linenumber" name="162" href="#162">162</a>                 } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="163" href="#163">163</a>                     <em class="jxr_comment">// unexpected exception</em>
+<a class="jxr_linenumber" name="164" href="#164">164</a>                     TApplicationException applicationException =
+<a class="jxr_linenumber" name="165" href="#165">165</a>                       <strong class="jxr_keyword">new</strong> TApplicationException(INTERNAL_ERROR,
+<a class="jxr_linenumber" name="166" href="#166">166</a>                                                 <span class="jxr_string">"Internal error processing "</span> + method.getName());
+<a class="jxr_linenumber" name="167" href="#167">167</a>                     applicationException.initCause(e);
+<a class="jxr_linenumber" name="168" href="#168">168</a> 
+<a class="jxr_linenumber" name="169" href="#169">169</a>                     <em class="jxr_comment">// Application exceptions are sent to client, and the connection can be reused</em>
+<a class="jxr_linenumber" name="170" href="#170">170</a>                     out.writeMessageBegin(<strong class="jxr_keyword">new</strong> TMessage(name, TMessageType.EXCEPTION, sequenceId));
+<a class="jxr_linenumber" name="171" href="#171">171</a>                     applicationException.write(out);
+<a class="jxr_linenumber" name="172" href="#172">172</a>                     out.writeMessageEnd();
+<a class="jxr_linenumber" name="173" href="#173">173</a>                     out.getTransport().flush();
+<a class="jxr_linenumber" name="174" href="#174">174</a> 
+<a class="jxr_linenumber" name="175" href="#175">175</a>                     stats.addErrorTime(nanosSince(start));
+<a class="jxr_linenumber" name="176" href="#176">176</a>                 }
+<a class="jxr_linenumber" name="177" href="#177">177</a>             } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="178" href="#178">178</a>                 stats.addErrorTime(nanosSince(start));
+<a class="jxr_linenumber" name="179" href="#179">179</a>             }
+<a class="jxr_linenumber" name="180" href="#180">180</a>         }
+<a class="jxr_linenumber" name="181" href="#181">181</a>     }
+<a class="jxr_linenumber" name="182" href="#182">182</a> 
+<a class="jxr_linenumber" name="183" href="#183">183</a>     <strong class="jxr_keyword">private</strong> Object invokeMethod(Object[] args)
+<a class="jxr_linenumber" name="184" href="#184">184</a>             <strong class="jxr_keyword">throws</strong> Exception
+<a class="jxr_linenumber" name="185" href="#185">185</a>     {
+<a class="jxr_linenumber" name="186" href="#186">186</a>         <strong class="jxr_keyword">long</strong> start = System.nanoTime();
+<a class="jxr_linenumber" name="187" href="#187">187</a>         <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="188" href="#188">188</a>             Object response = method.invoke(service, args);
+<a class="jxr_linenumber" name="189" href="#189">189</a>             stats.addInvokeTime(nanosSince(start));
+<a class="jxr_linenumber" name="190" href="#190">190</a>             <strong class="jxr_keyword">if</strong> (response instanceof Future)
+<a class="jxr_linenumber" name="191" href="#191">191</a>             {
+<a class="jxr_linenumber" name="192" href="#192">192</a>                 <em class="jxr_comment">// Server-side async isn't implemented yet, so if the server method returns</em>
+<a class="jxr_linenumber" name="193" href="#193">193</a>                 <em class="jxr_comment">// a future, we have to wait for it.</em>
+<a class="jxr_linenumber" name="194" href="#194">194</a>                 <strong class="jxr_keyword">return</strong> ((Future&lt;?&gt;)response).get();
+<a class="jxr_linenumber" name="195" href="#195">195</a>             }
+<a class="jxr_linenumber" name="196" href="#196">196</a>             <strong class="jxr_keyword">return</strong> response;
+<a class="jxr_linenumber" name="197" href="#197">197</a>         }
+<a class="jxr_linenumber" name="198" href="#198">198</a>         <strong class="jxr_keyword">catch</strong> (Throwable e) {
+<a class="jxr_linenumber" name="199" href="#199">199</a>             <em class="jxr_comment">// strip off the InvocationTargetException wrapper if present</em>
+<a class="jxr_linenumber" name="200" href="#200">200</a>             <strong class="jxr_keyword">if</strong> (e instanceof InvocationTargetException) {
+<a class="jxr_linenumber" name="201" href="#201">201</a>                 InvocationTargetException invocationTargetException = (InvocationTargetException) e;
+<a class="jxr_linenumber" name="202" href="#202">202</a>                 <strong class="jxr_keyword">if</strong> (invocationTargetException.getTargetException() != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="203" href="#203">203</a>                     e = invocationTargetException.getTargetException();
+<a class="jxr_linenumber" name="204" href="#204">204</a>                 }
+<a class="jxr_linenumber" name="205" href="#205">205</a>             }
+<a class="jxr_linenumber" name="206" href="#206">206</a> 
+<a class="jxr_linenumber" name="207" href="#207">207</a>             <em class="jxr_comment">// rethrow Exceptions or Errors</em>
+<a class="jxr_linenumber" name="208" href="#208">208</a>             Throwables.propagateIfPossible(e, Exception.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="209" href="#209">209</a> 
+<a class="jxr_linenumber" name="210" href="#210">210</a>             <em class="jxr_comment">// Wrap random extensions of Throwable in a runtime exception</em>
+<a class="jxr_linenumber" name="211" href="#211">211</a>             <strong class="jxr_keyword">throw</strong> Throwables.propagate(e);
+<a class="jxr_linenumber" name="212" href="#212">212</a>         }
+<a class="jxr_linenumber" name="213" href="#213">213</a>     }
+<a class="jxr_linenumber" name="214" href="#214">214</a> 
+<a class="jxr_linenumber" name="215" href="#215">215</a>     <strong class="jxr_keyword">private</strong> Object[] readArguments(TProtocol in)
+<a class="jxr_linenumber" name="216" href="#216">216</a>             <strong class="jxr_keyword">throws</strong> Exception
+<a class="jxr_linenumber" name="217" href="#217">217</a>     {
+<a class="jxr_linenumber" name="218" href="#218">218</a>         <strong class="jxr_keyword">long</strong> start = System.nanoTime();
+<a class="jxr_linenumber" name="219" href="#219">219</a> 
+<a class="jxr_linenumber" name="220" href="#220">220</a>         <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="221" href="#221">221</a>             <strong class="jxr_keyword">int</strong> numArgs = method.getParameterTypes().length;
+<a class="jxr_linenumber" name="222" href="#222">222</a>             Object[] args = <strong class="jxr_keyword">new</strong> Object[numArgs];
+<a class="jxr_linenumber" name="223" href="#223">223</a>             TProtocolReader reader = <strong class="jxr_keyword">new</strong> TProtocolReader(in);
+<a class="jxr_linenumber" name="224" href="#224">224</a> 
+<a class="jxr_linenumber" name="225" href="#225">225</a>             <em class="jxr_comment">// Map incoming arguments from the ID passed in on the wire to the position in the</em>
+<a class="jxr_linenumber" name="226" href="#226">226</a>             <em class="jxr_comment">// java argument list we expect to see a parameter with that ID.</em>
+<a class="jxr_linenumber" name="227" href="#227">227</a>             reader.readStructBegin();
+<a class="jxr_linenumber" name="228" href="#228">228</a>             <strong class="jxr_keyword">while</strong> (reader.nextField()) {
+<a class="jxr_linenumber" name="229" href="#229">229</a>                 <strong class="jxr_keyword">short</strong> fieldId = reader.getFieldId();
+<a class="jxr_linenumber" name="230" href="#230">230</a> 
+<a class="jxr_linenumber" name="231" href="#231">231</a>                 ThriftCodec&lt;?&gt; codec = parameterCodecs.get(fieldId);
+<a class="jxr_linenumber" name="232" href="#232">232</a>                 <strong class="jxr_keyword">if</strong> (codec == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="233" href="#233">233</a>                     <em class="jxr_comment">// unknown field</em>
+<a class="jxr_linenumber" name="234" href="#234">234</a>                     reader.skipFieldData();
+<a class="jxr_linenumber" name="235" href="#235">235</a>                 }
+<a class="jxr_linenumber" name="236" href="#236">236</a>                 <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="237" href="#237">237</a>                     <em class="jxr_comment">// Map the incoming arguments to an array of arguments ordered as the java</em>
+<a class="jxr_linenumber" name="238" href="#238">238</a>                     <em class="jxr_comment">// code for the handler method expects to see them</em>
+<a class="jxr_linenumber" name="239" href="#239">239</a>                     args[thriftParameterIdToJavaArgumentListPositionMap.get(fieldId)] = reader.readField(codec);
+<a class="jxr_linenumber" name="240" href="#240">240</a>                 }
+<a class="jxr_linenumber" name="241" href="#241">241</a>             }
+<a class="jxr_linenumber" name="242" href="#242">242</a>             reader.readStructEnd();
+<a class="jxr_linenumber" name="243" href="#243">243</a> 
+<a class="jxr_linenumber" name="244" href="#244">244</a>             <em class="jxr_comment">// Walk through our list of expected parameters and if no incoming parameters were</em>
+<a class="jxr_linenumber" name="245" href="#245">245</a>             <em class="jxr_comment">// mapped to a particular expected parameter, fill the expected parameter slow with</em>
+<a class="jxr_linenumber" name="246" href="#246">246</a>             <em class="jxr_comment">// the default for the parameter type.</em>
+<a class="jxr_linenumber" name="247" href="#247">247</a>             <strong class="jxr_keyword">int</strong> argumentPosition = 0;
+<a class="jxr_linenumber" name="248" href="#248">248</a>             <strong class="jxr_keyword">for</strong> (ThriftFieldMetadata argument : parameters) {
+<a class="jxr_linenumber" name="249" href="#249">249</a>                 <strong class="jxr_keyword">if</strong> (args[argumentPosition] == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="250" href="#250">250</a>                     Type argumentType = argument.getType().getJavaType();
+<a class="jxr_linenumber" name="251" href="#251">251</a> 
+<a class="jxr_linenumber" name="252" href="#252">252</a>                     <strong class="jxr_keyword">if</strong> (argumentType instanceof Class) {
+<a class="jxr_linenumber" name="253" href="#253">253</a>                         Class&lt;?&gt; argumentClass = (Class&lt;?&gt;) argumentType;
+<a class="jxr_linenumber" name="254" href="#254">254</a>                         argumentClass = Primitives.unwrap(argumentClass);
+<a class="jxr_linenumber" name="255" href="#255">255</a>                         args[argumentPosition] = Defaults.defaultValue(argumentClass);
+<a class="jxr_linenumber" name="256" href="#256">256</a>                     }
+<a class="jxr_linenumber" name="257" href="#257">257</a>                 }
+<a class="jxr_linenumber" name="258" href="#258">258</a>                 argumentPosition++;
+<a class="jxr_linenumber" name="259" href="#259">259</a>             }
+<a class="jxr_linenumber" name="260" href="#260">260</a> 
+<a class="jxr_linenumber" name="261" href="#261">261</a>             stats.addReadTime(nanosSince(start));
+<a class="jxr_linenumber" name="262" href="#262">262</a>             <strong class="jxr_keyword">return</strong> args;
+<a class="jxr_linenumber" name="263" href="#263">263</a>         }
+<a class="jxr_linenumber" name="264" href="#264">264</a>         <strong class="jxr_keyword">catch</strong> (TProtocolException e) {
+<a class="jxr_linenumber" name="265" href="#265">265</a>             <em class="jxr_comment">// TProtocolException is the only recoverable exception</em>
+<a class="jxr_linenumber" name="266" href="#266">266</a>             <em class="jxr_comment">// Other exceptions may have left the input stream in corrupted state so we must</em>
+<a class="jxr_linenumber" name="267" href="#267">267</a>             <em class="jxr_comment">// tear down the socket.</em>
+<a class="jxr_linenumber" name="268" href="#268">268</a>             <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+<a class="jxr_linenumber" name="269" href="#269">269</a>         }
+<a class="jxr_linenumber" name="270" href="#270">270</a>     }
+<a class="jxr_linenumber" name="271" href="#271">271</a> 
+<a class="jxr_linenumber" name="272" href="#272">272</a>     <strong class="jxr_keyword">private</strong> &lt;T&gt; <strong class="jxr_keyword">void</strong> writeResponse(TProtocol out,
+<a class="jxr_linenumber" name="273" href="#273">273</a>                                    <strong class="jxr_keyword">int</strong> sequenceId,
+<a class="jxr_linenumber" name="274" href="#274">274</a>                                    byte responseType,
+<a class="jxr_linenumber" name="275" href="#275">275</a>                                    String responseFieldName,
+<a class="jxr_linenumber" name="276" href="#276">276</a>                                    <strong class="jxr_keyword">short</strong> responseFieldId,
+<a class="jxr_linenumber" name="277" href="#277">277</a>                                    ThriftCodec&lt;T&gt; responseCodec,
+<a class="jxr_linenumber" name="278" href="#278">278</a>                                    T result) <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="279" href="#279">279</a>         <strong class="jxr_keyword">long</strong> start = System.nanoTime();
+<a class="jxr_linenumber" name="280" href="#280">280</a> 
+<a class="jxr_linenumber" name="281" href="#281">281</a>         out.writeMessageBegin(<strong class="jxr_keyword">new</strong> TMessage(name, responseType, sequenceId));
+<a class="jxr_linenumber" name="282" href="#282">282</a> 
+<a class="jxr_linenumber" name="283" href="#283">283</a>         TProtocolWriter writer = <strong class="jxr_keyword">new</strong> TProtocolWriter(out);
+<a class="jxr_linenumber" name="284" href="#284">284</a>         writer.writeStructBegin(resultStructName);
+<a class="jxr_linenumber" name="285" href="#285">285</a>         writer.writeField(responseFieldName, (<strong class="jxr_keyword">short</strong>) responseFieldId, responseCodec, result);
+<a class="jxr_linenumber" name="286" href="#286">286</a>         writer.writeStructEnd();
+<a class="jxr_linenumber" name="287" href="#287">287</a> 
+<a class="jxr_linenumber" name="288" href="#288">288</a>         out.writeMessageEnd();
+<a class="jxr_linenumber" name="289" href="#289">289</a>         out.getTransport().flush();
+<a class="jxr_linenumber" name="290" href="#290">290</a> 
+<a class="jxr_linenumber" name="291" href="#291">291</a>         stats.addWriteTime(nanosSince(start));
+<a class="jxr_linenumber" name="292" href="#292">292</a>     }
+<a class="jxr_linenumber" name="293" href="#293">293</a> 
+<a class="jxr_linenumber" name="294" href="#294">294</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">class</strong> <a href="../../../../com/facebook/swift/service/ThriftMethodProcessor.html">ExceptionProcessor</a>
+<a class="jxr_linenumber" name="295" href="#295">295</a>     {
+<a class="jxr_linenumber" name="296" href="#296">296</a>         <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">short</strong> id;
+<a class="jxr_linenumber" name="297" href="#297">297</a>         <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> ThriftCodec&lt;Object&gt; codec;
+<a class="jxr_linenumber" name="298" href="#298">298</a> 
+<a class="jxr_linenumber" name="299" href="#299">299</a>         <strong class="jxr_keyword">private</strong> <a href="../../../../com/facebook/swift/service/ThriftMethodProcessor.html">ExceptionProcessor</a>(<strong class="jxr_keyword">short</strong> id, ThriftCodec&lt;?&gt; coded)
+<a class="jxr_linenumber" name="300" href="#300">300</a>         {
+<a class="jxr_linenumber" name="301" href="#301">301</a>             <strong class="jxr_keyword">this</strong>.id = id;
+<a class="jxr_linenumber" name="302" href="#302">302</a>             <strong class="jxr_keyword">this</strong>.codec = (ThriftCodec&lt;Object&gt;) coded;
+<a class="jxr_linenumber" name="303" href="#303">303</a>         }
+<a class="jxr_linenumber" name="304" href="#304">304</a> 
+<a class="jxr_linenumber" name="305" href="#305">305</a>         <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">short</strong> getId()
+<a class="jxr_linenumber" name="306" href="#306">306</a>         {
+<a class="jxr_linenumber" name="307" href="#307">307</a>             <strong class="jxr_keyword">return</strong> id;
+<a class="jxr_linenumber" name="308" href="#308">308</a>         }
+<a class="jxr_linenumber" name="309" href="#309">309</a> 
+<a class="jxr_linenumber" name="310" href="#310">310</a>         <strong class="jxr_keyword">public</strong> ThriftCodec&lt;Object&gt; getCodec()
+<a class="jxr_linenumber" name="311" href="#311">311</a>         {
+<a class="jxr_linenumber" name="312" href="#312">312</a>             <strong class="jxr_keyword">return</strong> codec;
+<a class="jxr_linenumber" name="313" href="#313">313</a>         }
+<a class="jxr_linenumber" name="314" href="#314">314</a>     }
+<a class="jxr_linenumber" name="315" href="#315">315</a> }
+</pre>
+<hr/><div id="footer">This page was automatically generated by <a href="http://maven.apache.org/">Maven</a></div></body>
+</html>
+
