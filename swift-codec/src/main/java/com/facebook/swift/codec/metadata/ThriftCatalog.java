@@ -27,6 +27,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
+import com.google.common.util.concurrent.ListenableFuture;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -41,6 +42,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import javax.annotation.concurrent.ThreadSafe;
 
+import static com.facebook.swift.codec.metadata.ReflectionHelper.getFutureReturnType;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getIterableType;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getMapKeyType;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getMapValueType;
@@ -245,12 +247,17 @@ public class ThriftCatalog
             return list(getThriftType(elementType));
         }
         // The void type is used by service methods and is encoded as an empty struct
-        if (void.class.isAssignableFrom(rawType)) {
+        if (void.class.isAssignableFrom(rawType) || Void.class.isAssignableFrom(rawType)) {
             return VOID;
         }
         if (rawType.isAnnotationPresent(ThriftStruct.class)) {
             ThriftStructMetadata<?> structMetadata = getThriftStructMetadata(rawType);
             return struct(structMetadata);
+        }
+
+        if (ListenableFuture.class.isAssignableFrom(rawType)) {
+            Type returnType = getFutureReturnType(javaType);
+            return getThriftType(returnType);
         }
 
         // coerce the type if possible

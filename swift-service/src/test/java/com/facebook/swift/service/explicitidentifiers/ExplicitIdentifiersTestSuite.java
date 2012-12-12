@@ -7,9 +7,9 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 
-public class TestSuite extends TestSuiteBase<TestServiceHandler, TestServiceClient>
+public class ExplicitIdentifiersTestSuite extends TestSuiteBase<TestServiceHandler, TestServiceClient>
 {
-    public TestSuite()
+    public ExplicitIdentifiersTestSuite()
     {
         super(TestServiceHandler.class, TestServiceClient.class);
     }

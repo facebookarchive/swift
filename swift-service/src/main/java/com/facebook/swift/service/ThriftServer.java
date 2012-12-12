@@ -24,7 +24,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.TProcessorFactory;
-import org.apache.thrift.protocol.TBinaryProtocol;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.weakref.jmx.Managed;
 import org.weakref.jmx.com.google.common.primitives.Ints;
@@ -79,15 +78,12 @@ public class ThriftServer implements Closeable
         acceptorExecutor = newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("thrift-acceptor-%s").build());
         ioExecutor = newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("thrift-io-%s").build());
 
-        final ThriftServerDef thriftServerDef = new ThriftServerDefBuilder()
-            .name("thrift")
-            .listen(port)
-            .limitFrameSizeTo(Ints.saturatedCast(config.getMaxFrameSize().toBytes()))
-            .withProcessorFactory(processorFactory)
-            .inProtocol(new TBinaryProtocol.Factory())
-            .outProtocol(new TBinaryProtocol.Factory())
-            .using(workerExecutor)
-            .build();
+        ThriftServerDef thriftServerDef = ThriftServerDef.newBuilder()
+                                                         .name("thrift")
+                                                         .listen(port)
+                                                         .limitFrameSizeTo((int) config.getMaxFrameSize().toBytes())
+                                                         .withProcessorFactory(processorFactory)
+                                                         .using(workerExecutor).build();
 
         transport = new NettyServerTransport(thriftServerDef, new NettyConfigBuilder(), allChannels);
     }

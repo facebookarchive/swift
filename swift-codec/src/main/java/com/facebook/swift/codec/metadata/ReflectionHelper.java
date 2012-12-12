@@ -37,6 +37,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Future;
 
 import static java.lang.reflect.Modifier.isStatic;
 
@@ -50,6 +51,7 @@ public final class ReflectionHelper
     private static final Type MAP_VALUE_TYPE;
     private static final Type ITERATOR_TYPE;
     private static final Type ITERATOR_ELEMENT_TYPE;
+    private static final Type FUTURE_RETURN_TYPE;
 
     static {
         try {
@@ -59,6 +61,9 @@ public final class ReflectionHelper
 
             ITERATOR_TYPE = Iterable.class.getMethod("iterator").getGenericReturnType();
             ITERATOR_ELEMENT_TYPE = Iterator.class.getMethod("next").getGenericReturnType();
+
+            Method futureGetMethod = Future.class.getMethod("get");
+            FUTURE_RETURN_TYPE = futureGetMethod.getGenericReturnType();
         }
         catch (Exception e) {
             throw Throwables.propagate(e);
@@ -78,6 +83,11 @@ public final class ReflectionHelper
     public static Type getIterableType(Type type)
     {
         return TypeToken.of(type).resolveType(ITERATOR_TYPE).resolveType(ITERATOR_ELEMENT_TYPE).getType();
+    }
+
+    public static Type getFutureReturnType(Type type)
+    {
+        return TypeToken.of(type).resolveType(FUTURE_RETURN_TYPE).getType();
     }
 
     public static <T extends Annotation> Set<T> getAllClassAnnotations(Class<?> type, Class<T> annotation)

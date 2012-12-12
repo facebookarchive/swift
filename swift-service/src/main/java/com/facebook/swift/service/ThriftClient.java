@@ -15,13 +15,16 @@
  */
 package com.facebook.swift.service;
 
+import com.facebook.nifty.client.NiftyClientChannel;
 import com.google.common.base.Preconditions;
 import com.google.common.net.HostAndPort;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import io.airlift.units.Duration;
-import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.weakref.jmx.Managed;
+
+import java.util.concurrent.ExecutionException;
 
 public class ThriftClient<T>
 {
@@ -30,7 +33,8 @@ public class ThriftClient<T>
     private final String clientName;
     private final Duration connectTimeout;
     private final Duration readTimeout;
-    private final Duration sendTimeout;
+    private final Duration writeTimeout;
+
     private final HostAndPort socksProxy;
 
     @Inject
@@ -50,7 +54,7 @@ public class ThriftClient<T>
         this.clientName = clientName;
         connectTimeout = clientConfig.getConnectTimeout();
         readTimeout = clientConfig.getReadTimeout();
-        sendTimeout = clientConfig.getSendTimeout();
+        writeTimeout = clientConfig.getWriteTimeout();
         socksProxy = clientConfig.getSocksProxy();
     }
 
@@ -79,9 +83,9 @@ public class ThriftClient<T>
     }
 
     @Managed
-    public String getSendTimeout()
+    public String getWriteTimeout()
     {
-        return sendTimeout.toString();
+        return writeTimeout.toString();
     }
 
     @Managed
@@ -93,15 +97,15 @@ public class ThriftClient<T>
         return socksProxy.toString();
     }
 
-    public T open(HostAndPort address)
-            throws TTransportException
+    public ListenableFuture<T> open(HostAndPort address)
+            throws TTransportException, InterruptedException, ExecutionException
     {
-        return clientManager.createClient(address, clientType, connectTimeout, readTimeout, sendTimeout, clientName, socksProxy);
+        return clientManager.createClient(address, clientType, connectTimeout, readTimeout, writeTimeout, clientName, socksProxy);
     }
 
-    public T open(TTransport transport)
-            throws TTransportException
+    public T open(NiftyClientChannel channel)
+            throws TTransportException, InterruptedException
     {
-        return clientManager.createClient(transport, clientType, connectTimeout, readTimeout, clientName);
+      return clientManager.createClient(channel, clientType, clientName);
     }
 }

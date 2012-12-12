@@ -82,7 +82,7 @@ public class TestPuma
         try (
                 ThriftServer server = new ThriftServer(processor).start();
                 ThriftClientManager clientManager = new ThriftClientManager();
-                PumaReadService pumaClient = clientManager.createClient(fromParts("localhost", server.getPort()), PumaReadService.class)
+                PumaReadService pumaClient = clientManager.createClient(fromParts("localhost", server.getPort()), PumaReadService.class).get()
         ) {
             // invoke puma
             List<ReadResultQueryInfoTimeString> results = pumaClient.getResultTimeString(PUMA_REQUEST);
@@ -119,7 +119,7 @@ public class TestPuma
         try (
                 ThriftServer server = new ThriftServer(processor).start();
                 ThriftClientManager clientManager = new ThriftClientManager();
-                PumaReadService pumaClient = clientManager.createClient(fromParts("localhost", server.getPort()), PumaReadService.class)
+                PumaReadService pumaClient = clientManager.createClient(fromParts("localhost", server.getPort()), PumaReadService.class).get()
         ) {
             pumaClient.getResultTimeString(PUMA_REQUEST);
             fail("Expected ReadSemanticException");

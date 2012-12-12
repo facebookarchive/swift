@@ -26,11 +26,11 @@ public class ThriftClientConfig
 {
     public static final Duration DEFAULT_CONNECT_TIMEOUT = new Duration(500, TimeUnit.MILLISECONDS);
     public static final Duration DEFAULT_READ_TIMEOUT = new Duration(1, TimeUnit.MINUTES);
-    public static final Duration DEFAULT_SEND_TIMEOUT = new Duration(1, TimeUnit.MINUTES);
+    public static final Duration DEFAULT_WRITE_TIMEOUT = new Duration(1, TimeUnit.MINUTES);
 
     private Duration connectTimeout = DEFAULT_CONNECT_TIMEOUT;
     private Duration readTimeout = DEFAULT_READ_TIMEOUT;
-    private Duration sendTimeout = DEFAULT_SEND_TIMEOUT;
+    private Duration writeTimeout = DEFAULT_WRITE_TIMEOUT;
     private HostAndPort socksProxy;
 
     @MinDuration("1ms")
@@ -60,15 +60,15 @@ public class ThriftClientConfig
     }
 
     @MinDuration("1ms")
-    public Duration getSendTimeout()
+    public Duration getWriteTimeout()
     {
-        return sendTimeout;
+        return writeTimeout;
     }
 
-    @Config("thrift.client.send-timeout")
-    public ThriftClientConfig setSendTimeout(Duration sendTimeout)
+    @Config("thrift.client.write-timeout")
+    public ThriftClientConfig setWriteTimeout(Duration writeTimeout)
     {
-        this.sendTimeout = sendTimeout;
+        this.writeTimeout = writeTimeout;
         return this;
     }
 

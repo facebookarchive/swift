@@ -20,11 +20,14 @@ import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.ThriftServer;
 import com.facebook.swift.service.ThriftServiceProcessor;
 import com.google.common.net.HostAndPort;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.thrift.transport.TTransportException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+
+import java.util.concurrent.ExecutionException;
 
 public class TestSuiteBase<ServiceInterface, ClientInterface> {
     private ThriftCodecManager codecManager = new ThriftCodecManager();
@@ -43,14 +46,16 @@ public class TestSuiteBase<ServiceInterface, ClientInterface> {
 
     @BeforeClass
     public void setupSuite() throws InstantiationException, IllegalAccessException {
-        handler = handlerClass.newInstance();
-        server = createServer(handler).start();
     }
 
     @BeforeMethod
-    public void setupTest() throws TTransportException {
+    public void setupTest() throws Exception {
+        // TODO: move this to setupSuite when TestNG/surefire integration is fixed
+        handler = handlerClass.newInstance();
+        server = createServer(handler).start();
+
         clientManager = new ThriftClientManager(codecManager);
-        client = createClient(clientManager);
+        client = createClient(clientManager).get();
     }
 
     @AfterMethod
@@ -58,11 +63,15 @@ public class TestSuiteBase<ServiceInterface, ClientInterface> {
         AutoCloseable closeable = (AutoCloseable) client;
         closeable.close();
         clientManager.close();
+
+        // TODO: move this to tearDownSuite when TestNG/surefire integration is fixed
+        // (currently @AfterClass methods do not run if you are running a single test method
+        // from a class containing multiple test methods)
+        server.close();
     }
 
     @AfterClass
     public void tearDownSuite() {
-        server.close();
     }
 
     private ThriftServer createServer(ServiceInterface handler)
@@ -71,8 +80,9 @@ public class TestSuiteBase<ServiceInterface, ClientInterface> {
         return new ThriftServer(processor);
     }
 
-    private ClientInterface createClient(ThriftClientManager clientManager) throws
-      TTransportException {
+    private ListenableFuture<? extends ClientInterface> createClient(ThriftClientManager clientManager)
+            throws TTransportException, InterruptedException, ExecutionException
+    {
         HostAndPort address = HostAndPort.fromParts("localhost", server.getPort());
         return clientManager.createClient(address, clientClass);
     }

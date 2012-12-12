@@ -15,25 +15,29 @@
  */
 package com.facebook.swift.service;
 
+import com.facebook.nifty.client.FramedClientChannel;
 import com.facebook.nifty.client.NiftyClient;
-import com.facebook.nifty.client.TNiftyClientTransport;
+import com.facebook.nifty.client.NiftyClientChannel;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.metadata.ThriftMethodMetadata;
 import com.facebook.swift.service.metadata.ThriftServiceMetadata;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
+import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import io.airlift.units.Duration;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolException;
-import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TTransportException;
 
 import java.io.Closeable;
@@ -49,7 +53,7 @@ import javax.annotation.concurrent.Immutable;
 
 import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_CONNECT_TIMEOUT;
 import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_READ_TIMEOUT;
-import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_SEND_TIMEOUT;
+import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_WRITE_TIMEOUT;
 import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
 
 public class ThriftClientManager implements Closeable
@@ -83,7 +87,7 @@ public class ThriftClientManager implements Closeable
     public ThriftClientManager(ThriftCodecManager codecManager)
     {
         this.codecManager = codecManager;
-        niftyClient = new NiftyClient();
+        this.niftyClient = new NiftyClient();
     }
 
     public ThriftClientManager(ThriftCodecManager codecManager, int maxFrameSize)
@@ -92,41 +96,86 @@ public class ThriftClientManager implements Closeable
       niftyClient = new NiftyClient(maxFrameSize);
     }
 
-    public <T> T createClient(HostAndPort address, Class<T> type)
-            throws TTransportException
+    public <T> ListenableFuture<T> createClient(HostAndPort address, Class<T> type)
+            throws TTransportException, InterruptedException, ExecutionException
     {
-        return createClient(address, type, DEFAULT_CONNECT_TIMEOUT, DEFAULT_READ_TIMEOUT, DEFAULT_SEND_TIMEOUT, DEFAULT_NAME, null);
+        return createClient(address, type, DEFAULT_CONNECT_TIMEOUT, DEFAULT_READ_TIMEOUT, DEFAULT_WRITE_TIMEOUT, DEFAULT_NAME, null);
     }
 
-    public <T> T createClient(HostAndPort address,
-                              Class<T> type,
-                              Duration connectTimeout,
-                              Duration readTimeout,
-                              Duration sendTimeout,
-                              String clientName,
-                              HostAndPort socksProxy)
-            throws TTransportException
+    public <T> ListenableFuture<T> createClient(final HostAndPort address,
+                                                final Class<T> type,
+                                                final Duration connectTimeout,
+                                                final Duration readTimeout,
+                                                final Duration writeTimeout,
+                                                final String clientName,
+                                                HostAndPort socksProxy)
+            throws TTransportException, InterruptedException
     {
-        TNiftyClientTransport transport;
+        NiftyClientChannel channel = null;
         try {
-            transport = niftyClient.connectSync(new InetSocketAddress(address.getHostText(), address.getPort()),
-                    connectTimeout,
-                    readTimeout,
-                    sendTimeout,
-                    toSocksProxyAddress(socksProxy));
-        }
-        catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw Throwables.propagate(e);
-        }
+            final SettableFuture<T> clientFuture = SettableFuture.create();
+            ListenableFuture<FramedClientChannel> connectFuture =
+                    niftyClient.connectAsync(new FramedClientChannel.Factory(),
+                                             toInetSocketAddress(address),
+                                             connectTimeout,
+                                             readTimeout,
+                                             writeTimeout,
+                                             this.toSocksProxyAddress(socksProxy));
+            Futures.addCallback(connectFuture, new FutureCallback<FramedClientChannel>()
+            {
+                @Override
+                public void onSuccess(FramedClientChannel result)
+                {
+                    NiftyClientChannel channel = result;
 
-        try {
-            return createClient(transport, type, address.toString());
+                    if (readTimeout.toMillis() > 0) {
+                        channel.setReceiveTimeout(readTimeout);
+                    }
+                    if (writeTimeout.toMillis() > 0) {
+                        channel.setSendTimeout(writeTimeout);
+                    }
+                    clientFuture.set(createClient(channel, type, Strings.isNullOrEmpty(clientName) ? address.toString() : clientName));
+                }
+
+                @Override
+                public void onFailure(Throwable t)
+                {
+                    clientFuture.setException(t);
+                }
+            });
+            return clientFuture;
         }
         catch (RuntimeException | Error e) {
-            transport.close();
+            if (channel != null) {
+                channel.close();
+            }
             throw e;
         }
+    }
+
+    public <T> T createClient(NiftyClientChannel channel, Class<T> type)
+    {
+        return createClient(channel, type, DEFAULT_NAME);
+    }
+
+    public <T> T createClient(NiftyClientChannel channel, Class<T> type, String name)
+    {
+        ThriftClientMetadata clientMetadata = clientMetadataCache.getUnchecked(new TypeAndName(type, name));
+
+        String clientDescription = clientMetadata.getName() + " " + channel.toString();
+
+        ThriftInvocationHandler handler = new ThriftInvocationHandler(clientDescription, channel, clientMetadata.getMethodHandlers());
+
+        return type.cast(Proxy.newProxyInstance(
+                type.getClassLoader(),
+                new Class<?>[]{ type, Closeable.class },
+                handler
+        ));
+    }
+
+    private InetSocketAddress toInetSocketAddress(HostAndPort hostAndPort)
+    {
+        return new InetSocketAddress(hostAndPort.getHostText(), hostAndPort.getPort());
     }
 
     private InetSocketAddress toSocksProxyAddress(HostAndPort socksProxy)
@@ -135,32 +184,6 @@ public class ThriftClientManager implements Closeable
             return null;
         }
         return new InetSocketAddress(socksProxy.getHostText(), socksProxy.getPortOrDefault(SOCKS_DEFAULT_PORT));
-    }
-
-    public <T> T createClient(TTransport transport, Class<T> type, Duration connectTimeout, Duration readTimeout, String clientName)
-            throws TTransportException
-    {
-        return createClient(transport, type, DEFAULT_NAME);
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T> T createClient(TTransport transport, Class<T> type, String name)
-            throws TTransportException
-    {
-        ThriftClientMetadata clientMetadata = clientMetadataCache.getUnchecked(new TypeAndName(type, name));
-
-        String clientDescription = clientMetadata.getName() + " " + transport.toString();
-
-        ThriftInvocationHandler handler = new ThriftInvocationHandler(
-                clientDescription,
-                transport,
-                clientMetadata.getMethodHandlers());
-
-        return (T) Proxy.newProxyInstance(
-                type.getClassLoader(),
-                new Class<?>[]{type, Closeable.class},
-                handler
-        );
     }
 
     public ThriftClientMetadata getClientMetadata(Class<?> type, String name)
@@ -172,6 +195,17 @@ public class ThriftClientManager implements Closeable
     public void close()
     {
         niftyClient.close();
+    }
+
+    public NiftyClientChannel getNiftyChannel(Object client)
+    {
+        try {
+            InvocationHandler genericHandler = Proxy.getInvocationHandler(client);
+            ThriftInvocationHandler thriftHandler = ThriftInvocationHandler.class.cast(genericHandler);
+            return thriftHandler.getChannel();
+        } catch (ClassCastException e) {
+            throw new IllegalArgumentException("Not a swift client object", e);
+        }
     }
 
     @Immutable
@@ -224,25 +258,31 @@ public class ThriftClientManager implements Closeable
     {
         private static final Object[] NO_ARGS = new Object[0];
         private final String clientDescription;
-        private final TTransport transport;
-        private final TProtocol in;
-        private final TProtocol out;
+        private final TProtocolFactory in;
+        private final TProtocolFactory out;
+
+        private final NiftyClientChannel channel;
+
         private final Map<Method, ThriftMethodHandler> methods;
         private final AtomicInteger sequenceId = new AtomicInteger(1);
-
         private ThriftInvocationHandler(
                 String clientDescription,
-                TTransport transport,
+                NiftyClientChannel channel,
                 Map<Method, ThriftMethodHandler> methods
         )
         {
             this.clientDescription = clientDescription;
-            this.transport = transport;
+            this.channel = channel;
             this.methods = methods;
 
-            TProtocol protocol = new TBinaryProtocol(transport);
-            this.in = protocol;
-            this.out = protocol;
+            TProtocolFactory protocolFactory = new TBinaryProtocol.Factory();
+            this.in = protocolFactory;
+            this.out = protocolFactory;
+        }
+
+        public NiftyClientChannel getChannel()
+        {
+            return channel;
         }
 
         @Override
@@ -267,7 +307,7 @@ public class ThriftClientManager implements Closeable
             }
 
             if (args.length == 0 && "close".equals(method.getName())) {
-                transport.close();
+                channel.close();
                 return null;
             }
 
@@ -277,7 +317,7 @@ public class ThriftClientManager implements Closeable
                 if (methodHandler == null) {
                     throw new TApplicationException(UNKNOWN_METHOD, "Unknown method : '" + method + "'");
                 }
-                return methodHandler.invoke(in, out, sequenceId.getAndIncrement(), args);
+                return methodHandler.invoke(in, out, channel, sequenceId.getAndIncrement(), args);
             }
             catch (TException e) {
                 Class<? extends TException> thrownType = e.getClass();
