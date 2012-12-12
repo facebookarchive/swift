@@ -165,6 +165,22 @@
       </dependency>
 
       <dependency>
+        <groupId>io.airlift</groupId>
+        <artifactId>bootstrap</artifactId>
+        <version>${dep.airlift.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty</artifactId>
         <version>3.5.2.Final</version>
@@ -276,29 +292,6 @@
         <groupId>commons-lang</groupId>
         <artifactId>commons-lang</artifactId>
         <version>2.6</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.proofpoint.platform</groupId>
-        <artifactId>bootstrap</artifactId>
-        <version>0.51</version>
-        <exclusions>
-          <exclusion>
-            <!-- Swift uses a newer version named io.netty:netty -->
-            <groupId>org.jboss.netty</groupId>
-            <artifactId>netty</artifactId>
-          </exclusion>
-          <exclusion>
-            <!-- Swift uses a newer version named org.ow2.asm:asm-all -->
-            <groupId>asm</groupId>
-            <artifactId>asm</artifactId>
-          </exclusion>
-          <exclusion>
-            <!-- Swift doesn't use this and it causes META-INF content conflicts with jsr-303 -->
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-validator</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
     </dependencies>
   </dependencyManagement>
