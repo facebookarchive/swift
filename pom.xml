@@ -48,7 +48,7 @@
     <!-- This actually wants to be fixed -->
     <fb.check.fail-findbugs>false</fb.check.fail-findbugs>
 
-    <dep.airlift.version>0.67-SNAPSHOT</dep.airlift.version>
+    <dep.airlift.version>0.66</dep.airlift.version>
     <dep.maven-api.version>2.2.1</dep.maven-api.version>
     <dep.fb.nifty.version>0.0.2</dep.fb.nifty.version>
   </properties>
