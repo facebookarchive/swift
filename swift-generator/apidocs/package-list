@@ -1,0 +1,4 @@
+com.facebook.swift.generator
+com.facebook.swift.generator.template
+com.facebook.swift.generator.util
+com.facebook.swift.generator.visitors
