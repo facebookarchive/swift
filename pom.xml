@@ -126,8 +126,8 @@
         <groupId>io.airlift</groupId>
         <artifactId>jmx</artifactId>
         <version>${dep.airlift.version}</version>
-        <!-- airlift tries to pull in 4.2-beta1 -->
         <exclusions>
+          <!-- airlift tries to pull in 4.2-beta1 -->
           <exclusion>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpcore</artifactId>
@@ -166,6 +166,15 @@
         <artifactId>bootstrap</artifactId>
         <version>${dep.airlift.version}</version>
         <exclusions>
+          <!-- airlift tries to pull in 4.2-beta1 -->
+          <exclusion>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+          </exclusion>
           <exclusion>
             <!-- Swift uses a newer version named io.netty:netty -->
             <groupId>org.jboss.netty</groupId>
