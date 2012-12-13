@@ -18,7 +18,7 @@ package com.facebook.swift.generator;
 import java.util.EnumMap;
 import java.util.List;
 
-import com.facebook.swift.generator.template.ContextGenerator;
+import com.facebook.swift.generator.template.TemplateContextGenerator;
 import com.facebook.swift.parser.model.BaseType;
 import com.facebook.swift.parser.model.IdentifierType;
 import com.facebook.swift.parser.model.ListType;
@@ -72,8 +72,16 @@ public class TypeToJavaConverter
 
     private static interface Converter
     {
+        /**
+         * Return true if the converter accepts the proposed type.
+         */
         boolean accept(ThriftType type);
 
+        /**
+         * Convert the thrift type into a string suitable for a java type.
+         *
+         * @param primitive If true, return a primitive java type, otherwise force an object type.
+         */
         String convert(ThriftType type, boolean primitive);
     }
 
@@ -142,17 +150,25 @@ public class TypeToJavaConverter
         {
             final String name = ((IdentifierType) type).getName();
             if (name.indexOf('.') == -1) {
-                final String javatypeName = ContextGenerator.mangleJavatypeName(name);
+                final String javatypeName = TemplateContextGenerator.mangleJavatypeName(name);
                 final ThriftType thriftType = typedefRegistry.findType(defaultNamespace, javatypeName);
-                return (thriftType == null)
-                                    ? typeRegistry.findType(defaultNamespace, javatypeName).getSimpleName()
-                                    : convertType(thriftType);
+                if (thriftType == null) {
+                    final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, javatypeName);
+                    return (javaType == null) ? null : javaType.getSimpleName();
+                }
+                else {
+                    return convertType(thriftType);
+                }
             }
             else {
                 final ThriftType thriftType = typedefRegistry.findType(name);
-                return (thriftType == null)
-                                ? typeRegistry.findType(name).getClassName()
-                                : convertType(thriftType);
+                if (thriftType == null) {
+                    final SwiftJavaType javaType = typeRegistry.findType(name);
+                    return (javaType == null) ? null : javaType.getClassName();
+                }
+                else {
+                    return convertType(thriftType);
+                }
             }
         }
     }
