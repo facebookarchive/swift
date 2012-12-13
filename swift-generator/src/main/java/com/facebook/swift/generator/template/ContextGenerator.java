@@ -39,7 +39,9 @@ public class ContextGenerator
     {
         this.typeRegistry = context.getTypeRegistry();
         this.defaultNamespace = context.getNamespace();
-        this.typeConverter = new TypeToJavaConverter(typeRegistry, defaultNamespace);
+        this.typeConverter = new TypeToJavaConverter(typeRegistry,
+                                                     context.getTypedefRegistry(),
+                                                     defaultNamespace);
     }
 
     public ServiceContext serviceFromThrift(final Service service)

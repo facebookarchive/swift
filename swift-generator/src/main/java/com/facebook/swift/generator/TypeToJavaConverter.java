@@ -32,13 +32,17 @@ import com.google.common.collect.Maps;
 public class TypeToJavaConverter
 {
     private final TypeRegistry typeRegistry;
+    private final TypedefRegistry typedefRegistry;
     private final String defaultNamespace;
 
     private final List<Converter> converters;
 
-    public TypeToJavaConverter(final TypeRegistry typeRegistry, final String defaultNamespace)
+    public TypeToJavaConverter(final TypeRegistry typeRegistry,
+                               final TypedefRegistry typedefRegistry,
+                               final String defaultNamespace)
     {
         this.typeRegistry = typeRegistry;
+        this.typedefRegistry = typedefRegistry;
         this.defaultNamespace = defaultNamespace;
 
         final ImmutableList.Builder<Converter> builder = ImmutableList.builder();
@@ -138,10 +142,17 @@ public class TypeToJavaConverter
         {
             final String name = ((IdentifierType) type).getName();
             if (name.indexOf('.') == -1) {
-                return typeRegistry.findType(defaultNamespace, ContextGenerator.mangleJavatypeName(name)).getSimpleName();
+                final String javatypeName = ContextGenerator.mangleJavatypeName(name);
+                final ThriftType thriftType = typedefRegistry.findType(defaultNamespace, javatypeName);
+                return (thriftType == null)
+                                    ? typeRegistry.findType(defaultNamespace, javatypeName).getSimpleName()
+                                    : convertType(thriftType);
             }
             else {
-                return typeRegistry.findType(name).getClassName();
+                final ThriftType thriftType = typedefRegistry.findType(name);
+                return (thriftType == null)
+                                ? typeRegistry.findType(name).getClassName()
+                                : convertType(thriftType);
             }
         }
     }

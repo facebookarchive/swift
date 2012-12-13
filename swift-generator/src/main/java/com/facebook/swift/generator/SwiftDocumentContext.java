@@ -28,14 +28,17 @@ public class SwiftDocumentContext
     private final Document document;
     private final String namespace;
     private final TypeRegistry typeRegistry;
+    private final TypedefRegistry typedefRegistry;
 
     public SwiftDocumentContext(final File thriftFile,
                  final String namespace,
-                 final TypeRegistry typeRegistry) throws IOException
+                 final TypeRegistry typeRegistry,
+                 final TypedefRegistry typedefRegistry) throws IOException
     {
         this.document = ThriftIdlParser.parseThriftIdl(Files.newReaderSupplier(thriftFile, Charsets.UTF_8));
         this.namespace = namespace;
         this.typeRegistry = typeRegistry;
+        this.typedefRegistry = typedefRegistry;
     }
 
     public String getNamespace()
@@ -51,6 +54,11 @@ public class SwiftDocumentContext
     public TypeRegistry getTypeRegistry()
     {
         return typeRegistry;
+    }
+
+    public TypedefRegistry getTypedefRegistry()
+    {
+        return typedefRegistry;
     }
 }
 

@@ -28,6 +28,7 @@ import com.facebook.swift.generator.visitors.ServiceVisitor;
 import com.facebook.swift.generator.visitors.StringEnumVisitor;
 import com.facebook.swift.generator.visitors.StructVisitor;
 import com.facebook.swift.generator.visitors.TypeVisitor;
+import com.facebook.swift.generator.visitors.TypedefVisitor;
 import com.facebook.swift.parser.model.Document;
 import com.facebook.swift.parser.model.Header;
 import com.facebook.swift.parser.visitor.DocumentVisitor;
@@ -75,7 +76,7 @@ public class SwiftGenerator
     {
         final List<SwiftDocumentContext> contexts = Lists.newArrayList();
         for (final File file : swiftGeneratorConfig.getInputFiles()) {
-            contexts.add(parseDocument(file, new TypeRegistry()));
+            contexts.add(parseDocument(file, new TypeRegistry(), new TypedefRegistry()));
         }
 
         for (final SwiftDocumentContext context : contexts) {
@@ -84,7 +85,8 @@ public class SwiftGenerator
     }
 
     private SwiftDocumentContext parseDocument(final File thriftFile,
-                                               final TypeRegistry typeRegistry) throws IOException
+                                               final TypeRegistry typeRegistry,
+                                               final TypedefRegistry typedefRegistry) throws IOException
     {
         final String thriftName = thriftFile.getName();
         final int idx = thriftName.lastIndexOf('.');
@@ -93,7 +95,7 @@ public class SwiftGenerator
         Preconditions.checkState(thriftFile.exists(), "The file %s does not exist!", thriftFile.getAbsolutePath());
         Preconditions.checkState(thriftFile.canRead(), "The file %s can not be read!", thriftFile.getAbsolutePath());
         Preconditions.checkState(!StringUtils.isEmpty(thriftNamespace), "The file %s can not be translated to a namespace", thriftFile.getAbsolutePath());
-        final SwiftDocumentContext context = new SwiftDocumentContext(thriftFile, thriftNamespace, typeRegistry);
+        final SwiftDocumentContext context = new SwiftDocumentContext(thriftFile, thriftNamespace, typeRegistry, typedefRegistry);
 
         final Document document = context.getDocument();
         final Header header = document.getHeader();
@@ -101,10 +103,11 @@ public class SwiftGenerator
         Preconditions.checkState(!StringUtils.isEmpty(javaNamespace), "thrift file %s does not declare a java namespace!", thriftFile.getAbsolutePath());
 
         for (final String include : header.getIncludes()) {
-            parseDocument(new File(swiftGeneratorConfig.getInputFolder(), include), typeRegistry);
+            parseDocument(new File(swiftGeneratorConfig.getInputFolder(), include), typeRegistry, typedefRegistry);
         }
 
         document.visit(new TypeVisitor(javaNamespace, context));
+        document.visit(new TypedefVisitor(javaNamespace, context));
 
         return context;
     }

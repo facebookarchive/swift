@@ -17,36 +17,37 @@ package com.facebook.swift.generator.visitors;
 
 import com.facebook.swift.generator.SwiftDocumentContext;
 import com.facebook.swift.generator.SwiftJavaType;
-import com.facebook.swift.generator.TypeRegistry;
+import com.facebook.swift.generator.TypedefRegistry;
 import com.facebook.swift.generator.template.ContextGenerator;
+import com.facebook.swift.parser.model.Typedef;
 import com.facebook.swift.parser.visitor.DocumentVisitor;
-import com.facebook.swift.parser.visitor.Nameable;
 import com.facebook.swift.parser.visitor.Visitable;
 
-public class TypeVisitor implements DocumentVisitor
+public class TypedefVisitor implements DocumentVisitor
 {
-    private final TypeRegistry typeRegistry;
+    private final TypedefRegistry typedefRegistry;
     private final String javaNamespace;
     private final String defaultThriftNamespace;
 
-    public TypeVisitor(final String javaNamespace,
+    public TypedefVisitor(final String javaNamespace,
                        final SwiftDocumentContext context)
     {
         this.javaNamespace = javaNamespace;
         this.defaultThriftNamespace = context.getNamespace();
-        this.typeRegistry = context.getTypeRegistry();
+        this.typedefRegistry = context.getTypedefRegistry();
     }
 
     @Override
     public boolean accept(final Visitable visitable)
     {
-        return visitable instanceof Nameable;
+        return visitable instanceof Typedef;
     }
 
     @Override
     public void visit(final Visitable visitable)
     {
-	final Nameable type = Nameable.class.cast(visitable);
-	typeRegistry.add(new SwiftJavaType(defaultThriftNamespace, ContextGenerator.mangleJavatypeName(type.getName()), javaNamespace));
+    final Typedef typedef = Typedef.class.cast(visitable);
+    typedefRegistry.add(new SwiftJavaType(defaultThriftNamespace, ContextGenerator.mangleJavatypeName(typedef.getName()), javaNamespace),
+                typedef.getType());
     }
 }
