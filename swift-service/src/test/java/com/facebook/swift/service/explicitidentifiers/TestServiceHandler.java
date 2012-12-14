@@ -20,8 +20,6 @@ import com.facebook.swift.service.ThriftMethod;
 import com.facebook.swift.service.ThriftService;
 import com.google.common.base.Optional;
 
-import static org.testng.Assert.*;
-
 @ThriftService
 public class TestServiceHandler
 {
@@ -31,7 +29,8 @@ public class TestServiceHandler
     private Object lastByteParam;
     private Object lastCustomParam;
 
-    private void initializeLastParamValues() {
+    private void initializeLastParamValues()
+    {
         this.lastBooleanParam = null;
         this.lastStringParam = null;
         this.lastByteParam = null;
@@ -44,8 +43,8 @@ public class TestServiceHandler
             @ThriftField(value = 20) boolean booleanParam,
             @ThriftField(value = 30) String stringParam,
             @ThriftField(value = 10) int integerParam,
-            @ThriftField(value = 40) byte byteParam
-    ) {
+            @ThriftField(value = 40) byte byteParam)
+    {
         initializeLastParamValues();
         this.lastBooleanParam = Optional.of(booleanParam);
         this.lastIntegerParam = Optional.of(integerParam);
@@ -56,8 +55,8 @@ public class TestServiceHandler
     @ThriftMethod
     public void missingIncomingParameter(
             @ThriftField(value = 1) int integerParam,
-            @ThriftField(value = 2) String stringParam
-    ) {
+            @ThriftField(value = 2) String stringParam)
+    {
         initializeLastParamValues();
         this.lastIntegerParam = Optional.of(integerParam);
         this.lastStringParam = Optional.fromNullable(stringParam);
@@ -65,8 +64,8 @@ public class TestServiceHandler
 
     @ThriftMethod
     public void extraIncomingParameter(
-            @ThriftField(value = 1) int integerParam
-    ) {
+            @ThriftField(value = 1) int integerParam)
+    {
         initializeLastParamValues();
         this.lastIntegerParam = Optional.of(integerParam);
     }
@@ -75,8 +74,8 @@ public class TestServiceHandler
     public void missingAndReorderedParameters(
             @ThriftField(value = 3) boolean booleanParam,
             @ThriftField(value = 2) String stringParam,
-            @ThriftField(value = 1) int integerParam
-    ) {
+            @ThriftField(value = 1) int integerParam)
+    {
         initializeLastParamValues();
         this.lastBooleanParam = Optional.of(booleanParam);
         this.lastIntegerParam = Optional.of(integerParam);
@@ -86,8 +85,8 @@ public class TestServiceHandler
     @ThriftMethod
     public void extraAndReorderedParameters(
             @ThriftField(value = 3) boolean booleanParam,
-            @ThriftField(value = 2) String stringParam
-    ) {
+            @ThriftField(value = 2) String stringParam)
+    {
         initializeLastParamValues();
         this.lastBooleanParam = Optional.of(booleanParam);
         this.lastStringParam = Optional.fromNullable(stringParam);
@@ -95,22 +94,23 @@ public class TestServiceHandler
 
     @ThriftMethod
     public void missingInteger(
-            @ThriftField(value = 1) int integerParam
-    ) {
+            @ThriftField(value = 1) int integerParam)
+    {
         initializeLastParamValues();
         this.lastIntegerParam = Optional.of(integerParam);
     }
 
     @ThriftMethod
     public void missingStruct(
-            @ThriftField(value = 1) CustomArgument customParam
-    ) {
+            @ThriftField(value = 1) CustomArgument customParam)
+    {
         initializeLastParamValues();
         this.lastCustomParam = Optional.fromNullable(customParam);
     }
 
     @ThriftMethod
-    public void extraStruct() {
+    public void extraStruct()
+    {
         initializeLastParamValues();
     }
 

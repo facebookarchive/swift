@@ -16,7 +16,6 @@
 package com.facebook.swift.service.async;
 
 import com.facebook.nifty.client.HttpClientChannel;
-import com.facebook.nifty.client.NiftyClient;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.ThriftClient;
 import com.facebook.swift.service.ThriftClientConfig;
@@ -24,18 +23,13 @@ import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.ThriftServer;
 import com.facebook.swift.service.ThriftServerConfig;
 import com.facebook.swift.service.ThriftServiceProcessor;
-import com.google.common.base.Function;
 import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.AsyncFunction;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.airlift.units.DataSize;
 import io.airlift.units.Duration;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
-import javax.annotation.Nullable;
-import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 

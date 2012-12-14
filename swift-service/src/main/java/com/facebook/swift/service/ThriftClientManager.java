@@ -40,16 +40,16 @@ import org.apache.thrift.protocol.TProtocolException;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TTransportException;
 
-import javax.annotation.PreDestroy;
-import javax.annotation.concurrent.Immutable;
 import java.io.Closeable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.annotation.PreDestroy;
+import javax.annotation.concurrent.Immutable;
 
 import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_CONNECT_TIMEOUT;
 import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_READ_TIMEOUT;
@@ -81,7 +81,7 @@ public class ThriftClientManager implements Closeable
 
     public ThriftClientManager(int maxFrameSize)
     {
-      this(new ThriftCodecManager(), maxFrameSize);
+        this(new ThriftCodecManager(), maxFrameSize);
     }
 
     public ThriftClientManager(ThriftCodecManager codecManager)
@@ -92,8 +92,8 @@ public class ThriftClientManager implements Closeable
 
     public ThriftClientManager(ThriftCodecManager codecManager, int maxFrameSize)
     {
-      this.codecManager = codecManager;
-      niftyClient = new NiftyClient(maxFrameSize);
+        this.codecManager = codecManager;
+        niftyClient = new NiftyClient(maxFrameSize);
     }
 
     public <T> ListenableFuture<T> createClient(HostAndPort address, Class<T> type)
@@ -102,10 +102,10 @@ public class ThriftClientManager implements Closeable
         return createClient(address, type, channelFactory);
     }
 
-    public <T, C extends NiftyClientChannel>
-    ListenableFuture<T> createClient(HostAndPort address,
-                                     Class<T> type,
-                                     NiftyClientChannel.Factory<C> channelFactory)
+    public <T, C extends NiftyClientChannel> ListenableFuture<T> createClient(
+            HostAndPort address,
+            Class<T> type,
+            NiftyClientChannel.Factory<C> channelFactory)
     {
         return createClient(address,
                             type,
@@ -117,15 +117,15 @@ public class ThriftClientManager implements Closeable
                             null);
     }
 
-    public <T, C extends NiftyClientChannel>
-    ListenableFuture<T> createClient(final HostAndPort address,
-                                     final Class<T> type,
-                                     final NiftyClientChannel.Factory<C> channelFactory,
-                                     final Duration connectTimeout,
-                                     final Duration readTimeout,
-                                     final Duration writeTimeout,
-                                     final String clientName,
-                                     HostAndPort socksProxy)
+    public <T, C extends NiftyClientChannel> ListenableFuture<T> createClient(
+            final HostAndPort address,
+            final Class<T> type,
+            final NiftyClientChannel.Factory<C> channelFactory,
+            final Duration connectTimeout,
+            final Duration readTimeout,
+            final Duration writeTimeout,
+            final String clientName,
+            HostAndPort socksProxy)
     {
         NiftyClientChannel channel = null;
         try {
@@ -219,7 +219,8 @@ public class ThriftClientManager implements Closeable
             InvocationHandler genericHandler = Proxy.getInvocationHandler(client);
             ThriftInvocationHandler thriftHandler = ThriftInvocationHandler.class.cast(genericHandler);
             return thriftHandler.getChannel();
-        } catch (ClassCastException e) {
+        }
+        catch (ClassCastException e) {
             throw new IllegalArgumentException("Not a swift client object", e);
         }
     }
@@ -232,7 +233,10 @@ public class ThriftClientManager implements Closeable
         private final ThriftServiceMetadata thriftServiceMetadata;
         private final Map<Method, ThriftMethodHandler> methodHandlers;
 
-        private ThriftClientMetadata(Class<?> clientType, String clientName, ThriftCodecManager codecManager)
+        private ThriftClientMetadata(
+                Class<?> clientType,
+                String clientName,
+                ThriftCodecManager codecManager)
         {
             Preconditions.checkNotNull(clientType, "clientType is null");
             Preconditions.checkNotNull(clientName, "clientName is null");
@@ -281,11 +285,11 @@ public class ThriftClientManager implements Closeable
 
         private final Map<Method, ThriftMethodHandler> methods;
         private final AtomicInteger sequenceId = new AtomicInteger(1);
+
         private ThriftInvocationHandler(
                 String clientDescription,
                 NiftyClientChannel channel,
-                Map<Method, ThriftMethodHandler> methods
-        )
+                Map<Method, ThriftMethodHandler> methods)
         {
             this.clientDescription = clientDescription;
             this.channel = channel;

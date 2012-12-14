@@ -29,7 +29,9 @@ public abstract class AbstractClientWorker implements Runnable
     protected AtomicLong requestsFailed = new AtomicLong(0);
     protected AtomicLong requestsPending = new AtomicLong(0);
 
-    public AbstractClientWorker(ThriftClientManager clientManager, LoadGeneratorCommandLineConfig config)
+    public AbstractClientWorker(
+            ThriftClientManager clientManager,
+            LoadGeneratorCommandLineConfig config)
     {
         this.clientManager = clientManager;
         this.config = config;
@@ -51,8 +53,8 @@ public abstract class AbstractClientWorker implements Runnable
         return config.operationsPerConnection;
     }
 
-    public void bump() {
-
+    public void reconnect()
+    {
     }
 
     public abstract void shutdown();

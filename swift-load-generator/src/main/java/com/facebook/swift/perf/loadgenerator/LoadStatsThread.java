@@ -54,7 +54,8 @@ public class LoadStatsThread extends Thread
                     long workerOpsFailed = worker.collectFailedOperationCount();
 
                     if (workerOpsCompleted + workerOpsFailed == 0) {
-                        worker.bump();
+                        // No work was completed, so try reconnecting
+                        worker.reconnect();
                     }
 
                     deltaSuccessfulOperations += workerOpsCompleted;
@@ -72,13 +73,15 @@ public class LoadStatsThread extends Thread
                         " Total failed: " + failedOperations);
 
                 lastTime = currentTime;
-            } catch (InterruptedException e) {
+            }
+            catch (InterruptedException e) {
                 logger.error("Stats thread was interrupted");
             }
         }
     }
 
-    public void shutdown() {
+    public void shutdown()
+    {
         shutdown = true;
     }
 }

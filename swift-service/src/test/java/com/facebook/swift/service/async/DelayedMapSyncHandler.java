@@ -15,7 +15,6 @@
  */
 package com.facebook.swift.service.async;
 
-import com.facebook.swift.service.async.DelayedMap;
 import org.apache.thrift.TException;
 
 import java.util.ArrayList;

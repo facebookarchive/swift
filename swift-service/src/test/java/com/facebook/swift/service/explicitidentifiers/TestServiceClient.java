@@ -32,32 +32,30 @@ public interface TestServiceClient extends Closeable
             @ThriftField(value = 30) String stringParam,
             @ThriftField(value = 10) int integerParam,
             @ThriftField(value = 20) boolean booleanParam,
-            @ThriftField(value = 40) byte dummy
-    ) throws TException;
+            @ThriftField(value = 40) byte dummy)
+            throws TException;
 
     @ThriftMethod
     public void missingIncomingParameter(
-            @ThriftField(value = 1) int firstParameter
-    ) throws TException;
+            @ThriftField(value = 1) int firstParameter)
+            throws TException;
 
     @ThriftMethod
     public void extraIncomingParameter(
             @ThriftField(value = 1) int firstParameter,
-            @ThriftField(value = 2) String secondParameter
-    ) throws TException;
+            @ThriftField(value = 2) String secondParameter)
+            throws TException;
 
     @ThriftMethod
     public void missingAndReorderedParameters(
             @ThriftField(value = 1) int integerOne,
-            @ThriftField(value = 2) String stringTwo
-    );
+            @ThriftField(value = 2) String stringTwo);
 
     @ThriftMethod
     public void extraAndReorderedParameters(
             @ThriftField(value = 1) int integerOne,
             @ThriftField(value = 2) String stringTwo,
-            @ThriftField(value = 3) boolean booleanTrue
-    );
+            @ThriftField(value = 3) boolean booleanTrue);
 
     @ThriftMethod
     public void missingInteger();

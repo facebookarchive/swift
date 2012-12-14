@@ -16,9 +16,9 @@
 package com.facebook.swift.service.async;
 
 import com.facebook.swift.service.LogEntry;
+import com.facebook.swift.service.ResultCode;
 import com.facebook.swift.service.Scribe;
 import com.facebook.swift.service.ThriftClientManager;
-import com.facebook.swift.service.ResultCode;
 import com.facebook.swift.service.scribe.scribe;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.FutureCallback;
@@ -34,10 +34,11 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.testng.annotations.Test;
 
-import javax.servlet.ServletException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+
+import javax.servlet.ServletException;
 
 import static org.testng.Assert.assertEquals;
 
@@ -47,7 +48,8 @@ public class AsyncHttpClient extends AsyncTestBase
 
     // Test a simple sync client call through HTTP (in this case, to a TServlet running under Jetty)
     @Test
-    public void testHttpClient() throws Exception
+    public void testHttpClient()
+            throws Exception
     {
         clientManager = new ThriftClientManager();
         Server jettyServer = createServer();
@@ -69,7 +71,8 @@ public class AsyncHttpClient extends AsyncTestBase
 
     // Test a simple async client call to the same servlet
     @Test
-    public void testHttpAsyncClient() throws Exception
+    public void testHttpAsyncClient()
+            throws Exception
     {
         clientManager = new ThriftClientManager();
         final CountDownLatch latch = new CountDownLatch(1);
@@ -81,7 +84,8 @@ public class AsyncHttpClient extends AsyncTestBase
         int serverPort = jettyServer.getConnectors()[0].getLocalPort();
 
         ListenableFuture<AsyncScribe> clientFuture = createHttpClient(AsyncScribe.class, serverPort);
-        Futures.addCallback(clientFuture, new FutureCallback<AsyncScribe>() {
+        Futures.addCallback(clientFuture, new FutureCallback<AsyncScribe>()
+        {
             @Override
             public void onSuccess(AsyncScribe client)
             {
@@ -129,7 +133,8 @@ public class AsyncHttpClient extends AsyncTestBase
         shutdownServer();
     }
 
-    private Server createServer() throws Exception
+    private Server createServer()
+            throws Exception
     {
         httpServer = new Server();
 
@@ -154,7 +159,8 @@ public class AsyncHttpClient extends AsyncTestBase
         return httpServer;
     }
 
-    private int getServerPort(Server server) {
+    private int getServerPort(Server server)
+    {
         return server.getConnectors()[0].getLocalPort();
     }
 
@@ -165,10 +171,10 @@ public class AsyncHttpClient extends AsyncTestBase
         return (TestThriftServlet)handler.getServletHandler().getServlets()[0].getServlet();
     }
 
-    private void shutdownServer() throws Exception
+    private void shutdownServer()
+            throws Exception
     {
-        if (httpServer != null)
-        {
+        if (httpServer != null) {
             httpServer.stop();
             httpServer.join();
         }
@@ -207,7 +213,9 @@ public class AsyncHttpClient extends AsyncTestBase
 
         private final List<com.facebook.swift.service.scribe.LogEntry> logEntries;
 
-        public TestThriftServlet(scribe.Iface handler, List<com.facebook.swift.service.scribe.LogEntry> logEntries)
+        public TestThriftServlet(
+                scribe.Iface handler,
+                List<com.facebook.swift.service.scribe.LogEntry> logEntries)
         {
             super(new scribe.Processor<>(handler), new TBinaryProtocol.Factory());
             this.logEntries = logEntries;

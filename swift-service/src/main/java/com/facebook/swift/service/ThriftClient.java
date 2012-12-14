@@ -22,10 +22,7 @@ import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import io.airlift.units.Duration;
-import org.apache.thrift.transport.TTransportException;
 import org.weakref.jmx.Managed;
-
-import java.util.concurrent.ExecutionException;
 
 public class ThriftClient<T>
 {
@@ -45,19 +42,21 @@ public class ThriftClient<T>
         this(clientManager, clientType, new ThriftClientConfig(), ThriftClientManager.DEFAULT_NAME);
     }
 
-    public ThriftClient(ThriftClientManager clientManager,
-                        Class<T> clientType,
-                        ThriftClientConfig clientConfig,
-                        String clientName)
+    public ThriftClient(
+            ThriftClientManager clientManager,
+            Class<T> clientType,
+            ThriftClientConfig clientConfig,
+            String clientName)
     {
         this(clientManager, clientType, defaultChannelFactory, clientConfig, clientName);
     }
 
-    public ThriftClient(ThriftClientManager clientManager,
-                        Class<T> clientType,
-                        NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory,
-                        ThriftClientConfig clientConfig,
-                        String clientName)
+    public ThriftClient(
+            ThriftClientManager clientManager,
+            Class<T> clientType,
+            NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory,
+            ThriftClientConfig clientConfig,
+            String clientName)
     {
         Preconditions.checkNotNull(clientManager, "clientManager is null");
         Preconditions.checkNotNull(clientType, "clientInterface is null");
@@ -126,6 +125,6 @@ public class ThriftClient<T>
 
     public T open(NiftyClientChannel channel)
     {
-      return clientManager.createClient(channel, clientType, clientName);
+        return clientManager.createClient(channel, clientType, clientName);
     }
 }

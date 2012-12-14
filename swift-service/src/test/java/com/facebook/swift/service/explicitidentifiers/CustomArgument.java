@@ -21,12 +21,14 @@ import com.facebook.swift.codec.ThriftStruct;
 @ThriftStruct
 public class CustomArgument
 {
-    public CustomArgument() {
+    public CustomArgument()
+    {
         this.integerField = 0;
         this.stringField = null;
     }
 
-    public CustomArgument(int integerField, String stringField) {
+    public CustomArgument(int integerField, String stringField)
+    {
         this.integerField = integerField;
         this.stringField = stringField;
     }
