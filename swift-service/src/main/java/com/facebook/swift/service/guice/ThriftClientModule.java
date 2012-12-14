@@ -18,7 +18,6 @@ package com.facebook.swift.service.guice;
 import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.ThriftClientManager.ThriftClientMetadata;
 import com.facebook.swift.service.ThriftMethodHandler;
-import com.facebook.swift.service.guice.ThriftClientBinder.ThriftClientProviderProvider;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Binder;
@@ -46,7 +45,7 @@ public class ThriftClientModule implements Module
         binder.bind(ThriftClientManager.class).toProvider(ThriftClientManagerProvider.class).in(Scopes.SINGLETON);
 
         // We bind the ThriftClientProviderProviders in a Set so below we can export the thrift methods to JMX
-        newSetBinder(binder, ThriftClientProviderProvider.class).permitDuplicates();
+        newSetBinder(binder, ThriftClientBinder.ThriftClientProvider.class).permitDuplicates();
         ExportBinder.newExporter(binder)
                 .exportMap(ObjectName.class, ThriftMethodHandler.class)
                 .withGeneratedName(new MapObjectNameFunction<ObjectName, ThriftMethodHandler>()
@@ -61,12 +60,12 @@ public class ThriftClientModule implements Module
 
     @Provides
     @Singleton
-    public Map<ObjectName, ThriftMethodHandler> getMethodProcessors(Set<ThriftClientProviderProvider> clientProviders)
+    public Map<ObjectName, ThriftMethodHandler> getMethodProcessors(Set<ThriftClientBinder.ThriftClientProvider> clientProviders)
     {
         try {
             // extract method handles into a map so they can be exported individually into jmx
             ImmutableMap.Builder<ObjectName, ThriftMethodHandler> builder = ImmutableMap.builder();
-            for (ThriftClientProviderProvider<?> clientProvider : clientProviders) {
+            for (ThriftClientBinder.ThriftClientProvider<?> clientProvider : clientProviders) {
                 ThriftClientMetadata clientMetadata = clientProvider.getClientMetadata();
                 for (ThriftMethodHandler methodHandler : clientMetadata.getMethodHandlers().values()) {
                     String name = format("com.facebook.swift.client:type=%s,clientName=%s,name=%s",
