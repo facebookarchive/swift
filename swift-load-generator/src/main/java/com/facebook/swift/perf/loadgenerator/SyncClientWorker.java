@@ -50,9 +50,10 @@ public class SyncClientWorker extends AbstractClientWorker
     }
 
     @Inject
-    public SyncClientWorker(LoadGeneratorCommandLineConfig config,
-                            ThriftClientManager clientManager,
-                            NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory)
+    public SyncClientWorker(
+            LoadGeneratorCommandLineConfig config,
+            ThriftClientManager clientManager,
+            NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory)
     {
         super(clientManager, config);
         this.channelFactory = channelFactory;
@@ -89,7 +90,8 @@ public class SyncClientWorker extends AbstractClientWorker
     {
         try {
             client.noop();
-        } catch (TException ex) {
+        }
+        catch (TException ex) {
             requestsFailed.incrementAndGet();
             return;
         }

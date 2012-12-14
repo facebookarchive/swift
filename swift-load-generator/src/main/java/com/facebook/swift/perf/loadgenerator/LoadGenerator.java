@@ -102,9 +102,11 @@ public class LoadGenerator
     }
 
     @Inject
-    public LoadGenerator(LoadGeneratorCommandLineConfig config,
-                         Provider<AbstractClientWorker> clientWorkerProvider,
-                         ThriftClientManager clientManager) {
+    public LoadGenerator(
+            LoadGeneratorCommandLineConfig config,
+            Provider<AbstractClientWorker> clientWorkerProvider,
+            ThriftClientManager clientManager)
+    {
         this.config = config;
         this.clientWorkerProvider = clientWorkerProvider;
         this.clientManager = clientManager;
@@ -130,7 +132,8 @@ public class LoadGenerator
     }
 
     @PreDestroy
-    public void stop() {
+    public void stop()
+    {
         for (AbstractClientWorker worker : clientWorkers) {
             worker.shutdown();
         }

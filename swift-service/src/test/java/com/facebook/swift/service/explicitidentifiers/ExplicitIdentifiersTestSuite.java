@@ -52,7 +52,7 @@ public class ExplicitIdentifiersTestSuite extends TestSuiteBase<TestServiceHandl
     // Client passes only one parameter, server expects two
     @Test
     public void testMissingParameter()
-        throws TException
+            throws TException
     {
         getClient().missingIncomingParameter(1);
 
@@ -73,7 +73,7 @@ public class ExplicitIdentifiersTestSuite extends TestSuiteBase<TestServiceHandl
     // Client passes two parameters, server expects only one
     @Test
     public void testExtraParameter()
-        throws TException
+            throws TException
     {
         getClient().extraIncomingParameter(1, "2");
 

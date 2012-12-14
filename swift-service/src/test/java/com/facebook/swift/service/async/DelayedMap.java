@@ -80,8 +80,7 @@ public class DelayedMap
     public interface AsyncClient extends Closeable
     {
         @ThriftMethod
-        public ListenableFuture<String> getValueSlowly(long timeout, TimeUnit unit,
-                                                            String key)
+        public ListenableFuture<String> getValueSlowly(long timeout, TimeUnit unit, String key)
                 throws TException;
 
         @ThriftMethod

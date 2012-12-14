@@ -29,5 +29,5 @@ public interface AsyncScribe extends AutoCloseable
 {
     @ThriftMethod(value = "Log")
     public ListenableFuture<ResultCode> log(List<LogEntry> logEntries)
-        throws TException;
+            throws TException;
 }

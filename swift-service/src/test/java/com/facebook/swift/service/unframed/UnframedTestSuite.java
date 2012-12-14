@@ -15,15 +15,12 @@
  */
 package com.facebook.swift.service.unframed;
 
-import com.facebook.nifty.client.NiftyClient;
-import com.facebook.nifty.client.NiftyClientChannel;
 import com.facebook.nifty.client.UnframedClientChannel;
+import com.facebook.swift.service.LogEntry;
+import com.facebook.swift.service.ResultCode;
 import com.facebook.swift.service.Scribe;
 import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.async.AsyncScribe;
-import com.facebook.swift.service.LogEntry;
-import com.facebook.swift.service.ResultCode;
-import com.facebook.swift.service.base.TestSuiteBase;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.FutureCallback;
@@ -36,7 +33,6 @@ import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.testng.annotations.Test;
 
-import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -45,7 +41,8 @@ import static org.testng.Assert.assertEquals;
 public class UnframedTestSuite
 {
     @Test
-    public void testUnframedSyncMethod() throws Exception
+    public void testUnframedSyncMethod()
+            throws Exception
     {
         TestServerInfo info = startServer();
         ThriftClientManager clientManager = new ThriftClientManager();
@@ -60,7 +57,8 @@ public class UnframedTestSuite
     }
 
     @Test
-    public void testUnframedAsyncMethod() throws Exception
+    public void testUnframedAsyncMethod()
+            throws Exception
     {
         TestServerInfo info = startServer();
         ThriftClientManager clientManager = new ThriftClientManager();
@@ -109,9 +107,10 @@ public class UnframedTestSuite
         stopServer(info);
     }
 
-    private <T> ListenableFuture<T> createUnframedClient(ThriftClientManager clientManager,
-                                                         Class<T> clientType,
-                                                         int servicePort)
+    private <T> ListenableFuture<T> createUnframedClient(
+            ThriftClientManager clientManager,
+            Class<T> clientType,
+            int servicePort)
             throws Exception
     {
         return clientManager.createClient(HostAndPort.fromParts("localhost", servicePort),
@@ -119,7 +118,8 @@ public class UnframedTestSuite
                                           new UnframedClientChannel.Factory());
     }
 
-    public TestServerInfo startServer() throws Exception
+    public TestServerInfo startServer()
+            throws Exception
     {
         final TestServerInfo info = new TestServerInfo();
         TServerSocket serverSocket = new TServerSocket(0);
@@ -145,7 +145,8 @@ public class UnframedTestSuite
         return info;
     }
 
-    public void stopServer(TestServerInfo info) throws Exception
+    public void stopServer(TestServerInfo info)
+            throws Exception
     {
         info.server.stop();
     }

@@ -101,10 +101,12 @@ public class AsyncClient extends AsyncTestBase
                         assertEquals(Uninterruptibles.getUninterruptibly(getBeforeFuture), "default");
                         assertEquals(Uninterruptibles.getUninterruptibly(getAfterFuture), "testValue");
                         Uninterruptibles.getUninterruptibly(putFuture);
-                    } finally {
+                    }
+                    finally {
                         client.close();
                     }
-                } catch (Throwable t) {
+                }
+                catch (Throwable t) {
                     onFailure(t);
                 }
 
@@ -190,8 +192,8 @@ public class AsyncClient extends AsyncTestBase
                 @Override
                 public void onFailure(Throwable t)
                 {
-                    assert(t instanceof TTransportException &&
-                           t.getCause() instanceof TimeoutException);
+                    assertTrue(t instanceof TTransportException);
+                    assertTrue(t.getCause() instanceof TimeoutException);
                     latch.countDown();
                 }
             });

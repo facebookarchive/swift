@@ -20,20 +20,26 @@ import org.apache.thrift.TException;
 import org.testng.annotations.Test;
 
 @Test
-public class OnewayTestSuite extends TestSuiteBase<TestService, TestService> {
+public class OnewayTestSuite extends TestSuiteBase<TestService, TestService>
+{
 
-    public OnewayTestSuite() {
+    public OnewayTestSuite()
+    {
         super(TestServiceHandler.class, TestServiceClient.class);
     }
 
     @Test
-    public void testOnewayCall() throws TException {
+    public void testOnewayCall()
+            throws TException
+    {
         getClient().onewayMethod();
         getClient().verifyConnectionState();
     }
 
     @Test
-    public void testOneWayThrow() throws TException, OneWayException {
+    public void testOneWayThrow()
+            throws TException, OneWayException
+    {
         getClient().onewayThrow();
         getClient().verifyConnectionState();
     }

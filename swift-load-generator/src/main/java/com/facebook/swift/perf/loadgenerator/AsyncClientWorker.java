@@ -64,15 +64,16 @@ public final class AsyncClientWorker extends AbstractClientWorker implements Fut
     {
         @ThriftMethod
         public ListenableFuture<Void> noop()
-            throws TException;
+                throws TException;
 
         public void close();
     }
 
     @Inject
-    public AsyncClientWorker(LoadGeneratorCommandLineConfig config,
-                             ThriftClientManager clientManager,
-                             NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory)
+    public AsyncClientWorker(
+            LoadGeneratorCommandLineConfig config,
+            ThriftClientManager clientManager,
+            NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory)
     {
         super(clientManager, config);
 
@@ -128,17 +129,19 @@ public final class AsyncClientWorker extends AbstractClientWorker implements Fut
                         @Override
                         public void run()
                         {
-                        fillRequestPipeline(client);
+                            fillRequestPipeline(client);
                         }
                     });
                 }
 
                 @Override
-                public void onFailure(Throwable t) {
+                public void onFailure(Throwable t)
+                {
                     onConnectFailed(t);
                 }
             });
-        } catch (Throwable t) {
+        }
+        catch (Throwable t) {
             onConnectFailed(t);
         }
     }
@@ -154,7 +157,7 @@ public final class AsyncClientWorker extends AbstractClientWorker implements Fut
     }
 
     @Override
-    public void bump()
+    public void reconnect()
     {
         if (client != null) {
             client.close();
@@ -172,7 +175,8 @@ public final class AsyncClientWorker extends AbstractClientWorker implements Fut
         return pending;
     }
 
-    protected void fillRequestPipeline(final LoadTest client) {
+    protected void fillRequestPipeline(final LoadTest client)
+    {
         try {
             while (!shutdownRequested) {
                 if (channel.hasError()) {
