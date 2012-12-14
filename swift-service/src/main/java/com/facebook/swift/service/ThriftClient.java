@@ -49,15 +49,15 @@ public class ThriftClient<T>
             ThriftClientConfig clientConfig,
             String clientName)
     {
-        this(clientManager, clientType, defaultChannelFactory, clientConfig, clientName);
+        this(clientManager, clientType, clientConfig, clientName, defaultChannelFactory);
     }
 
     public ThriftClient(
             ThriftClientManager clientManager,
             Class<T> clientType,
-            NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory,
             ThriftClientConfig clientConfig,
-            String clientName)
+            String clientName,
+            NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory)
     {
         Preconditions.checkNotNull(clientManager, "clientManager is null");
         Preconditions.checkNotNull(clientType, "clientInterface is null");

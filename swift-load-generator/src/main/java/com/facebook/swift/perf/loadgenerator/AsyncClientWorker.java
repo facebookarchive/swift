@@ -27,9 +27,6 @@ import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.facebook.nifty.client.FramedClientChannel;
-import com.facebook.nifty.client.HttpClientChannel;
-import com.facebook.nifty.client.NiftyClient;
 import com.facebook.nifty.client.NiftyClientChannel;
 import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.ThriftMethod;
