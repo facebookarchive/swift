@@ -17,6 +17,7 @@ package com.facebook.nifty.server;
 
 import com.facebook.nifty.client.NiftyClient;
 import com.facebook.nifty.core.NiftyBootstrap;
+import com.facebook.nifty.core.RequestContext;
 import com.facebook.nifty.core.ThriftServerDefBuilder;
 import com.facebook.nifty.guice.NiftyModule;
 import com.facebook.nifty.test.LogEntry;
@@ -161,8 +162,12 @@ public class TestPlainServer
                     @Override
                     public ResultCode Log(List<LogEntry> messages)
                             throws TException {
+                        RequestContext context = RequestContext.getCurrentContext();
+
                         for (LogEntry message : messages) {
-                            log.info("{}: {}", message.getCategory(),
+                            log.info("[Client: {}] {}: {}",
+                                     context.getRemoteAddress(),
+                                     message.getCategory(),
                                      message.getMessage());
                         }
                         return ResultCode.OK;
