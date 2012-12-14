@@ -85,14 +85,17 @@ public class LoadGenerator
 
                             TypeLiteral<NiftyClientChannel.Factory<? extends NiftyClientChannel>> channelFactoryType =
                                     new TypeLiteral<NiftyClientChannel.Factory<? extends NiftyClientChannel>>() {};
-                            if (config.transport == TransportType.FRAMED) {
-                                binder.bind(channelFactoryType)
-                                      .to(FramedClientChannel.Factory.class);
-                            } else if (config.transport == TransportType.UNFRAMED) {
-                                binder.bind(channelFactoryType)
-                                      .to(UnframedClientChannel.Factory.class);
-                            } else {
-                                throw new IllegalStateException("Unknown transport");
+                            switch (config.transport) {
+                                case FRAMED:
+                                    binder.bind(channelFactoryType)
+                                          .to(FramedClientChannel.Factory.class);
+                                    break;
+                                case UNFRAMED:
+                                    binder.bind(channelFactoryType)
+                                          .to(UnframedClientChannel.Factory.class);
+                                    break;
+                                default:
+                                    throw new IllegalStateException("Unknown transport");
                             }
                         }
                     }

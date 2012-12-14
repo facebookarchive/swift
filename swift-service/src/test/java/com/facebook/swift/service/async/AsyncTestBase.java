@@ -64,7 +64,7 @@ public class AsyncTestBase
                                                             .setWriteTimeout(new Duration(1, TimeUnit.SECONDS));
         HttpClientChannel.Factory channelFactory =
                 new HttpClientChannel.Factory("localhost:4567", "/thrift/");
-        return new ThriftClient<>(clientManager, clientClass, channelFactory, config, "asyncTestClient").open(address);
+        return new ThriftClient<>(clientManager, clientClass, config, "asyncTestClient", channelFactory).open(address);
     }
 
     protected ThriftServer createAsyncServer()
