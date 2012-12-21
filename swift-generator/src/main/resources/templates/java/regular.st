@@ -5,11 +5,15 @@ package <context.javaPackage>;
 
 import com.facebook.swift.codec.*;
 import com.facebook.swift.service.*;
+import java.io.*;
 import java.util.*;
 
 @ThriftService("<context.name>")
-public interface <context.javaName> <if(context.javaParent)>extends <context.javaParent><endif>
+public interface <context.javaName> extends <if(context.javaParent)><context.javaParent>, <endif>Closeable
 {
+    // Swift clients do not throw any exceptions during close
+    void close();
+
     <context.methods : { method |<method(method)>}; separator="\n\n">
 }
 >>
