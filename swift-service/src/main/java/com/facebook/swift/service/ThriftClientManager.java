@@ -217,18 +217,28 @@ public class ThriftClientManager implements Closeable
 
     public static NiftyClientChannel getNiftyChannel(Object client)
     {
+        ThriftInvocationHandler thriftHandler = null;
         try {
             InvocationHandler genericHandler = Proxy.getInvocationHandler(client);
-            ThriftInvocationHandler thriftHandler = ThriftInvocationHandler.class.cast(genericHandler);
-            return thriftHandler.getChannel();
+            thriftHandler = ThriftInvocationHandler.class.cast(genericHandler);
         }
-        catch (ClassCastException e) {
-            throw new IllegalArgumentException("Not a swift client object", e);
+        catch (Throwable e) {
+            // Object was not a swift client and does not have a nifty channel associated with it
+            return null;
         }
+        return thriftHandler.getChannel();
     }
 
     public static HostAndPort getRemoteAddress(Object client) {
-        Channel nettyChannel = getNiftyChannel(client).getNettyChannel();
+        NiftyClientChannel niftyChannel = getNiftyChannel(client);
+
+        if (niftyChannel == null) {
+            // Object was not a swift client so swift does not know it's remote
+            // address (if there is one)
+            return null;
+        }
+
+        Channel nettyChannel = niftyChannel.getNettyChannel();
         if (nettyChannel == null || nettyChannel.getRemoteAddress() == null) {
             throw new IllegalStateException("Client is not connected");
         }
