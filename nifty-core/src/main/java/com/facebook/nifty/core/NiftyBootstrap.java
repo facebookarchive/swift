@@ -17,6 +17,8 @@ package com.facebook.nifty.core;
 
 import com.google.inject.Inject;
 import org.jboss.netty.channel.group.ChannelGroup;
+import org.jboss.netty.util.HashedWheelTimer;
+import org.jboss.netty.util.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,11 +39,11 @@ public class NiftyBootstrap
 {
     private static final Logger log = LoggerFactory.getLogger(NiftyBootstrap.class);
 
-    private final Set<ThriftServerDef> thriftServerDefs;
     private final ChannelGroup allChannels;
     private ArrayList<NettyServerTransport> transports;
     private ExecutorService bossExecutor;
     private ExecutorService workerExecutor;
+    private final Timer timer;
 
     /**
      * This takes a Set of ThriftServerDef. Use Guice Multibinder to inject.
@@ -52,11 +54,14 @@ public class NiftyBootstrap
             NettyConfigBuilder configBuilder,
             ChannelGroup allChannels)
     {
-        this.thriftServerDefs = thriftServerDefs;
         this.allChannels = allChannels;
-        this.transports = new ArrayList<NettyServerTransport>();
+        this.transports = new ArrayList<>();
+        this.timer = new HashedWheelTimer();
         for (ThriftServerDef thriftServerDef : thriftServerDefs) {
-            transports.add(new NettyServerTransport(thriftServerDef, configBuilder, allChannels));
+            transports.add(new NettyServerTransport(thriftServerDef,
+                                                    configBuilder,
+                                                    allChannels,
+                                                    timer));
         }
 
     }

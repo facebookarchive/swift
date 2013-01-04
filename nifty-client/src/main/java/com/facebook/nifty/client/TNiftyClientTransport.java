@@ -117,7 +117,7 @@ public class TNiftyClientTransport extends TNiftyAsyncClientTransport
         long timeRemaining = (long)timeout.convertTo(TimeUnit.NANOSECONDS);
         lock.lock();
         try {
-            while (true) {
+            while (!closed) {
                 int bytesAvailable = readBuffer.readableBytes();
                 if (bytesAvailable > 0) {
                     int begin = readBuffer.readerIndex();
@@ -129,9 +129,6 @@ public class TNiftyClientTransport extends TNiftyAsyncClientTransport
                     break;
                 }
                 timeRemaining = condition.awaitNanos(timeRemaining);
-                if (closed) {
-                    throw new TTransportException("channel closed !");
-                }
                 if (exception != null) {
                     try {
                         throw new TTransportException(exception);
@@ -142,6 +139,9 @@ public class TNiftyClientTransport extends TNiftyAsyncClientTransport
                         close();
                     }
                 }
+            }
+            if (closed) {
+                throw new TTransportException("channel closed !");
             }
         }
         finally {

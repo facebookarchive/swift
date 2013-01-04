@@ -15,6 +15,7 @@
  */
 package com.facebook.nifty.core;
 
+import io.airlift.units.Duration;
 import org.apache.thrift.TProcessorFactory;
 import org.apache.thrift.protocol.TProtocolFactory;
 
@@ -31,10 +32,12 @@ public class ThriftServerDef
     private final TProcessorFactory processorFactory;
     private final TProtocolFactory inProtocolFact;
     private final TProtocolFactory outProtocolFact;
+
+    private final Duration clientIdleTimeout;
+
     private final boolean headerTransport;
     private final Executor executor;
     private final String name;
-
     public ThriftServerDef(
             String name,
             int serverPort,
@@ -43,6 +46,7 @@ public class ThriftServerDef
             TProcessorFactory factory,
             TProtocolFactory inProtocolFact,
             TProtocolFactory outProtocolFact,
+            Duration clientIdleTimeout,
             boolean useHeaderTransport,
             Executor executor)
     {
@@ -53,6 +57,7 @@ public class ThriftServerDef
         this.processorFactory = factory;
         this.inProtocolFact = inProtocolFact;
         this.outProtocolFact = outProtocolFact;
+        this.clientIdleTimeout = clientIdleTimeout;
         this.headerTransport = useHeaderTransport;
         this.executor = executor;
     }
@@ -90,6 +95,10 @@ public class ThriftServerDef
     public TProtocolFactory getOutProtocolFactory()
     {
         return outProtocolFact;
+    }
+
+    public Duration getClientIdleTimeout() {
+        return clientIdleTimeout;
     }
 
     public boolean isHeaderTransport()
