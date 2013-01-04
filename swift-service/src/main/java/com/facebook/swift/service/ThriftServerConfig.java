@@ -17,6 +17,7 @@ package com.facebook.swift.service;
 
 import io.airlift.configuration.Config;
 import io.airlift.units.DataSize;
+import io.airlift.units.Duration;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
@@ -28,6 +29,7 @@ public class ThriftServerConfig
     private int port;
     private DataSize maxFrameSize = new DataSize(1, MEGABYTE);
     private int workerThreads = 200;
+    private Duration clientIdleTimeout;
 
     @Min(0)
     @Max(65535)
@@ -65,6 +67,18 @@ public class ThriftServerConfig
     public ThriftServerConfig setWorkerThreads(int workerThreads)
     {
         this.workerThreads = workerThreads;
+        return this;
+    }
+
+    public Duration getClientIdleTimeout()
+    {
+        return this.clientIdleTimeout;
+    }
+
+    @Config("thrift.client-idle-timeout")
+    public ThriftServerConfig setClientIdleTimeout(Duration clientIdleTimeout)
+    {
+        this.clientIdleTimeout = clientIdleTimeout;
         return this;
     }
 }

@@ -18,15 +18,15 @@ package com.facebook.swift.service;
 import com.facebook.nifty.core.NettyConfigBuilder;
 import com.facebook.nifty.core.NettyServerTransport;
 import com.facebook.nifty.core.ThriftServerDef;
-import com.facebook.nifty.core.ThriftServerDefBuilder;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.TProcessorFactory;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
+import org.jboss.netty.util.HashedWheelTimer;
+import org.jboss.netty.util.Timer;
 import org.weakref.jmx.Managed;
-import org.weakref.jmx.com.google.common.primitives.Ints;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -62,11 +62,16 @@ public class ThriftServer implements Closeable
 
     public ThriftServer(TProcessor processor)
     {
-        this (processor, new ThriftServerConfig());
+        this(processor, new ThriftServerConfig());
+    }
+
+    public ThriftServer(TProcessor processor, ThriftServerConfig config)
+    {
+        this(processor, config, new HashedWheelTimer());
     }
 
     @Inject
-    public ThriftServer(TProcessor processor, ThriftServerConfig config)
+    public ThriftServer(TProcessor processor, ThriftServerConfig config, @ThriftServerTimer Timer timer)
     {
         TProcessorFactory processorFactory = new TProcessorFactory(processor);
 
@@ -82,10 +87,11 @@ public class ThriftServer implements Closeable
                                                          .name("thrift")
                                                          .listen(port)
                                                          .limitFrameSizeTo((int) config.getMaxFrameSize().toBytes())
+                                                         .clientIdleTimeout(config.getClientIdleTimeout())
                                                          .withProcessorFactory(processorFactory)
                                                          .using(workerExecutor).build();
 
-        transport = new NettyServerTransport(thriftServerDef, new NettyConfigBuilder(), allChannels);
+        transport = new NettyServerTransport(thriftServerDef, new NettyConfigBuilder(), allChannels, timer);
     }
 
     private int getSpecifiedOrRandomPort(ThriftServerConfig config)
