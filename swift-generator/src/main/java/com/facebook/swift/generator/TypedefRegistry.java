@@ -15,11 +15,10 @@
  */
 package com.facebook.swift.generator;
 
-import org.apache.commons.lang3.StringUtils;
-
 import com.facebook.swift.parser.model.ThriftType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -40,19 +39,14 @@ public class TypedefRegistry implements Iterable<Map.Entry<String, ThriftType>>
 
     public void add(final SwiftJavaType type, final ThriftType thriftType)
     {
-    Preconditions.checkState(!registry.containsKey(type.getKey()), "The type %s was already registered!", type);
-    add(type.getKey(), thriftType);
+        Preconditions.checkState(!registry.containsKey(type.getKey()), "The type %s was already registered!", type);
+        add(type.getKey(), thriftType);
     }
 
     private void add(final String key, final ThriftType thriftType)
     {
         Preconditions.checkArgument(!StringUtils.isBlank(key), "key can not be empty!");
         registry.put(key, thriftType);
-    }
-
-    public ThriftType findType(final String thriftNamespace, final String name)
-    {
-        return findType(thriftNamespace + "." + name);
     }
 
     public ThriftType findType(final String key)

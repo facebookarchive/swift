@@ -15,9 +15,6 @@
  */
 package com.facebook.swift.generator;
 
-import java.util.EnumMap;
-import java.util.List;
-
 import com.facebook.swift.generator.template.TemplateContextGenerator;
 import com.facebook.swift.parser.model.BaseType;
 import com.facebook.swift.parser.model.IdentifierType;
@@ -26,24 +23,32 @@ import com.facebook.swift.parser.model.MapType;
 import com.facebook.swift.parser.model.SetType;
 import com.facebook.swift.parser.model.ThriftType;
 import com.facebook.swift.parser.model.VoidType;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.EnumMap;
+import java.util.List;
 
 public class TypeToJavaConverter
 {
+    private final String namespace;
     private final TypeRegistry typeRegistry;
     private final TypedefRegistry typedefRegistry;
-    private final String defaultNamespace;
 
     private final List<Converter> converters;
 
     public TypeToJavaConverter(final TypeRegistry typeRegistry,
                                final TypedefRegistry typedefRegistry,
-                               final String defaultNamespace)
+                               final String namespace)
     {
+        Preconditions.checkNotNull(typeRegistry);
+        Preconditions.checkNotNull(typedefRegistry);
+        Preconditions.checkNotNull(namespace);
         this.typeRegistry = typeRegistry;
         this.typedefRegistry = typedefRegistry;
-        this.defaultNamespace = defaultNamespace;
+        this.namespace = namespace;
 
         final ImmutableList.Builder<Converter> builder = ImmutableList.builder();
         builder.add(new VoidConverter());
@@ -149,26 +154,25 @@ public class TypeToJavaConverter
         public String convert(final ThriftType type, final boolean ignored)
         {
             final String name = ((IdentifierType) type).getName();
-            if (name.indexOf('.') == -1) {
-                final String javatypeName = TemplateContextGenerator.mangleJavatypeName(name);
-                final ThriftType thriftType = typedefRegistry.findType(defaultNamespace, javatypeName);
-                if (thriftType == null) {
-                    final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, javatypeName);
-                    return (javaType == null) ? null : javaType.getSimpleName();
-                }
-                else {
-                    return convertType(thriftType);
-                }
+            // the name is [<thrift-namespace>.]<thrift type>
+            final String [] names = StringUtils.split(name, '.');
+            Preconditions.checkState(names.length > 0 && names.length < 3, "only unqualified and thrift-namespace qualified names are allowed!");
+            String thriftName = names[0];
+            String thriftNamespace = namespace;
+
+            if (names.length == 2) {
+                thriftName = names[1];
+                thriftNamespace = names[0];
+            }
+
+            final String javatypeName = thriftNamespace + "." + TemplateContextGenerator.mangleJavatypeName(thriftName);
+            final ThriftType thriftType = typedefRegistry.findType(javatypeName);
+            if (thriftType == null) {
+                final SwiftJavaType javaType = typeRegistry.findType(javatypeName);
+                return (javaType == null) ? null : javaType.getSimpleName();
             }
             else {
-                final ThriftType thriftType = typedefRegistry.findType(name);
-                if (thriftType == null) {
-                    final SwiftJavaType javaType = typeRegistry.findType(name);
-                    return (javaType == null) ? null : javaType.getClassName();
-                }
-                else {
-                    return convertType(thriftType);
-                }
+                return convertType(thriftType);
             }
         }
     }

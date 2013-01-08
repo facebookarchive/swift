@@ -82,8 +82,8 @@ enumField(field) ::= <<
 
 method(method) ::= <<
 @ThriftMethod(value="<method.name>"<if(method.oneway)>,
-              oneway=true<endif><if(method.exceptions)>,
-              exception={<method.exceptions: {exception |<exceptionField(exception)>}; separator=", ">}<endif>)
+              oneway=true<endif><if(method.annotatedExceptions)>,
+              exception={<method.annotatedExceptions: {exception |<exceptionField(exception)>}; separator=", ">}<endif>)
 <method.javaType> <method.javaName>(<method.parameters: {param |<param(param)>}; separator=",\n">)<if(!method.exceptions)>;
 <else><\n>    throws <method.exceptions: {exception |<exception.type>}; separator=", ">;<endif>
 >>

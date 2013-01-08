@@ -28,6 +28,10 @@ public class TypeRegistry implements Iterable<SwiftJavaType>
 {
     private final Map<String, SwiftJavaType> registry = Maps.newHashMap();
 
+    public TypeRegistry()
+    {
+    }
+
     public void addAll(final TypeRegistry otherRegistry)
     {
         for (SwiftJavaType type : otherRegistry) {

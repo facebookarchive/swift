@@ -16,8 +16,9 @@
 package com.facebook.swift.generator.visitors;
 
 import com.facebook.swift.generator.SwiftDocumentContext;
-import com.facebook.swift.generator.template.TemplateContextGenerator;
+import com.facebook.swift.generator.SwiftGeneratorConfig;
 import com.facebook.swift.generator.template.JavaContext;
+import com.facebook.swift.generator.template.TemplateContextGenerator;
 import com.facebook.swift.generator.util.TemplateLoader;
 import com.facebook.swift.parser.visitor.DocumentVisitor;
 import com.google.common.base.Charsets;
@@ -35,14 +36,17 @@ public abstract class AbstractTemplateVisitor implements DocumentVisitor
     private final File outputFolder;
     private final TemplateLoader templateLoader;
     protected final TemplateContextGenerator contextGenerator;
+    protected final SwiftGeneratorConfig config;
 
     protected AbstractTemplateVisitor(final TemplateLoader templateLoader,
                                       final SwiftDocumentContext context,
+                                      final SwiftGeneratorConfig config,
                                       final File outputFolder)
     {
         this.outputFolder = outputFolder;
         this.templateLoader = templateLoader;
         this.contextGenerator = context.getTemplateContextGenerator();
+        this.config = config;
     }
 
     protected void render(final JavaContext context, final String templateName)
