@@ -33,7 +33,7 @@ import com.google.common.base.Throwables;
 import com.pyx4j.log4j.MavenLogAppender;
 
 /**
- * Process one or more idl files and write java code.
+ * Process IDL files and generates source code from the IDL files.
  *
  * @requiresProject true
  * @goal generate
@@ -52,12 +52,22 @@ public class SwiftMojo extends AbstractMojo
     private boolean skip = false;
 
     /**
-     * Target java package for the generated classes. If null, the java
-     * namespace from the idls is used.
+     * Override java package for the generated classes. If unset, the java
+     * namespace from the IDL files is used. If a value is set here, the java package
+     * definition from the IDL files is ignored.
      *
      * @parameter
      */
-    private String packageName = null;
+    private String overridePackage = null;
+
+    /**
+     * Give a default Java package for generated classes if the IDL files do not
+     * contain a java namespace definition. This package is only used if the IDL files
+     * do not contain a java namespace definition.
+     *
+     * @parameter
+     */
+    private String defaultPackage = null;
 
     /**
      * IDL files to process.
@@ -68,12 +78,29 @@ public class SwiftMojo extends AbstractMojo
     private FileSet idlFiles;
 
     /**
-     * Output folder
+     * Set the Output folder for generated code.
      *
      * @parameter default-value="${project.build.directory}/generated-sources/swift"
      * @required
      */
     private File outputFolder = null;
+
+    /**
+     * Generate code for included IDL files. If true, generate Java code for all IDL files
+     * that are listed in the idlFiles set and all IDL files loaded through include statements.
+     * Default is false (generate only code for explicitly listed IDL files).
+     *
+     * @parameter default-value="false"
+     */
+    private boolean generateIncludedCode = false;
+
+    /**
+     * Add {@link org.apache.thrift.TException} to each method signature. This exception is thrown
+     * when a thrift internal error occurs.
+     *
+     * @parameter default-value="true"
+     */
+    private boolean addThriftExceptions = true;
 
     /**
      * @parameter expression="${project}"
@@ -96,7 +123,16 @@ public class SwiftMojo extends AbstractMojo
                 List<File> files = FileUtils.getFiles(inputFolder,
                                                       StringUtils.join(idlFiles.getIncludes(), ','),
                                                       StringUtils.join(idlFiles.getExcludes(), ','));
-                final SwiftGeneratorConfig config = new SwiftGeneratorConfig(inputFolder, files.toArray(new File [files.size()]), outputFolder, packageName);
+                final SwiftGeneratorConfig config = SwiftGeneratorConfig.builder()
+                    .inputFolder(inputFolder)
+                    .addInputFiles(files)
+                    .outputFolder(outputFolder)
+                    .overridePackage(overridePackage)
+                    .defaultPackage(defaultPackage)
+                    .addThriftExceptions(addThriftExceptions)
+                    .generateIncludedCode(generateIncludedCode)
+                    .build();
+
                 final SwiftGenerator generator = new SwiftGenerator(config);
                 generator.parse();
 

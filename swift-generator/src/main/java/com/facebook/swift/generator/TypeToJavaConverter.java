@@ -15,10 +15,7 @@
  */
 package com.facebook.swift.generator;
 
-import java.util.EnumMap;
-import java.util.List;
-
-import com.facebook.swift.generator.template.ContextGenerator;
+import com.facebook.swift.generator.template.TemplateContextGenerator;
 import com.facebook.swift.parser.model.BaseType;
 import com.facebook.swift.parser.model.IdentifierType;
 import com.facebook.swift.parser.model.ListType;
@@ -26,20 +23,32 @@ import com.facebook.swift.parser.model.MapType;
 import com.facebook.swift.parser.model.SetType;
 import com.facebook.swift.parser.model.ThriftType;
 import com.facebook.swift.parser.model.VoidType;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.EnumMap;
+import java.util.List;
 
 public class TypeToJavaConverter
 {
+    private final String namespace;
     private final TypeRegistry typeRegistry;
-    private final String defaultNamespace;
+    private final TypedefRegistry typedefRegistry;
 
     private final List<Converter> converters;
 
-    public TypeToJavaConverter(final TypeRegistry typeRegistry, final String defaultNamespace)
+    public TypeToJavaConverter(final TypeRegistry typeRegistry,
+                               final TypedefRegistry typedefRegistry,
+                               final String namespace)
     {
+        Preconditions.checkNotNull(typeRegistry);
+        Preconditions.checkNotNull(typedefRegistry);
+        Preconditions.checkNotNull(namespace);
         this.typeRegistry = typeRegistry;
-        this.defaultNamespace = defaultNamespace;
+        this.typedefRegistry = typedefRegistry;
+        this.namespace = namespace;
 
         final ImmutableList.Builder<Converter> builder = ImmutableList.builder();
         builder.add(new VoidConverter());
@@ -68,8 +77,16 @@ public class TypeToJavaConverter
 
     private static interface Converter
     {
+        /**
+         * Return true if the converter accepts the proposed type.
+         */
         boolean accept(ThriftType type);
 
+        /**
+         * Convert the thrift type into a string suitable for a java type.
+         *
+         * @param primitive If true, return a primitive java type, otherwise force an object type.
+         */
         String convert(ThriftType type, boolean primitive);
     }
 
@@ -137,11 +154,25 @@ public class TypeToJavaConverter
         public String convert(final ThriftType type, final boolean ignored)
         {
             final String name = ((IdentifierType) type).getName();
-            if (name.indexOf('.') == -1) {
-                return typeRegistry.findType(defaultNamespace, ContextGenerator.mangleJavatypeName(name)).getSimpleName();
+            // the name is [<thrift-namespace>.]<thrift type>
+            final String [] names = StringUtils.split(name, '.');
+            Preconditions.checkState(names.length > 0 && names.length < 3, "only unqualified and thrift-namespace qualified names are allowed!");
+            String thriftName = names[0];
+            String thriftNamespace = namespace;
+
+            if (names.length == 2) {
+                thriftName = names[1];
+                thriftNamespace = names[0];
+            }
+
+            final String javatypeName = thriftNamespace + "." + TemplateContextGenerator.mangleJavatypeName(thriftName);
+            final ThriftType thriftType = typedefRegistry.findType(javatypeName);
+            if (thriftType == null) {
+                final SwiftJavaType javaType = typeRegistry.findType(javatypeName);
+                return (javaType == null) ? null : javaType.getSimpleName();
             }
             else {
-                return typeRegistry.findType(name).getClassName();
+                return convertType(thriftType);
             }
         }
     }

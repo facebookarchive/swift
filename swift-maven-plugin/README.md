@@ -1,0 +1,112 @@
+# Swift Maven Plugin
+
+Generate Swift compatible java code from thrift IDL files.
+
+# Usage
+
+Add the plugin to the build plugins section of the pom.
+
+```xml
+<build>
+  <plugins>
+    <plugin>
+      <groupId>com.facebook.mojo</groupId>
+      <artifactId>swift-maven-plugin</artifactId>
+      <version>0.2-SNAPSHOT</version>
+      <executions>
+        <execution>
+          <goals>
+            <goal>generate</goal>
+          </goals>
+        </execution>
+      </executions>
+      <configuration>
+       ...
+      </configuration>
+    </plugin>
+  </plugins>
+</build>
+```
+
+# Supported configuration parameters
+
+## skip
+
+Skip the plugin completely. Can be used to turn plugin execution on or off.
+
+<tt>skip</tt> is optional, default is "false".
+
+    <skip>true|false</skip>
+
+## overridePackage
+
+Sets the package name for the generated classes. If this value is set, any package name provided by the IDL files or default package name is ignored
+and all classes will be in this package.
+
+This is almost always the wrong value to use. Prefer using the package defined in the Thrift IDL files or set a default package name.
+
+<tt>overridePackage</tt> is optional. If not set, the plugin uses the package names from the IDL files or a default package name.
+
+    <overridePackage>... valid java package name ...</overridePackage>
+
+## defaultPackage
+
+Defines a Java package name if a Thrift IDL file does not contain a package name. This is used only as fallback.
+
+<tt>defaultPackage</tt> is optional. Trying to generate Java code from a Thrift IDL file without java namespace definition will fail with an error if no default package is set.
+
+    <defaultPackage>... valid java package name ...</defaultPackage>
+
+## idlFiles
+
+Defines a fileset to include for IDL parsing and code generation.
+
+<tt>idFiles</tt> must be defined in the POM, otherwise the plugin will report an error.
+
+Usage:
+```xml
+<idlFiles>
+  <directory>... base directory ...</directory>
+  <includes>
+    <include>... include pattern ...</include>
+  </includes>
+  <excludes>
+    <exclude>... exclude pattern ...</exclude>
+  </excludes>
+</idlFiles>
+```
+
+<tt>directory</tt>, <tt>includes</tt> and <tt>excludes</tt> are used to select the IDL files to process:
+
+* *directory*: Base directory, defines where the IDL files are to be found. There is no default.
+* *includes*: A set of files patterns which specify the files to include.
+* *excludes*: The same structure as includes, but specifies which files to ignore. In conflicts between include and exclude, exclude wins.
+
+Wildcards support '*' for all files in a given directory and '**/*' for all files in a given subtree.
+
+## outputFolder
+
+Determines the output folder for the generated sources. This folder is added to the sources for the project so any generated class is in turn picked up by the compiler plugin.
+
+<tt>outputFolder</tt> is optional with a default of <tt>${project.build.directory}/generated-sources/swift</tt>.
+
+## generateIncludedCode
+
+If set to true, generate Java code for all referenced Thrift IDL files. If false, only generate code for IDL files listed in <tt>idlFiles</tt>.
+
+<tt>generateIncludedCode</tt> is optional, default value is "false".
+
+    <generateIncludedCode>true</generateIncludedCode>
+
+## addThriftExceptions
+
+If set to true, adds <tt>org.apache.thrift.TException</tt> to each generated method signature (this is the default). 
+
+<tt>addThriftExceptions</tt> is optional, default value is "true".
+
+    <addThriftExceptions>false</addThriftExceptions>
+
+# Maven lifecycle
+
+The plugin is by default hooked into the <tt>generate-sources</tt> phase of the maven lifecycle.
+

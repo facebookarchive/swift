@@ -18,9 +18,16 @@ package com.facebook.swift.generator.template;
 public class ExceptionContext
 {
     private final String type;
-    private final short id;
+    // Id can be null if an exception should be on the method signature but not
+    // in the annotations. This is e.g. needed for the TException.
+    private final Short id;
 
-    ExceptionContext(String type, short id)
+    public static final ExceptionContext forType(final String type)
+    {
+        return new ExceptionContext(type, null);
+    }
+
+    ExceptionContext(String type, Short id)
     {
         this.type = type;
         this.id = id;
@@ -31,7 +38,7 @@ public class ExceptionContext
         return type;
     }
 
-    public short getId()
+    public Short getId()
     {
         return id;
     }
@@ -41,7 +48,7 @@ public class ExceptionContext
     {
         final int prime = 31;
         int result = 1;
-        result = prime * result + id;
+        result = prime * result + ((id == null) ? 0 : id.hashCode());
         result = prime * result + ((type == null) ? 0 : type.hashCode());
         return result;
     }
@@ -59,7 +66,12 @@ public class ExceptionContext
             return false;
         }
         ExceptionContext other = (ExceptionContext) obj;
-        if (id != other.id) {
+        if (id == null) {
+            if (other.id != null) {
+                return false;
+            }
+        }
+        else if (!id.equals(other.id)) {
             return false;
         }
         if (type == null) {

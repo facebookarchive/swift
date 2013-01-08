@@ -95,7 +95,7 @@ public class SwiftJavaType
     @Override
     public String toString()
     {
-        return "SwiftJavaType [thriftNamespace=" + thriftNamespace + ", name=" + name + ", javaPackageName=" + javaPackageName + "]";
+        return "[thrift namespace=" + thriftNamespace + ", name=" + name + ", java package=" + javaPackageName + "]";
     }
 }
 

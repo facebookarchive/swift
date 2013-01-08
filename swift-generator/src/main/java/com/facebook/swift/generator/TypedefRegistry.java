@@ -15,54 +15,48 @@
  */
 package com.facebook.swift.generator;
 
+import com.facebook.swift.parser.model.ThriftType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Iterator;
 import java.util.Map;
 
 /**
- * Collects all the various custom types found in the IDL definition files.
+ * Collects typedefs for replacement at templating time.
  */
-public class TypeRegistry implements Iterable<SwiftJavaType>
+public class TypedefRegistry implements Iterable<Map.Entry<String, ThriftType>>
 {
-    private final Map<String, SwiftJavaType> registry = Maps.newHashMap();
+    private final Map<String, ThriftType> registry = Maps.newHashMap();
 
-    public TypeRegistry()
+    public void addAll(final TypedefRegistry otherRegistry)
     {
-    }
-
-    public void addAll(final TypeRegistry otherRegistry)
-    {
-        for (SwiftJavaType type : otherRegistry) {
-            add(type);
+        for (final Map.Entry<String, ThriftType> entry : otherRegistry) {
+            add(entry.getKey(), entry.getValue());
         }
     }
 
-    public void add(final SwiftJavaType type)
+    public void add(final SwiftJavaType type, final ThriftType thriftType)
     {
         Preconditions.checkState(!registry.containsKey(type.getKey()), "The type %s was already registered!", type);
-        registry.put(type.getKey(), type);
+        add(type.getKey(), thriftType);
     }
 
-    public SwiftJavaType findType(final String thriftNamespace, final String name)
+    private void add(final String key, final ThriftType thriftType)
     {
-        return findType(thriftNamespace + "." + name);
+        Preconditions.checkArgument(!StringUtils.isBlank(key), "key can not be empty!");
+        registry.put(key, thriftType);
     }
 
-    public SwiftJavaType findType(final String key)
+    public ThriftType findType(final String key)
     {
-        if (key == null) {
-            return null;
-        }
-
-        Preconditions.checkState(registry.containsKey(key), "key %s is not known!", key);
         return registry.get(key);
     }
 
     @Override
-    public Iterator<SwiftJavaType> iterator()
+    public Iterator<Map.Entry<String, ThriftType>> iterator()
     {
-        return registry.values().iterator();
+        return registry.entrySet().iterator();
     }
 }

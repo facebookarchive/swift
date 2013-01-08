@@ -15,8 +15,11 @@
  */
 package com.facebook.swift.generator.template;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 
+import java.util.Collection;
 import java.util.List;
 
 public class MethodContext
@@ -55,6 +58,19 @@ public class MethodContext
     public List<ExceptionContext> getExceptions()
     {
         return exceptions;
+    }
+
+    public Collection<ExceptionContext> getAnnotatedExceptions()
+    {
+        return Collections2.filter(exceptions, new Predicate<ExceptionContext>() {
+
+            @Override
+            public boolean apply(ExceptionContext exceptionContext)
+            {
+                return exceptionContext.getId() != null;
+            }
+
+        });
     }
 
     public String getName()
