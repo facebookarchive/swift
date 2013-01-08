@@ -177,5 +177,17 @@ limitations under the License.
                 </plugin>
             </plugins>
         </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>com.mycila.maven-license-plugin</groupId>
+                <artifactId>maven-license-plugin</artifactId>
+                <configuration>
+                    <properties>
+                        <inceptionYear>${project.inceptionYear}</inceptionYear>
+                        <year>2013</year>
+                    </properties>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 </project>
