@@ -17,24 +17,27 @@ package com.facebook.swift.generator.visitors;
 
 import com.facebook.swift.generator.SwiftDocumentContext;
 import com.facebook.swift.generator.SwiftJavaType;
-import com.facebook.swift.generator.TypeRegistry;
-import com.facebook.swift.generator.template.ContextGenerator;
+import com.facebook.swift.generator.TypeToJavaConverter;
+import com.facebook.swift.generator.template.TemplateContextGenerator;
+import com.facebook.swift.parser.model.Typedef;
 import com.facebook.swift.parser.visitor.DocumentVisitor;
 import com.facebook.swift.parser.visitor.Nameable;
 import com.facebook.swift.parser.visitor.Visitable;
+import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TypeVisitor implements DocumentVisitor
 {
-    private final TypeRegistry typeRegistry;
+    private static final Logger LOG = LoggerFactory.getLogger(TypeVisitor.class);
     private final String javaNamespace;
-    private final String defaultThriftNamespace;
+    private final SwiftDocumentContext documentContext;
 
     public TypeVisitor(final String javaNamespace,
-                       final SwiftDocumentContext context)
+                       final SwiftDocumentContext documentContext)
     {
         this.javaNamespace = javaNamespace;
-        this.defaultThriftNamespace = context.getNamespace();
-        this.typeRegistry = context.getTypeRegistry();
+        this.documentContext = documentContext;
     }
 
     @Override
@@ -47,6 +50,22 @@ public class TypeVisitor implements DocumentVisitor
     public void visit(final Visitable visitable)
     {
         final Nameable type = Nameable.class.cast(visitable);
-        typeRegistry.add(new SwiftJavaType(defaultThriftNamespace, ContextGenerator.mangleJavatypeName(type.getName()), javaNamespace));
+        final SwiftJavaType swiftJavaType = new SwiftJavaType(documentContext.getNamespace(),
+                                                              TemplateContextGenerator.mangleJavatypeName(type.getName()), javaNamespace);
+        if (visitable instanceof Typedef) {
+            // Typedef checks must be done before the type is added to the registry. Otherwise it would be possible
+            // to have a typedef point at itself.
+            final Typedef typedef = Typedef.class.cast(visitable);
+
+            LOG.debug("Checking typedef '{}' as '{}'.", typedef.getType(), typedef.getName());
+
+            final TypeToJavaConverter typeConverter = documentContext.getTypeConverter();
+
+            Preconditions.checkNotNull(typeConverter.convertType(typedef.getType()), "typedef %s uses unknown type %s!", typedef.getName(), typedef.getType().toString());
+            documentContext.getTypedefRegistry().add(swiftJavaType, typedef.getType());
+        }
+
+        LOG.debug("Registering type '{}'", swiftJavaType);
+        documentContext.getTypeRegistry().add(swiftJavaType);
     }
 }

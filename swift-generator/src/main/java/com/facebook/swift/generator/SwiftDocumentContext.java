@@ -15,6 +15,7 @@
  */
 package com.facebook.swift.generator;
 
+import com.facebook.swift.generator.template.TemplateContextGenerator;
 import com.facebook.swift.parser.ThriftIdlParser;
 import com.facebook.swift.parser.model.Document;
 import com.google.common.base.Charsets;
@@ -28,14 +29,22 @@ public class SwiftDocumentContext
     private final Document document;
     private final String namespace;
     private final TypeRegistry typeRegistry;
+    private final TypedefRegistry typedefRegistry;
+    private final TypeToJavaConverter typeConverter;
 
     public SwiftDocumentContext(final File thriftFile,
-                 final String namespace,
-                 final TypeRegistry typeRegistry) throws IOException
+                                final String namespace,
+                                final TypeRegistry typeRegistry,
+                                final TypedefRegistry typedefRegistry) throws IOException
     {
         this.document = ThriftIdlParser.parseThriftIdl(Files.newReaderSupplier(thriftFile, Charsets.UTF_8));
         this.namespace = namespace;
         this.typeRegistry = typeRegistry;
+        this.typedefRegistry = typedefRegistry;
+        this.typeConverter = new TypeToJavaConverter(typeRegistry,
+                                                     typedefRegistry,
+                                                     namespace);
+
     }
 
     public String getNamespace()
@@ -51,6 +60,21 @@ public class SwiftDocumentContext
     public TypeRegistry getTypeRegistry()
     {
         return typeRegistry;
+    }
+
+    public TypedefRegistry getTypedefRegistry()
+    {
+        return typedefRegistry;
+    }
+
+    public TypeToJavaConverter getTypeConverter()
+    {
+        return typeConverter;
+    }
+
+    public TemplateContextGenerator getTemplateContextGenerator()
+    {
+        return new TemplateContextGenerator(typeRegistry, typeConverter, namespace);
     }
 }
 

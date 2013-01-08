@@ -15,6 +15,8 @@
  */
 package com.facebook.swift.generator.visitors;
 
+import com.facebook.swift.generator.SwiftGeneratorConfig;
+
 import com.facebook.swift.generator.SwiftDocumentContext;
 import com.facebook.swift.generator.template.EnumContext;
 import com.facebook.swift.generator.util.TemplateLoader;
@@ -28,9 +30,10 @@ public class StringEnumVisitor extends AbstractTemplateVisitor
 {
     public StringEnumVisitor(final TemplateLoader templateLoader,
                              final SwiftDocumentContext context,
+                             final SwiftGeneratorConfig config,
                              final File outputFolder)
     {
-        super(templateLoader, context, outputFolder);
+        super(templateLoader, context, config, outputFolder);
     }
 
     @Override

@@ -15,7 +15,6 @@
  */
 package com.facebook.swift.generator.template;
 
-import com.facebook.swift.generator.SwiftDocumentContext;
 import com.facebook.swift.generator.SwiftJavaType;
 import com.facebook.swift.generator.TypeRegistry;
 import com.facebook.swift.generator.TypeToJavaConverter;
@@ -29,17 +28,19 @@ import com.facebook.swift.parser.model.ThriftMethod;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
 
-public class ContextGenerator
+public class TemplateContextGenerator
 {
     private final TypeRegistry typeRegistry;
     private final TypeToJavaConverter typeConverter;
     private final String defaultNamespace;
 
-    public ContextGenerator(final SwiftDocumentContext context)
+    public TemplateContextGenerator(final TypeRegistry typeRegistry,
+                                    final TypeToJavaConverter typeConverter,
+                                    final String defaultNamespace)
     {
-        this.typeRegistry = context.getTypeRegistry();
-        this.defaultNamespace = context.getNamespace();
-        this.typeConverter = new TypeToJavaConverter(typeRegistry, defaultNamespace);
+        this.typeRegistry = typeRegistry;
+        this.defaultNamespace = defaultNamespace;
+        this.typeConverter = typeConverter;
     }
 
     public ServiceContext serviceFromThrift(final Service service)
