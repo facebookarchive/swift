@@ -211,7 +211,7 @@
       <dependency>
         <groupId>com.thoughtworks.paranamer</groupId>
         <artifactId>paranamer</artifactId>
-        <version>2.5</version>
+        <version>2.5.2</version>
       </dependency>
 
       <dependency>
@@ -346,21 +346,11 @@
             </execution>
           </executions>
         </plugin>
-	
+
 	<plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
 	  <version>2.0</version>
-	</plugin>
-
-	<plugin>
-          <groupId>com.mycila.maven-license-plugin</groupId>
-          <artifactId>maven-license-plugin</artifactId>
-          <configuration>
-            <validHeaders>
-              <validHeader>${fb.main.basedir}/src/license/paranamer.txt</validHeader>
-            </validHeaders>
-          </configuration>
 	</plugin>
       </plugins>
     </pluginManagement>
