@@ -36,6 +36,7 @@ public class TestSwiftGenerator
                                )
                         .outputFolder(new File(args.length == 0 ? OUTPUT_FOLDER : args[0]))
                         .setGenerateIncludedCode()
+                        .codeFlavor("java-immutable")
                         .build();
 
         final SwiftGenerator generator = new SwiftGenerator(config);
