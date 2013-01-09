@@ -41,6 +41,8 @@ import java.util.*;
 @ThriftStruct("<context.name>")
 public class <context.javaName>
 {
+    <_constructor(context)>
+
     <context.fields : { field |<_field(field)>}; separator="\n\n">
 }
 >>
@@ -61,6 +63,8 @@ import java.util.*;
 public class <context.javaName> extends Exception
 {
     private static final long serialVersionUID = 1L;
+
+    <_constructor(context)>
 
     <context.fields : { field |<_field(field)>}; separator="\n\n">
 }
@@ -140,12 +144,22 @@ _exceptionElement(exception) ::= <<
 >>
 
 _field(field) ::= <<
-private <field.javaType> <field.javaName>;
+private final <field.javaType> <field.javaName>;
 
-<_annotation(param)>
+<_annotation(field)>
 public <field.javaType> <field.javaGetterName>() { return <field.javaName>; }
-
-@ThriftField
-public void <field.javaSetterName>(final <field.javaType> <field.javaName>) { this.<field.javaName> = <field.javaName>; }
 >>
+
+_constructor(context) ::= <<
+@ThriftConstructor
+public <context.javaName>(<context.fields: {field|<_param(field)>}; separator=",\n">) {
+  <context.fields: {field|<_ctorAssignment(field)>}; separator="\n">
+}
+>>
+
+_ctorAssignment(field) ::= <<
+this.<field.javaName> = <field.javaName>;
+>>
+
+
 

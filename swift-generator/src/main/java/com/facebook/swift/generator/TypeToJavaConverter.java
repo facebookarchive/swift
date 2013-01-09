@@ -15,8 +15,6 @@
  */
 package com.facebook.swift.generator;
 
-import com.google.common.collect.Lists;
-
 import com.facebook.swift.generator.template.TemplateContextGenerator;
 import com.facebook.swift.parser.model.BaseType;
 import com.facebook.swift.parser.model.IdentifierType;
@@ -28,9 +26,9 @@ import com.facebook.swift.parser.model.VoidType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 

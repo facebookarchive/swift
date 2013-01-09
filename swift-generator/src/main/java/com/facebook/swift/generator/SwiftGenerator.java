@@ -27,6 +27,9 @@ import com.facebook.swift.parser.model.Header;
 import com.facebook.swift.parser.visitor.DocumentVisitor;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
@@ -34,7 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
@@ -49,6 +52,9 @@ public class SwiftGenerator
 {
     private static final Logger LOG = LoggerFactory.getLogger(SwiftGenerator.class);
 
+    private static final Map<String, String> TEMPLATES = ImmutableMap.of("java-regular", "java/regular.st",
+                                                                         "java-immutable", "java/immutable.st");
+
     private final File outputFolder;
     private final SwiftGeneratorConfig swiftGeneratorConfig;
 
@@ -56,6 +62,8 @@ public class SwiftGenerator
 
     public SwiftGenerator(final SwiftGeneratorConfig swiftGeneratorConfig)
     {
+        Preconditions.checkState(TEMPLATES.get(swiftGeneratorConfig.getCodeFlavor()) != null, "Templating type %s is unknown!", swiftGeneratorConfig.getCodeFlavor());
+
         this.swiftGeneratorConfig = swiftGeneratorConfig;
 
         this.outputFolder = swiftGeneratorConfig.getOutputFolder();
@@ -63,19 +71,23 @@ public class SwiftGenerator
             outputFolder.mkdirs();
         }
 
-        LOG.debug("Writing source files into {}", outputFolder);
+        LOG.debug("Writing source files into {} using {} ...", outputFolder, swiftGeneratorConfig.getCodeFlavor());
 
-        this.templateLoader = new TemplateLoader("java/regular.st");
+        this.templateLoader = new TemplateLoader(TEMPLATES.get(swiftGeneratorConfig.getCodeFlavor()));
     }
 
     public void parse() throws Exception
     {
-        LOG.info("Parsing Thrift IDL from {}...", Arrays.asList(swiftGeneratorConfig.getInputFiles()));
+        LOG.info("Parsing Thrift IDL from {}...", swiftGeneratorConfig.getInputs());
 
         final Map<String, SwiftDocumentContext> contexts = Maps.newHashMap();
-        for (final File file : swiftGeneratorConfig.getInputFiles()) {
-            final File inputFile = file.isAbsolute() ? file : new File(swiftGeneratorConfig.getInputFolder(), file.getPath());
-            parseDocument(inputFile, contexts, new TypeRegistry(), new TypedefRegistry());
+        for (final URI inputUri : swiftGeneratorConfig.getInputs()) {
+
+            parseDocument(inputUri.isAbsolute() ? inputUri
+                                                : swiftGeneratorConfig.getInputBase().resolve(inputUri),
+                          contexts,
+                          new TypeRegistry(),
+                          new TypedefRegistry());
         }
 
         LOG.info("IDL parsing complete, writing java code...");
@@ -87,33 +99,30 @@ public class SwiftGenerator
         LOG.info("Java code generation complete.");
     }
 
-    private void parseDocument(final File thriftFile,
+    private void parseDocument(final URI thriftUri,
                                @Nullable final Map<String, SwiftDocumentContext> contexts,
                                final TypeRegistry typeRegistry,
                                final TypedefRegistry typedefRegistry) throws IOException
     {
-        LOG.debug("Parsing {}...", thriftFile.getAbsolutePath());
+        Preconditions.checkState(thriftUri != null && thriftUri.isAbsolute() && !thriftUri.isOpaque(), "Only absolute, non opaque URIs can be parsed!");
+        LOG.debug("Parsing {}...", thriftUri);
 
-        final String thriftName = thriftFile.getName();
-        final int idx = thriftName.lastIndexOf('.');
-        final String thriftNamespace = (idx == -1) ? thriftName : thriftName.substring(0, idx);
+        final String thriftNamespace = extractThriftNamespace(thriftUri);
 
-        Preconditions.checkState(thriftFile.exists(), "The file %s does not exist!", thriftFile.getAbsolutePath());
-        Preconditions.checkState(thriftFile.canRead(), "The file %s can not be read!", thriftFile.getAbsolutePath());
-        Preconditions.checkState(!isBlank(thriftNamespace), "The file %s can not be translated to a namespace", thriftFile.getAbsolutePath());
-        final SwiftDocumentContext context = new SwiftDocumentContext(thriftFile, thriftNamespace, typeRegistry, typedefRegistry);
+        Preconditions.checkState(!isBlank(thriftNamespace), "Thrift URI %s can not be translated to a namespace", thriftUri);
+        final SwiftDocumentContext context = new SwiftDocumentContext(thriftUri, thriftNamespace, typeRegistry, typedefRegistry);
 
         final Document document = context.getDocument();
         final Header header = document.getHeader();
         final String javaNamespace = Objects.firstNonNull(Objects.firstNonNull(swiftGeneratorConfig.getOverridePackage(),
                                                                                header.getNamespace("java")),
                                                           swiftGeneratorConfig.getDefaultPackage());
-        Preconditions.checkState(!isBlank(javaNamespace), "thrift file %s does not declare a java namespace!", thriftFile.getAbsolutePath());
+        Preconditions.checkState(!isBlank(javaNamespace), "thrift uri %s does not declare a java namespace!", thriftUri);
 
         for (final String include : header.getIncludes()) {
-            final File includeFile = new File(swiftGeneratorConfig.getInputFolder(), include);
-            LOG.debug("Found {} included from {}.", includeFile.getAbsolutePath(), thriftFile.getAbsolutePath());
-            parseDocument(includeFile,
+            final URI includeUri = swiftGeneratorConfig.getInputBase().resolve(include);
+            LOG.debug("Found {} included from {}.", includeUri, thriftUri);
+            parseDocument(includeUri,
                           // If the includes should also generate code, pass the list of
                           // contexts down to the include parser, otherwise pass a null in
                           swiftGeneratorConfig.isGenerateIncludedCode() ? contexts : null,
@@ -126,6 +135,17 @@ public class SwiftGenerator
         if (contexts != null && contexts.put(context.getNamespace(), context) != null) {
             LOG.info("Thrift Namespace {} included multiple times!", context.getNamespace());
         }
+    }
+
+    private String extractThriftNamespace(final URI thriftUri)
+    {
+        final String path = thriftUri.getPath();
+        final String filename = Iterables.getLast(Splitter.on('/').split(path), null);
+        Preconditions.checkState(filename != null, "No thrift namespace found in %s", thriftUri);
+
+        final String name = Iterables.getFirst(Splitter.on('.').split(filename), null);
+        Preconditions.checkState(name != null, "No thrift namespace found in %s", thriftUri);
+        return name;
     }
 
     private void generateFiles(final SwiftDocumentContext context) throws IOException
