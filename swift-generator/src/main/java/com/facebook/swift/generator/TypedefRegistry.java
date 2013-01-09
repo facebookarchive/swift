@@ -18,10 +18,11 @@ package com.facebook.swift.generator;
 import com.facebook.swift.parser.model.ThriftType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.Iterator;
 import java.util.Map;
+
+import static com.facebook.swift.generator.util.SwiftInternalStringUtils.isBlank;
 
 /**
  * Collects typedefs for replacement at templating time.
@@ -45,7 +46,7 @@ public class TypedefRegistry implements Iterable<Map.Entry<String, ThriftType>>
 
     private void add(final String key, final ThriftType thriftType)
     {
-        Preconditions.checkArgument(!StringUtils.isBlank(key), "key can not be empty!");
+        Preconditions.checkArgument(!isBlank(key), "key can not be empty!");
         registry.put(key, thriftType);
     }
 

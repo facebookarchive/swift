@@ -15,10 +15,11 @@
  */
 package com.facebook.mojo;
 
-import java.io.File;
-import java.util.List;
-
-import org.apache.commons.lang3.StringUtils;
+import com.facebook.swift.generator.SwiftGenerator;
+import com.facebook.swift.generator.SwiftGeneratorConfig;
+import com.google.common.base.Joiner;
+import com.google.common.base.Throwables;
+import com.pyx4j.log4j.MavenLogAppender;
 import org.apache.log4j.Logger;
 import org.apache.maven.model.FileSet;
 import org.apache.maven.plugin.AbstractMojo;
@@ -27,10 +28,8 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
 
-import com.facebook.swift.generator.SwiftGenerator;
-import com.facebook.swift.generator.SwiftGeneratorConfig;
-import com.google.common.base.Throwables;
-import com.pyx4j.log4j.MavenLogAppender;
+import java.io.File;
+import java.util.List;
 
 /**
  * Process IDL files and generates source code from the IDL files.
@@ -121,8 +120,8 @@ public class SwiftMojo extends AbstractMojo
 
                 @SuppressWarnings("unchecked")
                 List<File> files = FileUtils.getFiles(inputFolder,
-                                                      StringUtils.join(idlFiles.getIncludes(), ','),
-                                                      StringUtils.join(idlFiles.getExcludes(), ','));
+                                                      Joiner.on(',').join(idlFiles.getIncludes()),
+                                                      Joiner.on(',').join(idlFiles.getExcludes()));
                 final SwiftGeneratorConfig config = SwiftGeneratorConfig.builder()
                     .inputFolder(inputFolder)
                     .addInputFiles(files)

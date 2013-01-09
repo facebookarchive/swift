@@ -22,9 +22,9 @@ import com.facebook.swift.generator.template.TemplateContextGenerator;
 import com.facebook.swift.generator.util.TemplateLoader;
 import com.facebook.swift.parser.visitor.DocumentVisitor;
 import com.google.common.base.Charsets;
+import com.google.common.base.Splitter;
 import org.antlr.stringtemplate.NoIndentWriter;
 import org.antlr.stringtemplate.StringTemplate;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -55,8 +55,9 @@ public abstract class AbstractTemplateVisitor implements DocumentVisitor
         final StringTemplate template = templateLoader.load(templateName);
         template.setAttribute("context", context);
 
-        final String [] packages = StringUtils.split(context.getJavaPackage(), '.');
+        final Iterable<String> packages = Splitter.on('.').split(context.getJavaPackage());
         File folder = outputFolder;
+
         for (String pkg : packages) {
             folder = new File(folder, pkg);
             folder.mkdir();

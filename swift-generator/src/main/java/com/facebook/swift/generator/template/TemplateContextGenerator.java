@@ -26,7 +26,9 @@ import com.facebook.swift.parser.model.StringEnum;
 import com.facebook.swift.parser.model.ThriftField;
 import com.facebook.swift.parser.model.ThriftMethod;
 import com.google.common.base.Preconditions;
-import org.apache.commons.lang3.StringUtils;
+
+import static com.facebook.swift.generator.util.SwiftInternalStringUtils.isBlank;
+
 
 public class TemplateContextGenerator
 {
@@ -134,20 +136,18 @@ public class TemplateContextGenerator
 
     private static final String mangleJavaName(final String src, boolean capitalize)
     {
-        Preconditions.checkArgument(StringUtils.isNotBlank(src), "input name must not be blank!");
+        Preconditions.checkArgument(!isBlank(src), "input name must not be blank!");
 
         final StringBuilder sb = new StringBuilder();
-        if (!StringUtils.isBlank(src)) {
-            boolean upCase = capitalize;
-            for (int i = 0; i < src.length(); i++) {
-                if (src.charAt(i) == '_') {
-                    upCase = true;
-                    continue;
-                }
-                else {
-                    sb.append(upCase ? Character.toUpperCase(src.charAt(i)) : src.charAt(i));
-                    upCase = false;
-                }
+        boolean upCase = capitalize;
+        for (int i = 0; i < src.length(); i++) {
+            if (src.charAt(i) == '_') {
+                upCase = true;
+                continue;
+            }
+            else {
+                sb.append(upCase ? Character.toUpperCase(src.charAt(i)) : src.charAt(i));
+                upCase = false;
             }
         }
         return sb.toString();
@@ -156,7 +156,7 @@ public class TemplateContextGenerator
     public static final String mangleJavaConstantName(final String src)
     {
         final StringBuilder sb = new StringBuilder();
-        if (!StringUtils.isBlank(src)) {
+        if (!isBlank(src)) {
             boolean lowerCase = false;
             for (int i = 0; i < src.length(); i++) {
                 if (Character.isUpperCase(src.charAt(i))) {
