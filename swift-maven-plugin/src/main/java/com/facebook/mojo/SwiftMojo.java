@@ -112,6 +112,13 @@ public class SwiftMojo extends AbstractMojo
     private boolean addThriftExceptions = true;
 
     /**
+     * Select the flavor of the generated source code. Default is "java-regular".
+     *
+     * @parameter default-value="java-regular";
+     */
+    private String codeFlavor = "java-regular";
+
+    /**
      * @parameter expression="${project}"
      * @required
      * @readonly
@@ -142,6 +149,7 @@ public class SwiftMojo extends AbstractMojo
                     .defaultPackage(defaultPackage)
                     .addThriftExceptions(addThriftExceptions)
                     .generateIncludedCode(generateIncludedCode)
+                    .codeFlavor(codeFlavor)
                     .build();
 
                 final SwiftGenerator generator = new SwiftGenerator(config);
