@@ -17,8 +17,10 @@ package com.facebook.mojo;
 
 import com.facebook.swift.generator.SwiftGenerator;
 import com.facebook.swift.generator.SwiftGeneratorConfig;
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Collections2;
 import com.pyx4j.log4j.MavenLogAppender;
 import org.apache.log4j.Logger;
 import org.apache.maven.model.FileSet;
@@ -29,6 +31,7 @@ import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
 
 import java.io.File;
+import java.net.URI;
 import java.util.List;
 
 /**
@@ -42,6 +45,13 @@ import java.util.List;
 public class SwiftMojo extends AbstractMojo
 {
     private static final Logger LOG = Logger.getLogger(SwiftMojo.class);
+
+    private static final Function<File, URI> URI_TRANSFORMER = new Function<File, URI>() {
+        @Override
+        public URI apply(final File file) {
+            return file == null ? null : file.toURI();
+        }
+    };
 
     /**
      * Skip the plugin execution.
@@ -119,12 +129,14 @@ public class SwiftMojo extends AbstractMojo
                 final File inputFolder = new File(idlFiles.getDirectory());
 
                 @SuppressWarnings("unchecked")
-                List<File> files = FileUtils.getFiles(inputFolder,
+                final List<File> files = FileUtils.getFiles(inputFolder,
                                                       Joiner.on(',').join(idlFiles.getIncludes()),
                                                       Joiner.on(',').join(idlFiles.getExcludes()));
+
+
                 final SwiftGeneratorConfig config = SwiftGeneratorConfig.builder()
-                    .inputFolder(inputFolder)
-                    .addInputFiles(files)
+                    .inputBase(inputFolder.toURI())
+                    .addInputs(Collections2.transform(files, URI_TRANSFORMER))
                     .outputFolder(outputFolder)
                     .overridePackage(overridePackage)
                     .defaultPackage(defaultPackage)
