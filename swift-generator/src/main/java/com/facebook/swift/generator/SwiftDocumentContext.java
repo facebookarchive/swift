@@ -19,10 +19,10 @@ import com.facebook.swift.generator.template.TemplateContextGenerator;
 import com.facebook.swift.parser.ThriftIdlParser;
 import com.facebook.swift.parser.model.Document;
 import com.google.common.base.Charsets;
-import com.google.common.io.Files;
+import com.google.common.io.Resources;
 
-import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 
 public class SwiftDocumentContext
 {
@@ -32,12 +32,12 @@ public class SwiftDocumentContext
     private final TypedefRegistry typedefRegistry;
     private final TypeToJavaConverter typeConverter;
 
-    public SwiftDocumentContext(final File thriftFile,
+    public SwiftDocumentContext(final URI thriftUri,
                                 final String namespace,
                                 final TypeRegistry typeRegistry,
                                 final TypedefRegistry typedefRegistry) throws IOException
     {
-        this.document = ThriftIdlParser.parseThriftIdl(Files.newReaderSupplier(thriftFile, Charsets.UTF_8));
+        this.document = ThriftIdlParser.parseThriftIdl(Resources.newReaderSupplier(thriftUri.toURL(), Charsets.UTF_8));
         this.namespace = namespace;
         this.typeRegistry = typeRegistry;
         this.typedefRegistry = typedefRegistry;

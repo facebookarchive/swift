@@ -15,6 +15,8 @@
  */
 package com.facebook.swift.generator;
 
+import com.google.common.io.Resources;
+
 import java.io.File;
 
 /**
@@ -22,23 +24,18 @@ import java.io.File;
  */
 public class TestSwiftGenerator
 {
-    private static final String THRIFT2_FOLDER = System.getProperty("user.home") + "/fb/src/swift-demo/src/main/idl";
-    private static final String OUTPUT_FOLDER = System.getProperty("user.home") + "/fb/workspace/default/Demo/src/";
+    private static final String OUTPUT_FOLDER = System.getProperty("java.io.tmpdir") + "demo";
 
     public static void main(final String ... args) throws Exception
     {
         final SwiftGeneratorConfig config = SwiftGeneratorConfig.builder()
-                        .inputFolder(new File(THRIFT2_FOLDER))
-                        .addInputFiles(
-                               new File("hive/metastore.thrift"),
-                               new File("Maestro.thrift")
-//                               new File("fb303.thrift"),
-//                               new File("common/fb303/if/fb303.thrift")
+                        .inputBase(Resources.getResource(TestSwiftGenerator.class, "/").toURI())
+                        .addInputs(
+                                   Resources.getResource(TestSwiftGenerator.class, "/hive/metastore.thrift").toURI(),
+                                   Resources.getResource(TestSwiftGenerator.class, "/Maestro.thrift").toURI()
                                )
-                        .outputFolder(new File(OUTPUT_FOLDER))
+                        .outputFolder(new File(args.length == 0 ? OUTPUT_FOLDER : args[0]))
                         .setGenerateIncludedCode()
-//                        .clearAddThriftExceptions()
-//                        .overridePackage("com.fb.test")
                         .build();
 
         final SwiftGenerator generator = new SwiftGenerator(config);

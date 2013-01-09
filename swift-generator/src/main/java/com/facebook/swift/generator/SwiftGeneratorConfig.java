@@ -16,33 +16,33 @@
 package com.facebook.swift.generator;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 
 import java.io.File;
+import java.net.URI;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public class SwiftGeneratorConfig
 {
-    private final File inputFolder;
-    private final File [] inputFiles;
+    private final URI inputBase;
+    private final Set<URI> inputs;
     private final File outputFolder;
     private final String overridePackage;
     private final String defaultPackage;
     private final boolean addThriftExceptions;
     private final boolean generateIncludedCode;
 
-    private SwiftGeneratorConfig(final File inputFolder,
-                                 final File [] inputFiles,
+    private SwiftGeneratorConfig(final URI inputBase,
+                                 final Set<URI> inputs,
                                  final File outputFolder,
                                  final String overridePackage,
                                  final String defaultPackage,
                                  final boolean addThriftExceptions,
                                  final boolean generateIncludedCode)
     {
-        this.inputFolder = inputFolder;
-        this.inputFiles = inputFiles;
+        this.inputBase = inputBase;
+        this.inputs = inputs;
         this.outputFolder = outputFolder;
         this.overridePackage = overridePackage;
         this.defaultPackage = defaultPackage;
@@ -56,20 +56,19 @@ public class SwiftGeneratorConfig
     }
 
     /**
-     * Returns the input folder which contains Thrift IDL files.
+     * Returns the input base URI to load Thrift IDL files.
      */
-    public File getInputFolder()
+    public URI getInputBase()
     {
-        return inputFolder;
+        return inputBase;
     }
 
     /**
-     * Returns an array of input files that are read. Files can be relative
-     * to the input folder or absolute.
+     * Returns an array of input URIs to read. If any of the URIs is not absolute, an input base must be set.
      */
-    public File[] getInputFiles()
+    public Set<URI> getInputs()
     {
-        return inputFiles;
+        return inputs;
     }
 
     /**
@@ -116,15 +115,13 @@ public class SwiftGeneratorConfig
 
     public static class Builder
     {
-        private File inputFolder = null;
-        private final List<File> inputFiles = Lists.newArrayList();
+        private URI inputBase = null;
+        private final Set<URI> inputs = new HashSet<>();
         private File outputFolder = null;
         private String overridePackage = null;
         private String defaultPackage = null;
         private boolean addThriftExceptions = true;
         private boolean generateIncludedCode = false;
-
-        private boolean relativeInputFileSeen = false;
 
         private Builder()
         {
@@ -133,12 +130,13 @@ public class SwiftGeneratorConfig
         public SwiftGeneratorConfig build()
         {
             Preconditions.checkState(outputFolder != null, "output folder must be set!");
-            Preconditions.checkState(inputFiles.size() > 0, "no input files given!");
-            Preconditions.checkState(!(inputFolder == null && relativeInputFileSeen), "no input folder set and a relative input file given!");
+            Preconditions.checkState(inputs.size() > 0, "no input files given!");
+
+            Preconditions.checkState(inputBase != null, "input base uri must be set to load includes!");
 
             return new SwiftGeneratorConfig(
-                inputFolder,
-                inputFiles.toArray(new File [inputFiles.size()]),
+                inputBase,
+                inputs,
                 outputFolder,
                 overridePackage,
                 defaultPackage,
@@ -146,9 +144,9 @@ public class SwiftGeneratorConfig
                 generateIncludedCode);
         }
 
-        public Builder inputFolder(final File inputFolder)
+        public Builder inputBase(final URI inputBase)
         {
-            this.inputFolder = inputFolder;
+            this.inputBase = inputBase;
             return this;
         }
 
@@ -158,15 +156,17 @@ public class SwiftGeneratorConfig
             return this;
         }
 
-        public Builder addInputFiles(final File ... inputFiles)
+        public Builder addInputs(final URI ... inputs)
         {
-            this.inputFiles.addAll(Arrays.asList(inputFiles));
-            return this;
+            return addInputs(Arrays.asList(inputs));
         }
 
-        public Builder addInputFiles(final Collection<File> inputFiles)
+        public Builder addInputs(final Iterable<URI> inputs)
         {
-            this.inputFiles.addAll(inputFiles);
+            for (URI input : inputs) {
+                this.inputs.add(input);
+            }
+
             return this;
         }
 
