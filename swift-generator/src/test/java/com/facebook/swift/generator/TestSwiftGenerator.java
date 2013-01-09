@@ -22,7 +22,7 @@ import java.io.File;
  */
 public class TestSwiftGenerator
 {
-    private static final String THRIFT2_FOLDER = System.getProperty("user.home") + "/fb/src/swift/swift-demo/src/main/idl";
+    private static final String THRIFT2_FOLDER = System.getProperty("user.home") + "/fb/src/swift-demo/src/main/idl";
     private static final String OUTPUT_FOLDER = System.getProperty("user.home") + "/fb/workspace/default/Demo/src/";
 
     public static void main(final String ... args) throws Exception

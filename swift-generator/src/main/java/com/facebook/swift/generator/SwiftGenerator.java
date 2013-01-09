@@ -29,7 +29,6 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +39,8 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nullable;
+
+import static com.facebook.swift.generator.util.SwiftInternalStringUtils.isBlank;
 
 /**
  * Parses a Thrift IDL file and writes out initial annotated java classes.
@@ -99,7 +100,7 @@ public class SwiftGenerator
 
         Preconditions.checkState(thriftFile.exists(), "The file %s does not exist!", thriftFile.getAbsolutePath());
         Preconditions.checkState(thriftFile.canRead(), "The file %s can not be read!", thriftFile.getAbsolutePath());
-        Preconditions.checkState(!StringUtils.isEmpty(thriftNamespace), "The file %s can not be translated to a namespace", thriftFile.getAbsolutePath());
+        Preconditions.checkState(!isBlank(thriftNamespace), "The file %s can not be translated to a namespace", thriftFile.getAbsolutePath());
         final SwiftDocumentContext context = new SwiftDocumentContext(thriftFile, thriftNamespace, typeRegistry, typedefRegistry);
 
         final Document document = context.getDocument();
@@ -107,7 +108,7 @@ public class SwiftGenerator
         final String javaNamespace = Objects.firstNonNull(Objects.firstNonNull(swiftGeneratorConfig.getOverridePackage(),
                                                                                header.getNamespace("java")),
                                                           swiftGeneratorConfig.getDefaultPackage());
-        Preconditions.checkState(!StringUtils.isEmpty(javaNamespace), "thrift file %s does not declare a java namespace!", thriftFile.getAbsolutePath());
+        Preconditions.checkState(!isBlank(javaNamespace), "thrift file %s does not declare a java namespace!", thriftFile.getAbsolutePath());
 
         for (final String include : header.getIncludes()) {
             final File includeFile = new File(swiftGeneratorConfig.getInputFolder(), include);

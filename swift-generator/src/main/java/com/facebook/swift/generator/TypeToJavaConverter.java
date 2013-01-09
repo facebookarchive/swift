@@ -15,6 +15,8 @@
  */
 package com.facebook.swift.generator;
 
+import com.google.common.collect.Lists;
+
 import com.facebook.swift.generator.template.TemplateContextGenerator;
 import com.facebook.swift.parser.model.BaseType;
 import com.facebook.swift.parser.model.IdentifierType;
@@ -24,10 +26,11 @@ import com.facebook.swift.parser.model.SetType;
 import com.facebook.swift.parser.model.ThriftType;
 import com.facebook.swift.parser.model.VoidType;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
-import org.apache.commons.lang3.StringUtils;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 
@@ -155,14 +158,15 @@ public class TypeToJavaConverter
         {
             final String name = ((IdentifierType) type).getName();
             // the name is [<thrift-namespace>.]<thrift type>
-            final String [] names = StringUtils.split(name, '.');
-            Preconditions.checkState(names.length > 0 && names.length < 3, "only unqualified and thrift-namespace qualified names are allowed!");
-            String thriftName = names[0];
+            final List<String> names = Lists.newArrayList(Splitter.on('.').split(name));
+
+            Preconditions.checkState(names.size() > 0 && names.size() < 3, "only unqualified and thrift-namespace qualified names are allowed!");
+            String thriftName = names.get(0);
             String thriftNamespace = namespace;
 
-            if (names.length == 2) {
-                thriftName = names[1];
-                thriftNamespace = names[0];
+            if (names.size() == 2) {
+                thriftName = names.get(1);
+                thriftNamespace = names.get(0);
             }
 
             final String javatypeName = thriftNamespace + "." + TemplateContextGenerator.mangleJavatypeName(thriftName);
