@@ -15,6 +15,8 @@
  */
 package com.facebook.swift.generator.template;
 
+import com.facebook.swift.generator.SwiftGeneratorConfig;
+import com.facebook.swift.generator.SwiftGeneratorTweak;
 import com.facebook.swift.generator.SwiftJavaType;
 import com.facebook.swift.generator.TypeRegistry;
 import com.facebook.swift.generator.TypeToJavaConverter;
@@ -27,19 +29,28 @@ import com.facebook.swift.parser.model.ThriftField;
 import com.facebook.swift.parser.model.ThriftMethod;
 import com.google.common.base.Preconditions;
 
+import java.io.Closeable;
+import java.util.HashSet;
+import java.util.Set;
+
 import static com.facebook.swift.generator.util.SwiftInternalStringUtils.isBlank;
 
 
 public class TemplateContextGenerator
 {
+    private static final MethodContext CLOSE_METHOD_CONTEXT = new MethodContext(null, true, "close", "void");
+
+    private final SwiftGeneratorConfig generatorConfig;
     private final TypeRegistry typeRegistry;
     private final TypeToJavaConverter typeConverter;
     private final String defaultNamespace;
 
-    public TemplateContextGenerator(final TypeRegistry typeRegistry,
+    public TemplateContextGenerator(final SwiftGeneratorConfig generatorConfig,
+                                    final TypeRegistry typeRegistry,
                                     final TypeToJavaConverter typeConverter,
                                     final String defaultNamespace)
     {
+        this.generatorConfig = generatorConfig;
         this.typeRegistry = typeRegistry;
         this.defaultNamespace = defaultNamespace;
         this.typeConverter = typeConverter;
@@ -51,10 +62,22 @@ public class TemplateContextGenerator
         final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, name);
         final SwiftJavaType parentType = typeRegistry.findType(service.getParent().orNull());
 
-        return new ServiceContext(name,
-                                  javaType.getPackage(),
-                                  javaType.getSimpleName(),
-                                  parentType == null ? null : parentType.getClassName());
+        final Set<String> javaParents = new HashSet<>();
+        if (parentType != null) {
+            javaParents.add(parentType.getClassName());
+        }
+
+        final ServiceContext serviceContext = new ServiceContext(name,
+                                                                 javaType.getPackage(),
+                                                                 javaType.getSimpleName(),
+                                                                 javaParents);
+
+        if (generatorConfig.containsTweak(SwiftGeneratorTweak.ADD_CLOSEABLE_INTERFACE)) {
+            javaParents.add("Closeable");
+            serviceContext.addMethod(CLOSE_METHOD_CONTEXT);
+        }
+
+        return serviceContext;
     }
 
     public StructContext structFromThrift(final AbstractStruct struct)

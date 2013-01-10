@@ -35,8 +35,11 @@ public class TestSwiftGenerator
                                    Resources.getResource(TestSwiftGenerator.class, "/Maestro.thrift").toURI()
                                )
                         .outputFolder(new File(args.length == 0 ? OUTPUT_FOLDER : args[0]))
-                        .setGenerateIncludedCode()
+                        .generateIncludedCode(true)
                         .codeFlavor("java-immutable")
+                        .addTweak(SwiftGeneratorTweak.ADD_CLOSEABLE_INTERFACE)
+                        .addTweak(SwiftGeneratorTweak.EXTEND_RUNTIME_EXCEPTION)
+                        .addTweak(SwiftGeneratorTweak.ADD_THRIFT_EXCEPTION)
                         .build();
 
         final SwiftGenerator generator = new SwiftGenerator(config);

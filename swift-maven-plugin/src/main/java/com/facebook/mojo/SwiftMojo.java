@@ -15,6 +15,8 @@
  */
 package com.facebook.mojo;
 
+import com.facebook.swift.generator.SwiftGeneratorTweak;
+
 import com.facebook.swift.generator.SwiftGenerator;
 import com.facebook.swift.generator.SwiftGeneratorConfig;
 import com.google.common.base.Function;
@@ -112,6 +114,20 @@ public class SwiftMojo extends AbstractMojo
     private boolean addThriftExceptions = true;
 
     /**
+     * Have generated services extend {@link Closeable} and a close method.
+     *
+     * @parameter default-value="false"
+     */
+    private boolean addCloseableInterface = false;
+
+    /**
+     * Generated exceptions extends {@link RuntimeException}, not {@link Exception}.
+     *
+     * @parameter default-value="true"
+     */
+    private boolean extendRuntimeException = true;
+
+    /**
      * Select the flavor of the generated source code. Default is "java-regular".
      *
      * @parameter default-value="java-regular";
@@ -141,18 +157,28 @@ public class SwiftMojo extends AbstractMojo
                                                       Joiner.on(',').join(idlFiles.getExcludes()));
 
 
-                final SwiftGeneratorConfig config = SwiftGeneratorConfig.builder()
+                final SwiftGeneratorConfig.Builder configBuilder = SwiftGeneratorConfig.builder()
                     .inputBase(inputFolder.toURI())
                     .addInputs(Collections2.transform(files, URI_TRANSFORMER))
                     .outputFolder(outputFolder)
                     .overridePackage(overridePackage)
                     .defaultPackage(defaultPackage)
-                    .addThriftExceptions(addThriftExceptions)
                     .generateIncludedCode(generateIncludedCode)
-                    .codeFlavor(codeFlavor)
-                    .build();
+                    .codeFlavor(codeFlavor);
 
-                final SwiftGenerator generator = new SwiftGenerator(config);
+                if (addThriftExceptions) {
+                    configBuilder.addTweak(SwiftGeneratorTweak.ADD_THRIFT_EXCEPTION);
+                }
+
+                if (addCloseableInterface) {
+                    configBuilder.addTweak(SwiftGeneratorTweak.ADD_CLOSEABLE_INTERFACE);
+                }
+
+                if (extendRuntimeException) {
+                    configBuilder.addTweak(SwiftGeneratorTweak.EXTEND_RUNTIME_EXCEPTION);
+                }
+
+                final SwiftGenerator generator = new SwiftGenerator(configBuilder.build());
                 generator.parse();
 
                 project.addCompileSourceRoot(outputFolder.getPath());

@@ -15,6 +15,8 @@
  */
 package com.facebook.swift.generator.visitors;
 
+import com.facebook.swift.generator.SwiftGeneratorTweak;
+
 import com.facebook.swift.generator.SwiftDocumentContext;
 import com.facebook.swift.generator.SwiftGeneratorConfig;
 import com.facebook.swift.generator.template.ExceptionContext;
@@ -65,7 +67,7 @@ public class ServiceVisitor extends AbstractTemplateVisitor
                 methodContext.addException(contextGenerator.exceptionFromThrift(field));
             }
 
-            if (config.isAddThriftExceptions()) {
+            if (config.containsTweak(SwiftGeneratorTweak.ADD_THRIFT_EXCEPTION)) {
                 methodContext.addException(THRIFT_EXCEPTION_CONTEXT);
             }
         }

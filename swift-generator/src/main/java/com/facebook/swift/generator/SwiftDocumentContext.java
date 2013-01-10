@@ -28,17 +28,20 @@ public class SwiftDocumentContext
 {
     private final Document document;
     private final String namespace;
+    private final SwiftGeneratorConfig generatorConfig;
     private final TypeRegistry typeRegistry;
     private final TypedefRegistry typedefRegistry;
     private final TypeToJavaConverter typeConverter;
 
     public SwiftDocumentContext(final URI thriftUri,
                                 final String namespace,
+                                final SwiftGeneratorConfig generatorConfig,
                                 final TypeRegistry typeRegistry,
                                 final TypedefRegistry typedefRegistry) throws IOException
     {
         this.document = ThriftIdlParser.parseThriftIdl(Resources.newReaderSupplier(thriftUri.toURL(), Charsets.UTF_8));
         this.namespace = namespace;
+        this.generatorConfig = generatorConfig;
         this.typeRegistry = typeRegistry;
         this.typedefRegistry = typedefRegistry;
         this.typeConverter = new TypeToJavaConverter(typeRegistry,
@@ -74,7 +77,7 @@ public class SwiftDocumentContext
 
     public TemplateContextGenerator getTemplateContextGenerator()
     {
-        return new TemplateContextGenerator(typeRegistry, typeConverter, namespace);
+        return new TemplateContextGenerator(generatorConfig, typeRegistry, typeConverter, namespace);
     }
 }
 
