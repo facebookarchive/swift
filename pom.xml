@@ -8,7 +8,7 @@
   <parent>
     <groupId>com.facebook</groupId>
     <artifactId>facebook-oss-pom</artifactId>
-    <version>3-SNAPSHOT</version>
+    <version>4</version>
   </parent>
 
   <groupId>com.facebook.swift</groupId>
@@ -55,11 +55,8 @@
     <!-- This actually wants to be fixed -->
     <fb.check.fail-findbugs>false</fb.check.fail-findbugs>
 
-    <dep.guice.version>3.0</dep.guice.version>
     <dep.airlift.version>0.66</dep.airlift.version>
     <dep.maven-api.version>2.2.1</dep.maven-api.version>
-    <dep.slf4j.version>1.7.2</dep.slf4j.version>
-    <dep.logback.version>1.0.7</dep.logback.version>
     <dep.fb.nifty.version>0.0.3-SNAPSHOT</dep.fb.nifty.version>
   </properties>
 
@@ -99,12 +96,6 @@
         <groupId>org.apache.thrift</groupId>
         <artifactId>libthrift</artifactId>
         <version>0.8.0</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.google.guava</groupId>
-        <artifactId>guava</artifactId>
-        <version>13.0.1</version>
       </dependency>
 
       <dependency>
