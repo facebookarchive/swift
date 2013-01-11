@@ -32,6 +32,7 @@ public class SwiftGeneratorConfig
     private final String defaultPackage;
     private final boolean addThriftExceptions;
     private final boolean generateIncludedCode;
+    private final String codeFlavor;
 
     private SwiftGeneratorConfig(final URI inputBase,
                                  final Set<URI> inputs,
@@ -39,7 +40,8 @@ public class SwiftGeneratorConfig
                                  final String overridePackage,
                                  final String defaultPackage,
                                  final boolean addThriftExceptions,
-                                 final boolean generateIncludedCode)
+                                 final boolean generateIncludedCode,
+                                 final String codeFlavor)
     {
         this.inputBase = inputBase;
         this.inputs = inputs;
@@ -48,6 +50,7 @@ public class SwiftGeneratorConfig
         this.defaultPackage = defaultPackage;
         this.addThriftExceptions = addThriftExceptions;
         this.generateIncludedCode = generateIncludedCode;
+        this.codeFlavor = codeFlavor;
     }
 
     public static Builder builder()
@@ -113,6 +116,14 @@ public class SwiftGeneratorConfig
         return generateIncludedCode;
     }
 
+    /**
+     * The template to use for generating source code.
+     */
+    public String getCodeFlavor()
+    {
+        return codeFlavor;
+    }
+
     public static class Builder
     {
         private URI inputBase = null;
@@ -122,6 +133,7 @@ public class SwiftGeneratorConfig
         private String defaultPackage = null;
         private boolean addThriftExceptions = true;
         private boolean generateIncludedCode = false;
+        private String codeFlavor = null;
 
         private Builder()
         {
@@ -133,6 +145,7 @@ public class SwiftGeneratorConfig
             Preconditions.checkState(inputs.size() > 0, "no input files given!");
 
             Preconditions.checkState(inputBase != null, "input base uri must be set to load includes!");
+            Preconditions.checkState(codeFlavor != null, "no code flavor selected!");
 
             return new SwiftGeneratorConfig(
                 inputBase,
@@ -141,7 +154,8 @@ public class SwiftGeneratorConfig
                 overridePackage,
                 defaultPackage,
                 addThriftExceptions,
-                generateIncludedCode);
+                generateIncludedCode,
+                codeFlavor);
         }
 
         public Builder inputBase(final URI inputBase)
@@ -203,6 +217,12 @@ public class SwiftGeneratorConfig
         public Builder setGenerateIncludedCode()
         {
             this.generateIncludedCode = true;
+            return this;
+        }
+
+        public Builder codeFlavor(final String codeFlavor)
+        {
+            this.codeFlavor = codeFlavor;
             return this;
         }
     }

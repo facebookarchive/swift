@@ -28,6 +28,7 @@ import com.facebook.swift.parser.visitor.DocumentVisitor;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -51,6 +52,9 @@ public class SwiftGenerator
 {
     private static final Logger LOG = LoggerFactory.getLogger(SwiftGenerator.class);
 
+    private static final Map<String, String> TEMPLATES = ImmutableMap.of("java-regular", "java/regular.st",
+                                                                         "java-immutable", "java/immutable.st");
+
     private final File outputFolder;
     private final SwiftGeneratorConfig swiftGeneratorConfig;
 
@@ -58,6 +62,8 @@ public class SwiftGenerator
 
     public SwiftGenerator(final SwiftGeneratorConfig swiftGeneratorConfig)
     {
+        Preconditions.checkState(TEMPLATES.get(swiftGeneratorConfig.getCodeFlavor()) != null, "Templating type %s is unknown!", swiftGeneratorConfig.getCodeFlavor());
+
         this.swiftGeneratorConfig = swiftGeneratorConfig;
 
         this.outputFolder = swiftGeneratorConfig.getOutputFolder();
@@ -65,9 +71,9 @@ public class SwiftGenerator
             outputFolder.mkdirs();
         }
 
-        LOG.debug("Writing source files into {}", outputFolder);
+        LOG.debug("Writing source files into {} using {} ...", outputFolder, swiftGeneratorConfig.getCodeFlavor());
 
-        this.templateLoader = new TemplateLoader("java/regular.st");
+        this.templateLoader = new TemplateLoader(TEMPLATES.get(swiftGeneratorConfig.getCodeFlavor()));
     }
 
     public void parse() throws Exception
