@@ -60,3 +60,10 @@ services to be exported with Thrift.   For example:
         }
     }
 
+# Swift Generator
+
+[Swift Generator](https://github.com/facebook/swift/tree/master/swift-generator) can create Java code usable with the Swift codec from Thrift IDL files.
+
+# Swift Maven plugin
+
+[Swift Maven plugin](https://github.com/facebook/swift/tree/master/swift-maven-plugin) allows using the code generator from a maven build and generate source code on the fly.
