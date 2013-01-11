@@ -3,8 +3,8 @@ swift-service,com.facebook.swift.service,ThriftMethodStats,0,68,0,0,0,21,0,11,0,
 swift-service,com.facebook.swift.service,ThriftMethodHandler.ParameterHandler,0,21,0,0,0,8,0,4,0,4
 swift-service,com.facebook.swift.service,ThriftServiceProcessor,55,123,3,7,9,31,4,6,1,4
 swift-service,com.facebook.swift.service,ThriftServer.State,9,39,0,0,0,4,2,2,2,2
-swift-service,com.facebook.swift.service,ThriftClientManager,69,146,3,1,17,23,6,9,4,9
-swift-service,com.facebook.swift.service,ThriftClient,46,57,2,0,11,13,9,2,8,2
+swift-service,com.facebook.swift.service,ThriftClientManager,69,155,3,1,17,25,6,10,4,10
+swift-service,com.facebook.swift.service,ThriftClient,46,75,2,0,11,17,9,4,8,4
 swift-service,com.facebook.swift.service,ThriftClientManager.TypeAndName,39,64,5,5,10,17,6,5,1,5
 swift-service,com.facebook.swift.service,RuntimeTApplicationException,5,0,0,0,2,0,1,0,1,0
 swift-service,com.facebook.swift.service,RuntimeTProtocolException,5,0,0,0,2,0,1,0,1,0
@@ -18,16 +18,17 @@ swift-service,com.facebook.swift.service,ThriftClientManager.new CacheLoader() {
 swift-service,com.facebook.swift.service,ThriftMethodProcessor,85,366,10,18,19,85,9,13,0,8
 swift-service,com.facebook.swift.service,ThriftMethodHandler.new NiftyClientChannel.Listener() {...},68,0,0,0,16,0,5,0,5,0
 swift-service,com.facebook.swift.service,SyncClientHelpers.new NiftyClientChannel.Listener() {...},9,22,0,0,3,5,1,3,1,3
-swift-service,com.facebook.swift.service,ThriftServer,59,190,16,10,10,42,15,7,2,7
+swift-service,com.facebook.swift.service,ThriftServer,59,202,16,10,10,44,15,8,2,8
 swift-service,com.facebook.swift.service,ThriftClientConfig,20,43,0,0,8,11,4,6,4,6
-swift-service,com.facebook.swift.service,ThriftServerConfig,15,22,0,0,6,6,3,4,3,4
+swift-service,com.facebook.swift.service,ThriftServerConfig,20,25,0,0,8,7,4,5,4,5
 swift-service,com.facebook.swift.service,ThriftClientManager.ThriftClientMetadata,0,76,0,2,0,18,0,6,0,5
 swift-service,com.facebook.swift.service,SyncClientHelpers.new NiftyClientChannel.Listener() {...},23,0,0,0,7,0,4,0,4,0
 swift-service,com.facebook.swift.service,RuntimeTException,5,0,0,0,2,0,1,0,1,0
 swift-service,com.facebook.swift.service.guice,ThriftServiceExporter,0,59,0,0,0,13,0,5,0,5
 swift-service,com.facebook.swift.service.guice,ThriftServiceExporter.ThriftServiceExport,49,13,8,0,13,5,6,3,2,3
 swift-service,com.facebook.swift.service.guice,ThriftClientBinder,0,189,0,2,0,32,0,7,0,6
-swift-service,com.facebook.swift.service.guice,ThriftServerModule,0,57,0,2,0,13,0,5,0,4
+swift-service,com.facebook.swift.service.guice,ThriftServerModule,0,66,0,2,0,14,0,5,0,4
+swift-service,com.facebook.swift.service.guice,ThriftClientBinder.ThriftClientProvider,38,93,13,3,10,21,9,6,1,6
 swift-service,com.facebook.swift.service.guice,ThriftServiceExporter.ThriftServiceProcessorProvider,0,44,0,2,0,11,0,3,0,2
 swift-service,com.facebook.swift.service.guice,ThriftClientModule.new MapObjectNameFunction() {...},0,8,0,0,0,2,0,2,0,2
 swift-service,com.facebook.swift.service.guice,ThriftClientManagerProvider,11,10,1,1,3,3,2,2,1,2
@@ -35,6 +36,5 @@ swift-service,com.facebook.swift.service.guice,ThriftClientBinder.new TypeParame
 swift-service,com.facebook.swift.service.guice,ThriftClientBinder.new TypeToken() {...},0,3,0,0,0,1,0,1,0,1
 swift-service,com.facebook.swift.service.guice,ThriftClientModule,4,84,0,4,2,14,0,5,0,3
 swift-service,com.facebook.swift.service.guice,ThriftServerModule.new ObjectNameFunction() {...},4,29,0,0,2,4,0,2,0,2
-swift-service,com.facebook.swift.service.guice,ThriftClientBinder.ThriftClientProviderProvider,38,93,13,3,10,21,9,6,1,6
 swift-service,com.facebook.swift.service.metadata,ThriftMethodMetadata,32,288,10,24,7,58,9,18,1,9
 swift-service,com.facebook.swift.service.metadata,ThriftServiceMetadata,42,105,5,7,8,20,6,6,2,4

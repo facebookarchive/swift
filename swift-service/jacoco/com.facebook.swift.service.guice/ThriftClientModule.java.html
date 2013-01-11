@@ -18,7 +18,6 @@ package com.facebook.swift.service.guice;
 import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.ThriftClientManager.ThriftClientMetadata;
 import com.facebook.swift.service.ThriftMethodHandler;
-import com.facebook.swift.service.guice.ThriftClientBinder.ThriftClientProviderProvider;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Binder;
@@ -37,50 +36,50 @@ import java.util.Set;
 import static com.google.inject.multibindings.Multibinder.newSetBinder;
 import static java.lang.String.format;
 
-<span class="fc" id="L40">public class ThriftClientModule implements Module</span>
+<span class="fc" id="L39">public class ThriftClientModule implements Module</span>
 {
     @Override
     public void configure(Binder binder)
     {
         // Bind single shared ThriftClientManager
-<span class="fc" id="L46">        binder.bind(ThriftClientManager.class).toProvider(ThriftClientManagerProvider.class).in(Scopes.SINGLETON);</span>
+<span class="fc" id="L45">        binder.bind(ThriftClientManager.class).toProvider(ThriftClientManagerProvider.class).in(Scopes.SINGLETON);</span>
 
         // We bind the ThriftClientProviderProviders in a Set so below we can export the thrift methods to JMX
-<span class="fc" id="L49">        newSetBinder(binder, ThriftClientProviderProvider.class).permitDuplicates();</span>
-<span class="fc" id="L50">        ExportBinder.newExporter(binder)</span>
+<span class="fc" id="L48">        newSetBinder(binder, ThriftClientBinder.ThriftClientProvider.class).permitDuplicates();</span>
+<span class="fc" id="L49">        ExportBinder.newExporter(binder)</span>
                 .exportMap(ObjectName.class, ThriftMethodHandler.class)
                 .withGeneratedName(new MapObjectNameFunction&lt;ObjectName, ThriftMethodHandler&gt;()
-<span class="fc" id="L53">                {</span>
+<span class="fc" id="L52">                {</span>
                     @Override
                     public ObjectName name(ObjectName key, ThriftMethodHandler value)
                     {
-<span class="fc" id="L57">                        return key;</span>
+<span class="fc" id="L56">                        return key;</span>
                     }
                 });
-<span class="fc" id="L60">    }</span>
+<span class="fc" id="L59">    }</span>
 
     @Provides
     @Singleton
-    public Map&lt;ObjectName, ThriftMethodHandler&gt; getMethodProcessors(Set&lt;ThriftClientProviderProvider&gt; clientProviders)
+    public Map&lt;ObjectName, ThriftMethodHandler&gt; getMethodProcessors(Set&lt;ThriftClientBinder.ThriftClientProvider&gt; clientProviders)
     {
         try {
             // extract method handles into a map so they can be exported individually into jmx
-<span class="fc" id="L68">            ImmutableMap.Builder&lt;ObjectName, ThriftMethodHandler&gt; builder = ImmutableMap.builder();</span>
-<span class="fc bfc" id="L69" title="All 2 branches covered.">            for (ThriftClientProviderProvider&lt;?&gt; clientProvider : clientProviders) {</span>
-<span class="fc" id="L70">                ThriftClientMetadata clientMetadata = clientProvider.getClientMetadata();</span>
-<span class="fc bfc" id="L71" title="All 2 branches covered.">                for (ThriftMethodHandler methodHandler : clientMetadata.getMethodHandlers().values()) {</span>
-<span class="fc" id="L72">                    String name = format(&quot;com.facebook.swift.client:type=%s,clientName=%s,name=%s&quot;,</span>
+<span class="fc" id="L67">            ImmutableMap.Builder&lt;ObjectName, ThriftMethodHandler&gt; builder = ImmutableMap.builder();</span>
+<span class="fc bfc" id="L68" title="All 2 branches covered.">            for (ThriftClientBinder.ThriftClientProvider&lt;?&gt; clientProvider : clientProviders) {</span>
+<span class="fc" id="L69">                ThriftClientMetadata clientMetadata = clientProvider.getClientMetadata();</span>
+<span class="fc bfc" id="L70" title="All 2 branches covered.">                for (ThriftMethodHandler methodHandler : clientMetadata.getMethodHandlers().values()) {</span>
+<span class="fc" id="L71">                    String name = format(&quot;com.facebook.swift.client:type=%s,clientName=%s,name=%s&quot;,</span>
                             clientMetadata.getClientType(),
                             clientMetadata.getClientName(),
                             methodHandler.getName());
-<span class="fc" id="L76">                    builder.put(ObjectName.getInstance(name), methodHandler);</span>
-<span class="fc" id="L77">                }</span>
-<span class="fc" id="L78">            }</span>
-<span class="fc" id="L79">            return builder.build();</span>
+<span class="fc" id="L75">                    builder.put(ObjectName.getInstance(name), methodHandler);</span>
+<span class="fc" id="L76">                }</span>
+<span class="fc" id="L77">            }</span>
+<span class="fc" id="L78">            return builder.build();</span>
         }
-<span class="nc" id="L81">        catch (MalformedObjectNameException e) {</span>
-<span class="nc" id="L82">            throw Throwables.propagate(e);</span>
+<span class="nc" id="L80">        catch (MalformedObjectNameException e) {</span>
+<span class="nc" id="L81">            throw Throwables.propagate(e);</span>
         }
     }
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.1.201212231917</span></div></body></html>

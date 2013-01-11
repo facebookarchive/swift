@@ -18,15 +18,15 @@ package com.facebook.swift.service;
 import com.facebook.nifty.core.NettyConfigBuilder;
 import com.facebook.nifty.core.NettyServerTransport;
 import com.facebook.nifty.core.ThriftServerDef;
-import com.facebook.nifty.core.ThriftServerDefBuilder;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.TProcessorFactory;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
+import org.jboss.netty.util.HashedWheelTimer;
+import org.jboss.netty.util.Timer;
 import org.weakref.jmx.Managed;
-import org.weakref.jmx.com.google.common.primitives.Ints;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -62,121 +62,127 @@ public class ThriftServer implements Closeable
 
     public ThriftServer(TProcessor processor)
     {
-<span class="fc" id="L65">        this (processor, new ThriftServerConfig());</span>
+<span class="fc" id="L65">        this(processor, new ThriftServerConfig());</span>
 <span class="fc" id="L66">    }</span>
 
-    @Inject
     public ThriftServer(TProcessor processor, ThriftServerConfig config)
-<span class="fc" id="L70">    {</span>
-<span class="fc" id="L71">        TProcessorFactory processorFactory = new TProcessorFactory(processor);</span>
+    {
+<span class="fc" id="L70">        this(processor, config, new HashedWheelTimer());</span>
+<span class="fc" id="L71">    }</span>
 
-<span class="fc" id="L73">        port = getSpecifiedOrRandomPort(config);</span>
+    @Inject
+    public ThriftServer(TProcessor processor, ThriftServerConfig config, @ThriftServerTimer Timer timer)
+<span class="fc" id="L75">    {</span>
+<span class="fc" id="L76">        TProcessorFactory processorFactory = new TProcessorFactory(processor);</span>
 
-<span class="fc" id="L75">        workerThreads = config.getWorkerThreads();</span>
+<span class="fc" id="L78">        port = getSpecifiedOrRandomPort(config);</span>
 
-<span class="fc" id="L77">        workerExecutor = newFixedThreadPool(workerThreads, new ThreadFactoryBuilder().setNameFormat(&quot;thrift-worker-%s&quot;).build());</span>
-<span class="fc" id="L78">        acceptorExecutor = newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat(&quot;thrift-acceptor-%s&quot;).build());</span>
-<span class="fc" id="L79">        ioExecutor = newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat(&quot;thrift-io-%s&quot;).build());</span>
+<span class="fc" id="L80">        workerThreads = config.getWorkerThreads();</span>
 
-<span class="fc" id="L81">        ThriftServerDef thriftServerDef = ThriftServerDef.newBuilder()</span>
+<span class="fc" id="L82">        workerExecutor = newFixedThreadPool(workerThreads, new ThreadFactoryBuilder().setNameFormat(&quot;thrift-worker-%s&quot;).build());</span>
+<span class="fc" id="L83">        acceptorExecutor = newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat(&quot;thrift-acceptor-%s&quot;).build());</span>
+<span class="fc" id="L84">        ioExecutor = newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat(&quot;thrift-io-%s&quot;).build());</span>
+
+<span class="fc" id="L86">        ThriftServerDef thriftServerDef = ThriftServerDef.newBuilder()</span>
                                                          .name(&quot;thrift&quot;)
                                                          .listen(port)
                                                          .limitFrameSizeTo((int) config.getMaxFrameSize().toBytes())
+                                                         .clientIdleTimeout(config.getClientIdleTimeout())
                                                          .withProcessorFactory(processorFactory)
                                                          .using(workerExecutor).build();
 
-<span class="fc" id="L88">        transport = new NettyServerTransport(thriftServerDef, new NettyConfigBuilder(), allChannels);</span>
-<span class="fc" id="L89">    }</span>
+<span class="fc" id="L94">        transport = new NettyServerTransport(thriftServerDef, new NettyConfigBuilder(), allChannels, timer);</span>
+<span class="fc" id="L95">    }</span>
 
     private int getSpecifiedOrRandomPort(ThriftServerConfig config)
     {
-<span class="pc bpc" id="L93" title="1 of 2 branches missed.">        if (config.getPort() != 0) {</span>
-<span class="nc" id="L94">            return config.getPort();</span>
+<span class="pc bpc" id="L99" title="1 of 2 branches missed.">        if (config.getPort() != 0) {</span>
+<span class="nc" id="L100">            return config.getPort();</span>
         }
-<span class="pc" id="L96">        try (ServerSocket s = new ServerSocket()) {</span>
-<span class="fc" id="L97">            s.bind(new InetSocketAddress(0));</span>
-<span class="fc" id="L98">            return s.getLocalPort();</span>
-<span class="pc bpc" id="L99" title="6 of 8 branches missed.">        }</span>
-<span class="nc" id="L100">        catch (IOException e) {</span>
-<span class="nc" id="L101">            throw new IllegalStateException(&quot;Unable to get a random port&quot;, e);</span>
+<span class="pc" id="L102">        try (ServerSocket s = new ServerSocket()) {</span>
+<span class="fc" id="L103">            s.bind(new InetSocketAddress(0));</span>
+<span class="fc" id="L104">            return s.getLocalPort();</span>
+<span class="pc bpc" id="L105" title="6 of 8 branches missed.">        }</span>
+<span class="nc" id="L106">        catch (IOException e) {</span>
+<span class="nc" id="L107">            throw new IllegalStateException(&quot;Unable to get a random port&quot;, e);</span>
         }
     }
 
     @Managed
     public int getPort()
     {
-<span class="fc" id="L108">        return port;</span>
+<span class="fc" id="L114">        return port;</span>
     }
 
     @Managed
     public int getWorkerThreads()
     {
-<span class="nc" id="L114">        return workerThreads;</span>
+<span class="nc" id="L120">        return workerThreads;</span>
     }
 
     public synchronized boolean isRunning() {
-<span class="nc bnc" id="L118" title="All 2 branches missed.">        return state == State.RUNNING;</span>
+<span class="nc bnc" id="L124" title="All 2 branches missed.">        return state == State.RUNNING;</span>
     }
 
     @PostConstruct
     public synchronized ThriftServer start()
     {
-<span class="pc bpc" id="L124" title="1 of 2 branches missed.">        Preconditions.checkState(state != State.CLOSED, &quot;Thrift server is closed&quot;);</span>
-<span class="pc bpc" id="L125" title="1 of 2 branches missed.">        if (state == State.NOT_STARTED) {</span>
-<span class="fc" id="L126">            transport.start(acceptorExecutor, ioExecutor);</span>
-<span class="fc" id="L127">            state = State.RUNNING;</span>
+<span class="pc bpc" id="L130" title="1 of 2 branches missed.">        Preconditions.checkState(state != State.CLOSED, &quot;Thrift server is closed&quot;);</span>
+<span class="pc bpc" id="L131" title="1 of 2 branches missed.">        if (state == State.NOT_STARTED) {</span>
+<span class="fc" id="L132">            transport.start(acceptorExecutor, ioExecutor);</span>
+<span class="fc" id="L133">            state = State.RUNNING;</span>
         }
-<span class="fc" id="L129">        return this;</span>
+<span class="fc" id="L135">        return this;</span>
     }
 
     @PreDestroy
     @Override
     public synchronized void close()
     {
-<span class="pc bpc" id="L136" title="1 of 2 branches missed.">        if (state == State.CLOSED) {</span>
-<span class="nc" id="L137">            return;</span>
+<span class="pc bpc" id="L142" title="1 of 2 branches missed.">        if (state == State.CLOSED) {</span>
+<span class="nc" id="L143">            return;</span>
         }
 
-<span class="pc bpc" id="L140" title="1 of 2 branches missed.">        if (state == State.RUNNING) {</span>
+<span class="pc bpc" id="L146" title="1 of 2 branches missed.">        if (state == State.RUNNING) {</span>
             try {
-<span class="fc" id="L142">                transport.stop();</span>
+<span class="fc" id="L148">                transport.stop();</span>
             }
-<span class="nc" id="L144">            catch (InterruptedException e) {</span>
-<span class="nc" id="L145">                Thread.currentThread().interrupt();</span>
-<span class="fc" id="L146">            }</span>
+<span class="nc" id="L150">            catch (InterruptedException e) {</span>
+<span class="nc" id="L151">                Thread.currentThread().interrupt();</span>
+<span class="fc" id="L152">            }</span>
         }
 
         // stop bosses
-<span class="pc bpc" id="L150" title="1 of 2 branches missed.">        if (acceptorExecutor != null) {</span>
-<span class="fc" id="L151">            shutdownExecutor(acceptorExecutor);</span>
+<span class="pc bpc" id="L156" title="1 of 2 branches missed.">        if (acceptorExecutor != null) {</span>
+<span class="fc" id="L157">            shutdownExecutor(acceptorExecutor);</span>
         }
 
         // stop worker
-<span class="pc bpc" id="L155" title="1 of 2 branches missed.">        if (workerExecutor != null) {</span>
-<span class="fc" id="L156">            shutdownExecutor(workerExecutor);</span>
+<span class="pc bpc" id="L161" title="1 of 2 branches missed.">        if (workerExecutor != null) {</span>
+<span class="fc" id="L162">            shutdownExecutor(workerExecutor);</span>
         }
 
         // TODO: allow an option here to control if we need to drain connections and wait instead of killing them all
-<span class="fc" id="L160">        allChannels.close();</span>
+<span class="fc" id="L166">        allChannels.close();</span>
 
         // finally the reader writer
-<span class="pc bpc" id="L163" title="1 of 2 branches missed.">        if (ioExecutor != null) {</span>
-<span class="fc" id="L164">            shutdownExecutor(ioExecutor);</span>
+<span class="pc bpc" id="L169" title="1 of 2 branches missed.">        if (ioExecutor != null) {</span>
+<span class="fc" id="L170">            shutdownExecutor(ioExecutor);</span>
         }
 
-<span class="fc" id="L167">        state = State.CLOSED;</span>
-<span class="fc" id="L168">    }</span>
+<span class="fc" id="L173">        state = State.CLOSED;</span>
+<span class="fc" id="L174">    }</span>
 
     private static void shutdownExecutor(ExecutorService executor)
     {
-<span class="fc" id="L172">        executor.shutdown();</span>
+<span class="fc" id="L178">        executor.shutdown();</span>
         try {
-<span class="fc" id="L174">            executor.awaitTermination(5, TimeUnit.SECONDS);</span>
+<span class="fc" id="L180">            executor.awaitTermination(5, TimeUnit.SECONDS);</span>
         }
-<span class="nc" id="L176">        catch (InterruptedException e) {</span>
+<span class="nc" id="L182">        catch (InterruptedException e) {</span>
             //ignored
-<span class="nc" id="L178">            Thread.currentThread().interrupt();</span>
-<span class="fc" id="L179">        }</span>
-<span class="fc" id="L180">    }</span>
+<span class="nc" id="L184">            Thread.currentThread().interrupt();</span>
+<span class="fc" id="L185">        }</span>
+<span class="fc" id="L186">    }</span>
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.1.201212231917</span></div></body></html>

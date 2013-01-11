@@ -46,7 +46,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.PreDestroy;
@@ -64,110 +63,126 @@ public class ThriftClientManager implements Closeable
 
     private final ThriftCodecManager codecManager;
     private final NiftyClient niftyClient;
-<span class="pc" id="L67">    private final LoadingCache&lt;TypeAndName, ThriftClientMetadata&gt; clientMetadataCache = CacheBuilder.newBuilder()</span>
+<span class="pc" id="L66">    private final LoadingCache&lt;TypeAndName, ThriftClientMetadata&gt; clientMetadataCache = CacheBuilder.newBuilder()</span>
             .build(new CacheLoader&lt;TypeAndName, ThriftClientMetadata&gt;()
-<span class="fc" id="L69">            {</span>
+<span class="fc" id="L68">            {</span>
                 @Override
                 public ThriftClientMetadata load(TypeAndName typeAndName)
                         throws Exception
                 {
-<span class="fc" id="L74">                    return new ThriftClientMetadata(typeAndName.getType(), typeAndName.getName(), codecManager);</span>
+<span class="fc" id="L73">                    return new ThriftClientMetadata(typeAndName.getType(), typeAndName.getName(), codecManager);</span>
                 }
             });
 
     public ThriftClientManager()
     {
-<span class="fc" id="L80">        this(new ThriftCodecManager());</span>
-<span class="fc" id="L81">    }</span>
+<span class="fc" id="L79">        this(new ThriftCodecManager());</span>
+<span class="fc" id="L80">    }</span>
 
     public ThriftClientManager(int maxFrameSize)
     {
-<span class="nc" id="L85">      this(new ThriftCodecManager(), maxFrameSize);</span>
-<span class="nc" id="L86">    }</span>
+<span class="nc" id="L84">        this(new ThriftCodecManager(), maxFrameSize);</span>
+<span class="nc" id="L85">    }</span>
 
     public ThriftClientManager(ThriftCodecManager codecManager)
-<span class="fc" id="L89">    {</span>
-<span class="fc" id="L90">        this.codecManager = codecManager;</span>
-<span class="fc" id="L91">        this.niftyClient = new NiftyClient();</span>
-<span class="fc" id="L92">    }</span>
+<span class="fc" id="L88">    {</span>
+<span class="fc" id="L89">        this.codecManager = codecManager;</span>
+<span class="fc" id="L90">        this.niftyClient = new NiftyClient();</span>
+<span class="fc" id="L91">    }</span>
 
     public ThriftClientManager(ThriftCodecManager codecManager, int maxFrameSize)
-<span class="nc" id="L95">    {</span>
-<span class="nc" id="L96">      this.codecManager = codecManager;</span>
-<span class="nc" id="L97">      niftyClient = new NiftyClient(maxFrameSize);</span>
-<span class="nc" id="L98">    }</span>
+<span class="nc" id="L94">    {</span>
+<span class="nc" id="L95">        this.codecManager = codecManager;</span>
+<span class="nc" id="L96">        niftyClient = new NiftyClient(maxFrameSize);</span>
+<span class="nc" id="L97">    }</span>
 
     public &lt;T&gt; ListenableFuture&lt;T&gt; createClient(HostAndPort address, Class&lt;T&gt; type)
-            throws TTransportException, InterruptedException, ExecutionException
     {
-<span class="fc" id="L103">        return createClient(address, type, DEFAULT_CONNECT_TIMEOUT, DEFAULT_READ_TIMEOUT, DEFAULT_WRITE_TIMEOUT, DEFAULT_NAME, null);</span>
+<span class="fc" id="L101">        FramedClientChannel.Factory channelFactory = new FramedClientChannel.Factory();</span>
+<span class="fc" id="L102">        return createClient(address, type, channelFactory);</span>
     }
 
-    public &lt;T&gt; ListenableFuture&lt;T&gt; createClient(final HostAndPort address,
-                                                final Class&lt;T&gt; type,
-                                                final Duration connectTimeout,
-                                                final Duration readTimeout,
-                                                final Duration writeTimeout,
-                                                final String clientName,
-                                                HostAndPort socksProxy)
-            throws TTransportException, InterruptedException
+    public &lt;T, C extends NiftyClientChannel&gt; ListenableFuture&lt;T&gt; createClient(
+            HostAndPort address,
+            Class&lt;T&gt; type,
+            NiftyClientChannel.Factory&lt;C&gt; channelFactory)
     {
-<span class="fc" id="L115">        NiftyClientChannel channel = null;</span>
+<span class="fc" id="L110">        return createClient(address,</span>
+                            type,
+                            channelFactory,
+                            DEFAULT_CONNECT_TIMEOUT,
+                            DEFAULT_READ_TIMEOUT,
+                            DEFAULT_WRITE_TIMEOUT,
+                            DEFAULT_NAME,
+                            null);
+    }
+
+    public &lt;T, C extends NiftyClientChannel&gt; ListenableFuture&lt;T&gt; createClient(
+            final HostAndPort address,
+            final Class&lt;T&gt; type,
+            final NiftyClientChannel.Factory&lt;C&gt; channelFactory,
+            final Duration connectTimeout,
+            final Duration readTimeout,
+            final Duration writeTimeout,
+            final String clientName,
+            HostAndPort socksProxy)
+    {
+<span class="fc" id="L130">        NiftyClientChannel channel = null;</span>
         try {
-<span class="fc" id="L117">            final SettableFuture&lt;T&gt; clientFuture = SettableFuture.create();</span>
-<span class="fc" id="L118">            ListenableFuture&lt;FramedClientChannel&gt; connectFuture =</span>
-                    niftyClient.connectAsync(new FramedClientChannel.Factory(),
+<span class="fc" id="L132">            final SettableFuture&lt;T&gt; clientFuture = SettableFuture.create();</span>
+<span class="fc" id="L133">            ListenableFuture&lt;C&gt; connectFuture =</span>
+                    niftyClient.connectAsync(channelFactory,
                                              toInetSocketAddress(address),
                                              connectTimeout,
                                              readTimeout,
                                              writeTimeout,
                                              this.toSocksProxyAddress(socksProxy));
-<span class="fc" id="L125">            Futures.addCallback(connectFuture, new FutureCallback&lt;FramedClientChannel&gt;()</span>
-<span class="fc" id="L126">            {</span>
+<span class="fc" id="L140">            Futures.addCallback(connectFuture, new FutureCallback&lt;C&gt;()</span>
+<span class="fc" id="L141">            {</span>
                 @Override
-                public void onSuccess(FramedClientChannel result)
+                public void onSuccess(C result)
                 {
-<span class="fc" id="L130">                    NiftyClientChannel channel = result;</span>
+<span class="fc" id="L145">                    NiftyClientChannel channel = result;</span>
 
-<span class="pc bpc" id="L132" title="1 of 2 branches missed.">                    if (readTimeout.toMillis() &gt; 0) {</span>
-<span class="fc" id="L133">                        channel.setReceiveTimeout(readTimeout);</span>
+<span class="pc bpc" id="L147" title="1 of 2 branches missed.">                    if (readTimeout.toMillis() &gt; 0) {</span>
+<span class="fc" id="L148">                        channel.setReceiveTimeout(readTimeout);</span>
                     }
-<span class="pc bpc" id="L135" title="1 of 2 branches missed.">                    if (writeTimeout.toMillis() &gt; 0) {</span>
-<span class="fc" id="L136">                        channel.setSendTimeout(writeTimeout);</span>
+<span class="pc bpc" id="L150" title="1 of 2 branches missed.">                    if (writeTimeout.toMillis() &gt; 0) {</span>
+<span class="fc" id="L151">                        channel.setSendTimeout(writeTimeout);</span>
                     }
-<span class="pc bpc" id="L138" title="1 of 2 branches missed.">                    clientFuture.set(createClient(channel, type, Strings.isNullOrEmpty(clientName) ? address.toString() : clientName));</span>
-<span class="fc" id="L139">                }</span>
+<span class="pc bpc" id="L153" title="1 of 2 branches missed.">                    clientFuture.set(createClient(channel, type, Strings.isNullOrEmpty(clientName) ? address.toString() : clientName));</span>
+<span class="fc" id="L154">                }</span>
 
                 @Override
                 public void onFailure(Throwable t)
                 {
-<span class="nc" id="L144">                    clientFuture.setException(t);</span>
-<span class="nc" id="L145">                }</span>
+<span class="nc" id="L159">                    clientFuture.setException(t);</span>
+<span class="nc" id="L160">                }</span>
             });
-<span class="fc" id="L147">            return clientFuture;</span>
+<span class="fc" id="L162">            return clientFuture;</span>
         }
-<span class="nc" id="L149">        catch (RuntimeException | Error e) {</span>
-<span class="nc bnc" id="L150" title="All 2 branches missed.">            if (channel != null) {</span>
-<span class="nc" id="L151">                channel.close();</span>
+<span class="nc" id="L164">        catch (RuntimeException | Error e) {</span>
+<span class="nc bnc" id="L165" title="All 2 branches missed.">            if (channel != null) {</span>
+<span class="nc" id="L166">                channel.close();</span>
             }
-<span class="nc" id="L153">            throw e;</span>
+<span class="nc" id="L168">            throw e;</span>
         }
     }
 
     public &lt;T&gt; T createClient(NiftyClientChannel channel, Class&lt;T&gt; type)
     {
-<span class="nc" id="L159">        return createClient(channel, type, DEFAULT_NAME);</span>
+<span class="nc" id="L174">        return createClient(channel, type, DEFAULT_NAME);</span>
     }
 
     public &lt;T&gt; T createClient(NiftyClientChannel channel, Class&lt;T&gt; type, String name)
     {
-<span class="fc" id="L164">        ThriftClientMetadata clientMetadata = clientMetadataCache.getUnchecked(new TypeAndName(type, name));</span>
+<span class="fc" id="L179">        ThriftClientMetadata clientMetadata = clientMetadataCache.getUnchecked(new TypeAndName(type, name));</span>
 
-<span class="fc" id="L166">        String clientDescription = clientMetadata.getName() + &quot; &quot; + channel.toString();</span>
+<span class="fc" id="L181">        String clientDescription = clientMetadata.getName() + &quot; &quot; + channel.toString();</span>
 
-<span class="fc" id="L168">        ThriftInvocationHandler handler = new ThriftInvocationHandler(clientDescription, channel, clientMetadata.getMethodHandlers());</span>
+<span class="fc" id="L183">        ThriftInvocationHandler handler = new ThriftInvocationHandler(clientDescription, channel, clientMetadata.getMethodHandlers());</span>
 
-<span class="fc" id="L170">        return type.cast(Proxy.newProxyInstance(</span>
+<span class="fc" id="L185">        return type.cast(Proxy.newProxyInstance(</span>
                 type.getClassLoader(),
                 new Class&lt;?&gt;[]{ type, Closeable.class },
                 handler
@@ -176,36 +191,37 @@ public class ThriftClientManager implements Closeable
 
     private InetSocketAddress toInetSocketAddress(HostAndPort hostAndPort)
     {
-<span class="fc" id="L179">        return new InetSocketAddress(hostAndPort.getHostText(), hostAndPort.getPort());</span>
+<span class="fc" id="L194">        return new InetSocketAddress(hostAndPort.getHostText(), hostAndPort.getPort());</span>
     }
 
     private InetSocketAddress toSocksProxyAddress(HostAndPort socksProxy)
     {
-<span class="pc bpc" id="L184" title="1 of 2 branches missed.">        if (socksProxy == null) {</span>
-<span class="fc" id="L185">            return null;</span>
+<span class="pc bpc" id="L199" title="1 of 2 branches missed.">        if (socksProxy == null) {</span>
+<span class="fc" id="L200">            return null;</span>
         }
-<span class="nc" id="L187">        return new InetSocketAddress(socksProxy.getHostText(), socksProxy.getPortOrDefault(SOCKS_DEFAULT_PORT));</span>
+<span class="nc" id="L202">        return new InetSocketAddress(socksProxy.getHostText(), socksProxy.getPortOrDefault(SOCKS_DEFAULT_PORT));</span>
     }
 
     public ThriftClientMetadata getClientMetadata(Class&lt;?&gt; type, String name)
     {
-<span class="fc" id="L192">        return clientMetadataCache.getUnchecked(new TypeAndName(type, name));</span>
+<span class="fc" id="L207">        return clientMetadataCache.getUnchecked(new TypeAndName(type, name));</span>
     }
 
     @PreDestroy
     public void close()
     {
-<span class="fc" id="L198">        niftyClient.close();</span>
-<span class="fc" id="L199">    }</span>
+<span class="fc" id="L213">        niftyClient.close();</span>
+<span class="fc" id="L214">    }</span>
 
     public NiftyClientChannel getNiftyChannel(Object client)
     {
         try {
-<span class="nc" id="L204">            InvocationHandler genericHandler = Proxy.getInvocationHandler(client);</span>
-<span class="nc" id="L205">            ThriftInvocationHandler thriftHandler = ThriftInvocationHandler.class.cast(genericHandler);</span>
-<span class="nc" id="L206">            return thriftHandler.getChannel();</span>
-<span class="nc" id="L207">        } catch (ClassCastException e) {</span>
-<span class="nc" id="L208">            throw new IllegalArgumentException(&quot;Not a swift client object&quot;, e);</span>
+<span class="nc" id="L219">            InvocationHandler genericHandler = Proxy.getInvocationHandler(client);</span>
+<span class="nc" id="L220">            ThriftInvocationHandler thriftHandler = ThriftInvocationHandler.class.cast(genericHandler);</span>
+<span class="nc" id="L221">            return thriftHandler.getChannel();</span>
+        }
+<span class="nc" id="L223">        catch (ClassCastException e) {</span>
+<span class="nc" id="L224">            throw new IllegalArgumentException(&quot;Not a swift client object&quot;, e);</span>
         }
     }
 
@@ -217,47 +233,50 @@ public class ThriftClientManager implements Closeable
         private final ThriftServiceMetadata thriftServiceMetadata;
         private final Map&lt;Method, ThriftMethodHandler&gt; methodHandlers;
 
-        private ThriftClientMetadata(Class&lt;?&gt; clientType, String clientName, ThriftCodecManager codecManager)
-<span class="fc" id="L221">        {</span>
-<span class="fc" id="L222">            Preconditions.checkNotNull(clientType, &quot;clientType is null&quot;);</span>
-<span class="fc" id="L223">            Preconditions.checkNotNull(clientName, &quot;clientName is null&quot;);</span>
-<span class="fc" id="L224">            Preconditions.checkNotNull(codecManager, &quot;codecManager is null&quot;);</span>
+        private ThriftClientMetadata(
+                Class&lt;?&gt; clientType,
+                String clientName,
+                ThriftCodecManager codecManager)
+<span class="fc" id="L240">        {</span>
+<span class="fc" id="L241">            Preconditions.checkNotNull(clientType, &quot;clientType is null&quot;);</span>
+<span class="fc" id="L242">            Preconditions.checkNotNull(clientName, &quot;clientName is null&quot;);</span>
+<span class="fc" id="L243">            Preconditions.checkNotNull(codecManager, &quot;codecManager is null&quot;);</span>
 
-<span class="fc" id="L226">            this.clientName = clientName;</span>
-<span class="fc" id="L227">            thriftServiceMetadata = new ThriftServiceMetadata(clientType, codecManager.getCatalog());</span>
-<span class="fc" id="L228">            this.clientType = thriftServiceMetadata.getName();</span>
-<span class="fc" id="L229">            ImmutableMap.Builder&lt;Method, ThriftMethodHandler&gt; methods = ImmutableMap.builder();</span>
-<span class="fc bfc" id="L230" title="All 2 branches covered.">            for (ThriftMethodMetadata methodMetadata : thriftServiceMetadata.getMethods().values()) {</span>
-<span class="fc" id="L231">                ThriftMethodHandler methodHandler = new ThriftMethodHandler(methodMetadata, codecManager);</span>
-<span class="fc" id="L232">                methods.put(methodMetadata.getMethod(), methodHandler);</span>
-<span class="fc" id="L233">            }</span>
-<span class="fc" id="L234">            methodHandlers = methods.build();</span>
-<span class="fc" id="L235">        }</span>
+<span class="fc" id="L245">            this.clientName = clientName;</span>
+<span class="fc" id="L246">            thriftServiceMetadata = new ThriftServiceMetadata(clientType, codecManager.getCatalog());</span>
+<span class="fc" id="L247">            this.clientType = thriftServiceMetadata.getName();</span>
+<span class="fc" id="L248">            ImmutableMap.Builder&lt;Method, ThriftMethodHandler&gt; methods = ImmutableMap.builder();</span>
+<span class="fc bfc" id="L249" title="All 2 branches covered.">            for (ThriftMethodMetadata methodMetadata : thriftServiceMetadata.getMethods().values()) {</span>
+<span class="fc" id="L250">                ThriftMethodHandler methodHandler = new ThriftMethodHandler(methodMetadata, codecManager);</span>
+<span class="fc" id="L251">                methods.put(methodMetadata.getMethod(), methodHandler);</span>
+<span class="fc" id="L252">            }</span>
+<span class="fc" id="L253">            methodHandlers = methods.build();</span>
+<span class="fc" id="L254">        }</span>
 
         public String getClientType()
         {
-<span class="fc" id="L239">            return clientType;</span>
+<span class="fc" id="L258">            return clientType;</span>
         }
 
         public String getClientName()
         {
-<span class="fc" id="L244">            return clientName;</span>
+<span class="fc" id="L263">            return clientName;</span>
         }
 
         public String getName()
         {
-<span class="fc" id="L249">            return thriftServiceMetadata.getName();</span>
+<span class="fc" id="L268">            return thriftServiceMetadata.getName();</span>
         }
 
         public Map&lt;Method, ThriftMethodHandler&gt; getMethodHandlers()
         {
-<span class="fc" id="L254">            return methodHandlers;</span>
+<span class="fc" id="L273">            return methodHandlers;</span>
         }
     }
 
     private static class ThriftInvocationHandler implements InvocationHandler
     {
-<span class="fc" id="L260">        private static final Object[] NO_ARGS = new Object[0];</span>
+<span class="fc" id="L279">        private static final Object[] NO_ARGS = new Object[0];</span>
         private final String clientDescription;
         private final TProtocolFactory in;
         private final TProtocolFactory out;
@@ -265,83 +284,83 @@ public class ThriftClientManager implements Closeable
         private final NiftyClientChannel channel;
 
         private final Map&lt;Method, ThriftMethodHandler&gt; methods;
-<span class="fc" id="L268">        private final AtomicInteger sequenceId = new AtomicInteger(1);</span>
+<span class="fc" id="L287">        private final AtomicInteger sequenceId = new AtomicInteger(1);</span>
+
         private ThriftInvocationHandler(
                 String clientDescription,
                 NiftyClientChannel channel,
-                Map&lt;Method, ThriftMethodHandler&gt; methods
-        )
-<span class="fc" id="L274">        {</span>
-<span class="fc" id="L275">            this.clientDescription = clientDescription;</span>
-<span class="fc" id="L276">            this.channel = channel;</span>
-<span class="fc" id="L277">            this.methods = methods;</span>
+                Map&lt;Method, ThriftMethodHandler&gt; methods)
+<span class="fc" id="L293">        {</span>
+<span class="fc" id="L294">            this.clientDescription = clientDescription;</span>
+<span class="fc" id="L295">            this.channel = channel;</span>
+<span class="fc" id="L296">            this.methods = methods;</span>
 
-<span class="fc" id="L279">            TProtocolFactory protocolFactory = new TBinaryProtocol.Factory();</span>
-<span class="fc" id="L280">            this.in = protocolFactory;</span>
-<span class="fc" id="L281">            this.out = protocolFactory;</span>
-<span class="fc" id="L282">        }</span>
+<span class="fc" id="L298">            TProtocolFactory protocolFactory = new TBinaryProtocol.Factory();</span>
+<span class="fc" id="L299">            this.in = protocolFactory;</span>
+<span class="fc" id="L300">            this.out = protocolFactory;</span>
+<span class="fc" id="L301">        }</span>
 
         public NiftyClientChannel getChannel()
         {
-<span class="nc" id="L286">            return channel;</span>
+<span class="nc" id="L305">            return channel;</span>
         }
 
         @Override
         public Object invoke(Object proxy, Method method, Object[] args)
                 throws Throwable
         {
-<span class="pc bpc" id="L293" title="1 of 2 branches missed.">            if (method.getDeclaringClass() == Object.class) {</span>
-<span class="nc bnc" id="L294" title="All 14 branches missed.">                switch (method.getName()) {</span>
+<span class="pc bpc" id="L312" title="1 of 2 branches missed.">            if (method.getDeclaringClass() == Object.class) {</span>
+<span class="nc bnc" id="L313" title="All 14 branches missed.">                switch (method.getName()) {</span>
                     case &quot;toString&quot;:
-<span class="nc" id="L296">                        return clientDescription;</span>
+<span class="nc" id="L315">                        return clientDescription;</span>
                     case &quot;equals&quot;:
-<span class="nc" id="L298">                        return equals(Proxy.getInvocationHandler(args[0]));</span>
+<span class="nc" id="L317">                        return equals(Proxy.getInvocationHandler(args[0]));</span>
                     case &quot;hashCode&quot;:
-<span class="nc" id="L300">                        return hashCode();</span>
+<span class="nc" id="L319">                        return hashCode();</span>
                     default:
-<span class="nc" id="L302">                        throw new UnsupportedOperationException();</span>
+<span class="nc" id="L321">                        throw new UnsupportedOperationException();</span>
                 }
             }
 
-<span class="fc bfc" id="L306" title="All 2 branches covered.">            if (args == null) {</span>
-<span class="fc" id="L307">                args = NO_ARGS;</span>
+<span class="fc bfc" id="L325" title="All 2 branches covered.">            if (args == null) {</span>
+<span class="fc" id="L326">                args = NO_ARGS;</span>
             }
 
-<span class="pc bpc" id="L310" title="1 of 4 branches missed.">            if (args.length == 0 &amp;&amp; &quot;close&quot;.equals(method.getName())) {</span>
-<span class="fc" id="L311">                channel.close();</span>
-<span class="fc" id="L312">                return null;</span>
+<span class="pc bpc" id="L329" title="1 of 4 branches missed.">            if (args.length == 0 &amp;&amp; &quot;close&quot;.equals(method.getName())) {</span>
+<span class="fc" id="L330">                channel.close();</span>
+<span class="fc" id="L331">                return null;</span>
             }
 
-<span class="fc" id="L315">            ThriftMethodHandler methodHandler = methods.get(method);</span>
+<span class="fc" id="L334">            ThriftMethodHandler methodHandler = methods.get(method);</span>
 
             try {
-<span class="pc bpc" id="L318" title="1 of 2 branches missed.">                if (methodHandler == null) {</span>
-<span class="nc" id="L319">                    throw new TApplicationException(UNKNOWN_METHOD, &quot;Unknown method : '&quot; + method + &quot;'&quot;);</span>
+<span class="pc bpc" id="L337" title="1 of 2 branches missed.">                if (methodHandler == null) {</span>
+<span class="nc" id="L338">                    throw new TApplicationException(UNKNOWN_METHOD, &quot;Unknown method : '&quot; + method + &quot;'&quot;);</span>
                 }
-<span class="fc" id="L321">                return methodHandler.invoke(in, out, channel, sequenceId.getAndIncrement(), args);</span>
+<span class="fc" id="L340">                return methodHandler.invoke(in, out, channel, sequenceId.getAndIncrement(), args);</span>
             }
-<span class="nc" id="L323">            catch (TException e) {</span>
-<span class="nc" id="L324">                Class&lt;? extends TException&gt; thrownType = e.getClass();</span>
+<span class="nc" id="L342">            catch (TException e) {</span>
+<span class="nc" id="L343">                Class&lt;? extends TException&gt; thrownType = e.getClass();</span>
 
-<span class="nc bnc" id="L326" title="All 2 branches missed.">                for (Class&lt;?&gt; exceptionType : method.getExceptionTypes()) {</span>
-<span class="nc bnc" id="L327" title="All 2 branches missed.">                    if (exceptionType.isAssignableFrom(thrownType)) {</span>
-<span class="nc" id="L328">                        throw e;</span>
+<span class="nc bnc" id="L345" title="All 2 branches missed.">                for (Class&lt;?&gt; exceptionType : method.getExceptionTypes()) {</span>
+<span class="nc bnc" id="L346" title="All 2 branches missed.">                    if (exceptionType.isAssignableFrom(thrownType)) {</span>
+<span class="nc" id="L347">                        throw e;</span>
                     }
                 }
 
                 //noinspection InstanceofCatchParameter
-<span class="nc bnc" id="L333" title="All 2 branches missed.">                if (e instanceof TApplicationException) {</span>
-<span class="nc" id="L334">                    throw new RuntimeTApplicationException(e.getMessage(), (TApplicationException) e);</span>
+<span class="nc bnc" id="L352" title="All 2 branches missed.">                if (e instanceof TApplicationException) {</span>
+<span class="nc" id="L353">                    throw new RuntimeTApplicationException(e.getMessage(), (TApplicationException) e);</span>
                 }
                 //noinspection InstanceofCatchParameter
-<span class="nc bnc" id="L337" title="All 2 branches missed.">                if (e instanceof TProtocolException) {</span>
-<span class="nc" id="L338">                    throw new RuntimeTProtocolException(e.getMessage(), (TProtocolException) e);</span>
+<span class="nc bnc" id="L356" title="All 2 branches missed.">                if (e instanceof TProtocolException) {</span>
+<span class="nc" id="L357">                    throw new RuntimeTProtocolException(e.getMessage(), (TProtocolException) e);</span>
                 }
                 //noinspection InstanceofCatchParameter
-<span class="nc bnc" id="L341" title="All 2 branches missed.">                if (e instanceof TTransportException) {</span>
-<span class="nc" id="L342">                    throw new RuntimeTTransportException(e.getMessage(), (TTransportException) e);</span>
+<span class="nc bnc" id="L360" title="All 2 branches missed.">                if (e instanceof TTransportException) {</span>
+<span class="nc" id="L361">                    throw new RuntimeTTransportException(e.getMessage(), (TTransportException) e);</span>
                 }
-<span class="nc" id="L344">                throw new RuntimeTException(e.getMessage(), e);</span>
+<span class="nc" id="L363">                throw new RuntimeTException(e.getMessage(), e);</span>
             }
         }
     }
@@ -353,63 +372,63 @@ public class ThriftClientManager implements Closeable
         private final String name;
 
         public TypeAndName(Class&lt;?&gt; type, String name)
-<span class="fc" id="L356">        {</span>
-<span class="fc" id="L357">            Preconditions.checkNotNull(type, &quot;type is null&quot;);</span>
-<span class="fc" id="L358">            Preconditions.checkNotNull(name, &quot;name is null&quot;);</span>
-<span class="fc" id="L359">            this.type = type;</span>
-<span class="fc" id="L360">            this.name = name;</span>
-<span class="fc" id="L361">        }</span>
+<span class="fc" id="L375">        {</span>
+<span class="fc" id="L376">            Preconditions.checkNotNull(type, &quot;type is null&quot;);</span>
+<span class="fc" id="L377">            Preconditions.checkNotNull(name, &quot;name is null&quot;);</span>
+<span class="fc" id="L378">            this.type = type;</span>
+<span class="fc" id="L379">            this.name = name;</span>
+<span class="fc" id="L380">        }</span>
 
         public Class&lt;?&gt; getType()
         {
-<span class="fc" id="L365">            return type;</span>
+<span class="fc" id="L384">            return type;</span>
         }
 
         public String getName()
         {
-<span class="fc" id="L370">            return name;</span>
+<span class="fc" id="L389">            return name;</span>
         }
 
         @Override
         public boolean equals(Object o)
         {
-<span class="pc bpc" id="L376" title="1 of 2 branches missed.">            if (this == o) {</span>
-<span class="nc" id="L377">                return true;</span>
+<span class="pc bpc" id="L395" title="1 of 2 branches missed.">            if (this == o) {</span>
+<span class="nc" id="L396">                return true;</span>
             }
-<span class="pc bpc" id="L379" title="2 of 4 branches missed.">            if (o == null || getClass() != o.getClass()) {</span>
-<span class="nc" id="L380">                return false;</span>
-            }
-
-<span class="fc" id="L383">            TypeAndName that = (TypeAndName) o;</span>
-
-<span class="pc bpc" id="L385" title="1 of 2 branches missed.">            if (!name.equals(that.name)) {</span>
-<span class="nc" id="L386">                return false;</span>
-            }
-<span class="pc bpc" id="L388" title="1 of 2 branches missed.">            if (!type.equals(that.type)) {</span>
-<span class="nc" id="L389">                return false;</span>
+<span class="pc bpc" id="L398" title="2 of 4 branches missed.">            if (o == null || getClass() != o.getClass()) {</span>
+<span class="nc" id="L399">                return false;</span>
             }
 
-<span class="fc" id="L392">            return true;</span>
+<span class="fc" id="L402">            TypeAndName that = (TypeAndName) o;</span>
+
+<span class="pc bpc" id="L404" title="1 of 2 branches missed.">            if (!name.equals(that.name)) {</span>
+<span class="nc" id="L405">                return false;</span>
+            }
+<span class="pc bpc" id="L407" title="1 of 2 branches missed.">            if (!type.equals(that.type)) {</span>
+<span class="nc" id="L408">                return false;</span>
+            }
+
+<span class="fc" id="L411">            return true;</span>
         }
 
         @Override
         public int hashCode()
         {
-<span class="fc" id="L398">            int result = type.hashCode();</span>
-<span class="fc" id="L399">            result = 31 * result + name.hashCode();</span>
-<span class="fc" id="L400">            return result;</span>
+<span class="fc" id="L417">            int result = type.hashCode();</span>
+<span class="fc" id="L418">            result = 31 * result + name.hashCode();</span>
+<span class="fc" id="L419">            return result;</span>
         }
 
         @Override
         public String toString()
         {
-<span class="nc" id="L406">            final StringBuilder sb = new StringBuilder();</span>
-<span class="nc" id="L407">            sb.append(&quot;TypeAndName&quot;);</span>
-<span class="nc" id="L408">            sb.append(&quot;{type=&quot;).append(type);</span>
-<span class="nc" id="L409">            sb.append(&quot;, name='&quot;).append(name).append('\'');</span>
-<span class="nc" id="L410">            sb.append('}');</span>
-<span class="nc" id="L411">            return sb.toString();</span>
+<span class="nc" id="L425">            final StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L426">            sb.append(&quot;TypeAndName&quot;);</span>
+<span class="nc" id="L427">            sb.append(&quot;{type=&quot;).append(type);</span>
+<span class="nc" id="L428">            sb.append(&quot;, name='&quot;).append(name).append('\'');</span>
+<span class="nc" id="L429">            sb.append('}');</span>
+<span class="nc" id="L430">            return sb.toString();</span>
         }
     }
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.1.201212231917</span></div></body></html>

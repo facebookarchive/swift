@@ -73,7 +73,7 @@ public class ThriftClientBinder
         // Bind ThriftClient to a provider which knows how to find the ThriftClientConfig using
         // the random @Named annotation
 <span class="fc" id="L75">        TypeLiteral&lt;ThriftClient&lt;T&gt;&gt; typeLiteral = toThriftClientTypeLiteral(clientInterface);</span>
-<span class="fc" id="L76">        ThriftClientProviderProvider&lt;T&gt; provider = new ThriftClientProviderProvider&lt;&gt;(clientInterface, DEFAULT_NAME, Key.get(ThriftClientConfig.class, thriftClientConfigKey));</span>
+<span class="fc" id="L76">        ThriftClientProvider&lt;T&gt; provider = new ThriftClientProvider&lt;&gt;(clientInterface, DEFAULT_NAME, Key.get(ThriftClientConfig.class, thriftClientConfigKey));</span>
 <span class="fc" id="L77">        binder.bind(typeLiteral).toProvider(provider).in(Scopes.SINGLETON);</span>
 
         // Export client to jmx
@@ -84,7 +84,7 @@ public class ThriftClientBinder
                         DEFAULT_NAME));
 
         // Add the provider itself to a SetBinding so later we can export the thrift methods to JMX
-<span class="fc" id="L87">        Multibinder.newSetBinder(binder, ThriftClientProviderProvider.class).addBinding().toInstance(provider);</span>
+<span class="fc" id="L87">        Multibinder.newSetBinder(binder, ThriftClientProvider.class).addBinding().toInstance(provider);</span>
 <span class="fc" id="L88">    }</span>
 
     public &lt;T&gt; void bindThriftClient(Class&lt;T&gt; clientInterface, Class&lt;? extends Annotation&gt; annotationType)
@@ -102,7 +102,7 @@ public class ThriftClientBinder
         // Bind ThriftClient to a provider which knows how to find the ThriftClientConfig using
         // the random @Named annotation
 <span class="fc" id="L104">        TypeLiteral&lt;ThriftClient&lt;T&gt;&gt; typeLiteral = toThriftClientTypeLiteral(clientInterface);</span>
-<span class="fc" id="L105">        ThriftClientProviderProvider&lt;T&gt; provider = new ThriftClientProviderProvider&lt;&gt;(clientInterface,</span>
+<span class="fc" id="L105">        ThriftClientProvider&lt;T&gt; provider = new ThriftClientProvider&lt;&gt;(clientInterface,</span>
                 name,
                 Key.get(ThriftClientConfig.class, thriftClientConfigKey));
 <span class="fc" id="L108">        binder.bind(Key.get(typeLiteral, annotationType)).toProvider(provider).in(Scopes.SINGLETON);</span>
@@ -111,11 +111,11 @@ public class ThriftClientBinder
 <span class="fc" id="L111">        ExportBinder.newExporter(binder)</span>
                 .export(Key.get(typeLiteral))
                 .as(format(&quot;com.facebook.swift.client:type=%s,clientName=%s&quot;,
-                        typeName,
-                        name));
+                           typeName,
+                           name));
 
         // Add the provider itself to a SetBinding so later we can export the thrift methods to JMX
-<span class="fc" id="L118">        Multibinder.newSetBinder(binder, ThriftClientProviderProvider.class).addBinding().toInstance(provider);</span>
+<span class="fc" id="L118">        Multibinder.newSetBinder(binder, ThriftClientProvider.class).addBinding().toInstance(provider);</span>
 <span class="fc" id="L119">    }</span>
 
     private static String getServiceName(Class&lt;?&gt; clientInterface)
@@ -140,7 +140,7 @@ public class ThriftClientBinder
 <span class="fc" id="L140">        return (TypeLiteral&lt;ThriftClient&lt;T&gt;&gt;) TypeLiteral.get(javaType);</span>
     }
 
-    public static class ThriftClientProviderProvider&lt;T&gt; implements Provider&lt;ThriftClient&lt;T&gt;&gt;
+    public static class ThriftClientProvider&lt;T&gt; implements Provider&lt;ThriftClient&lt;T&gt;&gt;
     {
         private final Class&lt;T&gt; clientType;
         private final String clientName;
@@ -148,7 +148,7 @@ public class ThriftClientBinder
         private ThriftClientManager clientManager;
         private Injector injector;
 
-        public ThriftClientProviderProvider(Class&lt;T&gt; clientType, String clientName, Key&lt;ThriftClientConfig&gt; configKey)
+        public ThriftClientProvider(Class&lt;T&gt; clientType, String clientName, Key&lt;ThriftClientConfig&gt; configKey)
 <span class="fc" id="L152">        {</span>
 <span class="fc" id="L153">            Preconditions.checkNotNull(clientType, &quot;clientInterface is null&quot;);</span>
 <span class="fc" id="L154">            Preconditions.checkNotNull(clientName, &quot;clientName is null&quot;);</span>
@@ -195,7 +195,7 @@ public class ThriftClientBinder
 <span class="nc" id="L195">                return false;</span>
             }
 
-<span class="nc" id="L198">            ThriftClientProviderProvider&lt;?&gt; that = (ThriftClientProviderProvider&lt;?&gt;) o;</span>
+<span class="nc" id="L198">            ThriftClientProvider&lt;?&gt; that = (ThriftClientProvider&lt;?&gt;) o;</span>
 
 <span class="nc bnc" id="L200" title="All 2 branches missed.">            if (!clientName.equals(that.clientName)) {</span>
 <span class="nc" id="L201">                return false;</span>
@@ -216,4 +216,4 @@ public class ThriftClientBinder
         }
     }
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.1.201212231917</span></div></body></html>

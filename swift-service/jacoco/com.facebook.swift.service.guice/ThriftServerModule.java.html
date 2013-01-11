@@ -18,6 +18,7 @@ package com.facebook.swift.service.guice;
 import com.facebook.swift.service.ThriftMethodProcessor;
 import com.facebook.swift.service.ThriftServer;
 import com.facebook.swift.service.ThriftServerConfig;
+import com.facebook.swift.service.ThriftServerTimer;
 import com.facebook.swift.service.ThriftServiceProcessor;
 import com.facebook.swift.service.guice.ThriftServiceExporter.ThriftServiceExport;
 import com.facebook.swift.service.guice.ThriftServiceExporter.ThriftServiceProcessorProvider;
@@ -28,6 +29,8 @@ import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import org.apache.thrift.TProcessor;
+import org.jboss.netty.util.HashedWheelTimer;
+import org.jboss.netty.util.Timer;
 import org.weakref.jmx.guice.ExportBinder;
 import org.weakref.jmx.guice.ObjectNameFunction;
 
@@ -41,53 +44,55 @@ import static com.google.inject.multibindings.Multibinder.newSetBinder;
 import static io.airlift.configuration.ConfigurationModule.bindConfig;
 import static java.lang.String.format;
 
-<span class="fc" id="L44">public class ThriftServerModule implements Module</span>
+<span class="fc" id="L47">public class ThriftServerModule implements Module</span>
 {
     @Override
     public void configure(Binder binder)
     {
-<span class="fc" id="L49">        newSetBinder(binder, ThriftServiceExport.class).permitDuplicates();</span>
-<span class="fc" id="L50">        binder.bind(ThriftServiceProcessor.class).toProvider(ThriftServiceProcessorProvider.class).in(Scopes.SINGLETON);</span>
-<span class="fc" id="L51">        binder.bind(TProcessor.class).to(Key.get(ThriftServiceProcessor.class)).in(Scopes.SINGLETON);</span>
+<span class="fc" id="L52">        binder.bind(Timer.class).annotatedWith(ThriftServerTimer.class).toInstance(new HashedWheelTimer());</span>
 
-<span class="fc" id="L53">        bindConfig(binder).to(ThriftServerConfig.class);</span>
-<span class="fc" id="L54">        binder.bind(ThriftServer.class).in(Scopes.SINGLETON);</span>
+<span class="fc" id="L54">        newSetBinder(binder, ThriftServiceExport.class).permitDuplicates();</span>
+<span class="fc" id="L55">        binder.bind(ThriftServiceProcessor.class).toProvider(ThriftServiceProcessorProvider.class).in(Scopes.SINGLETON);</span>
+<span class="fc" id="L56">        binder.bind(TProcessor.class).to(Key.get(ThriftServiceProcessor.class)).in(Scopes.SINGLETON);</span>
+
+<span class="fc" id="L58">        bindConfig(binder).to(ThriftServerConfig.class);</span>
+<span class="fc" id="L59">        binder.bind(ThriftServer.class).in(Scopes.SINGLETON);</span>
 
         // export methods from processors to JMX
-<span class="fc" id="L57">        ExportBinder.newExporter(binder).exportMap(ThriftMethodProcessor.class).withGeneratedName(new ObjectNameFunction&lt;ThriftMethodProcessor&gt;() {</span>
+<span class="fc" id="L62">        ExportBinder.newExporter(binder).exportMap(ThriftMethodProcessor.class).withGeneratedName(new ObjectNameFunction&lt;ThriftMethodProcessor&gt;() {</span>
             @Override
             public ObjectName name(ThriftMethodProcessor methodProcessor)
             {
                 try {
-<span class="fc" id="L62">                    Class&lt;?&gt; serviceClass = methodProcessor.getServiceClass();</span>
-<span class="fc" id="L63">                    String name = format(&quot;com.facebook.swift.server:type=%s,name=%s&quot;,</span>
+<span class="fc" id="L67">                    Class&lt;?&gt; serviceClass = methodProcessor.getServiceClass();</span>
+<span class="fc" id="L68">                    String name = format(&quot;com.facebook.swift.server:type=%s,name=%s&quot;,</span>
                             getServiceName(serviceClass),
                             methodProcessor.getName());
 
-<span class="fc" id="L67">                    return new ObjectName(name);</span>
+<span class="fc" id="L72">                    return new ObjectName(name);</span>
                 }
-<span class="nc" id="L69">                catch (MalformedObjectNameException e) {</span>
-<span class="nc" id="L70">                    throw Throwables.propagate(e);</span>
+<span class="nc" id="L74">                catch (MalformedObjectNameException e) {</span>
+<span class="nc" id="L75">                    throw Throwables.propagate(e);</span>
                 }
             }
         });
-<span class="fc" id="L74">    }</span>
+<span class="fc" id="L79">    }</span>
 
     @Provides
     @Singleton
     public Map&lt;String, ThriftMethodProcessor&gt; getMethodProcessors(ThriftServiceProcessor thriftServiceProcessor)
     {
         // extract method handles into a map so they can be exported individually to JMX
-<span class="fc" id="L81">        return thriftServiceProcessor.getMethods();</span>
+<span class="fc" id="L86">        return thriftServiceProcessor.getMethods();</span>
     }
 
     private static String getServiceName(Class&lt;?&gt; serviceClass)
     {
-<span class="fc" id="L86">        String serviceName = getThriftServiceAnnotation(serviceClass).value();</span>
-<span class="fc bfc" id="L87" title="All 2 branches covered.">        if (!serviceName.isEmpty()) {</span>
-<span class="fc" id="L88">            return serviceName;</span>
+<span class="fc" id="L91">        String serviceName = getThriftServiceAnnotation(serviceClass).value();</span>
+<span class="fc bfc" id="L92" title="All 2 branches covered.">        if (!serviceName.isEmpty()) {</span>
+<span class="fc" id="L93">            return serviceName;</span>
         }
-<span class="fc" id="L90">        return serviceClass.getSimpleName();</span>
+<span class="fc" id="L95">        return serviceClass.getSimpleName();</span>
     }
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.1.201212231917</span></div></body></html>
