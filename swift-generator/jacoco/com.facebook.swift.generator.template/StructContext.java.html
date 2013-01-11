@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>StructContext.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-generator</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.generator.template</a> &gt; <span class="el_source">StructContext.java</span></div><h1>StructContext.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.generator.template;
+
+import java.util.List;
+
+import com.google.common.collect.Lists;
+
+public class StructContext implements JavaContext
+{
+    private final String name;
+    private final String javaPackage;
+    private final String javaName;
+
+<span class="nc" id="L28">    private final List&lt;FieldContext&gt; fields = Lists.newArrayList();</span>
+
+    StructContext(String name, String javaPackage, String javaName)
+<span class="nc" id="L31">    {</span>
+<span class="nc" id="L32">        this.name = name;</span>
+<span class="nc" id="L33">        this.javaPackage = javaPackage;</span>
+<span class="nc" id="L34">        this.javaName = javaName;</span>
+<span class="nc" id="L35">    }</span>
+
+    public void addField(final FieldContext field)
+    {
+<span class="nc" id="L39">        this.fields.add(field);</span>
+<span class="nc" id="L40">    }</span>
+
+    public List&lt;FieldContext&gt; getFields()
+    {
+<span class="nc" id="L44">        return fields;</span>
+    }
+
+    public String getName()
+    {
+<span class="nc" id="L49">        return name;</span>
+    }
+
+    @Override
+    public String getJavaPackage()
+    {
+<span class="nc" id="L55">        return javaPackage;</span>
+    }
+
+    @Override
+    public String getJavaName()
+    {
+<span class="nc" id="L61">        return javaName;</span>
+    }
+
+    @Override
+    public int hashCode()
+    {
+<span class="nc" id="L67">        final int prime = 31;</span>
+<span class="nc" id="L68">        int result = 1;</span>
+<span class="nc bnc" id="L69" title="All 2 branches missed.">        result = prime * result + ((fields == null) ? 0 : fields.hashCode());</span>
+<span class="nc bnc" id="L70" title="All 2 branches missed.">        result = prime * result + ((javaName == null) ? 0 : javaName.hashCode());</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">        result = prime * result + ((javaPackage == null) ? 0 : javaPackage.hashCode());</span>
+<span class="nc bnc" id="L72" title="All 2 branches missed.">        result = prime * result + ((name == null) ? 0 : name.hashCode());</span>
+<span class="nc" id="L73">        return result;</span>
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+<span class="nc bnc" id="L79" title="All 2 branches missed.">        if (this == obj)</span>
+<span class="nc" id="L80">            return true;</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">        if (obj == null)</span>
+<span class="nc" id="L82">            return false;</span>
+<span class="nc bnc" id="L83" title="All 2 branches missed.">        if (getClass() != obj.getClass())</span>
+<span class="nc" id="L84">            return false;</span>
+<span class="nc" id="L85">        StructContext other = (StructContext) obj;</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">        if (fields == null) {</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">            if (other.fields != null)</span>
+<span class="nc" id="L88">                return false;</span>
+        }
+<span class="nc bnc" id="L90" title="All 2 branches missed.">        else if (!fields.equals(other.fields))</span>
+<span class="nc" id="L91">            return false;</span>
+<span class="nc bnc" id="L92" title="All 2 branches missed.">        if (javaName == null) {</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">            if (other.javaName != null)</span>
+<span class="nc" id="L94">                return false;</span>
+        }
+<span class="nc bnc" id="L96" title="All 2 branches missed.">        else if (!javaName.equals(other.javaName))</span>
+<span class="nc" id="L97">            return false;</span>
+<span class="nc bnc" id="L98" title="All 2 branches missed.">        if (javaPackage == null) {</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">            if (other.javaPackage != null)</span>
+<span class="nc" id="L100">                return false;</span>
+        }
+<span class="nc bnc" id="L102" title="All 2 branches missed.">        else if (!javaPackage.equals(other.javaPackage))</span>
+<span class="nc" id="L103">            return false;</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">        if (name == null) {</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">            if (other.name != null)</span>
+<span class="nc" id="L106">                return false;</span>
+        }
+<span class="nc bnc" id="L108" title="All 2 branches missed.">        else if (!name.equals(other.name))</span>
+<span class="nc" id="L109">            return false;</span>
+<span class="nc" id="L110">        return true;</span>
+    }
+
+    @Override
+    public String toString()
+    {
+<span class="nc" id="L116">        return &quot;StructContext [name=&quot; + name + &quot;, javaPackage=&quot; + javaPackage + &quot;, javaName=&quot; + javaName + &quot;, fields=&quot; + fields + &quot;]&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.1.201212231917</span></div></body></html>

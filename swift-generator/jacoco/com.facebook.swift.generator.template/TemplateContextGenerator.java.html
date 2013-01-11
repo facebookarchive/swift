@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>TemplateContextGenerator.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-generator</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.generator.template</a> &gt; <span class="el_source">TemplateContextGenerator.java</span></div><h1>TemplateContextGenerator.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.generator.template;
+
+import com.facebook.swift.generator.SwiftGeneratorConfig;
+import com.facebook.swift.generator.SwiftGeneratorTweak;
+import com.facebook.swift.generator.SwiftJavaType;
+import com.facebook.swift.generator.TypeRegistry;
+import com.facebook.swift.generator.TypeToJavaConverter;
+import com.facebook.swift.parser.model.AbstractStruct;
+import com.facebook.swift.parser.model.IntegerEnum;
+import com.facebook.swift.parser.model.IntegerEnumField;
+import com.facebook.swift.parser.model.Service;
+import com.facebook.swift.parser.model.StringEnum;
+import com.facebook.swift.parser.model.ThriftField;
+import com.facebook.swift.parser.model.ThriftMethod;
+import com.google.common.base.Preconditions;
+
+import java.io.Closeable;
+import java.util.HashSet;
+import java.util.Set;
+
+import static com.facebook.swift.generator.util.SwiftInternalStringUtils.isBlank;
+
+
+public class TemplateContextGenerator
+{
+<span class="nc" id="L41">    private static final MethodContext CLOSE_METHOD_CONTEXT = new MethodContext(null, true, &quot;close&quot;, &quot;void&quot;);</span>
+
+    private final SwiftGeneratorConfig generatorConfig;
+    private final TypeRegistry typeRegistry;
+    private final TypeToJavaConverter typeConverter;
+    private final String defaultNamespace;
+
+    public TemplateContextGenerator(final SwiftGeneratorConfig generatorConfig,
+                                    final TypeRegistry typeRegistry,
+                                    final TypeToJavaConverter typeConverter,
+                                    final String defaultNamespace)
+<span class="nc" id="L52">    {</span>
+<span class="nc" id="L53">        this.generatorConfig = generatorConfig;</span>
+<span class="nc" id="L54">        this.typeRegistry = typeRegistry;</span>
+<span class="nc" id="L55">        this.defaultNamespace = defaultNamespace;</span>
+<span class="nc" id="L56">        this.typeConverter = typeConverter;</span>
+<span class="nc" id="L57">    }</span>
+
+    public ServiceContext serviceFromThrift(final Service service)
+    {
+<span class="nc" id="L61">        final String name = mangleJavatypeName(service.getName());</span>
+<span class="nc" id="L62">        final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, name);</span>
+<span class="nc" id="L63">        final SwiftJavaType parentType = typeRegistry.findType(service.getParent().orNull());</span>
+
+<span class="nc" id="L65">        final Set&lt;String&gt; javaParents = new HashSet&lt;&gt;();</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">        if (parentType != null) {</span>
+<span class="nc" id="L67">            javaParents.add(parentType.getClassName());</span>
+        }
+
+<span class="nc" id="L70">        final ServiceContext serviceContext = new ServiceContext(name,</span>
+                                                                 javaType.getPackage(),
+                                                                 javaType.getSimpleName(),
+                                                                 javaParents);
+
+<span class="nc bnc" id="L75" title="All 2 branches missed.">        if (generatorConfig.containsTweak(SwiftGeneratorTweak.ADD_CLOSEABLE_INTERFACE)) {</span>
+<span class="nc" id="L76">            javaParents.add(&quot;Closeable&quot;);</span>
+<span class="nc" id="L77">            serviceContext.addMethod(CLOSE_METHOD_CONTEXT);</span>
+        }
+
+<span class="nc" id="L80">        return serviceContext;</span>
+    }
+
+    public StructContext structFromThrift(final AbstractStruct struct)
+    {
+<span class="nc" id="L85">        final String name = mangleJavatypeName(struct.getName());</span>
+<span class="nc" id="L86">        final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, name);</span>
+
+<span class="nc" id="L88">        return new StructContext(name,</span>
+                                 javaType.getPackage(),
+                                 javaType.getSimpleName());
+    }
+
+    public MethodContext methodFromThrift(final ThriftMethod method)
+    {
+<span class="nc" id="L95">        return new MethodContext(method.getName(),</span>
+                                 method.isOneway(),
+                                 mangleJavamethodName(method.getName()),
+                                 typeConverter.convertType(method.getReturnType()));
+    }
+
+    public FieldContext fieldFromThrift(final ThriftField field)
+    {
+<span class="nc" id="L103">        Preconditions.checkState(field.getIdentifier().isPresent(), &quot;exception %s has no identifier!&quot;, field.getName());</span>
+
+<span class="nc" id="L105">        return new FieldContext(field.getName(),</span>
+                                field.getIdentifier().get().shortValue(),
+                                typeConverter.convertType(field.getType()),
+                                mangleJavamethodName(field.getName()),
+                                getterName(field),
+                                setterName(field));
+    }
+
+    public ExceptionContext exceptionFromThrift(final ThriftField field)
+    {
+<span class="nc" id="L115">        Preconditions.checkState(field.getIdentifier().isPresent(), &quot;exception %s has no identifier!&quot;, field.getName());</span>
+<span class="nc" id="L116">        return new ExceptionContext(typeConverter.convertType(field.getType()), field.getIdentifier().get().shortValue());</span>
+    }
+
+    public EnumContext enumFromThrift(final IntegerEnum integerEnum)
+    {
+<span class="nc" id="L121">        final String name = mangleJavatypeName(integerEnum.getName());</span>
+<span class="nc" id="L122">        final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, name);</span>
+<span class="nc" id="L123">        return new EnumContext(javaType.getPackage(), javaType.getSimpleName());</span>
+    }
+
+    public EnumContext enumFromThrift(final StringEnum stringEnum)
+    {
+<span class="nc" id="L128">        final String name = mangleJavatypeName(stringEnum.getName());</span>
+<span class="nc" id="L129">        final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, name);</span>
+<span class="nc" id="L130">        return new EnumContext(javaType.getPackage(), javaType.getSimpleName());</span>
+    }
+
+    public EnumFieldContext fieldFromThrift(final IntegerEnumField field)
+    {
+<span class="nc bnc" id="L135" title="All 2 branches missed.">        Preconditions.checkState(field.getValue().get() != null, &quot;field value for integer field %s is null!&quot;, field.getName());</span>
+<span class="nc" id="L136">        return new EnumFieldContext(mangleJavaConstantName(field.getName()), field.getValue().get());</span>
+    }
+
+    public EnumFieldContext fieldFromThrift(final String value)
+    {
+<span class="nc" id="L141">        return new EnumFieldContext(mangleJavaConstantName(value), null);</span>
+    }
+
+    /**
+     * Turn an incoming snake case name into camel case for use in a java method name.
+     */
+    public static final String mangleJavamethodName(final String src)
+    {
+<span class="nc" id="L149">        return mangleJavaName(src, false);</span>
+    }
+
+    /**
+     * Turn an incoming snake case name into camel case for use in a java type name.
+     */
+    public static final String mangleJavatypeName(final String src)
+    {
+<span class="nc" id="L157">        return mangleJavaName(src, true);</span>
+    }
+
+    private static final String mangleJavaName(final String src, boolean capitalize)
+    {
+<span class="nc bnc" id="L162" title="All 2 branches missed.">        Preconditions.checkArgument(!isBlank(src), &quot;input name must not be blank!&quot;);</span>
+
+<span class="nc" id="L164">        final StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L165">        boolean upCase = capitalize;</span>
+<span class="nc bnc" id="L166" title="All 2 branches missed.">        for (int i = 0; i &lt; src.length(); i++) {</span>
+<span class="nc bnc" id="L167" title="All 2 branches missed.">            if (src.charAt(i) == '_') {</span>
+<span class="nc" id="L168">                upCase = true;</span>
+<span class="nc" id="L169">                continue;</span>
+            }
+            else {
+<span class="nc bnc" id="L172" title="All 2 branches missed.">                sb.append(upCase ? Character.toUpperCase(src.charAt(i)) : src.charAt(i));</span>
+<span class="nc" id="L173">                upCase = false;</span>
+            }
+        }
+<span class="nc" id="L176">        return sb.toString();</span>
+    }
+
+    public static final String mangleJavaConstantName(final String src)
+    {
+<span class="nc" id="L181">        final StringBuilder sb = new StringBuilder();</span>
+<span class="nc bnc" id="L182" title="All 2 branches missed.">        if (!isBlank(src)) {</span>
+<span class="nc" id="L183">            boolean lowerCase = false;</span>
+<span class="nc bnc" id="L184" title="All 2 branches missed.">            for (int i = 0; i &lt; src.length(); i++) {</span>
+<span class="nc bnc" id="L185" title="All 2 branches missed.">                if (Character.isUpperCase(src.charAt(i))) {</span>
+<span class="nc bnc" id="L186" title="All 2 branches missed.">                    if (lowerCase) {</span>
+<span class="nc" id="L187">                        sb.append('_');</span>
+                    }
+<span class="nc" id="L189">                    sb.append(Character.toUpperCase(src.charAt(i)));</span>
+<span class="nc" id="L190">                    lowerCase = false;</span>
+                }
+                else {
+<span class="nc" id="L193">                    sb.append(Character.toUpperCase(src.charAt(i)));</span>
+<span class="nc" id="L194">                    lowerCase = true;</span>
+                }
+            }
+        }
+<span class="nc" id="L198">        return sb.toString();</span>
+    }
+
+    private String getterName(final ThriftField field)
+    {
+<span class="nc" id="L203">        final String type = typeConverter.convertType(field.getType());</span>
+<span class="nc bnc" id="L204" title="All 2 branches missed.">        return (&quot;boolean&quot;.equals(type) ? &quot;is&quot; : &quot;get&quot;) + mangleJavatypeName(field.getName());</span>
+    }
+
+    private String setterName(final ThriftField field)
+    {
+<span class="nc" id="L209">        return &quot;set&quot; + mangleJavatypeName(field.getName());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.1.201212231917</span></div></body></html>

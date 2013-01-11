@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ServiceContext.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-generator</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.generator.template</a> &gt; <span class="el_source">ServiceContext.java</span></div><h1>ServiceContext.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.generator.template;
+
+import com.google.common.collect.Lists;
+
+import java.util.List;
+import java.util.Set;
+
+
+public class ServiceContext implements JavaContext
+{
+    private final String name;
+    private final String javaPackage;
+    private final String javaName;
+    private final Set&lt;String&gt; javaParents;
+
+<span class="nc" id="L31">    private final List&lt;MethodContext&gt; methods = Lists.newArrayList();</span>
+
+    ServiceContext(String name, String javaPackage, String javaName, Set&lt;String&gt; javaParents)
+<span class="nc" id="L34">    {</span>
+<span class="nc" id="L35">        this.name = name;</span>
+<span class="nc" id="L36">        this.javaPackage = javaPackage;</span>
+<span class="nc" id="L37">        this.javaName = javaName;</span>
+<span class="nc" id="L38">        this.javaParents = javaParents;</span>
+<span class="nc" id="L39">    }</span>
+
+    public void addMethod(final MethodContext method)
+    {
+<span class="nc" id="L43">        this.methods.add(method);</span>
+<span class="nc" id="L44">    }</span>
+
+    public List&lt;MethodContext&gt; getMethods()
+    {
+<span class="nc" id="L48">        return methods;</span>
+    }
+
+    public String getName()
+    {
+<span class="nc" id="L53">        return name;</span>
+    }
+
+    @Override
+    public String getJavaPackage()
+    {
+<span class="nc" id="L59">        return javaPackage;</span>
+    }
+
+    @Override
+    public String getJavaName()
+    {
+<span class="nc" id="L65">        return javaName;</span>
+    }
+
+    public Set&lt;String&gt; getJavaParents()
+    {
+<span class="nc" id="L70">        return javaParents;</span>
+    }
+
+    @Override
+    public int hashCode()
+    {
+<span class="nc" id="L76">        final int prime = 31;</span>
+<span class="nc" id="L77">        int result = 1;</span>
+<span class="nc bnc" id="L78" title="All 2 branches missed.">        result = prime * result + ((javaName == null) ? 0 : javaName.hashCode());</span>
+<span class="nc bnc" id="L79" title="All 2 branches missed.">        result = prime * result + ((javaPackage == null) ? 0 : javaPackage.hashCode());</span>
+<span class="nc bnc" id="L80" title="All 2 branches missed.">        result = prime * result + ((javaParents == null) ? 0 : javaParents.hashCode());</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">        result = prime * result + ((methods == null) ? 0 : methods.hashCode());</span>
+<span class="nc bnc" id="L82" title="All 2 branches missed.">        result = prime * result + ((name == null) ? 0 : name.hashCode());</span>
+<span class="nc" id="L83">        return result;</span>
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+<span class="nc bnc" id="L89" title="All 2 branches missed.">        if (this == obj) {</span>
+<span class="nc" id="L90">            return true;</span>
+        }
+<span class="nc bnc" id="L92" title="All 2 branches missed.">        if (obj == null) {</span>
+<span class="nc" id="L93">            return false;</span>
+        }
+<span class="nc bnc" id="L95" title="All 2 branches missed.">        if (getClass() != obj.getClass()) {</span>
+<span class="nc" id="L96">            return false;</span>
+        }
+<span class="nc" id="L98">        ServiceContext other = (ServiceContext) obj;</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">        if (javaName == null) {</span>
+<span class="nc bnc" id="L100" title="All 2 branches missed.">            if (other.javaName != null) {</span>
+<span class="nc" id="L101">                return false;</span>
+            }
+        }
+<span class="nc bnc" id="L104" title="All 2 branches missed.">        else if (!javaName.equals(other.javaName)) {</span>
+<span class="nc" id="L105">            return false;</span>
+        }
+<span class="nc bnc" id="L107" title="All 2 branches missed.">        if (javaPackage == null) {</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">            if (other.javaPackage != null) {</span>
+<span class="nc" id="L109">                return false;</span>
+            }
+        }
+<span class="nc bnc" id="L112" title="All 2 branches missed.">        else if (!javaPackage.equals(other.javaPackage)) {</span>
+<span class="nc" id="L113">            return false;</span>
+        }
+<span class="nc bnc" id="L115" title="All 2 branches missed.">        if (javaParents == null) {</span>
+<span class="nc bnc" id="L116" title="All 2 branches missed.">            if (other.javaParents != null) {</span>
+<span class="nc" id="L117">                return false;</span>
+            }
+        }
+<span class="nc bnc" id="L120" title="All 2 branches missed.">        else if (!javaParents.equals(other.javaParents)) {</span>
+<span class="nc" id="L121">            return false;</span>
+        }
+<span class="nc bnc" id="L123" title="All 2 branches missed.">        if (methods == null) {</span>
+<span class="nc bnc" id="L124" title="All 2 branches missed.">            if (other.methods != null) {</span>
+<span class="nc" id="L125">                return false;</span>
+            }
+        }
+<span class="nc bnc" id="L128" title="All 2 branches missed.">        else if (!methods.equals(other.methods)) {</span>
+<span class="nc" id="L129">            return false;</span>
+        }
+<span class="nc bnc" id="L131" title="All 2 branches missed.">        if (name == null) {</span>
+<span class="nc bnc" id="L132" title="All 2 branches missed.">            if (other.name != null) {</span>
+<span class="nc" id="L133">                return false;</span>
+            }
+        }
+<span class="nc bnc" id="L136" title="All 2 branches missed.">        else if (!name.equals(other.name)) {</span>
+<span class="nc" id="L137">            return false;</span>
+        }
+<span class="nc" id="L139">        return true;</span>
+    }
+
+    @Override
+    public String toString()
+    {
+<span class="nc" id="L145">        return &quot;ServiceContext [name=&quot; + name + &quot;, javaPackage=&quot; + javaPackage + &quot;, javaName=&quot; + javaName + &quot;, javaParents=&quot; + javaParents + &quot;, methods=&quot; + methods + &quot;]&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.1.201212231917</span></div></body></html>

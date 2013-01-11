@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>TypeToJavaConverter.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-generator</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.generator</a> &gt; <span class="el_source">TypeToJavaConverter.java</span></div><h1>TypeToJavaConverter.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.generator;
+
+import com.facebook.swift.generator.template.TemplateContextGenerator;
+import com.facebook.swift.parser.model.BaseType;
+import com.facebook.swift.parser.model.IdentifierType;
+import com.facebook.swift.parser.model.ListType;
+import com.facebook.swift.parser.model.MapType;
+import com.facebook.swift.parser.model.SetType;
+import com.facebook.swift.parser.model.ThriftType;
+import com.facebook.swift.parser.model.VoidType;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+
+import java.util.EnumMap;
+import java.util.List;
+
+public class TypeToJavaConverter
+{
+    private final String namespace;
+    private final TypeRegistry typeRegistry;
+    private final TypedefRegistry typedefRegistry;
+
+    private final List&lt;Converter&gt; converters;
+
+    public TypeToJavaConverter(final TypeRegistry typeRegistry,
+                               final TypedefRegistry typedefRegistry,
+                               final String namespace)
+<span class="nc" id="L46">    {</span>
+<span class="nc" id="L47">        Preconditions.checkNotNull(typeRegistry);</span>
+<span class="nc" id="L48">        Preconditions.checkNotNull(typedefRegistry);</span>
+<span class="nc" id="L49">        Preconditions.checkNotNull(namespace);</span>
+<span class="nc" id="L50">        this.typeRegistry = typeRegistry;</span>
+<span class="nc" id="L51">        this.typedefRegistry = typedefRegistry;</span>
+<span class="nc" id="L52">        this.namespace = namespace;</span>
+
+<span class="nc" id="L54">        final ImmutableList.Builder&lt;Converter&gt; builder = ImmutableList.builder();</span>
+<span class="nc" id="L55">        builder.add(new VoidConverter());</span>
+<span class="nc" id="L56">        builder.add(new BaseConverter());</span>
+<span class="nc" id="L57">        builder.add(new IdentifierConverter());</span>
+<span class="nc" id="L58">        builder.add(new SetConverter());</span>
+<span class="nc" id="L59">        builder.add(new ListConverter());</span>
+<span class="nc" id="L60">        builder.add(new MapConverter());</span>
+<span class="nc" id="L61">        converters = builder.build();</span>
+<span class="nc" id="L62">    }</span>
+
+    public String convertType(final ThriftType thriftType)
+    {
+<span class="nc" id="L66">        return convert(thriftType, true);</span>
+    }
+
+    public String convert(final ThriftType thriftType, boolean primitive)
+    {
+<span class="nc bnc" id="L71" title="All 2 branches missed.">        for (Converter converter : converters) {</span>
+<span class="nc bnc" id="L72" title="All 2 branches missed.">            if (converter.accept(thriftType)) {</span>
+<span class="nc" id="L73">                return converter.convert(thriftType, primitive);</span>
+            }
+<span class="nc" id="L75">        }</span>
+<span class="nc" id="L76">        throw new IllegalArgumentException(&quot;Thrift type %s is unknown!&quot;);</span>
+    }
+
+    private static interface Converter
+    {
+        /**
+         * Return true if the converter accepts the proposed type.
+         */
+        boolean accept(ThriftType type);
+
+        /**
+         * Convert the thrift type into a string suitable for a java type.
+         *
+         * @param primitive If true, return a primitive java type, otherwise force an object type.
+         */
+        String convert(ThriftType type, boolean primitive);
+    }
+
+<span class="nc" id="L94">    private static class VoidConverter implements Converter</span>
+    {
+        public boolean accept(final ThriftType type)
+        {
+<span class="nc bnc" id="L98" title="All 2 branches missed.">            return type.getClass() == VoidType.class;</span>
+        }
+
+        public String convert(final ThriftType type, boolean primitive)
+        {
+<span class="nc bnc" id="L103" title="All 2 branches missed.">            return primitive ? &quot;void&quot; : &quot;VOID&quot;;</span>
+        }
+    }
+
+<span class="nc" id="L107">    private static class BaseConverter implements Converter</span>
+    {
+        private static final EnumMap&lt;BaseType.Type, String&gt; JAVA_PRIMITIVES_MAP;
+        private static final EnumMap&lt;BaseType.Type, String&gt; JAVA_TYPE_MAP;
+
+        static {
+<span class="nc" id="L113">            final EnumMap&lt;BaseType.Type, String&gt; javaPrimitivesMap = Maps.newEnumMap(BaseType.Type.class);</span>
+<span class="nc" id="L114">            javaPrimitivesMap.put(BaseType.Type.BOOL, &quot;boolean&quot;);</span>
+<span class="nc" id="L115">            javaPrimitivesMap.put(BaseType.Type.BYTE, &quot;byte&quot;);</span>
+<span class="nc" id="L116">            javaPrimitivesMap.put(BaseType.Type.I16, &quot;short&quot;);</span>
+<span class="nc" id="L117">            javaPrimitivesMap.put(BaseType.Type.I32, &quot;int&quot;);</span>
+<span class="nc" id="L118">            javaPrimitivesMap.put(BaseType.Type.I64, &quot;long&quot;);</span>
+<span class="nc" id="L119">            javaPrimitivesMap.put(BaseType.Type.DOUBLE, &quot;double&quot;);</span>
+<span class="nc" id="L120">            javaPrimitivesMap.put(BaseType.Type.STRING, &quot;String&quot;);</span>
+<span class="nc" id="L121">            javaPrimitivesMap.put(BaseType.Type.BINARY, &quot;byte []&quot;);</span>
+<span class="nc" id="L122">            JAVA_PRIMITIVES_MAP = javaPrimitivesMap;</span>
+
+<span class="nc" id="L124">            final EnumMap&lt;BaseType.Type, String&gt; javaTypeMap = Maps.newEnumMap(BaseType.Type.class);</span>
+<span class="nc" id="L125">            javaTypeMap.put(BaseType.Type.BOOL, &quot;Boolean&quot;);</span>
+<span class="nc" id="L126">            javaTypeMap.put(BaseType.Type.BYTE, &quot;Byte&quot;);</span>
+<span class="nc" id="L127">            javaTypeMap.put(BaseType.Type.I16, &quot;Short&quot;);</span>
+<span class="nc" id="L128">            javaTypeMap.put(BaseType.Type.I32, &quot;Integer&quot;);</span>
+<span class="nc" id="L129">            javaTypeMap.put(BaseType.Type.I64, &quot;Long&quot;);</span>
+<span class="nc" id="L130">            javaTypeMap.put(BaseType.Type.DOUBLE, &quot;Double&quot;);</span>
+<span class="nc" id="L131">            javaTypeMap.put(BaseType.Type.STRING, &quot;String&quot;);</span>
+<span class="nc" id="L132">            javaTypeMap.put(BaseType.Type.BINARY, &quot;byte []&quot;);</span>
+<span class="nc" id="L133">            JAVA_TYPE_MAP = javaTypeMap;</span>
+<span class="nc" id="L134">        }</span>
+
+        public boolean accept(final ThriftType type)
+        {
+<span class="nc bnc" id="L138" title="All 2 branches missed.">            return type.getClass() == BaseType.class;</span>
+        }
+
+        public String convert(final ThriftType type, boolean primitive)
+        {
+<span class="nc" id="L143">            final BaseType.Type baseType = ((BaseType) type).getType();</span>
+<span class="nc bnc" id="L144" title="All 2 branches missed.">            return primitive ? JAVA_PRIMITIVES_MAP.get(baseType) : JAVA_TYPE_MAP.get(baseType);</span>
+        }
+    }
+
+<span class="nc" id="L148">    private class IdentifierConverter implements Converter</span>
+    {
+        public boolean accept(final ThriftType type)
+        {
+<span class="nc bnc" id="L152" title="All 2 branches missed.">            return type.getClass() == IdentifierType.class;</span>
+        }
+
+        public String convert(final ThriftType type, final boolean ignored)
+        {
+<span class="nc" id="L157">            final String name = ((IdentifierType) type).getName();</span>
+            // the name is [&lt;thrift-namespace&gt;.]&lt;thrift type&gt;
+<span class="nc" id="L159">            final List&lt;String&gt; names = Lists.newArrayList(Splitter.on('.').split(name));</span>
+
+<span class="nc bnc" id="L161" title="All 4 branches missed.">            Preconditions.checkState(names.size() &gt; 0 &amp;&amp; names.size() &lt; 3, &quot;only unqualified and thrift-namespace qualified names are allowed!&quot;);</span>
+<span class="nc" id="L162">            String thriftName = names.get(0);</span>
+<span class="nc" id="L163">            String thriftNamespace = namespace;</span>
+
+<span class="nc bnc" id="L165" title="All 2 branches missed.">            if (names.size() == 2) {</span>
+<span class="nc" id="L166">                thriftName = names.get(1);</span>
+<span class="nc" id="L167">                thriftNamespace = names.get(0);</span>
+            }
+
+<span class="nc" id="L170">            final String javatypeName = thriftNamespace + &quot;.&quot; + TemplateContextGenerator.mangleJavatypeName(thriftName);</span>
+<span class="nc" id="L171">            final ThriftType thriftType = typedefRegistry.findType(javatypeName);</span>
+<span class="nc bnc" id="L172" title="All 2 branches missed.">            if (thriftType == null) {</span>
+<span class="nc" id="L173">                final SwiftJavaType javaType = typeRegistry.findType(javatypeName);</span>
+<span class="nc bnc" id="L174" title="All 2 branches missed.">                return (javaType == null) ? null : javaType.getSimpleName();</span>
+            }
+            else {
+<span class="nc" id="L177">                return convertType(thriftType);</span>
+            }
+        }
+    }
+
+<span class="nc" id="L182">    private class SetConverter implements Converter</span>
+    {
+        public boolean accept(final ThriftType type)
+        {
+<span class="nc bnc" id="L186" title="All 2 branches missed.">            return type.getClass() == SetType.class;</span>
+        }
+
+        public String convert(final ThriftType type, final boolean ignored)
+        {
+<span class="nc" id="L191">            final SetType setType = SetType.class.cast(type);</span>
+
+<span class="nc" id="L193">            final String actualType = TypeToJavaConverter.this.convert(setType.getType(), false);</span>
+
+<span class="nc" id="L195">            return &quot;Set&lt;&quot; + actualType + &quot;&gt;&quot;;</span>
+        }
+    }
+
+<span class="nc" id="L199">    private class ListConverter implements Converter</span>
+    {
+        public boolean accept(final ThriftType type)
+        {
+<span class="nc bnc" id="L203" title="All 2 branches missed.">            return type.getClass() == ListType.class;</span>
+        }
+
+        public String convert(final ThriftType type, final boolean ignored)
+        {
+<span class="nc" id="L208">            final ListType listType = ListType.class.cast(type);</span>
+
+<span class="nc" id="L210">            final String actualType = TypeToJavaConverter.this.convert(listType.getType(), false);</span>
+
+<span class="nc" id="L212">            return &quot;List&lt;&quot; + actualType + &quot;&gt;&quot;;</span>
+        }
+    }
+
+<span class="nc" id="L216">    private class MapConverter implements Converter</span>
+    {
+        public boolean accept(final ThriftType type)
+        {
+<span class="nc bnc" id="L220" title="All 2 branches missed.">            return type.getClass() == MapType.class;</span>
+        }
+
+        public String convert(final ThriftType type, final boolean ignored)
+        {
+<span class="nc" id="L225">            final MapType mapType = MapType.class.cast(type);</span>
+
+<span class="nc" id="L227">            final String actualKeyType = TypeToJavaConverter.this.convert(mapType.getKeyType(), false);</span>
+<span class="nc" id="L228">            final String actualValueType = TypeToJavaConverter.this.convert(mapType.getValueType(), false);</span>
+
+<span class="nc" id="L230">            return String.format(&quot;Map&lt;%s, %s&gt;&quot;, actualKeyType, actualValueType);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.1.201212231917</span></div></body></html>

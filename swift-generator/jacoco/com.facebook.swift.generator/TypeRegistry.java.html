@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>TypeRegistry.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-generator</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.generator</a> &gt; <span class="el_source">TypeRegistry.java</span></div><h1>TypeRegistry.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.generator;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
+
+import java.util.Iterator;
+import java.util.Map;
+
+/**
+ * Collects all the various custom types found in the IDL definition files.
+ */
+public class TypeRegistry implements Iterable&lt;SwiftJavaType&gt;
+{
+<span class="nc" id="L29">    private final Map&lt;String, SwiftJavaType&gt; registry = Maps.newHashMap();</span>
+
+    public TypeRegistry()
+<span class="nc" id="L32">    {</span>
+<span class="nc" id="L33">    }</span>
+
+    public void addAll(final TypeRegistry otherRegistry)
+    {
+<span class="nc bnc" id="L37" title="All 2 branches missed.">        for (SwiftJavaType type : otherRegistry) {</span>
+<span class="nc" id="L38">            add(type);</span>
+<span class="nc" id="L39">        }</span>
+<span class="nc" id="L40">    }</span>
+
+    public void add(final SwiftJavaType type)
+    {
+<span class="nc bnc" id="L44" title="All 2 branches missed.">        Preconditions.checkState(!registry.containsKey(type.getKey()), &quot;The type %s was already registered!&quot;, type);</span>
+<span class="nc" id="L45">        registry.put(type.getKey(), type);</span>
+<span class="nc" id="L46">    }</span>
+
+    public SwiftJavaType findType(final String thriftNamespace, final String name)
+    {
+<span class="nc" id="L50">        return findType(thriftNamespace + &quot;.&quot; + name);</span>
+    }
+
+    public SwiftJavaType findType(final String key)
+    {
+<span class="nc bnc" id="L55" title="All 2 branches missed.">        if (key == null) {</span>
+<span class="nc" id="L56">            return null;</span>
+        }
+
+<span class="nc" id="L59">        Preconditions.checkState(registry.containsKey(key), &quot;key %s is not known!&quot;, key);</span>
+<span class="nc" id="L60">        return registry.get(key);</span>
+    }
+
+    @Override
+    public Iterator&lt;SwiftJavaType&gt; iterator()
+    {
+<span class="nc" id="L66">        return registry.values().iterator();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.1.201212231917</span></div></body></html>

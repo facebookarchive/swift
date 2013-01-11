@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>MethodContext.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-generator</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.generator.template</a> &gt; <span class="el_source">MethodContext.java</span></div><h1>MethodContext.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.generator.template;
+
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Lists;
+
+import java.io.Closeable;
+import java.util.Collection;
+import java.util.List;
+
+import javax.annotation.Nullable;
+
+/**
+ * Represents a method element of a service. If the name is null, this is a method that does nto represent
+ * a Thrift IDL method and has no annotations (e.g. the {@link Closeable#close()} method.
+ */
+public class MethodContext
+{
+    private final String name;
+    private final boolean oneway;
+    private final String javaName;
+    private final String javaType;
+
+<span class="nc" id="L39">    private final List&lt;FieldContext&gt; parameters = Lists.newArrayList();</span>
+<span class="nc" id="L40">    private final List&lt;ExceptionContext&gt; exceptions = Lists.newArrayList();</span>
+
+    MethodContext(@Nullable String name, boolean oneway, String javaName, String javaType)
+<span class="nc" id="L43">    {</span>
+<span class="nc" id="L44">        this.name = name;</span>
+<span class="nc" id="L45">        this.oneway = oneway;</span>
+<span class="nc" id="L46">        this.javaName = javaName;</span>
+<span class="nc" id="L47">        this.javaType = javaType;</span>
+<span class="nc" id="L48">    }</span>
+
+    public void addParameter(final FieldContext parameter)
+    {
+<span class="nc" id="L52">        this.parameters.add(parameter);</span>
+<span class="nc" id="L53">    }</span>
+
+    public void addException(final ExceptionContext exception)
+    {
+<span class="nc" id="L57">        this.exceptions.add(exception);</span>
+<span class="nc" id="L58">    }</span>
+
+    public List&lt;FieldContext&gt; getParameters()
+    {
+<span class="nc" id="L62">        return parameters;</span>
+    }
+
+    public List&lt;ExceptionContext&gt; getExceptions()
+    {
+<span class="nc" id="L67">        return exceptions;</span>
+    }
+
+    public Collection&lt;ExceptionContext&gt; getAnnotatedExceptions()
+    {
+<span class="nc" id="L72">        return Collections2.filter(exceptions, new Predicate&lt;ExceptionContext&gt;() {</span>
+
+            @Override
+            public boolean apply(ExceptionContext exceptionContext)
+            {
+<span class="nc bnc" id="L77" title="All 2 branches missed.">                return exceptionContext.getId() != null;</span>
+            }
+
+        });
+    }
+
+    public String getName()
+    {
+<span class="nc" id="L85">        return name;</span>
+    }
+
+    public boolean isOneway()
+    {
+<span class="nc" id="L90">        return oneway;</span>
+    }
+
+    public String getJavaName()
+    {
+<span class="nc" id="L95">        return javaName;</span>
+    }
+
+    public String getJavaType()
+    {
+<span class="nc" id="L100">        return javaType;</span>
+    }
+
+    @Override
+    public int hashCode()
+    {
+<span class="nc" id="L106">        final int prime = 31;</span>
+<span class="nc" id="L107">        int result = 1;</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">        result = prime * result + ((exceptions == null) ? 0 : exceptions.hashCode());</span>
+<span class="nc bnc" id="L109" title="All 2 branches missed.">        result = prime * result + ((javaName == null) ? 0 : javaName.hashCode());</span>
+<span class="nc bnc" id="L110" title="All 2 branches missed.">        result = prime * result + ((javaType == null) ? 0 : javaType.hashCode());</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">        result = prime * result + ((name == null) ? 0 : name.hashCode());</span>
+<span class="nc bnc" id="L112" title="All 2 branches missed.">        result = prime * result + (oneway ? 1231 : 1237);</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">        result = prime * result + ((parameters == null) ? 0 : parameters.hashCode());</span>
+<span class="nc" id="L114">        return result;</span>
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+<span class="nc bnc" id="L120" title="All 2 branches missed.">        if (this == obj) {</span>
+<span class="nc" id="L121">            return true;</span>
+        }
+<span class="nc bnc" id="L123" title="All 2 branches missed.">        if (obj == null) {</span>
+<span class="nc" id="L124">            return false;</span>
+        }
+<span class="nc bnc" id="L126" title="All 2 branches missed.">        if (getClass() != obj.getClass()) {</span>
+<span class="nc" id="L127">            return false;</span>
+        }
+<span class="nc" id="L129">        MethodContext other = (MethodContext) obj;</span>
+<span class="nc bnc" id="L130" title="All 2 branches missed.">        if (exceptions == null) {</span>
+<span class="nc bnc" id="L131" title="All 2 branches missed.">            if (other.exceptions != null) {</span>
+<span class="nc" id="L132">                return false;</span>
+            }
+        }
+<span class="nc bnc" id="L135" title="All 2 branches missed.">        else if (!exceptions.equals(other.exceptions)) {</span>
+<span class="nc" id="L136">            return false;</span>
+        }
+<span class="nc bnc" id="L138" title="All 2 branches missed.">        if (javaName == null) {</span>
+<span class="nc bnc" id="L139" title="All 2 branches missed.">            if (other.javaName != null) {</span>
+<span class="nc" id="L140">                return false;</span>
+            }
+        }
+<span class="nc bnc" id="L143" title="All 2 branches missed.">        else if (!javaName.equals(other.javaName)) {</span>
+<span class="nc" id="L144">            return false;</span>
+        }
+<span class="nc bnc" id="L146" title="All 2 branches missed.">        if (javaType == null) {</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">            if (other.javaType != null) {</span>
+<span class="nc" id="L148">                return false;</span>
+            }
+        }
+<span class="nc bnc" id="L151" title="All 2 branches missed.">        else if (!javaType.equals(other.javaType)) {</span>
+<span class="nc" id="L152">            return false;</span>
+        }
+<span class="nc bnc" id="L154" title="All 2 branches missed.">        if (name == null) {</span>
+<span class="nc bnc" id="L155" title="All 2 branches missed.">            if (other.name != null) {</span>
+<span class="nc" id="L156">                return false;</span>
+            }
+        }
+<span class="nc bnc" id="L159" title="All 2 branches missed.">        else if (!name.equals(other.name)) {</span>
+<span class="nc" id="L160">            return false;</span>
+        }
+<span class="nc bnc" id="L162" title="All 2 branches missed.">        if (oneway != other.oneway) {</span>
+<span class="nc" id="L163">            return false;</span>
+        }
+<span class="nc bnc" id="L165" title="All 2 branches missed.">        if (parameters == null) {</span>
+<span class="nc bnc" id="L166" title="All 2 branches missed.">            if (other.parameters != null) {</span>
+<span class="nc" id="L167">                return false;</span>
+            }
+        }
+<span class="nc bnc" id="L170" title="All 2 branches missed.">        else if (!parameters.equals(other.parameters)) {</span>
+<span class="nc" id="L171">            return false;</span>
+        }
+<span class="nc" id="L173">        return true;</span>
+    }
+
+    @Override
+    public String toString()
+    {
+<span class="nc" id="L179">        return &quot;MethodContext [name=&quot; + name + &quot;, oneway=&quot; + oneway + &quot;, javaName=&quot; + javaName + &quot;, javaType=&quot; + javaType + &quot;, parameters=&quot; + parameters + &quot;, exceptions=&quot; + exceptions + &quot;]&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.1.201212231917</span></div></body></html>

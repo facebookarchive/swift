@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>TemplateLoader.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-generator</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.generator.util</a> &gt; <span class="el_source">TemplateLoader.java</span></div><h1>TemplateLoader.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.generator.util;
+
+import com.google.common.base.Charsets;
+import com.google.common.io.InputSupplier;
+import com.google.common.io.Resources;
+import org.antlr.stringtemplate.StringTemplate;
+import org.antlr.stringtemplate.StringTemplateErrorListener;
+import org.antlr.stringtemplate.StringTemplateGroup;
+import org.antlr.stringtemplate.language.AngleBracketTemplateLexer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
+
+public class TemplateLoader
+{
+<span class="nc" id="L34">    private static final Logger LOG = LoggerFactory.getLogger(TemplateLoader.class);</span>
+
+<span class="nc" id="L36">    private final StringTemplateErrorListener ERROR_LISTENER = new LoaderErrorListener();</span>
+
+    private final String templateFileName;
+
+<span class="nc" id="L40">    private volatile StringTemplateGroup stg = null;</span>
+
+    public TemplateLoader(final String templateFileName)
+<span class="nc" id="L43">    {</span>
+<span class="nc" id="L44">        this.templateFileName = templateFileName;</span>
+<span class="nc" id="L45">    }</span>
+
+    public StringTemplate load(final String templateName) throws IOException
+    {
+<span class="nc" id="L49">        final StringTemplateGroup stg = getTemplateGroup();</span>
+<span class="nc" id="L50">        return stg.getInstanceOf(templateName);</span>
+    }
+
+    protected StringTemplateGroup getTemplateGroup() throws IOException
+    {
+<span class="nc bnc" id="L55" title="All 2 branches missed.">        if (stg == null) {</span>
+<span class="nc" id="L56">            final URL resourceUrl = Resources.getResource(this.getClass(), &quot;/templates/&quot; + templateFileName);</span>
+<span class="nc" id="L57">            final InputSupplier&lt;InputStreamReader&gt; is = Resources.newReaderSupplier(resourceUrl, Charsets.UTF_8);</span>
+<span class="nc" id="L58">            stg = new StringTemplateGroup(is.getInput(), AngleBracketTemplateLexer.class, ERROR_LISTENER);</span>
+        }
+
+<span class="nc" id="L61">        return stg;</span>
+    }
+
+<span class="nc" id="L64">    private static class LoaderErrorListener implements StringTemplateErrorListener</span>
+    {
+        @Override
+        public void error(String arg0, Throwable arg1)
+        {
+<span class="nc" id="L69">            LOG.error(String.format(&quot;%s: %s&quot;, arg0, arg1));</span>
+<span class="nc" id="L70">        }</span>
+
+        @Override
+        public void warning(String arg0)
+        {
+<span class="nc" id="L75">            LOG.warn(arg0);</span>
+<span class="nc" id="L76">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.1.201212231917</span></div></body></html>

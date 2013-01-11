@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>StructVisitor.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-generator</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.generator.visitors</a> &gt; <span class="el_source">StructVisitor.java</span></div><h1>StructVisitor.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.generator.visitors;
+
+import com.facebook.swift.generator.SwiftGeneratorConfig;
+
+import com.facebook.swift.generator.SwiftDocumentContext;
+import com.facebook.swift.generator.template.StructContext;
+import com.facebook.swift.generator.util.TemplateLoader;
+import com.facebook.swift.parser.model.Struct;
+import com.facebook.swift.parser.model.ThriftField;
+import com.facebook.swift.parser.visitor.Visitable;
+
+import java.io.File;
+import java.io.IOException;
+
+public class StructVisitor extends AbstractTemplateVisitor
+{
+    public StructVisitor(final TemplateLoader templateLoader,
+                         final SwiftDocumentContext context,
+                         final SwiftGeneratorConfig config,
+                         final File outputFolder)
+    {
+<span class="nc" id="L37">        super(templateLoader, context, config, outputFolder);</span>
+<span class="nc" id="L38">    }</span>
+
+    @Override
+    public boolean accept(final Visitable visitable)
+    {
+<span class="nc bnc" id="L43" title="All 2 branches missed.">        return visitable.getClass() == Struct.class;</span>
+    }
+
+    @Override
+    public void visit(final Visitable visitable) throws IOException
+    {
+<span class="nc" id="L49">        final Struct struct = Struct.class.cast(visitable);</span>
+<span class="nc" id="L50">        final StructContext structContext = contextGenerator.structFromThrift(struct);</span>
+
+<span class="nc bnc" id="L52" title="All 2 branches missed.">        for (final ThriftField field : struct.getFields()) {</span>
+<span class="nc" id="L53">            structContext.addField(contextGenerator.fieldFromThrift(field));</span>
+<span class="nc" id="L54">        }</span>
+
+<span class="nc" id="L56">        render(structContext, &quot;struct&quot;);</span>
+<span class="nc" id="L57">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.1.201212231917</span></div></body></html>
