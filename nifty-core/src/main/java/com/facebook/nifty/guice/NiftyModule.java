@@ -19,7 +19,9 @@ import com.facebook.nifty.core.NettyConfigBuilder;
 import com.facebook.nifty.core.ThriftServerDef;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
+import com.google.inject.util.Providers;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 
@@ -53,10 +55,22 @@ public abstract class NiftyModule extends AbstractModule
         throw iae();
     }
 
-    public NiftyModule withNettyConfig(Class<? extends Provider<NettyConfigBuilder>> provider)
+    public NiftyModule withNettyConfig(Class<? extends Provider<NettyConfigBuilder>> providerClass)
     {
         if (!configBound) {
-            binder().bind(NettyConfigBuilder.class).toProvider(provider);
+            binder().bind(NettyConfigBuilder.class).toProvider(providerClass);
+            configBound = true;
+            return this;
+        }
+        throw iae();
+    }
+
+    public NiftyModule withNettyConfig(Provider<NettyConfigBuilder> provider)
+    {
+        if (!configBound) {
+            // workaround for guice issue # 487
+            com.google.inject.Provider guiceProvider = Providers.guicify(provider);
+            binder().bind(NettyConfigBuilder.class).toProvider(guiceProvider);
             configBound = true;
             return this;
         }
@@ -91,13 +105,15 @@ public abstract class NiftyModule extends AbstractModule
                     .addBinding().toProvider(provider).asEagerSingleton();
         }
 
-        public void toProvider(com.google.inject.Provider<? extends ThriftServerDef> provider)
+        public void toProvider(Provider<? extends ThriftServerDef> provider)
         {
+            // workaround for guice issue # 487
+            com.google.inject.Provider guiceProvider = Providers.guicify(provider);
             Multibinder.newSetBinder(binder(), ThriftServerDef.class)
-                    .addBinding().toProvider(provider).asEagerSingleton();
+                    .addBinding().toProvider(guiceProvider).asEagerSingleton();
         }
 
-        public void toProvider(com.google.inject.TypeLiteral<? extends javax.inject.Provider<? extends ThriftServerDef>> typeLiteral)
+        public void toProvider(TypeLiteral<? extends javax.inject.Provider<? extends ThriftServerDef>> typeLiteral)
         {
             Multibinder.newSetBinder(binder(), ThriftServerDef.class)
                     .addBinding().toProvider(typeLiteral).asEagerSingleton();
@@ -115,7 +131,7 @@ public abstract class NiftyModule extends AbstractModule
                     .addBinding().to(clazz).asEagerSingleton();
         }
 
-        public void to(com.google.inject.TypeLiteral<? extends ThriftServerDef> typeLiteral)
+        public void to(TypeLiteral<? extends ThriftServerDef> typeLiteral)
         {
             Multibinder.newSetBinder(binder(), ThriftServerDef.class)
                     .addBinding().to(typeLiteral).asEagerSingleton();
