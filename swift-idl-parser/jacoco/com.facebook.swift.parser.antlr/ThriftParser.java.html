@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ThriftParser.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-idl-parser</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.parser.antlr</a> &gt; <span class="el_source">ThriftParser.java</span></div><h1>ThriftParser.java</h1><pre class="source lang-java linenums">// $ANTLR 3.4 com/facebook/swift/parser/antlr/Thrift.g 2013-01-10 18:11:54
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ThriftParser.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-idl-parser</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.parser.antlr</a> &gt; <span class="el_source">ThriftParser.java</span></div><h1>ThriftParser.java</h1><pre class="source lang-java linenums">// $ANTLR 3.4 com/facebook/swift/parser/antlr/Thrift.g 2013-01-11 11:00:38
 
     package com.facebook.swift.parser.antlr;
 
@@ -240,7 +240,7 @@ public TreeAdaptor getTreeAdaptor() {
 
 
             // AST REWRITE
-            // elements: header, definition
+            // elements: definition, header
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -1209,7 +1209,7 @@ public TreeAdaptor getTreeAdaptor() {
 
 
             // AST REWRITE
-            // elements: const_value, field_type, IDENTIFIER
+            // elements: IDENTIFIER, const_value, field_type
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -1613,7 +1613,7 @@ public TreeAdaptor getTreeAdaptor() {
 
 
             // AST REWRITE
-            // elements: IDENTIFIER, integer
+            // elements: integer, IDENTIFIER
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -2577,7 +2577,7 @@ public TreeAdaptor getTreeAdaptor() {
 
 
             // AST REWRITE
-            // elements: function, e, s
+            // elements: function, s, e
             // token labels: e, s
             // rule labels: retval
             // token list labels: 
@@ -2854,7 +2854,7 @@ public TreeAdaptor getTreeAdaptor() {
 
 
             // AST REWRITE
-            // elements: IDENTIFIER, type_annotations, const_value, field_req, field_type, field_id
+            // elements: field_req, field_type, type_annotations, const_value, field_id, IDENTIFIER
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -3387,7 +3387,7 @@ public TreeAdaptor getTreeAdaptor() {
 
 
             // AST REWRITE
-            // elements: oneway, field, type_annotations, throws_list, function_type, IDENTIFIER
+            // elements: throws_list, function_type, field, IDENTIFIER, oneway, type_annotations
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -4081,7 +4081,7 @@ public TreeAdaptor getTreeAdaptor() {
 
 
             // AST REWRITE
-            // elements: annotation_value, IDENTIFIER
+            // elements: IDENTIFIER, annotation_value
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -4986,7 +4986,7 @@ public TreeAdaptor getTreeAdaptor() {
 
 
             // AST REWRITE
-            // elements: field_type, cpp_type
+            // elements: cpp_type, field_type
             // token labels: 
             // rule labels: retval
             // token list labels: 
@@ -5679,7 +5679,7 @@ public TreeAdaptor getTreeAdaptor() {
 
 
             // AST REWRITE
-            // elements: v, k
+            // elements: k, v
             // token labels: 
             // rule labels: v, retval, k
             // token list labels: 
@@ -5701,7 +5701,7 @@ public TreeAdaptor getTreeAdaptor() {
                 , root_1);
 
                 // com/facebook/swift/parser/antlr/Thrift.g:232:75: ( ^( ENTRY $k $v) )*
-<span class="pc bpc" id="L5704" title="1 of 4 branches missed.">                while ( stream_v.hasNext()||stream_k.hasNext() ) {</span>
+<span class="pc bpc" id="L5704" title="1 of 4 branches missed.">                while ( stream_k.hasNext()||stream_v.hasNext() ) {</span>
                     // com/facebook/swift/parser/antlr/Thrift.g:232:75: ^( ENTRY $k $v)
                     {
 <span class="fc" id="L5707">                    Object root_2 = (Object)adaptor.nil();</span>
@@ -5717,8 +5717,8 @@ public TreeAdaptor getTreeAdaptor() {
 <span class="fc" id="L5717">                    }</span>
 
                 }
-<span class="fc" id="L5720">                stream_v.reset();</span>
-<span class="fc" id="L5721">                stream_k.reset();</span>
+<span class="fc" id="L5720">                stream_k.reset();</span>
+<span class="fc" id="L5721">                stream_v.reset();</span>
 
 <span class="fc" id="L5723">                adaptor.addChild(root_0, root_1);</span>
                 }
