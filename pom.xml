@@ -22,7 +22,7 @@ limitations under the License.
     <parent>
         <groupId>com.facebook</groupId>
         <artifactId>facebook-oss-pom</artifactId>
-        <version>1</version>
+        <version>4</version>
     </parent>
 
     <groupId>com.facebook.nifty</groupId>
@@ -36,7 +36,7 @@ limitations under the License.
         <module>nifty-examples</module>
         <module>nifty-load-tester</module>
     </modules>
-    
+
     <properties>
         <!-- Nifty actually can not build with the 1.6 compiler because -->
         <!-- it dependends on airlift, which is 1.7 only.               -->
