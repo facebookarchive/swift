@@ -68,7 +68,7 @@
 <a class="jxr_linenumber" name="58" href="#58">58</a>          checkNotNull(valueType, <span class="jxr_string">"valueType is null"</span>);
 <a class="jxr_linenumber" name="59" href="#59">59</a>  
 <a class="jxr_linenumber" name="60" href="#60">60</a>          @SuppressWarnings(<span class="jxr_string">"serial"</span>)
-<a class="jxr_linenumber" name="61" href="#61">61</a>          <a href="../../../../../com/facebook/swift/codec/metadata/BytecodeReaderParanamer.html">Type</a> javaType = <strong class="jxr_keyword">new</strong> TypeToken&lt;Map&lt;K, V&gt;&gt;(){}
+<a class="jxr_linenumber" name="61" href="#61">61</a>          Type javaType = <strong class="jxr_keyword">new</strong> TypeToken&lt;Map&lt;K, V&gt;&gt;(){}
 <a class="jxr_linenumber" name="62" href="#62">62</a>                  .where(<strong class="jxr_keyword">new</strong> TypeParameter&lt;K&gt;(){}, (TypeToken&lt;K&gt;) TypeToken.of(keyType.getJavaType()))
 <a class="jxr_linenumber" name="63" href="#63">63</a>                  .where(<strong class="jxr_keyword">new</strong> TypeParameter&lt;V&gt;(){}, (TypeToken&lt;V&gt;) TypeToken.of(valueType.getJavaType()))
 <a class="jxr_linenumber" name="64" href="#64">64</a>                  .getType();
@@ -80,7 +80,7 @@
 <a class="jxr_linenumber" name="70" href="#70">70</a>          Preconditions.checkNotNull(valueType, <span class="jxr_string">"valueType is null"</span>);
 <a class="jxr_linenumber" name="71" href="#71">71</a>  
 <a class="jxr_linenumber" name="72" href="#72">72</a>          @SuppressWarnings(<span class="jxr_string">"serial"</span>)
-<a class="jxr_linenumber" name="73" href="#73">73</a>          <a href="../../../../../com/facebook/swift/codec/metadata/BytecodeReaderParanamer.html">Type</a> javaType = <strong class="jxr_keyword">new</strong> TypeToken&lt;Set&lt;E&gt;&gt;(){}
+<a class="jxr_linenumber" name="73" href="#73">73</a>          Type javaType = <strong class="jxr_keyword">new</strong> TypeToken&lt;Set&lt;E&gt;&gt;(){}
 <a class="jxr_linenumber" name="74" href="#74">74</a>                  .where(<strong class="jxr_keyword">new</strong> TypeParameter&lt;E&gt;(){}, (TypeToken&lt;E&gt;) TypeToken.of(valueType.getJavaType()))
 <a class="jxr_linenumber" name="75" href="#75">75</a>                  .getType();
 <a class="jxr_linenumber" name="76" href="#76">76</a>          <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">new</strong> <a href="../../../../../com/facebook/swift/codec/metadata/ThriftType.html">ThriftType</a>(ThriftProtocolType.SET, javaType, <strong class="jxr_keyword">null</strong>, valueType);
@@ -91,7 +91,7 @@
 <a class="jxr_linenumber" name="81" href="#81">81</a>          checkNotNull(valueType, <span class="jxr_string">"valueType is null"</span>);
 <a class="jxr_linenumber" name="82" href="#82">82</a>  
 <a class="jxr_linenumber" name="83" href="#83">83</a>          @SuppressWarnings(<span class="jxr_string">"serial"</span>)
-<a class="jxr_linenumber" name="84" href="#84">84</a>          <a href="../../../../../com/facebook/swift/codec/metadata/BytecodeReaderParanamer.html">Type</a> javaType = <strong class="jxr_keyword">new</strong> TypeToken&lt;List&lt;E&gt;&gt;(){}
+<a class="jxr_linenumber" name="84" href="#84">84</a>          Type javaType = <strong class="jxr_keyword">new</strong> TypeToken&lt;List&lt;E&gt;&gt;(){}
 <a class="jxr_linenumber" name="85" href="#85">85</a>                  .where(<strong class="jxr_keyword">new</strong> TypeParameter&lt;E&gt;(){}, (TypeToken&lt;E&gt;) TypeToken.of(valueType.getJavaType()))
 <a class="jxr_linenumber" name="86" href="#86">86</a>                  .getType();
 <a class="jxr_linenumber" name="87" href="#87">87</a>          <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">new</strong> <a href="../../../../../com/facebook/swift/codec/metadata/ThriftType.html">ThriftType</a>(ThriftProtocolType.LIST, javaType, <strong class="jxr_keyword">null</strong>, valueType);
@@ -104,14 +104,14 @@
 <a class="jxr_linenumber" name="94" href="#94">94</a>      }
 <a class="jxr_linenumber" name="95" href="#95">95</a>  
 <a class="jxr_linenumber" name="96" href="#96">96</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> <a href="../../../../../com/facebook/swift/codec/ThriftProtocolType.html">ThriftProtocolType</a> protocolType;
-<a class="jxr_linenumber" name="97" href="#97">97</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> <a href="../../../../../com/facebook/swift/codec/metadata/BytecodeReaderParanamer.html">Type</a> javaType;
+<a class="jxr_linenumber" name="97" href="#97">97</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> Type javaType;
 <a class="jxr_linenumber" name="98" href="#98">98</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> <a href="../../../../../com/facebook/swift/codec/metadata/ThriftType.html">ThriftType</a> keyType;
 <a class="jxr_linenumber" name="99" href="#99">99</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> <a href="../../../../../com/facebook/swift/codec/metadata/ThriftType.html">ThriftType</a> valueType;
 <a class="jxr_linenumber" name="100" href="#100">100</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> ThriftStructMetadata&lt;?&gt; structMetadata;
 <a class="jxr_linenumber" name="101" href="#101">101</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> ThriftEnumMetadata&lt;?&gt; enumMetadata;
 <a class="jxr_linenumber" name="102" href="#102">102</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> <a href="../../../../../com/facebook/swift/codec/metadata/ThriftType.html">ThriftType</a> uncoercedType;
 <a class="jxr_linenumber" name="103" href="#103">103</a> 
-<a class="jxr_linenumber" name="104" href="#104">104</a>     <strong class="jxr_keyword">private</strong> <a href="../../../../../com/facebook/swift/codec/metadata/ThriftType.html">ThriftType</a>(<a href="../../../../../com/facebook/swift/codec/ThriftProtocolType.html">ThriftProtocolType</a> protocolType, <a href="../../../../../com/facebook/swift/codec/metadata/BytecodeReaderParanamer.html">Type</a> javaType)
+<a class="jxr_linenumber" name="104" href="#104">104</a>     <strong class="jxr_keyword">private</strong> <a href="../../../../../com/facebook/swift/codec/metadata/ThriftType.html">ThriftType</a>(<a href="../../../../../com/facebook/swift/codec/ThriftProtocolType.html">ThriftProtocolType</a> protocolType, Type javaType)
 <a class="jxr_linenumber" name="105" href="#105">105</a>     {
 <a class="jxr_linenumber" name="106" href="#106">106</a>         Preconditions.checkNotNull(protocolType, <span class="jxr_string">"protocolType is null"</span>);
 <a class="jxr_linenumber" name="107" href="#107">107</a>         Preconditions.checkNotNull(javaType, <span class="jxr_string">"javaType is null"</span>);
@@ -125,7 +125,7 @@
 <a class="jxr_linenumber" name="115" href="#115">115</a>         uncoercedType = <strong class="jxr_keyword">null</strong>;
 <a class="jxr_linenumber" name="116" href="#116">116</a>     }
 <a class="jxr_linenumber" name="117" href="#117">117</a> 
-<a class="jxr_linenumber" name="118" href="#118">118</a>     <strong class="jxr_keyword">private</strong> <a href="../../../../../com/facebook/swift/codec/metadata/ThriftType.html">ThriftType</a>(<a href="../../../../../com/facebook/swift/codec/ThriftProtocolType.html">ThriftProtocolType</a> protocolType, <a href="../../../../../com/facebook/swift/codec/metadata/BytecodeReaderParanamer.html">Type</a> javaType, <a href="../../../../../com/facebook/swift/codec/metadata/ThriftType.html">ThriftType</a> keyType, <a href="../../../../../com/facebook/swift/codec/metadata/ThriftType.html">ThriftType</a> valueType)
+<a class="jxr_linenumber" name="118" href="#118">118</a>     <strong class="jxr_keyword">private</strong> <a href="../../../../../com/facebook/swift/codec/metadata/ThriftType.html">ThriftType</a>(<a href="../../../../../com/facebook/swift/codec/ThriftProtocolType.html">ThriftProtocolType</a> protocolType, Type javaType, <a href="../../../../../com/facebook/swift/codec/metadata/ThriftType.html">ThriftType</a> keyType, <a href="../../../../../com/facebook/swift/codec/metadata/ThriftType.html">ThriftType</a> valueType)
 <a class="jxr_linenumber" name="119" href="#119">119</a>     {
 <a class="jxr_linenumber" name="120" href="#120">120</a>         Preconditions.checkNotNull(protocolType, <span class="jxr_string">"protocolType is null"</span>);
 <a class="jxr_linenumber" name="121" href="#121">121</a>         Preconditions.checkNotNull(javaType, <span class="jxr_string">"javaType is null"</span>);
@@ -166,7 +166,7 @@
 <a class="jxr_linenumber" name="156" href="#156">156</a>         <strong class="jxr_keyword">this</strong>.uncoercedType = <strong class="jxr_keyword">null</strong>;
 <a class="jxr_linenumber" name="157" href="#157">157</a>     }
 <a class="jxr_linenumber" name="158" href="#158">158</a> 
-<a class="jxr_linenumber" name="159" href="#159">159</a>     <strong class="jxr_keyword">public</strong> <a href="../../../../../com/facebook/swift/codec/metadata/ThriftType.html">ThriftType</a>(<a href="../../../../../com/facebook/swift/codec/metadata/ThriftType.html">ThriftType</a> uncoercedType, <a href="../../../../../com/facebook/swift/codec/metadata/BytecodeReaderParanamer.html">Type</a> javaType)
+<a class="jxr_linenumber" name="159" href="#159">159</a>     <strong class="jxr_keyword">public</strong> <a href="../../../../../com/facebook/swift/codec/metadata/ThriftType.html">ThriftType</a>(<a href="../../../../../com/facebook/swift/codec/metadata/ThriftType.html">ThriftType</a> uncoercedType, Type javaType)
 <a class="jxr_linenumber" name="160" href="#160">160</a>     {
 <a class="jxr_linenumber" name="161" href="#161">161</a>         <strong class="jxr_keyword">this</strong>.javaType = javaType;
 <a class="jxr_linenumber" name="162" href="#162">162</a>         <strong class="jxr_keyword">this</strong>.uncoercedType = uncoercedType;
@@ -178,7 +178,7 @@
 <a class="jxr_linenumber" name="168" href="#168">168</a>         enumMetadata = <strong class="jxr_keyword">null</strong>;
 <a class="jxr_linenumber" name="169" href="#169">169</a>     }
 <a class="jxr_linenumber" name="170" href="#170">170</a> 
-<a class="jxr_linenumber" name="171" href="#171">171</a>     <strong class="jxr_keyword">public</strong> <a href="../../../../../com/facebook/swift/codec/metadata/BytecodeReaderParanamer.html">Type</a> getJavaType()
+<a class="jxr_linenumber" name="171" href="#171">171</a>     <strong class="jxr_keyword">public</strong> Type getJavaType()
 <a class="jxr_linenumber" name="172" href="#172">172</a>     {
 <a class="jxr_linenumber" name="173" href="#173">173</a>         <strong class="jxr_keyword">return</strong> javaType;
 <a class="jxr_linenumber" name="174" href="#174">174</a>     }
@@ -217,7 +217,7 @@
 <a class="jxr_linenumber" name="207" href="#207">207</a>         <strong class="jxr_keyword">return</strong> uncoercedType != <strong class="jxr_keyword">null</strong>;
 <a class="jxr_linenumber" name="208" href="#208">208</a>     }
 <a class="jxr_linenumber" name="209" href="#209">209</a> 
-<a class="jxr_linenumber" name="210" href="#210">210</a>     <strong class="jxr_keyword">public</strong> <a href="../../../../../com/facebook/swift/codec/metadata/ThriftType.html">ThriftType</a> coerceTo(<a href="../../../../../com/facebook/swift/codec/metadata/BytecodeReaderParanamer.html">Type</a> javaType)
+<a class="jxr_linenumber" name="210" href="#210">210</a>     <strong class="jxr_keyword">public</strong> <a href="../../../../../com/facebook/swift/codec/metadata/ThriftType.html">ThriftType</a> coerceTo(Type javaType)
 <a class="jxr_linenumber" name="211" href="#211">211</a>     {
 <a class="jxr_linenumber" name="212" href="#212">212</a>         <strong class="jxr_keyword">if</strong> (javaType == <strong class="jxr_keyword">this</strong>.javaType) {
 <a class="jxr_linenumber" name="213" href="#213">213</a>             <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">this</strong>;

@@ -1,99 +1,94 @@
 GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+swift-codec,com.facebook.swift.codec.internal.compiler,ThriftCodecByteCodeGenerator.ConstructorParameters,0,58,0,0,0,11,0,6,0,6
 swift-codec,com.facebook.swift.codec.internal.compiler,CompilerThriftCodecFactory.new PrivilegedAction() {...},0,7,0,0,0,2,0,2,0,2
 swift-codec,com.facebook.swift.codec.internal.compiler,ThriftCodecByteCodeGenerator.ConstructorParameters.new Function() {...},0,9,0,0,0,2,0,2,0,2
 swift-codec,com.facebook.swift.codec.internal.compiler,ThriftCodecByteCodeGenerator.ConstructorParameters.new Function() {...},0,12,0,0,0,2,0,2,0,2
 swift-codec,com.facebook.swift.codec.internal.compiler,CompilerThriftCodecFactory,0,37,0,0,0,11,0,5,0,5
 swift-codec,com.facebook.swift.codec.internal.compiler,ThriftCodecByteCodeGenerator,65,1964,5,88,9,260,5,69,0,26
-swift-codec,com.facebook.swift.codec.internal.compiler,DynamicClassLoader,9,23,3,1,4,8,2,4,0,4
-swift-codec,com.facebook.swift.codec.internal.compiler,ThriftCodecByteCodeGenerator.ConstructorParameters,0,58,0,0,0,11,0,6,0,6
 swift-codec,com.facebook.swift.codec.internal.compiler,ThriftCodecByteCodeGenerator.new Object() {...},12,77,0,0,0,1,0,1,0,1
+swift-codec,com.facebook.swift.codec.internal.compiler,DynamicClassLoader,9,23,3,1,4,8,2,4,0,4
 swift-codec,com.facebook.swift.codec.internal,TProtocolReader,140,341,25,29,40,84,35,27,12,23
-swift-codec,com.facebook.swift.codec.internal,EnumThriftCodec,20,72,3,7,2,20,3,6,0,4
 swift-codec,com.facebook.swift.codec.internal,TProtocolWriter,57,396,15,17,31,94,21,23,8,20
+swift-codec,com.facebook.swift.codec.internal,EnumThriftCodec,20,72,3,7,2,20,3,6,0,4
+swift-codec,com.facebook.swift.codec.internal.builtin,ShortThriftCodec,0,26,0,0,0,8,0,4,0,4
 swift-codec,com.facebook.swift.codec.internal.builtin,DoubleThriftCodec,0,26,0,0,0,8,0,4,0,4
 swift-codec,com.facebook.swift.codec.internal.builtin,MapThriftCodec,0,60,0,0,0,15,0,4,0,4
 swift-codec,com.facebook.swift.codec.internal.builtin,SetThriftCodec,0,49,0,0,0,13,0,4,0,4
+swift-codec,com.facebook.swift.codec.internal.builtin,IntegerThriftCodec,0,26,0,0,0,8,0,4,0,4
+swift-codec,com.facebook.swift.codec.internal.builtin,BooleanThriftCodec,0,26,0,0,0,8,0,4,0,4
 swift-codec,com.facebook.swift.codec.internal.builtin,ListThriftCodec,0,49,0,0,0,13,0,4,0,4
 swift-codec,com.facebook.swift.codec.internal.builtin,LongThriftCodec,0,26,0,0,0,8,0,4,0,4
 swift-codec,com.facebook.swift.codec.internal.builtin,VoidThriftCodec,11,5,0,0,4,2,2,2,2,2
-swift-codec,com.facebook.swift.codec.internal.builtin,ShortThriftCodec,0,26,0,0,0,8,0,4,0,4
-swift-codec,com.facebook.swift.codec.internal.builtin,IntegerThriftCodec,0,26,0,0,0,8,0,4,0,4
-swift-codec,com.facebook.swift.codec.internal.builtin,BooleanThriftCodec,0,26,0,0,0,8,0,4,0,4
 swift-codec,com.facebook.swift.codec.internal.builtin,ByteThriftCodec,0,26,0,0,0,8,0,4,0,4
 swift-codec,com.facebook.swift.codec.internal.builtin,ByteBufferThriftCodec,0,24,0,0,0,8,0,4,0,4
 swift-codec,com.facebook.swift.codec.internal.compiler.byteCode,FieldDefinition,38,38,0,0,7,9,1,5,1,5
 swift-codec,com.facebook.swift.codec.internal.compiler.byteCode,MethodDefinition,230,945,12,31,42,177,27,66,15,52
+swift-codec,com.facebook.swift.codec.internal.compiler.byteCode,LocalVariableDefinition,34,18,0,0,7,7,2,3,2,3
 swift-codec,com.facebook.swift.codec.internal.compiler.byteCode,CaseStatement,31,21,0,0,6,7,1,4,1,4
 swift-codec,com.facebook.swift.codec.internal.compiler.byteCode,Access,5,241,0,2,0,29,1,7,1,6
 swift-codec,com.facebook.swift.codec.internal.compiler.byteCode,NamedParameterDefinition.new Function() {...},0,9,0,0,0,3,0,2,0,2
+swift-codec,com.facebook.swift.codec.internal.compiler.byteCode,NamedParameterDefinition,44,32,0,0,8,9,3,6,3,6
+swift-codec,com.facebook.swift.codec.internal.compiler.byteCode,ClassDefinition,52,148,2,8,9,31,5,8,3,5
 swift-codec,com.facebook.swift.codec.internal.compiler.byteCode,ParameterizedType.new Function() {...},0,9,0,0,0,2,0,2,0,2
 swift-codec,com.facebook.swift.codec.internal.compiler.byteCode,ParameterizedType.new Function() {...},0,6,0,0,0,2,0,2,0,2
 swift-codec,com.facebook.swift.codec.internal.compiler.byteCode,ParameterizedType.new Predicate() {...},0,6,0,0,0,2,0,2,0,2
-swift-codec,com.facebook.swift.codec.internal.compiler.byteCode,LocalVariableDefinition,34,18,0,0,7,7,2,3,2,3
-swift-codec,com.facebook.swift.codec.internal.compiler.byteCode,NamedParameterDefinition,44,32,0,0,8,9,3,6,3,6
-swift-codec,com.facebook.swift.codec.internal.compiler.byteCode,ClassDefinition,52,148,2,8,9,31,5,8,3,5
 swift-codec,com.facebook.swift.codec.internal.compiler.byteCode,ParameterizedType,128,231,23,27,31,59,15,28,2,16
-swift-codec,com.facebook.swift.codec.internal.coercion,CoercionThriftCodec,0,53,0,0,0,12,0,4,0,4
 swift-codec,com.facebook.swift.codec.internal.coercion,DefaultJavaCoercions,21,64,2,2,8,20,5,18,3,18
+swift-codec,com.facebook.swift.codec.internal.coercion,CoercionThriftCodec,0,53,0,0,0,12,0,4,0,4
 swift-codec,com.facebook.swift.codec.internal.reflection,ReflectionThriftCodec,104,353,16,38,28,84,12,21,0,6
 swift-codec,com.facebook.swift.codec.internal.reflection,ReflectionThriftCodecFactory,0,9,0,0,0,2,0,2,0,2
+swift-codec,com.facebook.swift.codec.metadata,ThriftStructMetadataBuilder.ConstructorInjection,29,32,0,0,6,10,1,4,1,4
+swift-codec,com.facebook.swift.codec.metadata,ThriftParameterInjection,45,43,2,2,8,13,3,5,1,5
 swift-codec,com.facebook.swift.codec.metadata,ThriftStructMetadataBuilder.MethodInjection,29,19,0,0,6,6,1,3,1,3
+swift-codec,com.facebook.swift.codec.metadata,MetadataErrorException,14,13,0,0,2,2,1,1,1,1
+swift-codec,com.facebook.swift.codec.metadata,ThriftStructMetadataBuilder.new Function() {...},1,18,1,1,0,3,1,2,0,2
+swift-codec,com.facebook.swift.codec.metadata,ThriftStructMetadataBuilder.new Function() {...},0,17,0,0,0,2,0,2,0,2
+swift-codec,com.facebook.swift.codec.metadata,ThriftStructMetadataBuilder.new Function() {...},0,19,0,0,0,2,0,2,0,2
 swift-codec,com.facebook.swift.codec.metadata,MetadataErrors,144,63,9,1,27,18,9,7,4,7
-swift-codec,com.facebook.swift.codec.metadata,BytecodeReadingParanamer,40,141,8,8,10,37,6,8,0,6
+swift-codec,com.facebook.swift.codec.metadata,ReflectionHelper,90,276,19,27,22,46,18,19,4,10
+swift-codec,com.facebook.swift.codec.metadata,ThriftType,53,507,22,22,9,106,21,24,0,23
 swift-codec,com.facebook.swift.codec.metadata,ThriftStructMetadata,66,76,0,0,11,17,1,9,1,9
 swift-codec,com.facebook.swift.codec.metadata,ThriftStructMetadata.new Function() {...},0,10,0,0,0,2,0,2,0,2
+swift-codec,com.facebook.swift.codec.metadata,TypeCoercion,36,33,0,0,7,11,1,4,1,4
 swift-codec,com.facebook.swift.codec.metadata,MetadataErrors.NullMonitor,0,5,0,0,0,3,0,3,0,3
 swift-codec,com.facebook.swift.codec.metadata,ThriftStructMetadataBuilder.FieldInjection,22,18,0,0,5,6,1,4,1,4
+swift-codec,com.facebook.swift.codec.metadata,ThriftCatalog.new ThreadLocal() {...},0,10,0,0,0,2,0,2,0,2
+swift-codec,com.facebook.swift.codec.metadata,ThriftCatalog.new Function() {...},9,0,0,0,2,0,2,0,2,0
+swift-codec,com.facebook.swift.codec.metadata,ThriftFieldInjection,45,35,1,1,7,11,2,4,1,4
+swift-codec,com.facebook.swift.codec.metadata,ThriftStructMetadataBuilder.ParameterInjection,43,39,2,4,8,11,3,5,1,4
 swift-codec,com.facebook.swift.codec.metadata,ReflectionHelper.GeneralParanamer,39,27,4,2,6,8,3,3,0,3
 swift-codec,com.facebook.swift.codec.metadata,ThriftStructMetadataBuilder,341,1332,48,132,34,257,44,77,0,31
 swift-codec,com.facebook.swift.codec.metadata,ThriftEnumMetadata,86,200,14,14,17,31,12,10,3,5
 swift-codec,com.facebook.swift.codec.metadata,ReflectionHelper.ThriftFieldParanamer,9,21,5,3,1,6,4,3,0,3
+swift-codec,com.facebook.swift.codec.metadata,ThriftFieldMetadata,67,87,7,5,10,23,7,11,1,11
 swift-codec,com.facebook.swift.codec.metadata,ThriftStructMetadataBuilder.FieldMetadata.new Function() {...},2,11,1,1,1,4,1,2,0,2
+swift-codec,com.facebook.swift.codec.metadata,ThriftMethodInjection,28,23,0,0,6,8,1,3,1,3
 swift-codec,com.facebook.swift.codec.metadata,ThriftStructMetadataBuilder.FieldMetadata.new Function() {...},2,8,1,1,1,3,1,2,0,2
 swift-codec,com.facebook.swift.codec.metadata,ThriftStructMetadataBuilder.FieldMetadata.new Function() {...},8,17,2,4,2,7,2,3,0,2
 swift-codec,com.facebook.swift.codec.metadata,ThriftStructMetadataBuilder.FieldMetadata.new Function() {...},2,8,1,1,1,3,1,2,0,2
 swift-codec,com.facebook.swift.codec.metadata,ThriftType.new TypeToken() {...},0,3,0,0,0,1,0,1,0,1
 swift-codec,com.facebook.swift.codec.metadata,ThriftType.new TypeToken() {...},0,3,0,0,0,1,0,1,0,1
 swift-codec,com.facebook.swift.codec.metadata,ThriftType.new TypeParameter() {...},0,3,0,0,0,1,0,1,0,1
-swift-codec,com.facebook.swift.codec.metadata,ThriftFieldExtractor,45,35,1,1,7,11,2,4,1,4
 swift-codec,com.facebook.swift.codec.metadata,ThriftType.new TypeToken() {...},0,3,0,0,0,1,0,1,0,1
+swift-codec,com.facebook.swift.codec.metadata,ThriftStructMetadataBuilder.Extractor,0,5,0,0,0,2,0,1,0,1
+swift-codec,com.facebook.swift.codec.metadata,ThriftFieldExtractor,45,35,1,1,7,11,2,4,1,4
 swift-codec,com.facebook.swift.codec.metadata,ThriftType.new TypeParameter() {...},0,3,0,0,0,1,0,1,0,1
 swift-codec,com.facebook.swift.codec.metadata,ThriftType.new TypeParameter() {...},0,3,0,0,0,1,0,1,0,1
 swift-codec,com.facebook.swift.codec.metadata,ThriftType.new TypeParameter() {...},0,3,0,0,0,1,0,1,0,1
-swift-codec,com.facebook.swift.codec.metadata,ThriftConstructorInjection,40,22,0,0,8,6,2,3,2,3
 swift-codec,com.facebook.swift.codec.metadata,ThriftMethodExtractor,39,35,1,1,7,11,2,4,1,4
+swift-codec,com.facebook.swift.codec.metadata,ThriftConstructorInjection,40,22,0,0,8,6,2,3,2,3
 swift-codec,com.facebook.swift.codec.metadata,ThriftCatalog,78,660,14,78,8,144,14,44,0,12
+swift-codec,com.facebook.swift.codec.metadata,ThriftStructMetadataBuilder.Injection,0,5,0,0,0,2,0,1,0,1
 swift-codec,com.facebook.swift.codec.metadata,ThriftStructMetadataBuilder.FieldExtractor,22,18,0,0,5,6,1,4,1,4
 swift-codec,com.facebook.swift.codec.metadata,ThriftStructMetadataBuilder.MethodExtractor,22,18,0,0,5,6,1,4,1,4
 swift-codec,com.facebook.swift.codec.metadata,ThriftStructMetadataBuilder.FieldMetadata,0,53,0,6,0,17,0,12,0,9
-swift-codec,com.facebook.swift.codec.metadata,ThriftStructMetadataBuilder.ConstructorInjection,29,32,0,0,6,10,1,4,1,4
-swift-codec,com.facebook.swift.codec.metadata,ThriftParameterInjection,45,43,2,2,8,13,3,5,1,5
-swift-codec,com.facebook.swift.codec.metadata,BytecodeReadingParanamer.ClassReader,191,562,28,50,43,140,23,28,0,10
-swift-codec,com.facebook.swift.codec.metadata,MetadataErrorException,14,13,0,0,2,2,1,1,1,1
-swift-codec,com.facebook.swift.codec.metadata,ThriftStructMetadataBuilder.new Function() {...},1,18,1,1,0,3,1,2,0,2
-swift-codec,com.facebook.swift.codec.metadata,ThriftStructMetadataBuilder.new Function() {...},0,17,0,0,0,2,0,2,0,2
-swift-codec,com.facebook.swift.codec.metadata,ThriftStructMetadataBuilder.new Function() {...},0,19,0,0,0,2,0,2,0,2
-swift-codec,com.facebook.swift.codec.metadata,BytecodeReadingParanamer.TypeCollector,24,180,6,24,6,34,5,14,0,4
-swift-codec,com.facebook.swift.codec.metadata,ReflectionHelper,90,276,19,27,22,46,18,19,4,10
-swift-codec,com.facebook.swift.codec.metadata,ThriftType,53,507,22,22,9,106,21,24,0,23
-swift-codec,com.facebook.swift.codec.metadata,TypeCoercion,36,33,0,0,7,11,1,4,1,4
-swift-codec,com.facebook.swift.codec.metadata,ThriftCatalog.new ThreadLocal() {...},0,10,0,0,0,2,0,2,0,2
-swift-codec,com.facebook.swift.codec.metadata,ThriftCatalog.new Function() {...},9,0,0,0,2,0,2,0,2,0
-swift-codec,com.facebook.swift.codec.metadata,ThriftFieldInjection,45,35,1,1,7,11,2,4,1,4
-swift-codec,com.facebook.swift.codec.metadata,ThriftStructMetadataBuilder.ParameterInjection,43,39,2,4,8,11,3,5,1,4
-swift-codec,com.facebook.swift.codec.metadata,ThriftFieldMetadata,67,87,7,5,10,23,7,11,1,11
-swift-codec,com.facebook.swift.codec.metadata,ThriftMethodInjection,28,23,0,0,6,8,1,3,1,3
-swift-codec,com.facebook.swift.codec.metadata,BytecodeReadingParanamer.MethodCollector,3,78,4,6,0,16,4,5,0,4
-swift-codec,com.facebook.swift.codec.metadata,ThriftStructMetadataBuilder.Extractor,0,5,0,0,0,2,0,1,0,1
-swift-codec,com.facebook.swift.codec.metadata,ThriftStructMetadataBuilder.Injection,0,5,0,0,0,2,0,1,0,1
 swift-codec,com.facebook.swift.codec.metadata,MetadataWarningException,14,13,0,0,2,2,1,1,1,1
-swift-codec,com.facebook.swift.codec.metadata,BytecodeReadingParanamer.Type,17,314,4,42,8,73,5,35,1,7
 swift-codec,com.facebook.swift.codec.guice,ThriftCodecBinder.ThriftCodecProvider,31,16,8,0,9,6,6,3,2,3
 swift-codec,com.facebook.swift.codec.guice,ThriftCodecBinder,0,163,0,0,0,25,0,8,0,8
 swift-codec,com.facebook.swift.codec.guice,ThriftCodecBinder.new TypeLiteral() {...},0,6,0,0,0,1,0,1,0,1
 swift-codec,com.facebook.swift.codec.guice,ThriftCodecModule,0,22,0,0,0,6,0,2,0,2
 swift-codec,com.facebook.swift.codec.guice,ThriftCodecModule.new TypeLiteral() {...},0,6,0,0,0,1,0,1,0,1
-swift-codec,com.facebook.swift.codec,ThriftCodecManager,18,205,2,4,5,45,4,15,2,14
 swift-codec,com.facebook.swift.codec,ThriftCodecManager.new CacheLoader() {...},12,103,1,7,1,15,1,7,0,2
 swift-codec,com.facebook.swift.codec,ThriftCodecManager.new Object() {...},5,35,0,0,0,1,0,1,0,1
 swift-codec,com.facebook.swift.codec,ThriftProtocolType,5,162,0,0,0,18,1,4,1,4
+swift-codec,com.facebook.swift.codec,ThriftCodecManager,18,205,2,4,5,45,4,15,2,14

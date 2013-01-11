@@ -147,7 +147,7 @@
 <a class="jxr_linenumber" name="137" href="#137">137</a>         }
 <a class="jxr_linenumber" name="138" href="#138">138</a>     }
 <a class="jxr_linenumber" name="139" href="#139">139</a> 
-<a class="jxr_linenumber" name="140" href="#140">140</a>     <strong class="jxr_keyword">public</strong> ThriftCodec&lt;?&gt; getCodec(<a href="../../../../com/facebook/swift/codec/metadata/BytecodeReaderParanamer.html">Type</a> javaType)
+<a class="jxr_linenumber" name="140" href="#140">140</a>     <strong class="jxr_keyword">public</strong> ThriftCodec&lt;?&gt; getCodec(Type javaType)
 <a class="jxr_linenumber" name="141" href="#141">141</a>     {
 <a class="jxr_linenumber" name="142" href="#142">142</a>         <a href="../../../../com/facebook/swift/codec/metadata/ThriftType.html">ThriftType</a> thriftType = catalog.getThriftType(javaType);
 <a class="jxr_linenumber" name="143" href="#143">143</a>         Preconditions.checkArgument(thriftType != <strong class="jxr_keyword">null</strong>, <span class="jxr_string">"Unsupported java type %s"</span>, javaType);

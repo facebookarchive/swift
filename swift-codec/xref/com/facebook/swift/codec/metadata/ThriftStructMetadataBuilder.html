@@ -438,12 +438,12 @@
 <a class="jxr_linenumber" name="428" href="#428">428</a>         <strong class="jxr_keyword">return</strong> method.getParameterTypes().length &gt;= 1;
 <a class="jxr_linenumber" name="429" href="#429">429</a>     }
 <a class="jxr_linenumber" name="430" href="#430">430</a> 
-<a class="jxr_linenumber" name="431" href="#431">431</a>     <strong class="jxr_keyword">private</strong> List&lt;ParameterInjection&gt; getParameterInjections(Annotation[][] parameterAnnotations, <a href="../../../../../com/facebook/swift/codec/metadata/BytecodeReaderParanamer.html">Type</a>[] parameterTypes, String[] parameterNames)
+<a class="jxr_linenumber" name="431" href="#431">431</a>     <strong class="jxr_keyword">private</strong> List&lt;ParameterInjection&gt; getParameterInjections(Annotation[][] parameterAnnotations, Type[] parameterTypes, String[] parameterNames)
 <a class="jxr_linenumber" name="432" href="#432">432</a>     {
 <a class="jxr_linenumber" name="433" href="#433">433</a>         List&lt;ParameterInjection&gt; parameters = newArrayListWithCapacity(parameterAnnotations.length);
 <a class="jxr_linenumber" name="434" href="#434">434</a>         <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> parameterIndex = 0; parameterIndex &lt; parameterAnnotations.length; parameterIndex++) {
 <a class="jxr_linenumber" name="435" href="#435">435</a>             Annotation[] annotations = parameterAnnotations[parameterIndex];
-<a class="jxr_linenumber" name="436" href="#436">436</a>             <a href="../../../../../com/facebook/swift/codec/metadata/BytecodeReaderParanamer.html">Type</a> parameterType = parameterTypes[parameterIndex];
+<a class="jxr_linenumber" name="436" href="#436">436</a>             Type parameterType = parameterTypes[parameterIndex];
 <a class="jxr_linenumber" name="437" href="#437">437</a> 
 <a class="jxr_linenumber" name="438" href="#438">438</a>             <a href="../../../../../com/facebook/swift/codec/ThriftField.html">ThriftField</a> thriftField = <strong class="jxr_keyword">null</strong>;
 <a class="jxr_linenumber" name="439" href="#439">439</a>             <strong class="jxr_keyword">for</strong> (Annotation annotation : annotations) {
@@ -785,7 +785,7 @@
 <a class="jxr_linenumber" name="775" href="#775">775</a>             <strong class="jxr_keyword">this</strong>.name = name;
 <a class="jxr_linenumber" name="776" href="#776">776</a>         }
 <a class="jxr_linenumber" name="777" href="#777">777</a> 
-<a class="jxr_linenumber" name="778" href="#778">778</a>         <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">abstract</strong> <a href="../../../../../com/facebook/swift/codec/metadata/BytecodeReaderParanamer.html">Type</a> getJavaType();
+<a class="jxr_linenumber" name="778" href="#778">778</a>         <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">abstract</strong> Type getJavaType();
 <a class="jxr_linenumber" name="779" href="#779">779</a> 
 <a class="jxr_linenumber" name="780" href="#780">780</a>         <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">abstract</strong> String extractName();
 <a class="jxr_linenumber" name="781" href="#781">781</a> 
@@ -888,7 +888,7 @@
 <a class="jxr_linenumber" name="878" href="#878">878</a>         }
 <a class="jxr_linenumber" name="879" href="#879">879</a> 
 <a class="jxr_linenumber" name="880" href="#880">880</a>         @Override
-<a class="jxr_linenumber" name="881" href="#881">881</a>         <strong class="jxr_keyword">public</strong> <a href="../../../../../com/facebook/swift/codec/metadata/BytecodeReaderParanamer.html">Type</a> getJavaType()
+<a class="jxr_linenumber" name="881" href="#881">881</a>         <strong class="jxr_keyword">public</strong> Type getJavaType()
 <a class="jxr_linenumber" name="882" href="#882">882</a>         {
 <a class="jxr_linenumber" name="883" href="#883">883</a>             <strong class="jxr_keyword">return</strong> field.getGenericType();
 <a class="jxr_linenumber" name="884" href="#884">884</a>         }
@@ -926,7 +926,7 @@
 <a class="jxr_linenumber" name="916" href="#916">916</a>         }
 <a class="jxr_linenumber" name="917" href="#917">917</a> 
 <a class="jxr_linenumber" name="918" href="#918">918</a>         @Override
-<a class="jxr_linenumber" name="919" href="#919">919</a>         <strong class="jxr_keyword">public</strong> <a href="../../../../../com/facebook/swift/codec/metadata/BytecodeReaderParanamer.html">Type</a> getJavaType()
+<a class="jxr_linenumber" name="919" href="#919">919</a>         <strong class="jxr_keyword">public</strong> Type getJavaType()
 <a class="jxr_linenumber" name="920" href="#920">920</a>         {
 <a class="jxr_linenumber" name="921" href="#921">921</a>             <strong class="jxr_keyword">return</strong> method.getGenericReturnType();
 <a class="jxr_linenumber" name="922" href="#922">922</a>         }
@@ -972,7 +972,7 @@
 <a class="jxr_linenumber" name="962" href="#962">962</a>         }
 <a class="jxr_linenumber" name="963" href="#963">963</a> 
 <a class="jxr_linenumber" name="964" href="#964">964</a>         @Override
-<a class="jxr_linenumber" name="965" href="#965">965</a>         <strong class="jxr_keyword">public</strong> <a href="../../../../../com/facebook/swift/codec/metadata/BytecodeReaderParanamer.html">Type</a> getJavaType()
+<a class="jxr_linenumber" name="965" href="#965">965</a>         <strong class="jxr_keyword">public</strong> Type getJavaType()
 <a class="jxr_linenumber" name="966" href="#966">966</a>         {
 <a class="jxr_linenumber" name="967" href="#967">967</a>             <strong class="jxr_keyword">return</strong> field.getGenericType();
 <a class="jxr_linenumber" name="968" href="#968">968</a>         }
@@ -1064,9 +1064,9 @@
 <a class="jxr_linenumber" name="1054" href="#1054">1054</a>     {
 <a class="jxr_linenumber" name="1055" href="#1055">1055</a>         <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> parameterIndex;
 <a class="jxr_linenumber" name="1056" href="#1056">1056</a>         <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> String extractedName;
-<a class="jxr_linenumber" name="1057" href="#1057">1057</a>         <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> <a href="../../../../../com/facebook/swift/codec/metadata/BytecodeReaderParanamer.html">Type</a> parameterJavaType;
+<a class="jxr_linenumber" name="1057" href="#1057">1057</a>         <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> Type parameterJavaType;
 <a class="jxr_linenumber" name="1058" href="#1058">1058</a> 
-<a class="jxr_linenumber" name="1059" href="#1059">1059</a>         <strong class="jxr_keyword">private</strong> <a href="../../../../../com/facebook/swift/codec/metadata/ThriftStructMetadataBuilder.html">ParameterInjection</a>(<strong class="jxr_keyword">int</strong> parameterIndex, <a href="../../../../../com/facebook/swift/codec/ThriftField.html">ThriftField</a> annotation, String extractedName, <a href="../../../../../com/facebook/swift/codec/metadata/BytecodeReaderParanamer.html">Type</a> parameterJavaType)
+<a class="jxr_linenumber" name="1059" href="#1059">1059</a>         <strong class="jxr_keyword">private</strong> <a href="../../../../../com/facebook/swift/codec/metadata/ThriftStructMetadataBuilder.html">ParameterInjection</a>(<strong class="jxr_keyword">int</strong> parameterIndex, <a href="../../../../../com/facebook/swift/codec/ThriftField.html">ThriftField</a> annotation, String extractedName, Type parameterJavaType)
 <a class="jxr_linenumber" name="1060" href="#1060">1060</a>         {
 <a class="jxr_linenumber" name="1061" href="#1061">1061</a>             <strong class="jxr_keyword">super</strong>(annotation);
 <a class="jxr_linenumber" name="1062" href="#1062">1062</a>             checkNotNull(parameterJavaType, <span class="jxr_string">"parameterJavaType is null"</span>);
@@ -1092,7 +1092,7 @@
 <a class="jxr_linenumber" name="1082" href="#1082">1082</a>         }
 <a class="jxr_linenumber" name="1083" href="#1083">1083</a> 
 <a class="jxr_linenumber" name="1084" href="#1084">1084</a>         @Override
-<a class="jxr_linenumber" name="1085" href="#1085">1085</a>         <strong class="jxr_keyword">public</strong> <a href="../../../../../com/facebook/swift/codec/metadata/BytecodeReaderParanamer.html">Type</a> getJavaType()
+<a class="jxr_linenumber" name="1085" href="#1085">1085</a>         <strong class="jxr_keyword">public</strong> Type getJavaType()
 <a class="jxr_linenumber" name="1086" href="#1086">1086</a>         {
 <a class="jxr_linenumber" name="1087" href="#1087">1087</a>             <strong class="jxr_keyword">return</strong> parameterJavaType;
 <a class="jxr_linenumber" name="1088" href="#1088">1088</a>         }
