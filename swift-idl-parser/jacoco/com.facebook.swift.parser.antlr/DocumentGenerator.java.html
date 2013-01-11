@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>DocumentGenerator.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-idl-parser</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.parser.antlr</a> &gt; <span class="el_source">DocumentGenerator.java</span></div><h1>DocumentGenerator.java</h1><pre class="source lang-java linenums">// $ANTLR 3.4 com/facebook/swift/parser/antlr/DocumentGenerator.g 2012-12-12 13:31:12
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>DocumentGenerator.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">swift-idl-parser</a> &gt; <a href="index.html" class="el_package">com.facebook.swift.parser.antlr</a> &gt; <span class="el_source">DocumentGenerator.java</span></div><h1>DocumentGenerator.java</h1><pre class="source lang-java linenums">// $ANTLR 3.4 com/facebook/swift/parser/antlr/DocumentGenerator.g 2013-01-10 18:11:55
 
     package com.facebook.swift.parser.antlr;
 
@@ -377,7 +377,7 @@ public TreeAdaptor getTreeAdaptor() {
 <span class="fc" id="L377">            	    adaptor.addChild(root_0, namespace6.getTree());</span>
 
 
-<span class="pc bpc" id="L380" title="2 of 4 branches missed.">            	     namespaces.put((namespace6!=null?namespace6.type:null), (namespace6!=null?namespace6.value:null)); </span>
+<span class="pc bpc" id="L380" title="2 of 4 branches missed.">            	     namespaces.put((namespace6!=null?namespace6.language:null), (namespace6!=null?namespace6.value:null)); </span>
 
             	    }
 <span class="fc" id="L383">            	    break;</span>
@@ -506,7 +506,7 @@ public TreeAdaptor getTreeAdaptor() {
 
 
 <span class="fc" id="L508">    public static class namespace_return extends TreeRuleReturnScope {</span>
-        public String type;
+        public String language;
         public String value;
         CommonTree tree;
 <span class="fc" id="L512">        public Object getTree() { return tree; }</span>
@@ -514,7 +514,7 @@ public TreeAdaptor getTreeAdaptor() {
 
 
     // $ANTLR start &quot;namespace&quot;
-    // com/facebook/swift/parser/antlr/DocumentGenerator.g:62:1: namespace returns [String type, String value] : ^( NAMESPACE k= IDENTIFIER (v= IDENTIFIER |v= LITERAL ) ) ;
+    // com/facebook/swift/parser/antlr/DocumentGenerator.g:62:1: namespace returns [String language, String value] : ^( NAMESPACE k= IDENTIFIER (v= IDENTIFIER |v= LITERAL ) ) ;
     public final DocumentGenerator.namespace_return namespace() throws RecognitionException {
 <span class="fc" id="L519">        DocumentGenerator.namespace_return retval = new DocumentGenerator.namespace_return();</span>
 <span class="fc" id="L520">        retval.start = input.LT(1);</span>
@@ -620,7 +620,7 @@ public TreeAdaptor getTreeAdaptor() {
             }
 
 
-<span class="pc bpc" id="L623" title="2 of 4 branches missed.">             retval.type = (k!=null?k.getText():null) ; retval.value = (v!=null?v.getText():null); </span>
+<span class="pc bpc" id="L623" title="2 of 4 branches missed.">             retval.language = (k!=null?k.getText():null) ; retval.value = (v!=null?v.getText():null); </span>
 
             }
 
@@ -5166,4 +5166,4 @@ public TreeAdaptor getTreeAdaptor() {
 <span class="fc" id="L5166">    public static final BitSet FOLLOW_HEX_INTEGER_in_integer1829 = new BitSet(new long[]{0x0000000000000002L});</span>
 
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.0.201210061924</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.1.201212231917</span></div></body></html>

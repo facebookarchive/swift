@@ -8,7 +8,7 @@
 <body>
 <div id="overview"><a href="../../../../../../apidocs/com/facebook/swift/parser/antlr/DocumentGenerator.html">View Javadoc</a></div><pre>
 
-<a class="jxr_linenumber" name="1" href="#1">1</a>   <em class="jxr_comment">// $ANTLR 3.4 com/facebook/swift/parser/antlr/DocumentGenerator.g 2012-12-12 13:31:12</em>
+<a class="jxr_linenumber" name="1" href="#1">1</a>   <em class="jxr_comment">// $ANTLR 3.4 com/facebook/swift/parser/antlr/DocumentGenerator.g 2013-01-10 18:11:55</em>
 <a class="jxr_linenumber" name="2" href="#2">2</a>   
 <a class="jxr_linenumber" name="3" href="#3">3</a>       <strong class="jxr_keyword">package</strong> com.facebook.swift.parser.antlr;
 <a class="jxr_linenumber" name="4" href="#4">4</a>   
@@ -387,7 +387,7 @@
 <a class="jxr_linenumber" name="377" href="#377">377</a>             	    adaptor.addChild(root_0, namespace6.getTree());
 <a class="jxr_linenumber" name="378" href="#378">378</a> 
 <a class="jxr_linenumber" name="379" href="#379">379</a> 
-<a class="jxr_linenumber" name="380" href="#380">380</a>             	     namespaces.put((namespace6!=<strong class="jxr_keyword">null</strong>?namespace6.type:<strong class="jxr_keyword">null</strong>), (namespace6!=<strong class="jxr_keyword">null</strong>?namespace6.value:<strong class="jxr_keyword">null</strong>)); 
+<a class="jxr_linenumber" name="380" href="#380">380</a>             	     namespaces.put((namespace6!=<strong class="jxr_keyword">null</strong>?namespace6.language:<strong class="jxr_keyword">null</strong>), (namespace6!=<strong class="jxr_keyword">null</strong>?namespace6.value:<strong class="jxr_keyword">null</strong>)); 
 <a class="jxr_linenumber" name="381" href="#381">381</a> 
 <a class="jxr_linenumber" name="382" href="#382">382</a>             	    }
 <a class="jxr_linenumber" name="383" href="#383">383</a>             	    <strong class="jxr_keyword">break</strong>;
@@ -516,7 +516,7 @@
 <a class="jxr_linenumber" name="506" href="#506">506</a> 
 <a class="jxr_linenumber" name="507" href="#507">507</a> 
 <a class="jxr_linenumber" name="508" href="#508">508</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">class</strong> namespace_<strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">extends</strong> TreeRuleReturnScope {
-<a class="jxr_linenumber" name="509" href="#509">509</a>         <strong class="jxr_keyword">public</strong> String type;
+<a class="jxr_linenumber" name="509" href="#509">509</a>         <strong class="jxr_keyword">public</strong> String language;
 <a class="jxr_linenumber" name="510" href="#510">510</a>         <strong class="jxr_keyword">public</strong> String value;
 <a class="jxr_linenumber" name="511" href="#511">511</a>         CommonTree tree;
 <a class="jxr_linenumber" name="512" href="#512">512</a>         <strong class="jxr_keyword">public</strong> Object getTree() { <strong class="jxr_keyword">return</strong> tree; }
@@ -524,7 +524,7 @@
 <a class="jxr_linenumber" name="514" href="#514">514</a> 
 <a class="jxr_linenumber" name="515" href="#515">515</a> 
 <a class="jxr_linenumber" name="516" href="#516">516</a>     <em class="jxr_comment">// $ANTLR start "namespace"</em>
-<a class="jxr_linenumber" name="517" href="#517">517</a>     <em class="jxr_comment">// com/facebook/swift/parser/antlr/DocumentGenerator.g:62:1: namespace returns [String type, String value] : ^( NAMESPACE k= IDENTIFIER (v= IDENTIFIER |v= LITERAL ) ) ;</em>
+<a class="jxr_linenumber" name="517" href="#517">517</a>     <em class="jxr_comment">// com/facebook/swift/parser/antlr/DocumentGenerator.g:62:1: namespace returns [String language, String value] : ^( NAMESPACE k= IDENTIFIER (v= IDENTIFIER |v= LITERAL ) ) ;</em>
 <a class="jxr_linenumber" name="518" href="#518">518</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">final</strong> DocumentGenerator.namespace_<strong class="jxr_keyword">return</strong> namespace() <strong class="jxr_keyword">throws</strong> RecognitionException {
 <a class="jxr_linenumber" name="519" href="#519">519</a>         DocumentGenerator.namespace_<strong class="jxr_keyword">return</strong> retval = <strong class="jxr_keyword">new</strong> DocumentGenerator.namespace_<strong class="jxr_keyword">return</strong>();
 <a class="jxr_linenumber" name="520" href="#520">520</a>         retval.start = input.LT(1);
@@ -630,7 +630,7 @@
 <a class="jxr_linenumber" name="620" href="#620">620</a>             }
 <a class="jxr_linenumber" name="621" href="#621">621</a> 
 <a class="jxr_linenumber" name="622" href="#622">622</a> 
-<a class="jxr_linenumber" name="623" href="#623">623</a>              retval.type = (k!=<strong class="jxr_keyword">null</strong>?k.getText():<strong class="jxr_keyword">null</strong>) ; retval.value = (v!=<strong class="jxr_keyword">null</strong>?v.getText():<strong class="jxr_keyword">null</strong>); 
+<a class="jxr_linenumber" name="623" href="#623">623</a>              retval.language = (k!=<strong class="jxr_keyword">null</strong>?k.getText():<strong class="jxr_keyword">null</strong>) ; retval.value = (v!=<strong class="jxr_keyword">null</strong>?v.getText():<strong class="jxr_keyword">null</strong>); 
 <a class="jxr_linenumber" name="624" href="#624">624</a> 
 <a class="jxr_linenumber" name="625" href="#625">625</a>             }
 <a class="jxr_linenumber" name="626" href="#626">626</a> 
