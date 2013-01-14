@@ -17,6 +17,7 @@ package com.facebook.swift.perf.loadgenerator;
 
 import static java.lang.Math.max;
 
+import com.facebook.nifty.client.NiftyClientConnector;
 import io.airlift.units.Duration;
 
 import java.io.Closeable;
@@ -47,7 +48,7 @@ public final class AsyncClientWorker extends AbstractClientWorker implements Fut
     private final long pendingOperationsHighWaterMark;
     private final Executor simpleExecutor;
     private NiftyClientChannel channel;
-    private NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory;
+    private NiftyClientConnector<? extends NiftyClientChannel> connector;
     private LoadTest client;
 
     @Override
@@ -70,11 +71,11 @@ public final class AsyncClientWorker extends AbstractClientWorker implements Fut
     public AsyncClientWorker(
             LoadGeneratorCommandLineConfig config,
             ThriftClientManager clientManager,
-            NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory)
+            NiftyClientConnector<? extends NiftyClientChannel> connector)
     {
         super(clientManager, config);
 
-        this.channelFactory = channelFactory;
+        this.connector = connector;
 
         // Keep the pipe full with between target and target * 2 operations
         pendingOperationsLowWaterMark = max(config.targetAsyncOperationsPending * 9 / 10, 1);
@@ -98,9 +99,8 @@ public final class AsyncClientWorker extends AbstractClientWorker implements Fut
         try {
             ListenableFuture<LoadTest> clientFuture;
 
-            clientFuture = clientManager.createClient(HostAndPort.fromParts(config.serverAddress, config.serverPort),
+            clientFuture = clientManager.createClient(connector,
                                                       LoadTest.class,
-                                                      channelFactory,
                                                       new Duration(config.connectTimeoutMilliseconds, TimeUnit.SECONDS),
                                                       new Duration(config.sendTimeoutMilliseconds, TimeUnit.MILLISECONDS),
                                                       new Duration(config.receiveTimeoutMilliseconds, TimeUnit.MILLISECONDS),

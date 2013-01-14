@@ -15,6 +15,8 @@
  */
 package com.facebook.swift.service.puma;
 
+import com.facebook.nifty.client.FramedClientChannel;
+import com.facebook.nifty.client.FramedClientConnector;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.ThriftServer;
@@ -26,6 +28,7 @@ import com.facebook.swift.service.puma.swift.ReadResultQueryInfoTimeString;
 import com.facebook.swift.service.puma.swift.ReadSemanticException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.net.HostAndPort;
 import org.apache.thrift.TProcessor;
 import org.testng.annotations.Test;
 
@@ -82,7 +85,9 @@ public class TestPuma
         try (
                 ThriftServer server = new ThriftServer(processor).start();
                 ThriftClientManager clientManager = new ThriftClientManager();
-                PumaReadService pumaClient = clientManager.createClient(fromParts("localhost", server.getPort()), PumaReadService.class).get()
+                PumaReadService pumaClient = clientManager.createClient(
+                        new FramedClientConnector(fromParts("localhost", server.getPort())),
+                        PumaReadService.class).get()
         ) {
             // invoke puma
             List<ReadResultQueryInfoTimeString> results = pumaClient.getResultTimeString(PUMA_REQUEST);
@@ -119,7 +124,9 @@ public class TestPuma
         try (
                 ThriftServer server = new ThriftServer(processor).start();
                 ThriftClientManager clientManager = new ThriftClientManager();
-                PumaReadService pumaClient = clientManager.createClient(fromParts("localhost", server.getPort()), PumaReadService.class).get()
+                PumaReadService pumaClient = clientManager.createClient(
+                        new FramedClientConnector(HostAndPort.fromParts("localhost", server.getPort())),
+                        PumaReadService.class).get()
         ) {
             pumaClient.getResultTimeString(PUMA_REQUEST);
             fail("Expected ReadSemanticException");

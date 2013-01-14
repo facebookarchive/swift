@@ -18,6 +18,7 @@ package com.facebook.swift.service;
 import com.facebook.nifty.client.FramedClientChannel;
 import com.facebook.nifty.client.NiftyClient;
 import com.facebook.nifty.client.NiftyClientChannel;
+import com.facebook.nifty.client.NiftyClientConnector;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.metadata.ThriftMethodMetadata;
 import com.facebook.swift.service.metadata.ThriftServiceMetadata;
@@ -96,20 +97,12 @@ public class ThriftClientManager implements Closeable
         niftyClient = new NiftyClient(maxFrameSize);
     }
 
-    public <T> ListenableFuture<T> createClient(HostAndPort address, Class<T> type)
-    {
-        FramedClientChannel.Factory channelFactory = new FramedClientChannel.Factory();
-        return createClient(address, type, channelFactory);
-    }
-
     public <T, C extends NiftyClientChannel> ListenableFuture<T> createClient(
-            HostAndPort address,
-            Class<T> type,
-            NiftyClientChannel.Factory<C> channelFactory)
+            NiftyClientConnector<C> connector,
+            Class<T> type)
     {
-        return createClient(address,
+        return createClient(connector,
                             type,
-                            channelFactory,
                             DEFAULT_CONNECT_TIMEOUT,
                             DEFAULT_READ_TIMEOUT,
                             DEFAULT_WRITE_TIMEOUT,
@@ -118,9 +111,8 @@ public class ThriftClientManager implements Closeable
     }
 
     public <T, C extends NiftyClientChannel> ListenableFuture<T> createClient(
-            final HostAndPort address,
+            final NiftyClientConnector<C> connector,
             final Class<T> type,
-            final NiftyClientChannel.Factory<C> channelFactory,
             final Duration connectTimeout,
             final Duration readTimeout,
             final Duration writeTimeout,
@@ -131,8 +123,7 @@ public class ThriftClientManager implements Closeable
         try {
             final SettableFuture<T> clientFuture = SettableFuture.create();
             ListenableFuture<C> connectFuture =
-                    niftyClient.connectAsync(channelFactory,
-                                             toInetSocketAddress(address),
+                    niftyClient.connectAsync(connector,
                                              connectTimeout,
                                              readTimeout,
                                              writeTimeout,
@@ -150,7 +141,7 @@ public class ThriftClientManager implements Closeable
                     if (writeTimeout.toMillis() > 0) {
                         channel.setSendTimeout(writeTimeout);
                     }
-                    clientFuture.set(createClient(channel, type, Strings.isNullOrEmpty(clientName) ? address.toString() : clientName));
+                    clientFuture.set(createClient(channel, type, Strings.isNullOrEmpty(clientName) ? connector.toString() : clientName));
                 }
 
                 @Override

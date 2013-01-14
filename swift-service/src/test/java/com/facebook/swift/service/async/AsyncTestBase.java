@@ -15,7 +15,10 @@
  */
 package com.facebook.swift.service.async;
 
+import com.facebook.nifty.client.FramedClientChannel;
+import com.facebook.nifty.client.FramedClientConnector;
 import com.facebook.nifty.client.HttpClientChannel;
+import com.facebook.nifty.client.HttpClientConnector;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.ThriftClient;
 import com.facebook.swift.service.ThriftClientConfig;
@@ -30,6 +33,7 @@ import io.airlift.units.Duration;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
+import java.net.URI;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -52,7 +56,8 @@ public class AsyncTestBase
         ThriftClientConfig config = new ThriftClientConfig().setConnectTimeout(new Duration(1, TimeUnit.SECONDS))
                                                             .setReadTimeout(new Duration(1, TimeUnit.SECONDS))
                                                             .setWriteTimeout(new Duration(1, TimeUnit.SECONDS));
-        return new ThriftClient<>(clientManager, clientClass, config, "asyncTestClient").open(address);
+        FramedClientConnector connector = new FramedClientConnector(address);
+        return new ThriftClient<>(clientManager, clientClass, config, "asyncTestClient").open(connector);
     }
 
     protected <T> ListenableFuture<T> createHttpClient(Class<T> clientClass, int serverPort)
@@ -62,9 +67,9 @@ public class AsyncTestBase
         ThriftClientConfig config = new ThriftClientConfig().setConnectTimeout(new Duration(1, TimeUnit.SECONDS))
                                                             .setReadTimeout(new Duration(1, TimeUnit.SECONDS))
                                                             .setWriteTimeout(new Duration(1, TimeUnit.SECONDS));
-        HttpClientChannel.Factory channelFactory =
-                new HttpClientChannel.Factory("localhost:4567", "/thrift/");
-        return new ThriftClient<>(clientManager, clientClass, config, "asyncTestClient", channelFactory).open(address);
+        HttpClientConnector connector =
+                new HttpClientConnector(URI.create("http://localhost:4567/thrift/"));
+        return new ThriftClient<>(clientManager, clientClass, config, "asyncTestClient").open(connector);
     }
 
     protected ThriftServer createAsyncServer()

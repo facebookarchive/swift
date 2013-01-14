@@ -16,6 +16,7 @@
 package com.facebook.swift.service.unframed;
 
 import com.facebook.nifty.client.UnframedClientChannel;
+import com.facebook.nifty.client.UnframedClientConnector;
 import com.facebook.swift.service.LogEntry;
 import com.facebook.swift.service.ResultCode;
 import com.facebook.swift.service.Scribe;
@@ -113,9 +114,9 @@ public class UnframedTestSuite
             int servicePort)
             throws Exception
     {
-        return clientManager.createClient(HostAndPort.fromParts("localhost", servicePort),
-                                          clientType,
-                                          new UnframedClientChannel.Factory());
+        return clientManager.createClient(
+                new UnframedClientConnector(HostAndPort.fromParts("localhost", servicePort)),
+                clientType);
     }
 
     public TestServerInfo startServer()

@@ -15,6 +15,7 @@
  */
 package com.facebook.swift.service;
 
+import com.facebook.nifty.client.NiftyClientChannel;
 import com.google.common.net.HostAndPort;
 import io.airlift.configuration.Config;
 import io.airlift.units.Duration;
