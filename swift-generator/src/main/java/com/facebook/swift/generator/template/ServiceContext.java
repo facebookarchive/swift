@@ -15,9 +15,10 @@
  */
 package com.facebook.swift.generator.template;
 
-import java.util.List;
-
 import com.google.common.collect.Lists;
+
+import java.util.List;
+import java.util.Set;
 
 
 public class ServiceContext implements JavaContext
@@ -25,16 +26,16 @@ public class ServiceContext implements JavaContext
     private final String name;
     private final String javaPackage;
     private final String javaName;
-    private final String javaParent;
+    private final Set<String> javaParents;
 
     private final List<MethodContext> methods = Lists.newArrayList();
 
-    ServiceContext(String name, String javaPackage, String javaName, String javaParent)
+    ServiceContext(String name, String javaPackage, String javaName, Set<String> javaParents)
     {
         this.name = name;
         this.javaPackage = javaPackage;
         this.javaName = javaName;
-        this.javaParent = javaParent;
+        this.javaParents = javaParents;
     }
 
     public void addMethod(final MethodContext method)
@@ -64,9 +65,9 @@ public class ServiceContext implements JavaContext
         return javaName;
     }
 
-    public String getJavaParent()
+    public Set<String> getJavaParents()
     {
-        return javaParent;
+        return javaParents;
     }
 
     @Override
@@ -76,7 +77,7 @@ public class ServiceContext implements JavaContext
         int result = 1;
         result = prime * result + ((javaName == null) ? 0 : javaName.hashCode());
         result = prime * result + ((javaPackage == null) ? 0 : javaPackage.hashCode());
-        result = prime * result + ((javaParent == null) ? 0 : javaParent.hashCode());
+        result = prime * result + ((javaParents == null) ? 0 : javaParents.hashCode());
         result = prime * result + ((methods == null) ? 0 : methods.hashCode());
         result = prime * result + ((name == null) ? 0 : name.hashCode());
         return result;
@@ -85,49 +86,62 @@ public class ServiceContext implements JavaContext
     @Override
     public boolean equals(Object obj)
     {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         ServiceContext other = (ServiceContext) obj;
         if (javaName == null) {
-            if (other.javaName != null)
+            if (other.javaName != null) {
                 return false;
+            }
         }
-        else if (!javaName.equals(other.javaName))
+        else if (!javaName.equals(other.javaName)) {
             return false;
+        }
         if (javaPackage == null) {
-            if (other.javaPackage != null)
+            if (other.javaPackage != null) {
                 return false;
+            }
         }
-        else if (!javaPackage.equals(other.javaPackage))
+        else if (!javaPackage.equals(other.javaPackage)) {
             return false;
-        if (javaParent == null) {
-            if (other.javaParent != null)
+        }
+        if (javaParents == null) {
+            if (other.javaParents != null) {
                 return false;
+            }
         }
-        else if (!javaParent.equals(other.javaParent))
+        else if (!javaParents.equals(other.javaParents)) {
             return false;
+        }
         if (methods == null) {
-            if (other.methods != null)
+            if (other.methods != null) {
                 return false;
+            }
         }
-        else if (!methods.equals(other.methods))
+        else if (!methods.equals(other.methods)) {
             return false;
+        }
         if (name == null) {
-            if (other.name != null)
+            if (other.name != null) {
                 return false;
+            }
         }
-        else if (!name.equals(other.name))
+        else if (!name.equals(other.name)) {
             return false;
+        }
         return true;
     }
 
     @Override
     public String toString()
     {
-        return "ServiceContext [name=" + name + ", javaPackage=" + javaPackage + ", javaName=" + javaName + ", javaParent=" + javaParent + ", methods=" + methods + "]";
+        return "ServiceContext [name=" + name + ", javaPackage=" + javaPackage + ", javaName=" + javaName + ", javaParents=" + javaParents + ", methods=" + methods + "]";
     }
 }

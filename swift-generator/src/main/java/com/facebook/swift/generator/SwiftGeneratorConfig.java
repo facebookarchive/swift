@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import java.io.File;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -30,7 +31,7 @@ public class SwiftGeneratorConfig
     private final File outputFolder;
     private final String overridePackage;
     private final String defaultPackage;
-    private final boolean addThriftExceptions;
+    private final Set<SwiftGeneratorTweak> generatorTweaks;
     private final boolean generateIncludedCode;
     private final String codeFlavor;
 
@@ -39,7 +40,7 @@ public class SwiftGeneratorConfig
                                  final File outputFolder,
                                  final String overridePackage,
                                  final String defaultPackage,
-                                 final boolean addThriftExceptions,
+                                 final Set<SwiftGeneratorTweak> generatorTweaks,
                                  final boolean generateIncludedCode,
                                  final String codeFlavor)
     {
@@ -48,7 +49,7 @@ public class SwiftGeneratorConfig
         this.outputFolder = outputFolder;
         this.overridePackage = overridePackage;
         this.defaultPackage = defaultPackage;
-        this.addThriftExceptions = addThriftExceptions;
+        this.generatorTweaks = generatorTweaks;
         this.generateIncludedCode = generateIncludedCode;
         this.codeFlavor = codeFlavor;
     }
@@ -99,12 +100,11 @@ public class SwiftGeneratorConfig
     }
 
     /**
-     * If true, adds {@link org.apache.thrift.TException} to the method signature
-     * of all generated service methods.
+     * Returns true if the tweak is set, false otherwise.
      */
-    public boolean isAddThriftExceptions()
+    public boolean containsTweak(final SwiftGeneratorTweak tweak)
     {
-        return addThriftExceptions;
+        return generatorTweaks.contains(tweak);
     }
 
     /**
@@ -131,7 +131,7 @@ public class SwiftGeneratorConfig
         private File outputFolder = null;
         private String overridePackage = null;
         private String defaultPackage = null;
-        private boolean addThriftExceptions = true;
+        private Set<SwiftGeneratorTweak> generatorTweaks = EnumSet.noneOf(SwiftGeneratorTweak.class);
         private boolean generateIncludedCode = false;
         private String codeFlavor = null;
 
@@ -153,7 +153,7 @@ public class SwiftGeneratorConfig
                 outputFolder,
                 overridePackage,
                 defaultPackage,
-                addThriftExceptions,
+                generatorTweaks,
                 generateIncludedCode,
                 codeFlavor);
         }
@@ -196,27 +196,15 @@ public class SwiftGeneratorConfig
             return this;
         }
 
-        public Builder clearAddThriftExceptions()
+        public Builder addTweak(final SwiftGeneratorTweak tweak)
         {
-            this.addThriftExceptions = false;
-            return this;
-        }
-
-        public Builder addThriftExceptions(final boolean addThriftExceptions)
-        {
-            this.addThriftExceptions = addThriftExceptions;
+            this.generatorTweaks.add(tweak);
             return this;
         }
 
         public Builder generateIncludedCode(final boolean generateIncludedCode)
         {
             this.generateIncludedCode = generateIncludedCode;
-            return this;
-        }
-
-        public Builder setGenerateIncludedCode()
-        {
-            this.generateIncludedCode = true;
             return this;
         }
 

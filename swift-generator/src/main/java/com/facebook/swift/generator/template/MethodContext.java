@@ -19,9 +19,16 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 
+import java.io.Closeable;
 import java.util.Collection;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
+/**
+ * Represents a method element of a service. If the name is null, this is a method that does nto represent
+ * a Thrift IDL method and has no annotations (e.g. the {@link Closeable#close()} method.
+ */
 public class MethodContext
 {
     private final String name;
@@ -32,7 +39,7 @@ public class MethodContext
     private final List<FieldContext> parameters = Lists.newArrayList();
     private final List<ExceptionContext> exceptions = Lists.newArrayList();
 
-    MethodContext(String name, boolean oneway, String javaName, String javaType)
+    MethodContext(@Nullable String name, boolean oneway, String javaName, String javaType)
     {
         this.name = name;
         this.oneway = oneway;

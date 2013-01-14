@@ -110,7 +110,7 @@ public class SwiftGenerator
         final String thriftNamespace = extractThriftNamespace(thriftUri);
 
         Preconditions.checkState(!isBlank(thriftNamespace), "Thrift URI %s can not be translated to a namespace", thriftUri);
-        final SwiftDocumentContext context = new SwiftDocumentContext(thriftUri, thriftNamespace, typeRegistry, typedefRegistry);
+        final SwiftDocumentContext context = new SwiftDocumentContext(thriftUri, thriftNamespace, swiftGeneratorConfig, typeRegistry, typedefRegistry);
 
         final Document document = context.getDocument();
         final Header header = document.getHeader();
