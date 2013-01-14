@@ -17,12 +17,16 @@ package com.facebook.swift.perf.loadgenerator;
 
 import com.beust.jcommander.JCommander;
 import com.facebook.nifty.client.FramedClientChannel;
+import com.facebook.nifty.client.FramedClientConnector;
 import com.facebook.nifty.client.NiftyClientChannel;
+import com.facebook.nifty.client.NiftyClientConnector;
 import com.facebook.nifty.client.UnframedClientChannel;
+import com.facebook.nifty.client.UnframedClientConnector;
 import com.facebook.swift.codec.guice.ThriftCodecModule;
 import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.guice.ThriftClientModule;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.net.HostAndPort;
 import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -41,6 +45,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 import static com.facebook.swift.service.guice.ThriftClientBinder.thriftClientBinder;
+import static com.google.inject.util.Providers.guicify;
 
 public class LoadGenerator
 {
@@ -83,20 +88,20 @@ public class LoadGenerator
                                 binder.bind(AbstractClientWorker.class).to(AsyncClientWorker.class);
                             }
 
-                            TypeLiteral<NiftyClientChannel.Factory<? extends NiftyClientChannel>> channelFactoryType =
-                                    new TypeLiteral<NiftyClientChannel.Factory<? extends NiftyClientChannel>>() {};
+                            TypeLiteral<NiftyClientConnector<? extends NiftyClientChannel>> channelConnectorType =
+                                    new TypeLiteral<NiftyClientConnector<? extends NiftyClientChannel>>() {};
+                            NiftyClientConnector<? extends NiftyClientChannel> connector;
                             switch (config.transport) {
                                 case FRAMED:
-                                    binder.bind(channelFactoryType)
-                                          .to(FramedClientChannel.Factory.class);
+                                    connector = new FramedClientConnector(HostAndPort.fromParts(config.serverAddress, config.serverPort));
                                     break;
                                 case UNFRAMED:
-                                    binder.bind(channelFactoryType)
-                                          .to(UnframedClientChannel.Factory.class);
+                                    connector = new UnframedClientConnector(HostAndPort.fromParts(config.serverAddress, config.serverPort));
                                     break;
                                 default:
                                     throw new IllegalStateException("Unknown transport");
                             }
+                            binder.bind(channelConnectorType).toInstance(connector);
                         }
                     }
             );

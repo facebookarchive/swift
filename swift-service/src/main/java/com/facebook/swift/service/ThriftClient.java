@@ -15,8 +15,8 @@
  */
 package com.facebook.swift.service;
 
-import com.facebook.nifty.client.FramedClientChannel;
 import com.facebook.nifty.client.NiftyClientChannel;
+import com.facebook.nifty.client.NiftyClientConnector;
 import com.google.common.base.Preconditions;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -34,8 +34,6 @@ public class ThriftClient<T>
     private final Duration writeTimeout;
 
     private final HostAndPort socksProxy;
-    private final NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory;
-    private static FramedClientChannel.Factory defaultChannelFactory = new FramedClientChannel.Factory();
 
     @Inject
     public ThriftClient(ThriftClientManager clientManager, Class<T> clientType)
@@ -49,16 +47,6 @@ public class ThriftClient<T>
             ThriftClientConfig clientConfig,
             String clientName)
     {
-        this(clientManager, clientType, clientConfig, clientName, defaultChannelFactory);
-    }
-
-    public ThriftClient(
-            ThriftClientManager clientManager,
-            Class<T> clientType,
-            ThriftClientConfig clientConfig,
-            String clientName,
-            NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory)
-    {
         Preconditions.checkNotNull(clientManager, "clientManager is null");
         Preconditions.checkNotNull(clientType, "clientInterface is null");
         Preconditions.checkNotNull(clientName, "clientName is null");
@@ -66,7 +54,6 @@ public class ThriftClient<T>
         this.clientManager = clientManager;
         this.clientType = clientType;
         this.clientName = clientName;
-        this.channelFactory = channelFactory;
         connectTimeout = clientConfig.getConnectTimeout();
         readTimeout = clientConfig.getReadTimeout();
         writeTimeout = clientConfig.getWriteTimeout();
@@ -112,18 +99,28 @@ public class ThriftClient<T>
         return socksProxy.toString();
     }
 
-    public ListenableFuture<T> open(HostAndPort address)
+    /***
+     * Asynchronously connect to a service to create a new client
+     * @param connector Connector used to establish the new connection
+     * @return Future that will be set to the client once the connection is established
+     */
+    public ListenableFuture<T> open(NiftyClientConnector<? extends NiftyClientChannel> connector)
     {
-        return clientManager.createClient(address,
-                                          clientType,
-                                          channelFactory,
-                                          connectTimeout,
-                                          readTimeout,
-                                          writeTimeout,
-                                          clientName,
-                                          socksProxy);
+        return clientManager.createClient(
+                connector,
+                clientType,
+                connectTimeout,
+                readTimeout,
+                writeTimeout,
+                clientName,
+                socksProxy);
     }
 
+    /***
+     * Create a new client from an existing connection
+     * @param channel Established client connection
+     * @return The new client
+     */
     public T open(NiftyClientChannel channel)
     {
         return clientManager.createClient(channel, clientType, clientName);

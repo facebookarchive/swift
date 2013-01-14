@@ -15,12 +15,15 @@
  */
 package com.facebook.swift.service.guice;
 
+import com.facebook.nifty.client.FramedClientConnector;
+import com.facebook.nifty.client.NiftyClientConnector;
 import com.facebook.swift.codec.guice.ThriftCodecModule;
 import com.facebook.swift.service.LogEntry;
 import com.facebook.swift.service.ResultCode;
 import com.facebook.swift.service.Scribe;
 import com.facebook.swift.service.SwiftScribe;
 import com.facebook.swift.service.ThriftClient;
+import com.facebook.swift.service.ThriftClientConfig;
 import com.facebook.swift.service.ThriftServer;
 import com.facebook.swift.service.puma.TestPuma;
 import com.facebook.swift.service.puma.swift.PumaReadServer;
@@ -28,6 +31,7 @@ import com.facebook.swift.service.puma.swift.PumaReadService;
 import com.facebook.swift.service.puma.swift.ReadResultQueryInfoTimeString;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.net.HostAndPort;
 import com.google.inject.Binder;
 import com.google.inject.BindingAnnotation;
 import com.google.inject.Guice;
@@ -40,18 +44,19 @@ import com.google.inject.TypeLiteral;
 import io.airlift.configuration.ConfigurationFactory;
 import io.airlift.configuration.ConfigurationModule;
 import io.airlift.jmx.JmxModule;
+import io.airlift.units.Duration;
 import org.testng.annotations.Test;
 import org.weakref.jmx.guice.MBeanModule;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.facebook.swift.service.guice.ThriftClientBinder.thriftClientBinder;
 import static com.facebook.swift.service.guice.ThriftServiceExporter.thriftServerBinder;
 import static com.facebook.swift.service.puma.TestPuma.verifyPumaResults;
 import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.net.HostAndPort.fromParts;
 import static java.lang.annotation.ElementType.CONSTRUCTOR;
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
@@ -102,14 +107,14 @@ public class TestThriftClientAndServerModules
 
             // test scribe
             ThriftClient<Scribe> scribeClient = injector.getInstance(Key.get(new TypeLiteral<ThriftClient<Scribe>>() {}));
-            try (Scribe scribe = scribeClient.open(fromParts("localhost", server.getPort())).get()) {
+            try (Scribe scribe = scribeClient.open(localFramedConnector(server.getPort())).get()) {
                 assertEquals(scribe.log(MESSAGES), ResultCode.OK);
                 assertEquals(injector.getInstance(SwiftScribe.class).getMessages(), newArrayList(MESSAGES));
             }
 
             // test puma
             ThriftClient<PumaReadService> pumaClient = injector.getInstance(Key.get(new TypeLiteral<ThriftClient<PumaReadService>>() {}));
-            try (PumaReadService puma = pumaClient.open(fromParts("localhost", server.getPort())).get()) {
+            try (PumaReadService puma = pumaClient.open(localFramedConnector(server.getPort())).get()) {
                 List<ReadResultQueryInfoTimeString> results = puma.getResultTimeString(TestPuma.PUMA_REQUEST);
                 verifyPumaResults(results);
             }
@@ -149,14 +154,14 @@ public class TestThriftClientAndServerModules
         try (ThriftServer server = injector.getInstance(ThriftServer.class).start()) {
             // test scribe
             ThriftClient<Scribe> scribeClient = injector.getInstance(Key.get(new TypeLiteral<ThriftClient<Scribe>>() {}, TestAnnotation.class));
-            try (Scribe scribe = scribeClient.open(fromParts("localhost", server.getPort())).get()) {
+            try (Scribe scribe = scribeClient.open(localFramedConnector(server.getPort())).get()) {
                 assertEquals(scribe.log(MESSAGES), ResultCode.OK);
                 assertEquals(injector.getInstance(Key.get(SwiftScribe.class, TestAnnotation.class)).getMessages(), newArrayList(MESSAGES));
             }
 
             // test puma
             ThriftClient<PumaReadService> pumaClient = injector.getInstance(Key.get(new TypeLiteral<ThriftClient<PumaReadService>>() {}, TestAnnotation.class));
-            try (PumaReadService puma = pumaClient.open(fromParts("localhost", server.getPort())).get()) {
+            try (PumaReadService puma = pumaClient.open(localFramedConnector(server.getPort())).get()) {
                 List<ReadResultQueryInfoTimeString> results = puma.getResultTimeString(TestPuma.PUMA_REQUEST);
                 verifyPumaResults(results);
             }
@@ -196,19 +201,58 @@ public class TestThriftClientAndServerModules
         try (ThriftServer server = injector.getInstance(ThriftServer.class).start()) {
             // test scribe
             ThriftClient<Scribe> scribeClient = injector.getInstance(Key.get(new TypeLiteral<ThriftClient<Scribe>>() {}));
-            try (Scribe scribe = scribeClient.open(fromParts("localhost", server.getPort())).get()) {
+            try (Scribe scribe = scribeClient.open(localFramedConnector(server.getPort())).get()) {
                 assertEquals(scribe.log(MESSAGES), ResultCode.OK);
                 assertEquals(injector.getInstance(Key.get(SwiftScribe.class, TestAnnotation.class)).getMessages(), newArrayList(MESSAGES));
             }
 
             // test puma
             ThriftClient<PumaReadService> pumaClient = injector.getInstance(Key.get(new TypeLiteral<ThriftClient<PumaReadService>>() {}));
-            try (PumaReadService puma = pumaClient.open(fromParts("localhost", server.getPort())).get()) {
+            try (PumaReadService puma = pumaClient.open(localFramedConnector(server.getPort())).get()) {
                 List<ReadResultQueryInfoTimeString> results = puma.getResultTimeString(TestPuma.PUMA_REQUEST);
                 verifyPumaResults(results);
             }
         }
 
+    }
+
+    @Test
+    public void testThriftClientWithConfiguration()
+            throws Exception
+    {
+        ImmutableMap<String, String> configMap = new ImmutableMap.Builder<String, String>()
+                .put("scribe.thrift.client.connect-timeout", "1s")
+                .put("scribe.thrift.client.read-timeout", "750ms")
+                .put("PumaReadService.thrift.client.write-timeout", "10s")
+                .build();
+
+        Injector injector = Guice.createInjector(
+                Stage.PRODUCTION,
+                new ConfigurationModule(new ConfigurationFactory(configMap)),
+                new ThriftCodecModule(),
+                new ThriftClientModule(),
+                new Module() {
+                    @Override
+                    public void configure(Binder binder)
+                    {
+                        thriftClientBinder(binder).bindThriftClient(Scribe.class);
+                        thriftClientBinder(binder).bindThriftClient(PumaReadService.class);
+                    }
+                });
+
+        ThriftClient<Scribe> scribeClient = injector.getInstance(Key.get(new TypeLiteral<ThriftClient<Scribe>>() {}));
+        assertEquals(Duration.valueOf(scribeClient.getConnectTimeout()), new Duration(1, TimeUnit.SECONDS));
+        assertEquals(Duration.valueOf(scribeClient.getReadTimeout()), new Duration(750, TimeUnit.MILLISECONDS));
+        assertEquals(Duration.valueOf(scribeClient.getWriteTimeout()), ThriftClientConfig.DEFAULT_WRITE_TIMEOUT);
+
+        ThriftClient<PumaReadService> pumaClient = injector.getInstance(Key.get(new TypeLiteral<ThriftClient<PumaReadService>>() {}));
+        assertEquals(Duration.valueOf(pumaClient.getConnectTimeout()), ThriftClientConfig.DEFAULT_CONNECT_TIMEOUT);
+        assertEquals(Duration.valueOf(pumaClient.getReadTimeout()), ThriftClientConfig.DEFAULT_READ_TIMEOUT);
+        assertEquals(Duration.valueOf(pumaClient.getWriteTimeout()), new Duration(10, TimeUnit.SECONDS));
+    }
+
+    private NiftyClientConnector localFramedConnector(int port) {
+        return new FramedClientConnector(HostAndPort.fromParts("localhost", port));
     }
 
     @Target({METHOD, CONSTRUCTOR, FIELD, PARAMETER})
