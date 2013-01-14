@@ -20,17 +20,10 @@ import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.ChannelPipelineFactory;
-import org.jboss.netty.channel.Channels;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
-import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
-import org.jboss.netty.handler.codec.http.HttpClientCodec;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpRequestEncoder;
 import org.jboss.netty.handler.codec.http.HttpResponse;
-import org.jboss.netty.handler.codec.http.HttpResponseDecoder;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.jboss.netty.util.Timer;
 
@@ -119,37 +112,4 @@ public class HttpClientChannel extends AbstractClientChannel {
         this.headerDictionary = headers;
     }
 
-    public static class Factory implements NiftyClientChannel.Factory<HttpClientChannel> {
-        private final String hostName;
-        private final String endpointUri;
-
-        public Factory(String hostName, String endpointUri)
-        {
-            this.hostName = hostName;
-            this.endpointUri = endpointUri;
-        }
-
-        @Override
-        public HttpClientChannel newThriftClientChannel(Channel nettyChannel, Timer timer) {
-            HttpClientChannel channel =
-                    new HttpClientChannel(nettyChannel, timer, hostName, endpointUri);
-            channel.getNettyChannel().getPipeline().addLast("thriftHandler", channel);
-            return channel;
-        }
-
-        @Override
-        public ChannelPipelineFactory newChannelPipelineFactory(final int maxFrameSize) {
-            return new ChannelPipelineFactory()
-            {
-                @Override
-                public ChannelPipeline getPipeline()
-                        throws Exception {
-                ChannelPipeline cp = Channels.pipeline();
-                cp.addLast("httpClientCodec", new HttpClientCodec());
-                cp.addLast("chunkAggregator", new HttpChunkAggregator(maxFrameSize));
-                return cp;
-                }
-            };
-        }
-    }
 }

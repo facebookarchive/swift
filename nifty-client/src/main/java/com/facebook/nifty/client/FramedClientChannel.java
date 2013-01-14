@@ -66,27 +66,4 @@ public class FramedClientChannel extends AbstractClientChannel {
         return getNettyChannel().write(request);
     }
 
-    public static class Factory implements NiftyClientChannel.Factory<FramedClientChannel> {
-        @Override
-        public FramedClientChannel newThriftClientChannel(Channel nettyChannel, Timer timer) {
-            FramedClientChannel channel = new FramedClientChannel(nettyChannel, timer);
-            channel.getNettyChannel().getPipeline().addLast("thriftHandler", channel);
-            return channel;
-        }
-
-        @Override
-        public ChannelPipelineFactory newChannelPipelineFactory(final int maxFrameSize) {
-            return new ChannelPipelineFactory() {
-                @Override
-                public ChannelPipeline getPipeline()
-                        throws Exception {
-                    ChannelPipeline cp = Channels.pipeline();
-                    cp.addLast("frameEncoder", new LengthFieldPrepender(4));
-                    cp.addLast("frameDecoder", new LengthFieldBasedFrameDecoder(maxFrameSize,
-                                                                                0, 4, 0, 4));
-                    return cp;
-                }
-            };
-        }
-    }
 }

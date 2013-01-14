@@ -16,6 +16,7 @@
 package com.facebook.nifty.client;
 
 import com.facebook.nifty.core.ThriftUnframedDecoder;
+
 import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
@@ -23,8 +24,6 @@ import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
-import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
-import org.jboss.netty.handler.codec.frame.LengthFieldPrepender;
 import org.jboss.netty.util.Timer;
 
 import javax.annotation.concurrent.NotThreadSafe;
@@ -67,25 +66,4 @@ public class UnframedClientChannel extends AbstractClientChannel {
         return getNettyChannel().write(request);
     }
 
-    public static class Factory implements NiftyClientChannel.Factory<UnframedClientChannel> {
-        @Override
-        public UnframedClientChannel newThriftClientChannel(Channel nettyChannel, Timer timer) {
-            UnframedClientChannel channel = new UnframedClientChannel(nettyChannel, timer);
-            channel.getNettyChannel().getPipeline().addLast("thriftHandler", channel);
-            return channel;
-        }
-
-        @Override
-        public ChannelPipelineFactory newChannelPipelineFactory(final int maxFrameSize) {
-            return new ChannelPipelineFactory() {
-                @Override
-                public ChannelPipeline getPipeline()
-                        throws Exception {
-                    ChannelPipeline cp = Channels.pipeline();
-                    cp.addLast("thriftUnframedDecoder", new ThriftUnframedDecoder());
-                    return cp;
-                }
-            };
-        }
-    }
 }

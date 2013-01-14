@@ -17,8 +17,10 @@ package com.facebook.nifty.client;
 
 import io.airlift.units.Duration;
 import org.apache.thrift.TException;
+import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.util.Timer;
 
@@ -99,12 +101,6 @@ public interface NiftyClientChannel {
     void executeInIoThread(Runnable runnable);
 
     Channel getNettyChannel();
-
-    public static interface Factory<T> {
-        public T newThriftClientChannel(Channel channel, Timer timer);
-
-        public ChannelPipelineFactory newChannelPipelineFactory(int maxFrameSize);
-    }
 
     public interface Listener {
         public abstract void onRequestSent();

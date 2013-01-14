@@ -98,11 +98,9 @@ public class NiftyClient implements Closeable
     }
 
     public <T extends NiftyClientChannel> ListenableFuture<T> connectAsync(
-            NiftyClientChannel.Factory<T> clientChannelFactory,
-            InetSocketAddress addr)
+            NiftyClientConnector<T> clientChannelConnector)
     {
-        return connectAsync(clientChannelFactory,
-                            addr,
+        return connectAsync(clientChannelConnector,
                             DEFAULT_CONNECT_TIMEOUT,
                             DEFAULT_READ_TIMEOUT,
                             DEFAULT_WRITE_TIMEOUT,
@@ -110,14 +108,12 @@ public class NiftyClient implements Closeable
     }
 
     public <T extends NiftyClientChannel> ListenableFuture<T> connectAsync(
-            NiftyClientChannel.Factory<T> clientChannelFactory,
-            InetSocketAddress addr,
+            NiftyClientConnector<T> clientChannelConnector,
             Duration connectTimeout,
             Duration receiveTimeout,
             Duration sendTimeout)
     {
-        return connectAsync(clientChannelFactory,
-                            addr,
+        return connectAsync(clientChannelConnector,
                             connectTimeout,
                             receiveTimeout,
                             sendTimeout,
@@ -125,8 +121,7 @@ public class NiftyClient implements Closeable
     }
 
     public <T extends NiftyClientChannel> ListenableFuture<T> connectAsync(
-            NiftyClientChannel.Factory<T> clientChannelFactory,
-            InetSocketAddress addr,
+            NiftyClientConnector<T> clientChannelConnector,
             Duration connectTimeout,
             Duration receiveTimeout,
             Duration sendTimeout,
@@ -135,8 +130,8 @@ public class NiftyClient implements Closeable
         ClientBootstrap bootstrap = createClientBootstrap(socksProxyAddress);
         bootstrap.setOptions(configBuilder.getOptions());
         bootstrap.setOption("connectTimeoutMillis", (long)connectTimeout.toMillis());
-        bootstrap.setPipelineFactory(clientChannelFactory.newChannelPipelineFactory(maxFrameSize));
-        ChannelFuture nettyChannelFuture = bootstrap.connect(addr);
+        bootstrap.setPipelineFactory(clientChannelConnector.newChannelPipelineFactory(maxFrameSize));
+        ChannelFuture nettyChannelFuture = clientChannelConnector.connect(bootstrap);
         nettyChannelFuture.addListener(new ChannelFutureListener() {
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {
@@ -154,10 +149,10 @@ public class NiftyClient implements Closeable
                 }
             }
         });
-        return new TNiftyFuture<T>(clientChannelFactory,
-                                   receiveTimeout,
-                                   sendTimeout,
-                                   nettyChannelFuture);
+        return new TNiftyFuture(clientChannelConnector,
+                                receiveTimeout,
+                                sendTimeout,
+                                nettyChannelFuture);
     }
 
     // trying to mirror the synchronous nature of TSocket as much as possible here.
@@ -254,7 +249,7 @@ public class NiftyClient implements Closeable
 
     private class TNiftyFuture<T extends NiftyClientChannel> extends AbstractFuture<T>
     {
-        private TNiftyFuture(final NiftyClientChannel.Factory<T> clientChannelFactory,
+        private TNiftyFuture(final NiftyClientConnector<T> clientChannelConnector,
                              final Duration receiveTimeout,
                              final Duration sendTimeout,
                              final ChannelFuture channelFuture)
@@ -267,8 +262,8 @@ public class NiftyClient implements Closeable
                 {
                     if (future.isSuccess()) {
                         Channel nettyChannel = future.getChannel();
-                        T channel = clientChannelFactory.newThriftClientChannel(nettyChannel,
-                                                                                hashedWheelTimer);
+                        T channel = clientChannelConnector.newThriftClientChannel(nettyChannel,
+                                                                                  hashedWheelTimer);
                         channel.setReceiveTimeout(receiveTimeout);
                         channel.setSendTimeout(sendTimeout);
                         set(channel);

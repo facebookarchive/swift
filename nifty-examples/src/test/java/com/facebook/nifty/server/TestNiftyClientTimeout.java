@@ -16,13 +16,12 @@
 package com.facebook.nifty.server;
 
 import com.facebook.nifty.client.FramedClientChannel;
+import com.facebook.nifty.client.FramedClientConnector;
 import com.facebook.nifty.client.NiftyClient;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.airlift.units.Duration;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -94,8 +93,7 @@ public class TestNiftyClientTimeout
         final NiftyClient client = new NiftyClient();
         try {
             ListenableFuture<FramedClientChannel> future =
-                            client.connectAsync(new FramedClientChannel.Factory(),
-                                                new InetSocketAddress(port),
+                            client.connectAsync(new FramedClientConnector(new InetSocketAddress(port)),
                                                 TEST_CONNECT_TIMEOUT,
                                                 TEST_READ_TIMEOUT,
                                                 TEST_WRITE_TIMEOUT);
