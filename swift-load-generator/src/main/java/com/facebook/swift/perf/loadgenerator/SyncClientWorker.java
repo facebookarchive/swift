@@ -16,6 +16,7 @@
 package com.facebook.swift.perf.loadgenerator;
 
 import com.facebook.nifty.client.NiftyClientChannel;
+import com.facebook.nifty.client.NiftyClientConnector;
 import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.ThriftMethod;
 import com.facebook.swift.service.ThriftService;
@@ -31,7 +32,7 @@ public class SyncClientWorker extends AbstractClientWorker
 {
     private static final Logger logger = LoggerFactory.getLogger(SyncClientWorker.class);
     private volatile boolean shutdownRequested = false;
-    private NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory;
+    private NiftyClientConnector<? extends NiftyClientChannel> connector;
 
     @Override
     public void shutdown()
@@ -53,10 +54,10 @@ public class SyncClientWorker extends AbstractClientWorker
     public SyncClientWorker(
             LoadGeneratorCommandLineConfig config,
             ThriftClientManager clientManager,
-            NiftyClientChannel.Factory<? extends NiftyClientChannel> channelFactory)
+            NiftyClientConnector<? extends NiftyClientChannel> connector)
     {
         super(clientManager, config);
-        this.channelFactory = channelFactory;
+        this.connector = connector;
     }
 
     @Override
@@ -70,7 +71,7 @@ public class SyncClientWorker extends AbstractClientWorker
             {
                 while (!shutdownRequested) {
                     try {
-                        try (LoadTest client = clientManager.createClient(serverHostAndPort, LoadTest.class, channelFactory).get()) {
+                        try (LoadTest client = clientManager.createClient(connector, LoadTest.class).get()) {
                             logger.info("Worker connected");
                             for (int i = 0; i < getOperationsPerConnection(); i++) {
                                 sendRequest(client);

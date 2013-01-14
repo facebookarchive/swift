@@ -15,6 +15,8 @@
  */
 package com.facebook.swift.service.base;
 
+import com.facebook.nifty.client.FramedClientChannel;
+import com.facebook.nifty.client.FramedClientConnector;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.ThriftServer;
@@ -84,7 +86,7 @@ public class TestSuiteBase<ServiceInterface, ClientInterface> {
             throws TTransportException, InterruptedException, ExecutionException
     {
         HostAndPort address = HostAndPort.fromParts("localhost", server.getPort());
-        return clientManager.createClient(address, clientClass);
+        return clientManager.createClient(new FramedClientConnector(address), clientClass);
     }
 
     protected ClientInterface getClient() {

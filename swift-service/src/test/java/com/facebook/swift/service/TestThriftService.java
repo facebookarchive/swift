@@ -15,6 +15,8 @@
  */
 package com.facebook.swift.service;
 
+import com.facebook.nifty.client.FramedClientChannel;
+import com.facebook.nifty.client.FramedClientConnector;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.scribe.LogEntry;
 import com.facebook.swift.service.scribe.ResultCode;
@@ -106,7 +108,9 @@ public class TestThriftService
     {
         try (
                 ThriftClientManager clientManager = new ThriftClientManager();
-                Scribe scribe = clientManager.createClient(fromParts("localhost", port), Scribe.class).get()
+                Scribe scribe = clientManager.createClient(
+                        new FramedClientConnector(fromParts("localhost", port)),
+                        Scribe.class).get()
         ) {
             return scribe.log(entries);
         }
