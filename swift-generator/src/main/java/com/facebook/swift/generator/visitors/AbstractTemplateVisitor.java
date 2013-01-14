@@ -17,6 +17,7 @@ package com.facebook.swift.generator.visitors;
 
 import com.facebook.swift.generator.SwiftDocumentContext;
 import com.facebook.swift.generator.SwiftGeneratorConfig;
+import com.facebook.swift.generator.SwiftGeneratorTweak;
 import com.facebook.swift.generator.template.JavaContext;
 import com.facebook.swift.generator.template.TemplateContextGenerator;
 import com.facebook.swift.generator.util.TemplateLoader;
@@ -30,6 +31,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.HashMap;
+import java.util.Map;
 
 public abstract class AbstractTemplateVisitor implements DocumentVisitor
 {
@@ -54,6 +57,13 @@ public abstract class AbstractTemplateVisitor implements DocumentVisitor
     {
         final StringTemplate template = templateLoader.load(templateName);
         template.setAttribute("context", context);
+
+        final Map<String, Boolean> tweakMap = new HashMap<>();
+        for (SwiftGeneratorTweak tweak: SwiftGeneratorTweak.values()) {
+            tweakMap.put(tweak.name(), config.containsTweak(tweak));
+        }
+        template.setAttribute("tweaks", tweakMap);
+
 
         final Iterable<String> packages = Splitter.on('.').split(context.getJavaPackage());
         File folder = outputFolder;

@@ -1,6 +1,6 @@
 group java;
 
-service(context) ::= <<
+service(context, tweaks) ::= <<
 <! ================================================================================== !>
 <! =                                                                                = !>
 <! = service definition                                                             = !>
@@ -16,16 +16,13 @@ import java.io.*;
 import java.util.*;
 
 @ThriftService("<context.name>")
-public interface <context.javaName> extends <if(context.javaParent)><context.javaParent>, <endif>Closeable
+public interface <context.javaName><if(context.javaParents)> extends <context.javaParents; separator=", "><endif>
 {
-    // Swift clients do not throw any exceptions during close.
-    void close();
-
     <context.methods : { method |<_method(method)>}; separator="\n\n">
 }
 >>
 
-struct(context) ::= <<
+struct(context, tweaks) ::= <<
 <! ================================================================================== !>
 <! =                                                                                = !>
 <! = struct definition                                                              = !>
@@ -47,7 +44,7 @@ public class <context.javaName>
 }
 >>
 
-exception(context) ::= <<
+exception(context, tweaks) ::= <<
 <! ================================================================================== !>
 <! =                                                                                = !>
 <! = exception definition                                                           = !>
@@ -60,7 +57,7 @@ package <context.javaPackage>;
 import com.facebook.swift.codec.*;
 import java.util.*;
 
-public class <context.javaName> extends Exception
+public class <context.javaName> extends <if(tweaks.EXTEND_RUNTIME_EXCEPTION)>RuntimeException<else>Exception<endif>
 {
     private static final long serialVersionUID = 1L;
 
@@ -70,7 +67,7 @@ public class <context.javaName> extends Exception
 }
 >>
 
-stringEnum(context) ::= <<
+stringEnum(context, tweaks) ::= <<
 <! ================================================================================== !>
 <! =                                                                                = !>
 <! = string based enum definition                                                   = !>
@@ -88,7 +85,7 @@ public enum <context.javaName>
 }
 >>
 
-intEnum(context) ::= <<
+intEnum(context, tweaks) ::= <<
 <! ================================================================================== !>
 <! =                                                                                = !>
 <! = int based enum definition                                                      = !>
@@ -124,9 +121,11 @@ _enumElement(field) ::= <<
 >>
 
 _method(method) ::= <<
+<if(method.name)>
 @ThriftMethod(value="<method.name>"<if(method.oneway)>,
               oneway=true<endif><if(method.annotatedExceptions)>,
               exception={<method.annotatedExceptions: {exception |<_exceptionElement(exception)>}; separator=", ">}<endif>)
+<endif>
 <method.javaType> <method.javaName>(<method.parameters: {param |<_param(param)>}; separator=",\n">)<if(!method.exceptions)>;
 <else><\n>    throws <method.exceptions: {exception |<exception.type>}; separator=", ">;<endif>
 >>
@@ -150,10 +149,10 @@ private final <field.javaType> <field.javaName>;
 public <field.javaType> <field.javaGetterName>() { return <field.javaName>; }
 >>
 
-_constructor(context) ::= <<
+_constructor(element) ::= <<
 @ThriftConstructor
-public <context.javaName>(<context.fields: {field|<_param(field)>}; separator=",\n">) {
-  <context.fields: {field|<_ctorAssignment(field)>}; separator="\n">
+public <element.javaName>(<element.fields: {field|<_param(field)>}; separator=",\n">) {
+  <element.fields: {field|<_ctorAssignment(field)>}; separator="\n">
 }
 >>
 
