@@ -55,7 +55,7 @@
     <!-- This actually wants to be fixed -->
     <fb.check.fail-findbugs>false</fb.check.fail-findbugs>
 
-    <dep.airlift.version>0.66</dep.airlift.version>
+    <dep.airlift.version>0.68</dep.airlift.version>
     <dep.maven-api.version>2.2.1</dep.maven-api.version>
     <dep.fb.nifty.version>0.0.3-SNAPSHOT</dep.fb.nifty.version>
   </properties>
@@ -369,6 +369,28 @@
           <artifactId>maven-shade-plugin</artifactId>
 	  <version>2.0</version>
 	</plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <configuration>
+            <rules>
+              <bannedDependencies>
+                <!--
+                    Ban io.airlift:log except in tests, since it bridges from
+                    jul and log4j back to slf4j, which would prevent consumers
+                    of swift from choosing those logging implementations
+                -->
+                <excludes combine.children="append">
+                  <exclude>io.airlift:log:*:*:*</exclude>
+                </excludes>
+                <includes combine.children="append">
+                  <exclude>io.airlift:log:*:*:test</exclude>
+                </includes>
+              </bannedDependencies>
+            </rules>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
   </build>

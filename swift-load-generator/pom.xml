@@ -96,6 +96,25 @@
           </transformers>
         </configuration>
       </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <configuration>
+          <rules>
+            <bannedDependencies>
+              <!--
+                  This module uses io.airlift:bootstrap, which does depends on io.airlift:log,
+                  and it's fine to include io.airlift:log here because this is a standalone app,
+                  not a library, and it doesn't use log4j as its logger.
+              -->
+              <includes combine.children="append">
+                <exclude>io.airlift:log:*:*:compile</exclude>
+              </includes>
+            </bannedDependencies>
+          </rules>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 </project>
