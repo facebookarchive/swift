@@ -16,6 +16,7 @@
 package com.facebook.swift.service.guice;
 
 import com.facebook.nifty.client.FramedClientConnector;
+import com.facebook.nifty.client.NiftyClientChannel;
 import com.facebook.nifty.client.NiftyClientConnector;
 import com.facebook.swift.codec.guice.ThriftCodecModule;
 import com.facebook.swift.service.LogEntry;
@@ -251,7 +252,7 @@ public class TestThriftClientAndServerModules
         assertEquals(Duration.valueOf(pumaClient.getWriteTimeout()), new Duration(10, TimeUnit.SECONDS));
     }
 
-    private NiftyClientConnector localFramedConnector(int port) {
+    private NiftyClientConnector<? extends NiftyClientChannel> localFramedConnector(int port) {
         return new FramedClientConnector(HostAndPort.fromParts("localhost", port));
     }
 
