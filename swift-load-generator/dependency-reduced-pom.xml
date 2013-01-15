@@ -13,19 +13,30 @@
     <plugins>
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
-        <executions>
-          <execution>
-            <configuration>
-              <transformers>
-                <transformer>
-                  <mainClass>com.facebook.swift.perf.loadgenerator.LoadGenerator</mainClass>
-                </transformer>
-              </transformers>
-            </configuration>
-          </execution>
-        </executions>
+        <configuration>
+          <transformers>
+            <transformer>
+              <mainClass>com.facebook.swift.perf.loadgenerator.LoadGenerator</mainClass>
+            </transformer>
+          </transformers>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <configuration>
+          <rules>
+            <bannedDependencies>
+              <includes>
+                <exclude>io.airlift:log:*:*:compile</exclude>
+              </includes>
+            </bannedDependencies>
+          </rules>
+        </configuration>
       </plugin>
     </plugins>
   </build>
+  <properties>
+    <fb.main.basedir>${project.parent.basedir}</fb.main.basedir>
+  </properties>
 </project>
 
