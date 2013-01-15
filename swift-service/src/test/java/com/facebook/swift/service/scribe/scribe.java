@@ -265,12 +265,18 @@ public class scribe
                 super("Log");
             }
 
-            protected Log_args getEmptyArgsInstance()
+            protected boolean isOneway()
+            {
+                return false;
+            }
+
+
+            public Log_args getEmptyArgsInstance()
             {
                 return new Log_args();
             }
 
-            protected Log_result getResult(I iface, Log_args args)
+            public Log_result getResult(I iface, Log_args args)
                     throws TException
             {
                 Log_result result = new Log_result();
