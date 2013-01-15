@@ -1,5 +1,6 @@
 target/
 pom.xml.versionsBackup
+dependency-reduced-pom.xml
 test-output/
 /atlassian-ide-plugin.x
 .idea/
