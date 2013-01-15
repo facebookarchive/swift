@@ -69,7 +69,7 @@ public abstract class NiftyModule extends AbstractModule
     {
         if (!configBound) {
             // workaround for guice issue # 487
-            com.google.inject.Provider guiceProvider = Providers.guicify(provider);
+            com.google.inject.Provider<NettyConfigBuilder> guiceProvider = Providers.guicify(provider);
             binder().bind(NettyConfigBuilder.class).toProvider(guiceProvider);
             configBound = true;
             return this;
@@ -108,7 +108,7 @@ public abstract class NiftyModule extends AbstractModule
         public void toProvider(Provider<? extends ThriftServerDef> provider)
         {
             // workaround for guice issue # 487
-            com.google.inject.Provider guiceProvider = Providers.guicify(provider);
+            com.google.inject.Provider<? extends ThriftServerDef> guiceProvider = Providers.guicify(provider);
             Multibinder.newSetBinder(binder(), ThriftServerDef.class)
                     .addBinding().toProvider(guiceProvider).asEagerSingleton();
         }

@@ -114,7 +114,7 @@ public class TestNiftyClient
                     {
                         bind().toInstance(new ThriftServerDefBuilder()
                                 .listen(port)
-                                .withProcessor(new scribe.Processor(new scribe.Iface()
+                                .withProcessor(new scribe.Processor<>(new scribe.Iface()
                                 {
                                     @Override
                                     public ResultCode Log(List<LogEntry> messages)

@@ -89,7 +89,7 @@ public class TestPlainClient {
 
                 serverDefBuilder = new ThriftServerDefBuilder()
                         .listen(port)
-                        .withProcessor(new scribe.Processor(new scribe.Iface() {
+                        .withProcessor(new scribe.Processor<>(new scribe.Iface() {
                             @Override
                             public ResultCode Log(List<LogEntry> messages)
                                     throws TException {

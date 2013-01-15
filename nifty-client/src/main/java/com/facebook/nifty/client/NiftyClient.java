@@ -149,10 +149,10 @@ public class NiftyClient implements Closeable
                 }
             }
         });
-        return new TNiftyFuture(clientChannelConnector,
-                                receiveTimeout,
-                                sendTimeout,
-                                nettyChannelFuture);
+        return new TNiftyFuture<>(clientChannelConnector,
+                                  receiveTimeout,
+                                  sendTimeout,
+                                  nettyChannelFuture);
     }
 
     // trying to mirror the synchronous nature of TSocket as much as possible here.
