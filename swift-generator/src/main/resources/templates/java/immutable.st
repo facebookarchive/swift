@@ -1,9 +1,9 @@
 group java;
 
 _structbody(context) ::= <<
-    <_constructor(context)>
+<_constructor(context)>
 
-    <context.fields : { field |<_field(field)>}; separator="\n\n">
+<context.fields : { field |<_field(field)>}; separator="\n\n">
 >>
 
 _field(field) ::= <<
@@ -15,8 +15,8 @@ public <field.javaType> <field.javaGetterName>() { return <field.javaName>; }
 
 _constructor(element) ::= <<
 @ThriftConstructor
-public <element.javaName>(<element.fields: {field|<_param(field)>}; separator=",\n">) {
-  <element.fields: {field|<_ctorAssignment(field)>}; separator="\n">
+public <element.javaName><_params(element.fields)> {
+    <element.fields: {field|<_ctorAssignment(field)>}; separator="\n">
 }
 >>
 

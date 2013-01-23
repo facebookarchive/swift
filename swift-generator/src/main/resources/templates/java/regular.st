@@ -1,7 +1,7 @@
 group java;
 
 _structbody(context) ::= <<
-    <context.fields : { field |<_field(field)>}; separator="\n\n">
+<context.fields : { field |<_field(field)>}; separator="\n\n">
 >>
 
 _field(field) ::= <<
