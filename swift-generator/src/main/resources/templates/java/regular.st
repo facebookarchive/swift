@@ -38,7 +38,7 @@ import java.util.*;
 @ThriftStruct("<context.name>")
 public class <context.javaName>
 {
-    <context.fields : { field |<_field(field)>}; separator="\n\n">
+    <_structbody(context)>
 }
 >>
 
@@ -59,7 +59,7 @@ public class <context.javaName> extends <if(tweaks.EXTEND_RUNTIME_EXCEPTION)>Run
 {
     private static final long serialVersionUID = 1L;
 
-    <context.fields : { field |<_field(field)>}; separator="\n\n">
+    <_structbody(context)>
 }
 >>
 
@@ -138,6 +138,10 @@ _exceptionElement(exception) ::= <<
 @ThriftException(type=<exception.type>.class, id=<exception.id>)
 >>
 
+_structbody(context) ::= <<
+    <context.fields : { field |<_field(field)>}; separator="\n\n">
+>>
+
 _field(field) ::= <<
 private <field.javaType> <field.javaName>;
 
@@ -147,4 +151,3 @@ public <field.javaType> <field.javaGetterName>() { return <field.javaName>; }
 @ThriftField
 public void <field.javaSetterName>(final <field.javaType> <field.javaName>) { this.<field.javaName> = <field.javaName>; }
 >>
-
