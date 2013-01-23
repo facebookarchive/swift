@@ -24,7 +24,7 @@ import com.facebook.swift.generator.util.TemplateLoader;
 import com.facebook.swift.parser.visitor.DocumentVisitor;
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
-import org.stringtemplate.v4.NoIndentWriter;
+import org.stringtemplate.v4.AutoIndentWriter;
 import org.stringtemplate.v4.ST;
 
 import java.io.File;
@@ -76,7 +76,7 @@ public abstract class AbstractTemplateVisitor implements DocumentVisitor
         final File file = new File(folder, context.getJavaName() + ".java");
 
         try (OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(file), Charsets.UTF_8)) {
-            template.write(new NoIndentWriter(osw));
+            template.write(new AutoIndentWriter(osw));
             osw.flush();
         }
     }
