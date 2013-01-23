@@ -31,7 +31,7 @@ public class TemplateLoader
 {
     private static final Logger LOG = LoggerFactory.getLogger(TemplateLoader.class);
 
-    private static final String COMMON_TEMPLATES = "common.st";
+    private static final String COMMON_TEMPLATES = "java/common.st";
 
     private final STErrorListener ERROR_LISTENER = new LoaderErrorListener();
 

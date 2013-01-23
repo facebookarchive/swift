@@ -15,8 +15,6 @@
  */
 package com.facebook.swift.generator;
 
-import com.beust.jcommander.JCommander;
-
 import com.facebook.swift.generator.util.TemplateLoader;
 import com.facebook.swift.generator.visitors.ExceptionVisitor;
 import com.facebook.swift.generator.visitors.IntegerEnumVisitor;
@@ -27,7 +25,6 @@ import com.facebook.swift.generator.visitors.TypeVisitor;
 import com.facebook.swift.parser.model.Document;
 import com.facebook.swift.parser.model.Header;
 import com.facebook.swift.parser.visitor.DocumentVisitor;
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -38,7 +35,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.impl.SimpleLogger;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,49 +58,6 @@ public class SwiftGenerator
 
     private static final Map<String, String> TEMPLATES = ImmutableMap.of("java-regular", "java/regular.st",
                                                                          "java-immutable", "java/immutable.st");
-    public static void main(final String ... args) throws Exception
-    {
-        Logger rootLogger = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
-        if (rootLogger instanceof SimpleLogger) {
-            SimpleLogger logbackLogger = (SimpleLogger) rootLogger;
-        }
-
-        System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "info");
-
-        URI workingDirectory = new File(System.getProperty("user.dir")).getCanonicalFile().toURI();
-
-        SwiftGeneratorCommandLineConfig cliConfig = new SwiftGeneratorCommandLineConfig();
-        JCommander jCommander = new JCommander(cliConfig, args);
-        jCommander.setProgramName(SwiftGenerator.class.getSimpleName());
-
-        if (cliConfig.inputFiles == null) {
-            jCommander.usage();
-            return;
-        }
-
-        SwiftGeneratorConfig.Builder configBuilder = SwiftGeneratorConfig.builder()
-                .inputBase(workingDirectory)
-                .addInputs(Lists.transform(cliConfig.inputFiles, new Function<File, URI>() {
-                    @Nullable
-                    @Override
-                    public URI apply(@Nullable File input)
-                    {
-                        return input.toURI();
-                    }
-                }))
-                .outputFolder(cliConfig.outputDirectory)
-                .overridePackage(cliConfig.overridePackage)
-                .defaultPackage(cliConfig.defaultPackage)
-                .addTweak(SwiftGeneratorTweak.ADD_CLOSEABLE_INTERFACE)
-                .generateIncludedCode(cliConfig.generateIncludedCode)
-                .codeFlavor(cliConfig.mutableTypes ? "java-regular" : "java-immutable");
-
-        if (cliConfig.addThriftExceptions) {
-            configBuilder.addTweak(SwiftGeneratorTweak.ADD_THRIFT_EXCEPTION);
-        }
-
-        new SwiftGenerator(configBuilder.build()).parse();
-    }
 
     private final File outputFolder;
     private final SwiftGeneratorConfig swiftGeneratorConfig;
