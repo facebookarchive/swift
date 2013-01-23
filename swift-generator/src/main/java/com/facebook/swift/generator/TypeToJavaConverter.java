@@ -152,7 +152,7 @@ public class TypeToJavaConverter
             return type.getClass() == IdentifierType.class;
         }
 
-        public String convert(final ThriftType type, final boolean ignored)
+        public String convert(final ThriftType type, final boolean primitive)
         {
             final String name = ((IdentifierType) type).getName();
             // the name is [<thrift-namespace>.]<thrift type>
@@ -174,7 +174,7 @@ public class TypeToJavaConverter
                 return (javaType == null) ? null : javaType.getSimpleName();
             }
             else {
-                return convertType(thriftType);
+                return TypeToJavaConverter.this.convert(thriftType, primitive);
             }
         }
     }
