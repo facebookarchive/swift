@@ -31,6 +31,8 @@ public class TemplateLoader
 {
     private static final Logger LOG = LoggerFactory.getLogger(TemplateLoader.class);
 
+    private static final String COMMON_TEMPLATES = "common.st";
+
     private final STErrorListener ERROR_LISTENER = new LoaderErrorListener();
 
     private final String templateFileName;
@@ -51,12 +53,20 @@ public class TemplateLoader
     protected STGroup getTemplateGroup() throws IOException
     {
         if (stg == null) {
-            final URL resourceUrl = Resources.getResource(this.getClass(), "/templates/" + templateFileName);
-            stg = new STGroup();
-            stg.errMgr = new ErrorManager(ERROR_LISTENER);
-            stg.loadGroupFile("", resourceUrl.toExternalForm());
+            STGroup common = getTemplateGroupFromFile(COMMON_TEMPLATES);
+            stg = getTemplateGroupFromFile(templateFileName);
+            stg.importTemplates(common);
         }
 
+        return stg;
+    }
+
+    protected STGroup getTemplateGroupFromFile(String fileName) throws IOException
+    {
+        final URL resourceUrl = Resources.getResource(this.getClass(), "/templates/" + fileName);
+        STGroup stg = new STGroup();
+        stg.errMgr = new ErrorManager(ERROR_LISTENER);
+        stg.loadGroupFile("", resourceUrl.toExternalForm());
         return stg;
     }
 
