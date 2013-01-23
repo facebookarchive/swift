@@ -33,6 +33,8 @@ public class TemplateLoader
 {
     private static final Logger LOG = LoggerFactory.getLogger(TemplateLoader.class);
 
+    private static final String COMMON_TEMPLATES = "common.st";
+
     private final StringTemplateErrorListener ERROR_LISTENER = new LoaderErrorListener();
 
     private final String templateFileName;
@@ -53,12 +55,19 @@ public class TemplateLoader
     protected StringTemplateGroup getTemplateGroup() throws IOException
     {
         if (stg == null) {
-            final URL resourceUrl = Resources.getResource(this.getClass(), "/templates/" + templateFileName);
-            final InputSupplier<InputStreamReader> is = Resources.newReaderSupplier(resourceUrl, Charsets.UTF_8);
-            stg = new StringTemplateGroup(is.getInput(), AngleBracketTemplateLexer.class, ERROR_LISTENER);
+            StringTemplateGroup common = getTemplateGroupFromFile(COMMON_TEMPLATES);
+            stg = getTemplateGroupFromFile(templateFileName);
+            stg.setSuperGroup(common);
         }
 
         return stg;
+    }
+
+    protected StringTemplateGroup getTemplateGroupFromFile(String fileName) throws IOException
+    {
+        final URL resourceUrl = Resources.getResource(this.getClass(), "/templates/" + fileName);
+        final InputSupplier<InputStreamReader> is = Resources.newReaderSupplier(resourceUrl, Charsets.UTF_8);
+        return new StringTemplateGroup(is.getInput(), AngleBracketTemplateLexer.class, ERROR_LISTENER);
     }
 
     private static class LoaderErrorListener implements StringTemplateErrorListener
