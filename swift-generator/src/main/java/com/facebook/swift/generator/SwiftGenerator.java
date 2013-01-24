@@ -25,6 +25,7 @@ import com.facebook.swift.generator.visitors.TypeVisitor;
 import com.facebook.swift.parser.model.Document;
 import com.facebook.swift.parser.model.Header;
 import com.facebook.swift.parser.visitor.DocumentVisitor;
+import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
@@ -38,8 +39,11 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.Stack;
 
 import javax.annotation.Nullable;
 
@@ -57,8 +61,9 @@ public class SwiftGenerator
 
     private final File outputFolder;
     private final SwiftGeneratorConfig swiftGeneratorConfig;
-
     private final TemplateLoader templateLoader;
+    private final Set<URI> parsedDocuments = new HashSet<>();
+    private final Stack<URI> parentDocuments = new Stack<>();
 
     public SwiftGenerator(final SwiftGeneratorConfig swiftGeneratorConfig)
     {
@@ -105,6 +110,16 @@ public class SwiftGenerator
                                final TypedefRegistry typedefRegistry) throws IOException
     {
         Preconditions.checkState(thriftUri != null && thriftUri.isAbsolute() && !thriftUri.isOpaque(), "Only absolute, non opaque URIs can be parsed!");
+        Preconditions.checkArgument(
+                !parentDocuments.contains(thriftUri),
+                "An input recursively includes itself!",
+                Joiner.on(" -> ").join(parentDocuments) + " -> " + thriftUri);
+
+        if (parsedDocuments.contains(thriftUri)) {
+            LOG.debug("Skipping already parsed file {}...", thriftUri);
+            return;
+        }
+
         LOG.debug("Parsing {}...", thriftUri);
 
         final String thriftNamespace = extractThriftNamespace(thriftUri);
@@ -119,16 +134,28 @@ public class SwiftGenerator
                                                           swiftGeneratorConfig.getDefaultPackage());
         Preconditions.checkState(!isBlank(javaNamespace), "thrift uri %s does not declare a java namespace!", thriftUri);
 
-        for (final String include : header.getIncludes()) {
-            final URI includeUri = swiftGeneratorConfig.getInputBase().resolve(include);
-            LOG.debug("Found {} included from {}.", includeUri, thriftUri);
-            parseDocument(includeUri,
-                          // If the includes should also generate code, pass the list of
-                          // contexts down to the include parser, otherwise pass a null in
-                          swiftGeneratorConfig.isGenerateIncludedCode() ? contexts : null,
-                          typeRegistry,
-                          typedefRegistry);
+        // Make a note that this document is a parent of all the documents included, directly or recursively
+        parentDocuments.push(thriftUri);
+
+        try {
+            for (final String include : header.getIncludes()) {
+                final URI includeUri = swiftGeneratorConfig.getInputBase().resolve(include);
+                LOG.debug("Found {} included from {}.", includeUri, thriftUri);
+                parseDocument(includeUri,
+                              // If the includes should also generate code, pass the list of
+                              // contexts down to the include parser, otherwise pass a null in
+                              swiftGeneratorConfig.isGenerateIncludedCode() ? contexts : null,
+                              typeRegistry,
+                              typedefRegistry);
+            }
         }
+        finally {
+            // Done parsing this document's includes, remove it from the parent chain
+            parentDocuments.pop();
+        }
+
+        // Make a note that we've already parsed this document
+        parsedDocuments.add(thriftUri);
 
         document.visit(new TypeVisitor(javaNamespace, context));
 
