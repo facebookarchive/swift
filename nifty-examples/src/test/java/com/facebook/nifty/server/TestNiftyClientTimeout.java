@@ -84,7 +84,7 @@ public class TestNiftyClientTimeout
         fail("Connection succeeded but failure was expected");
     }
 
-    @Test(timeOut = 2000)
+    @Test(timeOut = 5000)
     public void testAsyncConnectTimeout() throws IOException
     {
         ServerSocket serverSocket = new ServerSocket(0);

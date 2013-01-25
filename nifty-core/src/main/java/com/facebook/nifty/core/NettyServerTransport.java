@@ -22,9 +22,10 @@ import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
+import org.jboss.netty.channel.ServerChannelFactory;
 import org.jboss.netty.channel.group.ChannelGroup;
-import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.timeout.IdleStateHandler;
+import org.jboss.netty.util.ExternalResourceReleasable;
 import org.jboss.netty.util.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +40,7 @@ import java.util.concurrent.TimeUnit;
  * A core channel the decode framed Thrift message, dispatches to the TProcessor given
  * and then encode message back to Thrift frame.
  */
-public class NettyServerTransport
+public class NettyServerTransport implements ExternalResourceReleasable
 {
     private static final Logger log = LoggerFactory.getLogger(NettyServerTransport.class);
 
@@ -94,9 +95,9 @@ public class NettyServerTransport
 
     }
 
-    public void start(ExecutorService bossExecutor, ExecutorService workerExecutor)
+    public void start(ServerChannelFactory serverChannelFactory)
     {
-        bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(bossExecutor, workerExecutor));
+        bootstrap = new ServerBootstrap(serverChannelFactory);
         bootstrap.setOptions(configBuilder.getOptions());
         bootstrap.setPipelineFactory(pipelineFactory);
         log.info("starting transport {}:{}", def.getName(), port);
@@ -119,7 +120,7 @@ public class NettyServerTransport
                     // stop and process remaining in-flight invocations
                     if (def.getExecutor() instanceof ExecutorService) {
                         ExecutorService exe = (ExecutorService) def.getExecutor();
-                        NiftyBootstrap.shutdownExecutor(exe, "dispatcher");
+                        ShutdownUtil.shutdownExecutor(exe, "dispatcher");
                     }
                     latch.countDown();
                 }
@@ -131,5 +132,11 @@ public class NettyServerTransport
 
     public Channel getServerChannel() {
         return serverChannel;
+    }
+
+    @Override
+    public void releaseExternalResources()
+    {
+        bootstrap.releaseExternalResources();
     }
 }

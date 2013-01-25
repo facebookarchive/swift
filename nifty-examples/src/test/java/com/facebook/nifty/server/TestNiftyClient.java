@@ -82,6 +82,7 @@ public class TestNiftyClient
                     bootstrap.stop();
                 }
                 catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                 }
             }
         }.start();

@@ -16,10 +16,9 @@
 package com.facebook.nifty.client;
 
 import com.facebook.nifty.client.socks.Socks4ClientBootstrap;
+import com.facebook.nifty.core.ShutdownUtil;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.airlift.units.Duration;
 import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.bootstrap.ClientBootstrap;
@@ -35,9 +34,11 @@ import javax.annotation.Nullable;
 import java.io.Closeable;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import static com.google.common.util.concurrent.MoreExecutors.getExitingExecutorService;
+import static java.util.concurrent.Executors.newCachedThreadPool;
 
 public class NiftyClient implements Closeable
 {
@@ -48,8 +49,8 @@ public class NiftyClient implements Closeable
     private static final Duration DEFAULT_WRITE_TIMEOUT = new Duration(2, TimeUnit.SECONDS);
 
     private final NettyClientConfigBuilder configBuilder;
-    private final ExecutorService boss;
-    private final ExecutorService worker;
+    private final ExecutorService bossExecutor;
+    private final ExecutorService workerExecutor;
     private final int maxFrameSize;
     private final NioClientSocketChannelFactory channelFactory;
     private final InetSocketAddress defaultSocksProxyAddress;
@@ -58,7 +59,7 @@ public class NiftyClient implements Closeable
 
     /**
      * Creates a new NiftyClient with defaults : frame size 1MB, 30 secs
-     * connect and read timeout and cachedThreadPool for boss and worker.
+     * connect and read timeout and cachedThreadPool for bossExecutor and workerExecutor.
      */
     public NiftyClient()
     {
@@ -68,8 +69,8 @@ public class NiftyClient implements Closeable
     public NiftyClient(int maxFrameSize)
     {
         this(new NettyClientConfigBuilder(),
-                MoreExecutors.getExitingExecutorService(makeThreadPool("netty-boss")),
-                MoreExecutors.getExitingExecutorService(makeThreadPool("netty-worker")),
+                getExitingExecutorService((ThreadPoolExecutor) newCachedThreadPool()),
+                getExitingExecutorService((ThreadPoolExecutor) newCachedThreadPool()),
                 maxFrameSize,
                 null);
     }
@@ -90,8 +91,8 @@ public class NiftyClient implements Closeable
             @Nullable InetSocketAddress defaultSocksProxyAddress)
     {
         this.configBuilder = configBuilder;
-        this.boss = boss;
-        this.worker = worker;
+        this.bossExecutor = boss;
+        this.workerExecutor = worker;
         this.maxFrameSize = maxFrameSize;
         this.defaultSocksProxyAddress = defaultSocksProxyAddress;
         this.channelFactory = new NioClientSocketChannelFactory(boss, worker);
@@ -229,12 +230,10 @@ public class NiftyClient implements Closeable
         // shutdown process
         hashedWheelTimer.stop();
 
-        // Close all open channels
-        allChannels.close();
-
-        // Shut down client Executors
-        boss.shutdownNow();
-        worker.shutdownNow();
+        ShutdownUtil.shutdownChannelFactory(channelFactory,
+                                            bossExecutor,
+                                            workerExecutor,
+                                            allChannels);
     }
 
     private ClientBootstrap createClientBootstrap(InetSocketAddress socksProxyAddress)
@@ -277,16 +276,5 @@ public class NiftyClient implements Closeable
                 }
             });
         }
-    }
-
-    // just the inline version of Executors.newCachedThreadPool()
-    // to make MoreExecutors happy.
-    private static ThreadPoolExecutor makeThreadPool(String name)
-    {
-        return new ThreadPoolExecutor(
-                0, Integer.MAX_VALUE,
-                60L, TimeUnit.SECONDS,
-                new SynchronousQueue<Runnable>(),
-                new ThreadFactoryBuilder().setNameFormat(name + "-%d").build());
     }
 }
