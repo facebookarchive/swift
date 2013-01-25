@@ -15,7 +15,6 @@
  */
 package com.facebook.nifty.client;
 
-import com.google.common.base.Preconditions;
 import com.google.common.net.HostAndPort;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelPipeline;
@@ -25,7 +24,6 @@ import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
 import org.jboss.netty.handler.codec.http.HttpClientCodec;
 import org.jboss.netty.util.Timer;
 
-import javax.validation.constraints.NotNull;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -33,32 +31,45 @@ import java.net.URISyntaxException;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class HttpClientConnector extends AbstractClientConnector<HttpClientChannel> {
+public class HttpClientConnector extends AbstractClientConnector<HttpClientChannel>
+{
     private final URI endpointUri;
 
     public HttpClientConnector(String hostNameAndPort, String servicePath)
-            throws URISyntaxException {
+            throws URISyntaxException
+    {
         super(new InetSocketAddress(HostAndPort.fromString(hostNameAndPort).getHostText(),
                                     HostAndPort.fromString(hostNameAndPort).getPort()));
 
         this.endpointUri = new URI("http", hostNameAndPort, servicePath, null);
     }
 
-    public HttpClientConnector(URI uri) {
-
-        super(HostAndPort.fromParts(checkNotNull(uri).getHost(), checkNotNull(uri).getPort()));
+    public HttpClientConnector(URI uri)
+    {
+        super(HostAndPort.fromParts(checkNotNull(uri).getHost(), getPort(uri)));
 
         checkArgument(uri.isAbsolute() && !uri.isOpaque(),
                       "HttpClientConnector requires an absolute URI with a path");
-        checkArgument(uri.getScheme().compareTo("http") != 0 &&
-                      uri.getScheme().compareTo("https") != 0,
-                      "HttpClientConnector only connects to HTTP/HTTPS URIs");
 
         this.endpointUri = uri;
     }
 
+    public static int getPort(URI uri)
+    {
+        URI uriNN = checkNotNull(uri);
+        if (uri.getScheme().toLowerCase().equals("http")) {
+            return uriNN.getPort() == -1 ? 80 : uriNN.getPort();
+        } else if (uri.getScheme().toLowerCase().equals("https")) {
+            return uriNN.getPort() == -1 ? 443 : uriNN.getPort();
+        } else {
+            throw new IllegalArgumentException("HttpClientConnector only connects to HTTP/HTTPS " +
+                                               "URIs");
+        }
+    }
+
     @Override
-    public HttpClientChannel newThriftClientChannel(Channel nettyChannel, Timer timer) {
+    public HttpClientChannel newThriftClientChannel(Channel nettyChannel, Timer timer)
+    {
         HttpClientChannel channel =
                 new HttpClientChannel(nettyChannel,
                                       timer,
@@ -69,22 +80,25 @@ public class HttpClientConnector extends AbstractClientConnector<HttpClientChann
     }
 
     @Override
-    public ChannelPipelineFactory newChannelPipelineFactory(final int maxFrameSize) {
+    public ChannelPipelineFactory newChannelPipelineFactory(final int maxFrameSize)
+    {
         return new ChannelPipelineFactory()
         {
             @Override
             public ChannelPipeline getPipeline()
-                    throws Exception {
-            ChannelPipeline cp = Channels.pipeline();
-            cp.addLast("httpClientCodec", new HttpClientCodec());
-            cp.addLast("chunkAggregator", new HttpChunkAggregator(maxFrameSize));
-            return cp;
+                    throws Exception
+            {
+                ChannelPipeline cp = Channels.pipeline();
+                cp.addLast("httpClientCodec", new HttpClientCodec());
+                cp.addLast("chunkAggregator", new HttpChunkAggregator(maxFrameSize));
+                return cp;
             }
         };
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return endpointUri.toString();
     }
 }
