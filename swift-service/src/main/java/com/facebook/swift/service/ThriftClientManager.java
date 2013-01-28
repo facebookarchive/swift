@@ -39,12 +39,14 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocolException;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TTransportException;
+import org.jboss.netty.channel.Channel;
 
 import java.io.Closeable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -179,12 +181,12 @@ public class ThriftClientManager implements Closeable
         ));
     }
 
-    private InetSocketAddress toInetSocketAddress(HostAndPort hostAndPort)
+    private static InetSocketAddress toInetSocketAddress(HostAndPort hostAndPort)
     {
         return new InetSocketAddress(hostAndPort.getHostText(), hostAndPort.getPort());
     }
 
-    private InetSocketAddress toSocksProxyAddress(HostAndPort socksProxy)
+    private static InetSocketAddress toSocksProxyAddress(HostAndPort socksProxy)
     {
         if (socksProxy == null) {
             return null;
@@ -203,16 +205,42 @@ public class ThriftClientManager implements Closeable
         niftyClient.close();
     }
 
-    public NiftyClientChannel getNiftyChannel(Object client)
+    public static NiftyClientChannel getNiftyChannel(Object client)
     {
+        ThriftInvocationHandler thriftHandler = null;
         try {
             InvocationHandler genericHandler = Proxy.getInvocationHandler(client);
-            ThriftInvocationHandler thriftHandler = ThriftInvocationHandler.class.cast(genericHandler);
-            return thriftHandler.getChannel();
+            thriftHandler = ThriftInvocationHandler.class.cast(genericHandler);
         }
-        catch (ClassCastException e) {
-            throw new IllegalArgumentException("Not a swift client object", e);
+        catch (Throwable e) {
+            // Object was not a swift client and does not have a nifty channel associated with it
+            return null;
         }
+        return thriftHandler.getChannel();
+    }
+
+    public static HostAndPort getRemoteAddress(Object client) {
+        NiftyClientChannel niftyChannel = getNiftyChannel(client);
+
+        if (niftyChannel == null) {
+            // Object was not a swift client so swift does not know it's remote
+            // address (if there is one)
+            return null;
+        }
+
+        Channel nettyChannel = niftyChannel.getNettyChannel();
+        if (nettyChannel == null || nettyChannel.getRemoteAddress() == null) {
+            throw new IllegalStateException("Client is not connected");
+        }
+
+        SocketAddress address = nettyChannel.getRemoteAddress();
+        if (!(address instanceof InetSocketAddress)) {
+            throw new IllegalStateException("Client is not connected via TCP socket");
+        }
+
+        InetSocketAddress inetAddress = (InetSocketAddress) address;
+        return HostAndPort.fromParts(inetAddress.getHostName(),
+                                     inetAddress.getPort());
     }
 
     @Immutable
