@@ -51,6 +51,11 @@ public class ShutdownUtil
         if (workerExecutor != null) {
             shutdownExecutor(workerExecutor, "workerExecutor");
         }
+
+        // Release any other resources netty might be holding onto via this channelFactory
+        if (channelFactory != null) {
+            channelFactory.releaseExternalResources();
+        }
     }
 
     public static void closeChannels(ChannelGroup allChannels)
