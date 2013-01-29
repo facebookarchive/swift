@@ -34,12 +34,6 @@
       <artifactId>annotations</artifactId>
     </dependency>
 
-
-    <dependency>
-      <groupId>com.beust</groupId>
-      <artifactId>jcommander</artifactId>
-    </dependency>
-
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
@@ -47,9 +41,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.testng</groupId>
-      <artifactId>testng</artifactId>
-      <scope>test</scope>
+      <groupId>com.beust</groupId>
+      <artifactId>jcommander</artifactId>
     </dependency>
   </dependencies>
 
