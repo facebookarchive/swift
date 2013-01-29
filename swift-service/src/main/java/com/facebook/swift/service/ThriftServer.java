@@ -23,7 +23,9 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.TProcessorFactory;
+import org.jboss.netty.channel.ServerChannelFactory;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
+import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.util.HashedWheelTimer;
 import org.jboss.netty.util.Timer;
 import org.weakref.jmx.Managed;
@@ -33,11 +35,12 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
+import static com.facebook.nifty.core.ShutdownUtil.shutdownChannelFactory;
+import static com.facebook.nifty.core.ShutdownUtil.shutdownExecutor;
 import static java.util.concurrent.Executors.newCachedThreadPool;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 
@@ -57,6 +60,8 @@ public class ThriftServer implements Closeable
     private final ExecutorService acceptorExecutor;
     private final ExecutorService ioExecutor;
     private final ExecutorService workerExecutor;
+
+    private final ServerChannelFactory serverChannelFactory;
 
     private State state = State.NOT_STARTED;
 
@@ -80,8 +85,11 @@ public class ThriftServer implements Closeable
         workerThreads = config.getWorkerThreads();
 
         workerExecutor = newFixedThreadPool(workerThreads, new ThreadFactoryBuilder().setNameFormat("thrift-worker-%s").build());
+
         acceptorExecutor = newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("thrift-acceptor-%s").build());
         ioExecutor = newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("thrift-io-%s").build());
+
+        serverChannelFactory = new NioServerSocketChannelFactory(acceptorExecutor, ioExecutor);
 
         ThriftServerDef thriftServerDef = ThriftServerDef.newBuilder()
                                                          .name("thrift")
@@ -129,7 +137,7 @@ public class ThriftServer implements Closeable
     {
         Preconditions.checkState(state != State.CLOSED, "Thrift server is closed");
         if (state == State.NOT_STARTED) {
-            transport.start(acceptorExecutor, ioExecutor);
+            transport.start(serverChannelFactory);
             state = State.RUNNING;
         }
         return this;
@@ -146,42 +154,15 @@ public class ThriftServer implements Closeable
         if (state == State.RUNNING) {
             try {
                 transport.stop();
+
+                shutdownExecutor(workerExecutor, "workerExecutor");
+                shutdownChannelFactory(serverChannelFactory, acceptorExecutor, ioExecutor, allChannels);
             }
             catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
         }
 
-        // stop bosses
-        if (acceptorExecutor != null) {
-            shutdownExecutor(acceptorExecutor);
-        }
-
-        // stop worker
-        if (workerExecutor != null) {
-            shutdownExecutor(workerExecutor);
-        }
-
-        // TODO: allow an option here to control if we need to drain connections and wait instead of killing them all
-        allChannels.close();
-
-        // finally the reader writer
-        if (ioExecutor != null) {
-            shutdownExecutor(ioExecutor);
-        }
-
         state = State.CLOSED;
-    }
-
-    private static void shutdownExecutor(ExecutorService executor)
-    {
-        executor.shutdown();
-        try {
-            executor.awaitTermination(5, TimeUnit.SECONDS);
-        }
-        catch (InterruptedException e) {
-            //ignored
-            Thread.currentThread().interrupt();
-        }
     }
 }
