@@ -80,18 +80,16 @@ public class SwiftGenerator
         this.templateLoader = new TemplateLoader(TEMPLATES.get(swiftGeneratorConfig.getCodeFlavor()));
     }
 
-    public void parse() throws Exception
+    public void parse(Iterable<URI> inputs) throws Exception
     {
-        Iterable<URI> inputFiles = swiftGeneratorConfig.getInputs();
-        if (inputFiles == null) {
-            LOG.error("No input files!");
-            return;
-        }
+        Preconditions.checkArgument(
+                inputs != null && inputs.iterator().hasNext(),
+                "No input files!");
 
-        LOG.info("Parsing Thrift IDL from {}...", swiftGeneratorConfig.getInputs());
+        LOG.info("Parsing Thrift IDL from {}...", inputs);
 
         final Map<String, SwiftDocumentContext> contexts = Maps.newHashMap();
-        for (final URI inputUri : swiftGeneratorConfig.getInputs()) {
+        for (final URI inputUri : inputs) {
 
             parseDocument(inputUri.isAbsolute() ? inputUri
                                                 : swiftGeneratorConfig.getInputBase().resolve(inputUri),

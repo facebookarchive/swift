@@ -17,7 +17,7 @@ package com.facebook.swift.generator;
 
 import com.beust.jcommander.JCommander;
 import com.google.common.base.Function;
-import com.google.common.collect.Lists;
+import com.google.common.collect.Iterables;
 
 import java.io.File;
 import java.net.URI;
@@ -26,6 +26,17 @@ import javax.annotation.Nonnull;
 
 public class Main
 {
+
+    public static final Function<File,URI> FILE_TO_URI_TRANSFORM = new Function<File, URI>()
+    {
+        @Nonnull
+        @Override
+        public URI apply(@Nonnull File input)
+        {
+            return input.toURI();
+        }
+    };
+
     public static void main(final String ... args) throws Exception
     {
         URI workingDirectory = new File(System.getProperty("user.dir")).getCanonicalFile().toURI();
@@ -41,15 +52,6 @@ public class Main
 
         SwiftGeneratorConfig.Builder configBuilder = SwiftGeneratorConfig.builder()
                 .inputBase(workingDirectory)
-                .addInputs(Lists.transform(cliConfig.inputFiles, new Function<File, URI>()
-                {
-                    @Nonnull
-                    @Override
-                    public URI apply(@Nonnull File input)
-                    {
-                        return input.toURI();
-                    }
-                }))
                 .outputFolder(cliConfig.outputDirectory)
                 .overridePackage(cliConfig.overridePackage)
                 .defaultPackage(cliConfig.defaultPackage)
@@ -64,6 +66,8 @@ public class Main
             configBuilder.addTweak(SwiftGeneratorTweak.ADD_THRIFT_EXCEPTION);
         }
 
-        new SwiftGenerator(configBuilder.build()).parse();
+        Iterable<URI> inputs = Iterables.transform(cliConfig.inputFiles, FILE_TO_URI_TRANSFORM);
+
+        new SwiftGenerator(configBuilder.build()).parse(inputs);
     }
 }

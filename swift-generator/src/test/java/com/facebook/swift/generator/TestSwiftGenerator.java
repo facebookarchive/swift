@@ -15,6 +15,7 @@
  */
 package com.facebook.swift.generator;
 
+import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 
 import java.io.File;
@@ -30,10 +31,6 @@ public class TestSwiftGenerator
     {
         final SwiftGeneratorConfig config = SwiftGeneratorConfig.builder()
                         .inputBase(Resources.getResource(TestSwiftGenerator.class, "/").toURI())
-                        .addInputs(
-                                   Resources.getResource(TestSwiftGenerator.class, "/hive/metastore.thrift").toURI(),
-                                   Resources.getResource(TestSwiftGenerator.class, "/Maestro.thrift").toURI()
-                               )
                         .outputFolder(new File(args.length == 0 ? OUTPUT_FOLDER : args[0]))
                         .generateIncludedCode(true)
                         .codeFlavor("java-immutable")
@@ -43,6 +40,11 @@ public class TestSwiftGenerator
                         .build();
 
         final SwiftGenerator generator = new SwiftGenerator(config);
-        generator.parse();
+        generator.parse(
+                Lists.newArrayList(
+                        Resources.getResource(TestSwiftGenerator.class, "/hive/metastore.thrift").toURI(),
+                        Resources.getResource(TestSwiftGenerator.class, "/Maestro.thrift").toURI()
+                )
+        );
     }
 }
