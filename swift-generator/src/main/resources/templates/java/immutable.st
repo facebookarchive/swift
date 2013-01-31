@@ -1,5 +1,3 @@
-group java;
-
 _structbody(context) ::= <<
 <_constructor(context)>
 
