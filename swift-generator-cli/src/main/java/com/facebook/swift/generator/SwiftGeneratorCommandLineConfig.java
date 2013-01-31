@@ -16,10 +16,13 @@
 package com.facebook.swift.generator;
 
 import com.beust.jcommander.Parameter;
+import com.google.common.collect.Sets;
 
 import java.io.File;
 import java.net.URI;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class SwiftGeneratorCommandLineConfig
 {
@@ -54,8 +57,14 @@ public class SwiftGeneratorCommandLineConfig
     public boolean generateIncludedCode = false;
 
     @Parameter(
-            names = "-generate_mutable_structs",
-            description = "Generate mutable structs for thrift types"
+            names = "-generate_beans",
+            description = "Generate thrift types as mutable beans"
     )
-    public boolean mutableTypes = false;
+    public boolean generateBeans = false;
+
+    @Parameter(
+            names = "-tweaks",
+            description = "Enable specific code generation tweaks"
+    )
+    public Set<SwiftGeneratorTweak> tweaks = Sets.newHashSet(SwiftGeneratorTweak.ADD_CLOSEABLE_INTERFACE);
 }

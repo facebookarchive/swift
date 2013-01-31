@@ -22,14 +22,12 @@ import com.google.common.collect.Lists;
 import java.io.File;
 import java.net.URI;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 
 public class Main
 {
     public static void main(final String ... args) throws Exception
     {
-        System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "info");
-
         URI workingDirectory = new File(System.getProperty("user.dir")).getCanonicalFile().toURI();
 
         SwiftGeneratorCommandLineConfig cliConfig = new SwiftGeneratorCommandLineConfig();
@@ -45,9 +43,9 @@ public class Main
                 .inputBase(workingDirectory)
                 .addInputs(Lists.transform(cliConfig.inputFiles, new Function<File, URI>()
                 {
-                    @Nullable
+                    @Nonnull
                     @Override
-                    public URI apply(@Nullable File input)
+                    public URI apply(@Nonnull File input)
                     {
                         return input.toURI();
                     }
@@ -55,9 +53,12 @@ public class Main
                 .outputFolder(cliConfig.outputDirectory)
                 .overridePackage(cliConfig.overridePackage)
                 .defaultPackage(cliConfig.defaultPackage)
-                .addTweak(SwiftGeneratorTweak.ADD_CLOSEABLE_INTERFACE)
                 .generateIncludedCode(cliConfig.generateIncludedCode)
-                .codeFlavor(cliConfig.mutableTypes ? "java-regular" : "java-immutable");
+                .codeFlavor(cliConfig.generateBeans ? "java-regular" : "java-immutable");
+
+        for (SwiftGeneratorTweak tweak : cliConfig.tweaks) {
+            configBuilder.addTweak(tweak);
+        }
 
         if (cliConfig.addThriftExceptions) {
             configBuilder.addTweak(SwiftGeneratorTweak.ADD_THRIFT_EXCEPTION);

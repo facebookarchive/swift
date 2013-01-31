@@ -15,6 +15,11 @@
  */
 package com.facebook.swift.generator.util;
 
+import com.google.common.base.Charsets;
+import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
+import com.google.common.io.CharStreams;
+import com.google.common.io.InputSupplier;
 import com.google.common.io.Resources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,37 +30,59 @@ import org.stringtemplate.v4.misc.ErrorManager;
 import org.stringtemplate.v4.misc.STMessage;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.net.URL;
+
+import javax.annotation.Nonnull;
 
 public class TemplateLoader
 {
-    private static final Logger LOG = LoggerFactory.getLogger(TemplateLoader.class);
+    private static final Function<String,InputSupplier<InputStreamReader>> FILE_TO_INPUT_SUPPLIER_TRANSFORM =
+            new Function<String, InputSupplier<InputStreamReader>>()
+            {
+                @Nonnull
+                @Override
+                public InputSupplier<InputStreamReader> apply(@Nonnull String templateFileName)
+                {
 
-    private static final String COMMON_TEMPLATES = "java/common.st";
+                    return Resources.newReaderSupplier(Resources.getResource(this.getClass(), "/templates/" + templateFileName), Charsets.UTF_8);
+                }
+            };
+
+    private static final Logger LOG = LoggerFactory.getLogger(TemplateLoader.class);
 
     private final STErrorListener ERROR_LISTENER = new LoaderErrorListener();
 
-    private final String templateFileName;
-
+    private final Iterable<String> templateFileNames;
     private volatile STGroup stg = null;
 
-    public TemplateLoader(final String templateFileName)
+    public TemplateLoader(final Iterable<String> templateFileNames)
     {
-        this.templateFileName = templateFileName;
+        this.templateFileNames = templateFileNames;
     }
 
     public ST load(final String templateName) throws IOException
     {
-        final STGroup stg = getTemplateGroup();
+        final STGroup stg = getTemplateGroup(templateFileNames);
         return stg.getInstanceOf(templateName);
     }
 
-    protected STGroup getTemplateGroup() throws IOException
+    protected STGroup getTemplateGroup(Iterable<String> templateFileNames) throws IOException
     {
         if (stg == null) {
-            STGroup common = getTemplateGroupFromFile(COMMON_TEMPLATES);
-            stg = getTemplateGroupFromFile(templateFileName);
-            stg.importTemplates(common);
+            // Create a hard-coded input supplier for the 'group' header line
+            InputSupplier<StringReader> headerSupplier = CharStreams.newReaderSupplier("group swiftGeneratorTemplates;");
+
+            // Convert set of relative paths to .st files into a set of input suppliers
+            Iterable<InputSupplier<InputStreamReader>> templateInputSuppliers =
+                    Iterables.transform(templateFileNames, FILE_TO_INPUT_SUPPLIER_TRANSFORM);
+
+            // Combine the header and all .st files and load everything into a StringTemplateGroup
+            stg = new STGroup();
+            for (String templateFileName : templateFileNames) {
+                stg.importTemplates(getTemplateGroupFromFile(templateFileName));
+            }
         }
 
         return stg;
