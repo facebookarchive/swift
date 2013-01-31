@@ -159,7 +159,6 @@ public class SwiftMojo extends AbstractMojo
 
                 final SwiftGeneratorConfig.Builder configBuilder = SwiftGeneratorConfig.builder()
                     .inputBase(inputFolder.toURI())
-                    .addInputs(Collections2.transform(files, URI_TRANSFORMER))
                     .outputFolder(outputFolder)
                     .overridePackage(overridePackage)
                     .defaultPackage(defaultPackage)
@@ -179,7 +178,7 @@ public class SwiftMojo extends AbstractMojo
                 }
 
                 final SwiftGenerator generator = new SwiftGenerator(configBuilder.build());
-                generator.parse();
+                generator.parse(Collections2.transform(files, URI_TRANSFORMER));
 
                 project.addCompileSourceRoot(outputFolder.getPath());
             }

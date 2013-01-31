@@ -19,15 +19,12 @@ import com.beust.jcommander.Parameter;
 import com.google.common.collect.Sets;
 
 import java.io.File;
-import java.net.URI;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class SwiftGeneratorCommandLineConfig
 {
     @Parameter(description = "Thrift IDL input files")
-    public List<File> inputFiles;
+    public Iterable<File> inputFiles;
 
     @Parameter(names = "-out", description = "Output directory")
     public File outputDirectory = new File(System.getProperty("user.dir") + "/gen-swift");

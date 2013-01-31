@@ -27,7 +27,6 @@ import java.util.Set;
 public class SwiftGeneratorConfig
 {
     private final URI inputBase;
-    private final Set<URI> inputs;
     private final File outputFolder;
     private final String overridePackage;
     private final String defaultPackage;
@@ -36,7 +35,6 @@ public class SwiftGeneratorConfig
     private final String codeFlavor;
 
     private SwiftGeneratorConfig(final URI inputBase,
-                                 final Set<URI> inputs,
                                  final File outputFolder,
                                  final String overridePackage,
                                  final String defaultPackage,
@@ -45,7 +43,6 @@ public class SwiftGeneratorConfig
                                  final String codeFlavor)
     {
         this.inputBase = inputBase;
-        this.inputs = inputs;
         this.outputFolder = outputFolder;
         this.overridePackage = overridePackage;
         this.defaultPackage = defaultPackage;
@@ -65,14 +62,6 @@ public class SwiftGeneratorConfig
     public URI getInputBase()
     {
         return inputBase;
-    }
-
-    /**
-     * Returns an array of input URIs to read. If any of the URIs is not absolute, an input base must be set.
-     */
-    public Set<URI> getInputs()
-    {
-        return inputs;
     }
 
     /**
@@ -127,7 +116,6 @@ public class SwiftGeneratorConfig
     public static class Builder
     {
         private URI inputBase = null;
-        private final Set<URI> inputs = new HashSet<>();
         private File outputFolder = null;
         private String overridePackage = null;
         private String defaultPackage = null;
@@ -142,14 +130,12 @@ public class SwiftGeneratorConfig
         public SwiftGeneratorConfig build()
         {
             Preconditions.checkState(outputFolder != null, "output folder must be set!");
-            Preconditions.checkState(inputs.size() > 0, "no input files given!");
 
             Preconditions.checkState(inputBase != null, "input base uri must be set to load includes!");
             Preconditions.checkState(codeFlavor != null, "no code flavor selected!");
 
             return new SwiftGeneratorConfig(
                 inputBase,
-                inputs,
                 outputFolder,
                 overridePackage,
                 defaultPackage,
@@ -167,20 +153,6 @@ public class SwiftGeneratorConfig
         public Builder outputFolder(final File outputFolder)
         {
             this.outputFolder = outputFolder;
-            return this;
-        }
-
-        public Builder addInputs(final URI ... inputs)
-        {
-            return addInputs(Arrays.asList(inputs));
-        }
-
-        public Builder addInputs(final Iterable<URI> inputs)
-        {
-            for (URI input : inputs) {
-                this.inputs.add(input);
-            }
-
             return this;
         }
 
