@@ -35,6 +35,7 @@
     <module>swift-idl-parser</module>
     <module>swift-service</module>
     <module>swift-generator</module>
+    <module>swift-generator-cli</module>
     <module>swift-maven-plugin</module>
     <module>swift-load-generator</module>
   </modules>

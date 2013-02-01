@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -52,8 +53,11 @@ public class SwiftGenerator
 {
     private static final Logger LOG = LoggerFactory.getLogger(SwiftGenerator.class);
 
-    private static final Map<String, String> TEMPLATES = ImmutableMap.of("java-regular", "java/regular.st",
-                                                                         "java-immutable", "java/immutable.st");
+    private static final Map<String, ArrayList<String>> TEMPLATES =
+            ImmutableMap.of(
+                    "java-regular", Lists.newArrayList("java/common.st", "java/regular.st"),
+                    "java-immutable", Lists.newArrayList("java/common.st", "java/immutable.st")
+            );
 
     private final File outputFolder;
     private final SwiftGeneratorConfig swiftGeneratorConfig;
@@ -76,12 +80,16 @@ public class SwiftGenerator
         this.templateLoader = new TemplateLoader(TEMPLATES.get(swiftGeneratorConfig.getCodeFlavor()));
     }
 
-    public void parse() throws Exception
+    public void parse(Iterable<URI> inputs) throws Exception
     {
-        LOG.info("Parsing Thrift IDL from {}...", swiftGeneratorConfig.getInputs());
+        Preconditions.checkArgument(
+                inputs != null && inputs.iterator().hasNext(),
+                "No input files!");
+
+        LOG.info("Parsing Thrift IDL from {}...", inputs);
 
         final Map<String, SwiftDocumentContext> contexts = Maps.newHashMap();
-        for (final URI inputUri : swiftGeneratorConfig.getInputs()) {
+        for (final URI inputUri : inputs) {
 
             parseDocument(inputUri.isAbsolute() ? inputUri
                                                 : swiftGeneratorConfig.getInputBase().resolve(inputUri),
