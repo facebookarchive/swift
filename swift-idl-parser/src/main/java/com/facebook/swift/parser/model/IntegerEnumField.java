@@ -23,12 +23,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class IntegerEnumField
 {
     private final String name;
-    private final Optional<Long> value;
+    private final Optional<Long> explicitValue;
 
-    public IntegerEnumField(String name, Long value)
+    private final long effectiveValue;
+
+    public IntegerEnumField(String name, Long explicitValue, Long defaultValue)
     {
         this.name = checkNotNull(name, "name");
-        this.value = Optional.fromNullable(value);
+        this.explicitValue = Optional.fromNullable(explicitValue);
+        this.effectiveValue = (this.explicitValue.isPresent()) ? this.explicitValue.get() : defaultValue;
     }
 
     public String getName()
@@ -36,9 +39,14 @@ public class IntegerEnumField
         return name;
     }
 
-    public Optional<Long> getValue()
+    public Optional<Long> getExplicitValue()
     {
-        return value;
+        return explicitValue;
+    }
+
+    public long getValue()
+    {
+        return effectiveValue;
     }
 
     @Override
@@ -46,7 +54,8 @@ public class IntegerEnumField
     {
         return Objects.toStringHelper(this)
                 .add("name", name)
-                .add("value", value)
+                .add("value", effectiveValue)
+                .add("explicitValue", explicitValue)
                 .toString();
     }
 }
