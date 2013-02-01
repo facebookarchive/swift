@@ -88,6 +88,8 @@ public class SwiftGenerator
         final Map<String, SwiftDocumentContext> contexts = Maps.newHashMap();
         for (final URI inputUri : swiftGeneratorConfig.getInputs()) {
 
+            parsedDocuments.clear();
+
             parseDocument(inputUri.isAbsolute() ? inputUri
                                                 : swiftGeneratorConfig.getInputBase().resolve(inputUri),
                           contexts,
