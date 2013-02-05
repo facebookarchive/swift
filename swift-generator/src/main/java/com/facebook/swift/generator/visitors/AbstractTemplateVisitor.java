@@ -24,8 +24,8 @@ import com.facebook.swift.generator.util.TemplateLoader;
 import com.facebook.swift.parser.visitor.DocumentVisitor;
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
-import org.antlr.stringtemplate.NoIndentWriter;
-import org.antlr.stringtemplate.StringTemplate;
+import org.stringtemplate.v4.NoIndentWriter;
+import org.stringtemplate.v4.ST;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -55,14 +55,14 @@ public abstract class AbstractTemplateVisitor implements DocumentVisitor
     protected void render(final JavaContext context, final String templateName)
         throws IOException
     {
-        final StringTemplate template = templateLoader.load(templateName);
-        template.setAttribute("context", context);
+        final ST template = templateLoader.load(templateName);
+        template.add("context", context);
 
         final Map<String, Boolean> tweakMap = new HashMap<>();
         for (SwiftGeneratorTweak tweak: SwiftGeneratorTweak.values()) {
             tweakMap.put(tweak.name(), config.containsTweak(tweak));
         }
-        template.setAttribute("tweaks", tweakMap);
+        template.add("tweaks", tweakMap);
 
 
         final Iterable<String> packages = Splitter.on('.').split(context.getJavaPackage());

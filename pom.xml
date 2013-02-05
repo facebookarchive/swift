@@ -207,7 +207,7 @@
       <dependency>
         <groupId>org.antlr</groupId>
         <artifactId>stringtemplate</artifactId>
-        <version>3.2.1</version>
+        <version>4.0.2</version>
       </dependency>
 
       <!-- maven -->
