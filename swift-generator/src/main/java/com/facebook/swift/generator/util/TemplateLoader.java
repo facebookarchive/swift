@@ -15,64 +15,75 @@
  */
 package com.facebook.swift.generator.util;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.InputSupplier;
 import com.google.common.io.Resources;
-import org.antlr.stringtemplate.StringTemplate;
-import org.antlr.stringtemplate.StringTemplateErrorListener;
-import org.antlr.stringtemplate.StringTemplateGroup;
-import org.antlr.stringtemplate.language.AngleBracketTemplateLexer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stringtemplate.v4.ST;
+import org.stringtemplate.v4.STErrorListener;
+import org.stringtemplate.v4.STGroup;
+import org.stringtemplate.v4.misc.ErrorManager;
+import org.stringtemplate.v4.misc.STMessage;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URL;
 
 public class TemplateLoader
 {
     private static final Logger LOG = LoggerFactory.getLogger(TemplateLoader.class);
 
-    private final StringTemplateErrorListener ERROR_LISTENER = new LoaderErrorListener();
+    private final STErrorListener ERROR_LISTENER = new LoaderErrorListener();
 
     private final String templateFileName;
 
-    private volatile StringTemplateGroup stg = null;
+    private volatile STGroup stg = null;
 
     public TemplateLoader(final String templateFileName)
     {
         this.templateFileName = templateFileName;
     }
 
-    public StringTemplate load(final String templateName) throws IOException
+    public ST load(final String templateName) throws IOException
     {
-        final StringTemplateGroup stg = getTemplateGroup();
+        final STGroup stg = getTemplateGroup();
         return stg.getInstanceOf(templateName);
     }
 
-    protected StringTemplateGroup getTemplateGroup() throws IOException
+    protected STGroup getTemplateGroup() throws IOException
     {
         if (stg == null) {
             final URL resourceUrl = Resources.getResource(this.getClass(), "/templates/" + templateFileName);
-            final InputSupplier<InputStreamReader> is = Resources.newReaderSupplier(resourceUrl, Charsets.UTF_8);
-            stg = new StringTemplateGroup(is.getInput(), AngleBracketTemplateLexer.class, ERROR_LISTENER);
+            stg = new STGroup();
+            stg.errMgr = new ErrorManager(ERROR_LISTENER);
+            stg.loadGroupFile("", resourceUrl.toExternalForm());
         }
 
         return stg;
     }
 
-    private static class LoaderErrorListener implements StringTemplateErrorListener
+    private static class LoaderErrorListener implements STErrorListener
     {
         @Override
-        public void error(String arg0, Throwable arg1)
+        public void compileTimeError(STMessage msg)
         {
-            LOG.error(String.format("%s: %s", arg0, arg1));
+            LOG.error(msg.toString());
         }
 
         @Override
-        public void warning(String arg0)
+        public void runTimeError(STMessage msg)
         {
-            LOG.warn(arg0);
+            LOG.error(msg.toString());
+        }
+
+        @Override
+        public void IOError(STMessage msg)
+        {
+            LOG.error(msg.toString());
+        }
+
+        @Override
+        public void internalError(STMessage msg)
+        {
+            LOG.error(msg.toString());
         }
     }
 }
