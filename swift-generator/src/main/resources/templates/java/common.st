@@ -16,7 +16,7 @@ import java.util.*;
 @ThriftService("<context.name>")
 public interface <context.javaName><if(context.javaParents)> extends <context.javaParents; separator=", "><endif>
 {
-    <context.methods : { method |<_method(method)>}; separator="\n\n">
+    <context.methods : { method |<_method(method)>}; separator="\n">
 }
 >>
 
@@ -117,13 +117,18 @@ _enumElement(field) ::= <<
 
 _method(method) ::= <<
 <if(method.name)>
-@ThriftMethod(value="<method.name>"<if(method.oneway)>,
-              oneway=true<endif><if(method.annotatedExceptions)>,
-              exception={<method.annotatedExceptions: {exception |<_exceptionElement(exception)>}; separator=", ">}<endif>)<endif>
-<method.javaType> <method.javaName><_params(method.parameters)><if(!method.exceptions)>;
-<else>
- throws <method.exceptions: {exception |<exception.type>}; separator=", ">;
+@ThriftMethod(value = "<method.name>"<if(method.oneway)>,
+              oneway = true<endif><if(method.annotatedExceptions)>,
+              exception = {
+                  <_annotatedExceptions(method)>
+              }<endif>)
 <endif>
+<method.javaType> <method.javaName><_params(method.parameters)><if(!method.exceptions)>;
+<else> throws <method.exceptions: {exception |<exception.type>}; separator=", ">;<endif>
+>>
+
+_annotatedExceptions(method) ::= <<
+<method.annotatedExceptions: {exception |<_exceptionElement(exception)>}; separator=",\n">
 >>
 
 _annotation(field) ::= <<
