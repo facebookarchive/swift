@@ -139,10 +139,20 @@ public class SwiftGenerator
 
         final Document document = context.getDocument();
         final Header header = document.getHeader();
-        final String javaNamespace = Objects.firstNonNull(Objects.firstNonNull(swiftGeneratorConfig.getOverridePackage(),
-                                                                               header.getNamespace("java")),
-                                                          swiftGeneratorConfig.getDefaultPackage());
-        Preconditions.checkState(!isBlank(javaNamespace), "thrift uri %s does not declare a java namespace!", thriftUri);
+
+        // Override takes precedence
+        String javaNamespace = swiftGeneratorConfig.getOverridePackage();
+        // Otherwise fallback on package specified in .thrift file
+        if (javaNamespace == null) {
+            javaNamespace = header.getNamespace("java");
+        }
+        // Or the default if we don't have an override package or a package in the .thrift file
+        if (javaNamespace == null) {
+            javaNamespace = swiftGeneratorConfig.getDefaultPackage();
+        }
+
+        // If none of the above options get us a package to use, fail
+        Preconditions.checkState(javaNamespace != null, "thrift uri %s does not declare a java namespace!", thriftUri);
 
         // Make a note that this document is a parent of all the documents included, directly or recursively
         parentDocuments.push(thriftUri);
