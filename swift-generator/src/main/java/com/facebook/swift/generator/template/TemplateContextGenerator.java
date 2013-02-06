@@ -29,7 +29,6 @@ import com.facebook.swift.parser.model.ThriftField;
 import com.facebook.swift.parser.model.ThriftMethod;
 import com.google.common.base.Preconditions;
 
-import java.io.Closeable;
 import java.util.HashSet;
 import java.util.Set;
 

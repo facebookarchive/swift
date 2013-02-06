@@ -33,7 +33,6 @@ import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.ThriftMethod;
 import com.facebook.swift.service.ThriftService;
 import com.google.common.base.Throwables;
-import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;

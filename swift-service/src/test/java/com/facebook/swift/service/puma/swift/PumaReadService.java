@@ -15,10 +15,8 @@
  */
 package com.facebook.swift.service.puma.swift;
 
-import com.facebook.swift.service.ThriftException;
 import com.facebook.swift.service.ThriftMethod;
 import com.facebook.swift.service.ThriftService;
-import org.apache.thrift.TException;
 
 import java.io.Closeable;
 import java.util.List;

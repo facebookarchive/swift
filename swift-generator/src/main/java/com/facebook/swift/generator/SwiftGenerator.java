@@ -26,7 +26,6 @@ import com.facebook.swift.parser.model.Document;
 import com.facebook.swift.parser.model.Header;
 import com.facebook.swift.parser.visitor.DocumentVisitor;
 import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
@@ -40,7 +39,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -96,14 +94,12 @@ public class SwiftGenerator
 
         final Map<String, SwiftDocumentContext> contexts = Maps.newHashMap();
         for (final URI inputUri : inputs) {
-
             parsedDocuments.clear();
-
-            parseDocument(inputUri.isAbsolute() ? inputUri
-                                                : swiftGeneratorConfig.getInputBase().resolve(inputUri),
-                          contexts,
-                          new TypeRegistry(),
-                          new TypedefRegistry());
+            parseDocument(
+                    inputUri.isAbsolute() ? inputUri : swiftGeneratorConfig.getInputBase().resolve(inputUri),
+                    contexts,
+                    new TypeRegistry(),
+                    new TypedefRegistry());
         }
 
         LOG.info("IDL parsing complete, writing java code...");

@@ -16,11 +16,9 @@
 package com.facebook.swift.perf.loadgenerator;
 
 import com.beust.jcommander.JCommander;
-import com.facebook.nifty.client.FramedClientChannel;
 import com.facebook.nifty.client.FramedClientConnector;
 import com.facebook.nifty.client.NiftyClientChannel;
 import com.facebook.nifty.client.NiftyClientConnector;
-import com.facebook.nifty.client.UnframedClientChannel;
 import com.facebook.nifty.client.UnframedClientConnector;
 import com.facebook.swift.codec.guice.ThriftCodecModule;
 import com.facebook.swift.service.ThriftClientManager;
@@ -45,7 +43,6 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 import static com.facebook.swift.service.guice.ThriftClientBinder.thriftClientBinder;
-import static com.google.inject.util.Providers.guicify;
 
 public class LoadGenerator
 {

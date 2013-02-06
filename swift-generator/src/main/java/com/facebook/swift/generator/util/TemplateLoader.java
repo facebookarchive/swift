@@ -18,7 +18,6 @@ package com.facebook.swift.generator.util;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
-import com.google.common.io.CharStreams;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.Resources;
 import org.slf4j.Logger;
@@ -31,7 +30,6 @@ import org.stringtemplate.v4.misc.STMessage;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.StringReader;
 import java.net.URL;
 
 import javax.annotation.Nonnull;
@@ -45,7 +43,6 @@ public class TemplateLoader
                 @Override
                 public InputSupplier<InputStreamReader> apply(@Nonnull String templateFileName)
                 {
-
                     return Resources.newReaderSupplier(Resources.getResource(this.getClass(), "/templates/" + templateFileName), Charsets.UTF_8);
                 }
             };
