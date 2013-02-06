@@ -62,10 +62,6 @@ public class Main
             configBuilder.addTweak(tweak);
         }
 
-        if (cliConfig.addThriftExceptions) {
-            configBuilder.addTweak(SwiftGeneratorTweak.ADD_THRIFT_EXCEPTION);
-        }
-
         Iterable<URI> inputs = Iterables.transform(cliConfig.inputFiles, FILE_TO_URI_TRANSFORM);
 
         new SwiftGenerator(configBuilder.build()).parse(inputs);

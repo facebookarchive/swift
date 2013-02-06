@@ -42,12 +42,6 @@ public class SwiftGeneratorCommandLineConfig
     public String defaultPackage = null;
 
     @Parameter(
-            names = "-add_thrift_exceptions",
-            description = "Add TException as a return type for generated interfaces"
-    )
-    public boolean addThriftExceptions = false;
-
-    @Parameter(
             names = "-generate_included_files",
             description = "Generate code for included IDL files as well as specified IDL files"
     )
@@ -60,8 +54,8 @@ public class SwiftGeneratorCommandLineConfig
     public boolean generateBeans = false;
 
     @Parameter(
-            names = "-tweaks",
+            names = "-tweak",
             description = "Enable specific code generation tweaks"
     )
-    public Set<SwiftGeneratorTweak> tweaks = Sets.newHashSet(SwiftGeneratorTweak.ADD_CLOSEABLE_INTERFACE);
+    public Set<SwiftGeneratorTweak> tweaks = Sets.newHashSet();
 }
