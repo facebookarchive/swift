@@ -71,9 +71,6 @@ public class TemplateLoader
     protected STGroup getTemplateGroup(Iterable<String> templateFileNames) throws IOException
     {
         if (stg == null) {
-            // Create a hard-coded input supplier for the 'group' header line
-            InputSupplier<StringReader> headerSupplier = CharStreams.newReaderSupplier("group swiftGeneratorTemplates;");
-
             // Convert set of relative paths to .st files into a set of input suppliers
             Iterable<InputSupplier<InputStreamReader>> templateInputSuppliers =
                     Iterables.transform(templateFileNames, FILE_TO_INPUT_SUPPLIER_TRANSFORM);
