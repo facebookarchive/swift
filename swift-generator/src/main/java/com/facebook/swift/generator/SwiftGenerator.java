@@ -29,6 +29,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -57,10 +58,10 @@ public class SwiftGenerator
 {
     private static final Logger LOG = LoggerFactory.getLogger(SwiftGenerator.class);
 
-    private static final Map<String, ArrayList<String>> TEMPLATES =
+    private static final Map<String, ImmutableList<String>> TEMPLATES =
             ImmutableMap.of(
-                    "java-regular", Lists.newArrayList("java/common.st", "java/regular.st"),
-                    "java-immutable", Lists.newArrayList("java/common.st", "java/immutable.st")
+                    "java-regular", ImmutableList.of("java/common.st", "java/regular.st"),
+                    "java-immutable", ImmutableList.of("java/common.st", "java/immutable.st")
             );
 
     private final File outputFolder;
