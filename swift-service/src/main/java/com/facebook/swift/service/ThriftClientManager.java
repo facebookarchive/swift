@@ -54,6 +54,7 @@ import javax.annotation.concurrent.Immutable;
 import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_CONNECT_TIMEOUT;
 import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_READ_TIMEOUT;
 import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_WRITE_TIMEOUT;
+import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_MAX_FRAME_SIZE;
 import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
 
 public class ThriftClientManager implements Closeable
@@ -79,21 +80,10 @@ public class ThriftClientManager implements Closeable
         this(new ThriftCodecManager());
     }
 
-    public ThriftClientManager(int maxFrameSize)
-    {
-        this(new ThriftCodecManager(), maxFrameSize);
-    }
-
     public ThriftClientManager(ThriftCodecManager codecManager)
     {
         this.codecManager = codecManager;
         this.niftyClient = new NiftyClient();
-    }
-
-    public ThriftClientManager(ThriftCodecManager codecManager, int maxFrameSize)
-    {
-        this.codecManager = codecManager;
-        niftyClient = new NiftyClient(maxFrameSize);
     }
 
     public <T, C extends NiftyClientChannel> ListenableFuture<T> createClient(
@@ -105,6 +95,7 @@ public class ThriftClientManager implements Closeable
                             DEFAULT_CONNECT_TIMEOUT,
                             DEFAULT_READ_TIMEOUT,
                             DEFAULT_WRITE_TIMEOUT,
+                            DEFAULT_MAX_FRAME_SIZE,
                             DEFAULT_NAME,
                             null);
     }
@@ -115,6 +106,7 @@ public class ThriftClientManager implements Closeable
             final Duration connectTimeout,
             final Duration readTimeout,
             final Duration writeTimeout,
+            final int maxFrameSize,
             final String clientName,
             HostAndPort socksProxy)
     {
@@ -126,6 +118,7 @@ public class ThriftClientManager implements Closeable
                                              connectTimeout,
                                              readTimeout,
                                              writeTimeout,
+                                             maxFrameSize,
                                              this.toSocksProxyAddress(socksProxy));
             Futures.addCallback(connectFuture, new FutureCallback<C>()
             {

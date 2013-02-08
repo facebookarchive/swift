@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.google.inject.multibindings.Multibinder.newSetBinder;
+import static io.airlift.configuration.ConfigurationModule.bindConfig;
 import static java.lang.String.format;
 
 public class ThriftClientModule implements Module
@@ -42,7 +43,7 @@ public class ThriftClientModule implements Module
     public void configure(Binder binder)
     {
         // Bind single shared ThriftClientManager
-        binder.bind(ThriftClientManager.class).toProvider(ThriftClientManagerProvider.class).in(Scopes.SINGLETON);
+        binder.bind(ThriftClientManager.class).in(Scopes.SINGLETON);
 
         // We bind the ThriftClientProviderProviders in a Set so below we can export the thrift methods to JMX
         newSetBinder(binder, ThriftClientBinder.ThriftClientProvider.class).permitDuplicates();

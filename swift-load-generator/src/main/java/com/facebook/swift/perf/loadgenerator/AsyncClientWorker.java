@@ -41,6 +41,7 @@ import com.google.inject.Inject;
 public final class AsyncClientWorker extends AbstractClientWorker implements FutureCallback<Object>
 {
     private static final Logger logger = LoggerFactory.getLogger(AsyncClientWorker.class);
+    private static final int MAX_FRAME_SIZE = 0x7FFFFFFF;
 
     private volatile boolean shutdownRequested = false;
     private final long pendingOperationsLowWaterMark;
@@ -103,6 +104,7 @@ public final class AsyncClientWorker extends AbstractClientWorker implements Fut
                                                       new Duration(config.connectTimeoutMilliseconds, TimeUnit.SECONDS),
                                                       new Duration(config.sendTimeoutMilliseconds, TimeUnit.MILLISECONDS),
                                                       new Duration(config.receiveTimeoutMilliseconds, TimeUnit.MILLISECONDS),
+                                                      MAX_FRAME_SIZE,
                                                       "AsyncClientWorker",
                                                       null);
 
