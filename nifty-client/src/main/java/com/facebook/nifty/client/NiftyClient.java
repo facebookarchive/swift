@@ -34,66 +34,52 @@ import javax.annotation.Nullable;
 import java.io.Closeable;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import static com.google.common.util.concurrent.MoreExecutors.getExitingExecutorService;
 import static java.util.concurrent.Executors.newCachedThreadPool;
 
 public class NiftyClient implements Closeable
 {
-    // 1MB default
-    private static final int DEFAULT_MAX_FRAME_SIZE = 1048576;
     public static final Duration DEFAULT_CONNECT_TIMEOUT = new Duration(2, TimeUnit.SECONDS);
     public static final Duration DEFAULT_READ_TIMEOUT = new Duration(2, TimeUnit.SECONDS);
     private static final Duration DEFAULT_WRITE_TIMEOUT = new Duration(2, TimeUnit.SECONDS);
+    private static final int DEFAULT_MAX_FRAME_SIZE = 16777216;
 
     private final NettyClientConfigBuilder configBuilder;
     private final ExecutorService bossExecutor;
     private final ExecutorService workerExecutor;
-    private final int maxFrameSize;
     private final NioClientSocketChannelFactory channelFactory;
     private final InetSocketAddress defaultSocksProxyAddress;
     private final ChannelGroup allChannels = new DefaultChannelGroup();
     private final HashedWheelTimer hashedWheelTimer = new HashedWheelTimer();
 
     /**
-     * Creates a new NiftyClient with defaults : frame size 1MB, 30 secs
-     * connect and read timeout and cachedThreadPool for bossExecutor and workerExecutor.
+     * Creates a new NiftyClient with defaults: cachedThreadPool for bossExecutor and workerExecutor
      */
     public NiftyClient()
     {
-        this(DEFAULT_MAX_FRAME_SIZE);
-    }
-
-    public NiftyClient(int maxFrameSize)
-    {
         this(new NettyClientConfigBuilder(),
-                getExitingExecutorService((ThreadPoolExecutor) newCachedThreadPool()),
-                getExitingExecutorService((ThreadPoolExecutor) newCachedThreadPool()),
-                maxFrameSize,
-                null);
+             newCachedThreadPool(),
+             newCachedThreadPool(),
+             null);
     }
 
     public NiftyClient(NettyClientConfigBuilder configBuilder,
             ExecutorService boss,
-            ExecutorService worker,
-            int maxFrameSize)
+            ExecutorService worker)
     {
-        this(configBuilder, boss, worker, maxFrameSize, null);
+        this(configBuilder, boss, worker, null);
     }
 
     public NiftyClient(
             NettyClientConfigBuilder configBuilder,
             ExecutorService boss,
             ExecutorService worker,
-            int maxFrameSize,
             @Nullable InetSocketAddress defaultSocksProxyAddress)
     {
         this.configBuilder = configBuilder;
         this.bossExecutor = boss;
         this.workerExecutor = worker;
-        this.maxFrameSize = maxFrameSize;
         this.defaultSocksProxyAddress = defaultSocksProxyAddress;
         this.channelFactory = new NioClientSocketChannelFactory(boss, worker);
     }
@@ -105,19 +91,7 @@ public class NiftyClient implements Closeable
                             DEFAULT_CONNECT_TIMEOUT,
                             DEFAULT_READ_TIMEOUT,
                             DEFAULT_WRITE_TIMEOUT,
-                            defaultSocksProxyAddress);
-    }
-
-    public <T extends NiftyClientChannel> ListenableFuture<T> connectAsync(
-            NiftyClientConnector<T> clientChannelConnector,
-            Duration connectTimeout,
-            Duration receiveTimeout,
-            Duration sendTimeout)
-    {
-        return connectAsync(clientChannelConnector,
-                            connectTimeout,
-                            receiveTimeout,
-                            sendTimeout,
+                            DEFAULT_MAX_FRAME_SIZE,
                             defaultSocksProxyAddress);
     }
 
@@ -126,6 +100,22 @@ public class NiftyClient implements Closeable
             Duration connectTimeout,
             Duration receiveTimeout,
             Duration sendTimeout,
+            int maxFrameSize)
+    {
+        return connectAsync(clientChannelConnector,
+                            connectTimeout,
+                            receiveTimeout,
+                            sendTimeout,
+                            maxFrameSize,
+                            defaultSocksProxyAddress);
+    }
+
+    public <T extends NiftyClientChannel> ListenableFuture<T> connectAsync(
+            NiftyClientConnector<T> clientChannelConnector,
+            Duration connectTimeout,
+            Duration receiveTimeout,
+            Duration sendTimeout,
+            int maxFrameSize,
             @Nullable InetSocketAddress socksProxyAddress)
     {
         ClientBootstrap bootstrap = createClientBootstrap(socksProxyAddress);
@@ -160,17 +150,7 @@ public class NiftyClient implements Closeable
     public TNiftyClientTransport connectSync(InetSocketAddress addr)
             throws TTransportException, InterruptedException
     {
-        return connectSync(addr, DEFAULT_CONNECT_TIMEOUT, DEFAULT_READ_TIMEOUT, DEFAULT_WRITE_TIMEOUT);
-    }
-
-    public TNiftyClientTransport connectSync(
-            InetSocketAddress addr,
-            Duration connectTimeout,
-            Duration receiveTimeout,
-            Duration sendTimeout)
-            throws TTransportException, InterruptedException
-    {
-        return connectSync(addr, connectTimeout, receiveTimeout, sendTimeout, defaultSocksProxyAddress);
+        return connectSync(addr, DEFAULT_CONNECT_TIMEOUT, DEFAULT_READ_TIMEOUT, DEFAULT_WRITE_TIMEOUT, DEFAULT_MAX_FRAME_SIZE);
     }
 
     public TNiftyClientTransport connectSync(
@@ -178,6 +158,18 @@ public class NiftyClient implements Closeable
             Duration connectTimeout,
             Duration receiveTimeout,
             Duration sendTimeout,
+            int maxFrameSize)
+            throws TTransportException, InterruptedException
+    {
+        return connectSync(addr, connectTimeout, receiveTimeout, sendTimeout, maxFrameSize, defaultSocksProxyAddress);
+    }
+
+    public TNiftyClientTransport connectSync(
+            InetSocketAddress addr,
+            Duration connectTimeout,
+            Duration receiveTimeout,
+            Duration sendTimeout,
+            int maxFrameSize,
             @Nullable InetSocketAddress socksProxyAddress)
             throws TTransportException, InterruptedException
     {
