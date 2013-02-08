@@ -34,6 +34,7 @@ public class ThriftClient<T>
     private final Duration writeTimeout;
 
     private final HostAndPort socksProxy;
+    private final int maxFrameSize;
 
     @Inject
     public ThriftClient(ThriftClientManager clientManager, Class<T> clientType)
@@ -58,6 +59,7 @@ public class ThriftClient<T>
         readTimeout = clientConfig.getReadTimeout();
         writeTimeout = clientConfig.getWriteTimeout();
         socksProxy = clientConfig.getSocksProxy();
+        maxFrameSize = clientConfig.getMaxFrameSize();
     }
 
     @Managed
@@ -99,6 +101,12 @@ public class ThriftClient<T>
         return socksProxy.toString();
     }
 
+    @Managed
+    public int getMaxFrameSize()
+    {
+        return maxFrameSize;
+    }
+
     /***
      * Asynchronously connect to a service to create a new client
      * @param connector Connector used to establish the new connection
@@ -112,6 +120,7 @@ public class ThriftClient<T>
                 connectTimeout,
                 readTimeout,
                 writeTimeout,
+                maxFrameSize,
                 clientName,
                 socksProxy);
     }

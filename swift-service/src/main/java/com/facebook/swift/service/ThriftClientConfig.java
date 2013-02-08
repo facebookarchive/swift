@@ -22,12 +22,16 @@ import io.airlift.units.MinDuration;
 
 import java.util.concurrent.TimeUnit;
 
+import javax.validation.constraints.Max;
+
 public class ThriftClientConfig
 {
     public static final Duration DEFAULT_CONNECT_TIMEOUT = new Duration(500, TimeUnit.MILLISECONDS);
     public static final Duration DEFAULT_READ_TIMEOUT = new Duration(1, TimeUnit.MINUTES);
     public static final Duration DEFAULT_WRITE_TIMEOUT = new Duration(1, TimeUnit.MINUTES);
+    public static final int DEFAULT_MAX_FRAME_SIZE = 0x7FFFFFFF;
 
+    private int maxFrameSize = DEFAULT_MAX_FRAME_SIZE;
     private Duration connectTimeout = DEFAULT_CONNECT_TIMEOUT;
     private Duration readTimeout = DEFAULT_READ_TIMEOUT;
     private Duration writeTimeout = DEFAULT_WRITE_TIMEOUT;
@@ -81,6 +85,19 @@ public class ThriftClientConfig
     public ThriftClientConfig setSocksProxy(HostAndPort socksProxy)
     {
         this.socksProxy = socksProxy;
+        return this;
+    }
+
+    @Max(value = 0x7FFFFFFF)
+    public int getMaxFrameSize()
+    {
+        return maxFrameSize;
+    }
+
+    @Config("thrift.client.max-frame-size")
+    public ThriftClientConfig setMaxFrameSize(int maxFrameSize)
+    {
+        this.maxFrameSize = maxFrameSize;
         return this;
     }
 }
