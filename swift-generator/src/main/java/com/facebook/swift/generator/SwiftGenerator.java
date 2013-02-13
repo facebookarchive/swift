@@ -137,18 +137,21 @@ public class SwiftGenerator
         final Header header = document.getHeader();
 
         // Override takes precedence
-        String javaNamespace = swiftGeneratorConfig.getOverridePackage();
+        String javaPackage = swiftGeneratorConfig.getOverridePackage();
         // Otherwise fallback on package specified in .thrift file
-        if (javaNamespace == null) {
-            javaNamespace = header.getNamespace("java");
+        if (javaPackage == null) {
+            javaPackage = header.getNamespace("swift");
+        }
+        if (javaPackage == null) {
+            javaPackage = header.getNamespace("java");
         }
         // Or the default if we don't have an override package or a package in the .thrift file
-        if (javaNamespace == null) {
-            javaNamespace = swiftGeneratorConfig.getDefaultPackage();
+        if (javaPackage == null) {
+            javaPackage = swiftGeneratorConfig.getDefaultPackage();
         }
 
         // If none of the above options get us a package to use, fail
-        Preconditions.checkState(javaNamespace != null, "thrift uri %s does not declare a java namespace!", thriftUri);
+        Preconditions.checkState(javaPackage != null, "thrift uri %s does not declare a swift namespace!", thriftUri);
 
         // Make a note that this document is a parent of all the documents included, directly or recursively
         parentDocuments.push(thriftUri);
@@ -173,7 +176,7 @@ public class SwiftGenerator
         // Make a note that we've already parsed this document
         parsedDocuments.add(thriftUri);
 
-        document.visit(new TypeVisitor(javaNamespace, context));
+        document.visit(new TypeVisitor(javaPackage, context));
 
         if (contexts != null && contexts.put(context.getNamespace(), context) != null) {
             LOG.info("Thrift Namespace {} included multiple times!", context.getNamespace());
