@@ -140,7 +140,7 @@ public class SwiftGenerator
         String javaPackage = swiftGeneratorConfig.getOverridePackage();
         // Otherwise fallback on package specified in .thrift file
         if (javaPackage == null) {
-            javaPackage = header.getNamespace("swift");
+            javaPackage = header.getNamespace("java.swift");
         }
         if (javaPackage == null) {
             javaPackage = header.getNamespace("java");
