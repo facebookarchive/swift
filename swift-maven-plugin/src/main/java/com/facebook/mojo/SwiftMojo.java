@@ -135,6 +135,13 @@ public class SwiftMojo extends AbstractMojo
     private String codeFlavor = "java-regular";
 
     /**
+     * Use the 'java' namespace instead of the 'java.swift' namespace.
+     *
+     * @parameter default-value="false"
+     */
+    private boolean usePlainJavaNamespace = false;
+
+    /**
      * @parameter expression="${project}"
      * @required
      * @readonly
@@ -163,7 +170,8 @@ public class SwiftMojo extends AbstractMojo
                     .overridePackage(overridePackage)
                     .defaultPackage(defaultPackage)
                     .generateIncludedCode(generateIncludedCode)
-                    .codeFlavor(codeFlavor);
+                    .codeFlavor(codeFlavor)
+                    .usePlainJavaNamespace(usePlainJavaNamespace);
 
                 if (addThriftExceptions) {
                     configBuilder.addTweak(SwiftGeneratorTweak.ADD_THRIFT_EXCEPTION);
