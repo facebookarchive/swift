@@ -56,7 +56,8 @@ public class Main
                 .overridePackage(cliConfig.overridePackage)
                 .defaultPackage(cliConfig.defaultPackage)
                 .generateIncludedCode(cliConfig.generateIncludedCode)
-                .codeFlavor(cliConfig.generateBeans ? "java-regular" : "java-immutable");
+                .codeFlavor(cliConfig.generateBeans ? "java-regular" : "java-immutable")
+                .usePlainJavaNamespace(cliConfig.usePlainJavaNamespace);
 
         for (SwiftGeneratorTweak tweak : cliConfig.tweaks) {
             configBuilder.addTweak(tweak);

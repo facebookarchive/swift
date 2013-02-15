@@ -59,4 +59,10 @@ public class SwiftGeneratorCommandLineConfig
             description = "Enable specific code generation tweaks"
     )
     public Set<SwiftGeneratorTweak> tweaks = Sets.newHashSet();
+
+    @Parameter(
+            names = "-use_java_namespace",
+            description = "Use 'java' namespace instead of 'java.swift' namespace"
+    )
+    public boolean usePlainJavaNamespace;
 }
