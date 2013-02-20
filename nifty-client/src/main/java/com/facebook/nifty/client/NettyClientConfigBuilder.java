@@ -26,6 +26,13 @@ import java.lang.reflect.Proxy;
  */
 public class NettyClientConfigBuilder extends NettyConfigBuilderBase
 {
+    // The constants come directly from Netty but are private in Netty. We need these default
+    // values to call the NioClientSocketChannelFactory constructor with a custom timer.
+    private static final int DEFAULT_BOSS_THREAD_COUNT = 1;
+    private static final int DEFAULT_WORKER_THREAD_COUNT = Runtime.getRuntime().availableProcessors() * 2;
+    private int bossThreadCount = DEFAULT_BOSS_THREAD_COUNT;
+    private int workerThreadCount = DEFAULT_WORKER_THREAD_COUNT;
+
     private final NioSocketChannelConfig socketChannelConfig = (NioSocketChannelConfig) Proxy.newProxyInstance(
             getClass().getClassLoader(),
             new Class<?>[]{NioSocketChannelConfig.class},
@@ -40,5 +47,27 @@ public class NettyClientConfigBuilder extends NettyConfigBuilderBase
     public NioSocketChannelConfig getSocketChannelConfig()
     {
         return socketChannelConfig;
+    }
+
+    public NettyClientConfigBuilder setNiftyBossThreadCount(int bossThreadCount)
+    {
+        this.bossThreadCount = bossThreadCount;
+        return this;
+    }
+
+    public int getNiftyBossThreadCount()
+    {
+        return bossThreadCount;
+    }
+
+    public NettyClientConfigBuilder setNiftyWorkerThreadCount(int workerThreadCount)
+    {
+        this.workerThreadCount = workerThreadCount;
+        return this;
+    }
+
+    public int getNiftyWorkerThreadCount()
+    {
+        return workerThreadCount;
     }
 }

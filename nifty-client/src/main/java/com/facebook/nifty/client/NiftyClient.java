@@ -19,6 +19,7 @@ import com.facebook.nifty.client.socks.Socks4ClientBootstrap;
 import com.facebook.nifty.core.ShutdownUtil;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.airlift.units.Duration;
 import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.bootstrap.ClientBootstrap;
@@ -28,12 +29,14 @@ import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
+import org.jboss.netty.channel.socket.nio.NioWorkerPool;
 import org.jboss.netty.util.HashedWheelTimer;
 
 import javax.annotation.Nullable;
 import java.io.Closeable;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.Executors.newCachedThreadPool;
@@ -51,37 +54,36 @@ public class NiftyClient implements Closeable
     private final NioClientSocketChannelFactory channelFactory;
     private final InetSocketAddress defaultSocksProxyAddress;
     private final ChannelGroup allChannels = new DefaultChannelGroup();
-    private final HashedWheelTimer hashedWheelTimer = new HashedWheelTimer();
+    private final HashedWheelTimer hashedWheelTimer;
 
     /**
      * Creates a new NiftyClient with defaults: cachedThreadPool for bossExecutor and workerExecutor
      */
     public NiftyClient()
     {
-        this(new NettyClientConfigBuilder(),
-             newCachedThreadPool(),
-             newCachedThreadPool(),
-             null);
+        this(new NettyClientConfigBuilder());
     }
 
-    public NiftyClient(NettyClientConfigBuilder configBuilder,
-            ExecutorService boss,
-            ExecutorService worker)
+    public NiftyClient(NettyClientConfigBuilder configBuilder)
     {
-        this(configBuilder, boss, worker, null);
+        this(configBuilder, null);
     }
 
     public NiftyClient(
             NettyClientConfigBuilder configBuilder,
-            ExecutorService boss,
-            ExecutorService worker,
             @Nullable InetSocketAddress defaultSocksProxyAddress)
     {
         this.configBuilder = configBuilder;
-        this.bossExecutor = boss;
-        this.workerExecutor = worker;
+
+        this.hashedWheelTimer = new HashedWheelTimer(renamingDaemonThreadFactory("nifty-client-timer-%s"));
+        this.bossExecutor = newCachedThreadPool(renamingDaemonThreadFactory("nifty-client-boss-%s"));
+        this.workerExecutor = newCachedThreadPool(renamingDaemonThreadFactory("nifty-client-worker-%s"));
         this.defaultSocksProxyAddress = defaultSocksProxyAddress;
-        this.channelFactory = new NioClientSocketChannelFactory(boss, worker);
+
+        int bossThreadCount = configBuilder.getNiftyBossThreadCount();
+        int workerThreadCount = configBuilder.getNiftyWorkerThreadCount();
+        NioWorkerPool workerPool = new NioWorkerPool(workerExecutor, workerThreadCount);
+        this.channelFactory = new NioClientSocketChannelFactory(bossExecutor, bossThreadCount, workerPool, hashedWheelTimer);
     }
 
     public <T extends NiftyClientChannel> ListenableFuture<T> connectAsync(
@@ -226,6 +228,11 @@ public class NiftyClient implements Closeable
                                             bossExecutor,
                                             workerExecutor,
                                             allChannels);
+    }
+
+    private ThreadFactory renamingDaemonThreadFactory(String nameFormat)
+    {
+        return new ThreadFactoryBuilder().setNameFormat(nameFormat).setDaemon(true).build();
     }
 
     private ClientBootstrap createClientBootstrap(InetSocketAddress socksProxyAddress)
