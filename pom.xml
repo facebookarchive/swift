@@ -45,7 +45,7 @@ limitations under the License.
         <fb.check.fail-pmd>false</fb.check.fail-pmd>
         <fb.check.fail-findbugs>false</fb.check.fail-findbugs>
 
-        <dep.airlift.version>0.68</dep.airlift.version>
+        <dep.airlift.version>0.70</dep.airlift.version>
     </properties>
 
     <url>https://facebook.github.com/nifty</url>
@@ -110,7 +110,7 @@ limitations under the License.
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty</artifactId>
-                <version>3.6.1.Final</version>
+                <version>3.6.2.Final</version>
             </dependency>
 
             <dependency>
