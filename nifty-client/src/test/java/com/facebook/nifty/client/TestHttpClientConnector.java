@@ -18,6 +18,9 @@ package com.facebook.nifty.client;
 import org.testng.annotations.Test;
 
 import java.net.URI;
+import java.net.URISyntaxException;
+
+import static org.testng.Assert.assertEquals;
 
 public class TestHttpClientConnector
 {
@@ -61,5 +64,19 @@ public class TestHttpClientConnector
     public void testUriWithInvalidScheme()
     {
         new HttpClientConnector(URI.create("ftp://good.com/foo"));
+    }
+
+    @Test
+    public void testHostNameAndPortWithServicePath() throws URISyntaxException
+    {
+        HttpClientConnector connector = new HttpClientConnector("good.com:1234", "/foo");
+        assertEquals(connector.toString(), "http://good.com:1234/foo");
+    }
+
+    @Test
+    public void testHostNameAndDefaultPortWithServicePath() throws URISyntaxException
+    {
+        HttpClientConnector connector = new HttpClientConnector("good.com", "/foo");
+        assertEquals(connector.toString(), "http://good.com/foo");
     }
 }

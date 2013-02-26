@@ -39,9 +39,9 @@ public class HttpClientConnector extends AbstractClientConnector<HttpClientChann
             throws URISyntaxException
     {
         super(new InetSocketAddress(HostAndPort.fromString(hostNameAndPort).getHostText(),
-                                    HostAndPort.fromString(hostNameAndPort).getPort()));
+                                    HostAndPort.fromString(hostNameAndPort).getPortOrDefault(80)));
 
-        this.endpointUri = new URI("http", hostNameAndPort, servicePath, null);
+        this.endpointUri = new URI("http", hostNameAndPort, servicePath, null, null);
     }
 
     public HttpClientConnector(URI uri)
