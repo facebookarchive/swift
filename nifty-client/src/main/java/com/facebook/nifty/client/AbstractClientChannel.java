@@ -60,7 +60,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
         return nettyChannel;
     }
 
-    protected abstract ChannelBuffer extractResponse(Object message);
+    protected abstract ChannelBuffer extractResponse(Object message) throws TTransportException;
 
     protected abstract int extractSequenceId(ChannelBuffer message)
             throws TTransportException;
@@ -168,19 +168,19 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
     {
-        ChannelBuffer response = extractResponse(e.getMessage());
+        try {
+            ChannelBuffer response = extractResponse(e.getMessage());
 
-        if (response != null) {
-            try {
+            if (response != null) {
                 int sequenceId = extractSequenceId(response);
                 onResponseReceived(sequenceId, response);
             }
-            catch (Throwable t) {
-                onError(t);
+            else {
+                ctx.sendUpstream(e);
             }
         }
-        else {
-            ctx.sendUpstream(e);
+        catch (Throwable t) {
+            onError(t);
         }
     }
 
@@ -237,7 +237,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
         }
     }
 
-    private void onError(Throwable t)
+    protected void onError(Throwable t)
     {
         TException wrappedException = wrapException(t);
 

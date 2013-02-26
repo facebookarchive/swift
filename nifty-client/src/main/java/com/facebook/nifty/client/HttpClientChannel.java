@@ -16,6 +16,7 @@
 package com.facebook.nifty.client;
 
 import com.google.common.net.HttpHeaders;
+import org.apache.thrift.protocol.TProtocolException;
 import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
@@ -24,6 +25,7 @@ import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.jboss.netty.util.Timer;
 
@@ -69,13 +71,19 @@ public class HttpClientChannel extends AbstractClientChannel {
     }
 
     @Override
-    protected ChannelBuffer extractResponse(Object message)
+    protected ChannelBuffer extractResponse(Object message) throws TTransportException
     {
         if (!(message instanceof HttpResponse)) {
             return null;
         }
 
         HttpResponse httpResponse = (HttpResponse) message;
+
+        if (!httpResponse.getStatus().equals(HttpResponseStatus.OK)) {
+            throw new TTransportException("HTTP response had non-OK status: " + httpResponse
+                    .getStatus().toString());
+        }
+
         ChannelBuffer content = httpResponse.getContent();
 
         if (!content.readable()) {
