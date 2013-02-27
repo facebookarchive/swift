@@ -39,12 +39,14 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocolException;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TTransportException;
+import org.jboss.netty.channel.Channel;
 
 import java.io.Closeable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -196,15 +198,41 @@ public class ThriftClientManager implements Closeable
         niftyClient.close();
     }
 
+    /**
+     * Returns the {@link NiftyClientChannel} backing a Swift client
+     *
+     * @throws IllegalArgumentException if the client is not a Swift client
+     */
     public NiftyClientChannel getNiftyChannel(Object client)
     {
         try {
             InvocationHandler genericHandler = Proxy.getInvocationHandler(client);
-            ThriftInvocationHandler thriftHandler = ThriftInvocationHandler.class.cast(genericHandler);
+            ThriftInvocationHandler thriftHandler = (ThriftInvocationHandler) genericHandler;
             return thriftHandler.getChannel();
         }
-        catch (ClassCastException e) {
+        catch (IllegalArgumentException | ClassCastException e) {
             throw new IllegalArgumentException("Not a swift client object", e);
+        }
+    }
+
+    /**
+     * Returns the remote address that a Swift client is connected to
+     *
+     * @throws IllegalArgumentException if the client is not a Swift client or is not connected
+     * through an internet socket
+     */
+    public HostAndPort getRemoteAddress(Object client)
+    {
+        NiftyClientChannel niftyChannel = getNiftyChannel(client);
+
+        try {
+            Channel nettyChannel = niftyChannel.getNettyChannel();
+            SocketAddress address = nettyChannel.getRemoteAddress();
+            InetSocketAddress inetAddress = (InetSocketAddress) address;
+            return HostAndPort.fromParts(inetAddress.getHostName(), inetAddress.getPort());
+        }
+        catch (NullPointerException | ClassCastException e) {
+            throw new IllegalArgumentException("Swift client is not connected through an internet socket", e);
         }
     }
 
