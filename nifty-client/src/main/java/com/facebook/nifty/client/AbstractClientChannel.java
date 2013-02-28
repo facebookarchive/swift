@@ -337,7 +337,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
     /**
      * Used to create TimerTasks that will fire
      */
-    private class IoThreadBoundTimerTask implements TimerTask {
+    private static class IoThreadBoundTimerTask implements TimerTask {
         private final NiftyClientChannel channel;
         private final TimerTask timerTask;
 

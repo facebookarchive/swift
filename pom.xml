@@ -16,7 +16,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -42,9 +44,6 @@ limitations under the License.
         <!-- it dependends on airlift, which is 1.7 only.               -->
         <!-- <project.build.targetJdk>1.6</project.build.targetJdk>     -->
 
-        <fb.check.fail-pmd>false</fb.check.fail-pmd>
-        <fb.check.fail-findbugs>false</fb.check.fail-findbugs>
-
         <dep.airlift.version>0.70</dep.airlift.version>
     </properties>
 
@@ -68,14 +67,14 @@ limitations under the License.
         <connection>scm:git:git@github.com:facebook/nifty.git</connection>
         <developerConnection>scm:git:git@github.com:facebook/nifty.git</developerConnection>
         <url>https://github.com/facebook/nifty</url>
-      <tag>HEAD</tag>
-  </scm>
+        <tag>HEAD</tag>
+    </scm>
 
     <distributionManagement>
-      <site>
-	<id>github-project-site</id>
-	<url>gitsite:git@github.com/facebook/nifty.git</url>
-      </site>
+        <site>
+            <id>github-project-site</id>
+            <url>gitsite:git@github.com/facebook/nifty.git</url>
+        </site>
     </distributionManagement>
 
     <dependencyManagement>
@@ -166,6 +165,20 @@ limitations under the License.
                             </goals>
                         </execution>
                     </executions>
+                </plugin>
+
+                <!-- Configure findbugs plugin to skip checking of thrift-generated files -->
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>findbugs-maven-plugin</artifactId>
+                    <configuration>
+                        <!--
+                            NOTE: It would make more sense to have an exclude filter file per sub-module
+                            but findbugs-maven-plugin has a bug that it will continue using the first
+                            filter file it saw for the rest of the mvn process (even in different sub-modules).
+                        -->
+                        <excludeFilterFile>src/findbugs/findbugs-exclude-filter.xml</excludeFilterFile>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>

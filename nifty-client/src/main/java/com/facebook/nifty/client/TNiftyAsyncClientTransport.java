@@ -141,6 +141,8 @@ public class TNiftyAsyncClientTransport extends TTransport
                         listener.onChannelClosedOrDisconnected(ctx.getChannel());
                     }
                     break;
+                default:
+                    break;
             }
         }
         else if (e instanceof ExceptionEvent) {
@@ -152,10 +154,8 @@ public class TNiftyAsyncClientTransport extends TTransport
 
     private void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
     {
-        if (e.getMessage() instanceof ChannelBuffer) {
-            if (listener != null) {
-                listener.onFrameRead(ctx.getChannel(), (ChannelBuffer) e.getMessage());
-            }
+        if (e.getMessage() instanceof ChannelBuffer && listener != null) {
+            listener.onFrameRead(ctx.getChannel(), (ChannelBuffer) e.getMessage());
         }
         // drop it
     }

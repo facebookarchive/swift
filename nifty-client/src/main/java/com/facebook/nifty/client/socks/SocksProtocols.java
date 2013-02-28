@@ -15,6 +15,7 @@
  */
 package com.facebook.nifty.client.socks;
 
+import com.google.common.base.Charsets;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 
@@ -40,7 +41,7 @@ public class SocksProtocols
         if (address == null) {
             throw new IllegalArgumentException("address is null");
         }
-        byte[] userBytes = System.getProperty("user.name", "").getBytes();
+        byte[] userBytes = System.getProperty("user.name", "").getBytes(Charsets.ISO_8859_1);
         ChannelBuffer handshake = ChannelBuffers.dynamicBuffer(9 + userBytes.length);
         handshake.writeByte(SOCKS_VERSION_4); // SOCKS version
         handshake.writeByte(CONNECT); // CONNECT
@@ -56,8 +57,8 @@ public class SocksProtocols
         if (hostName == null) {
             throw new IllegalArgumentException("hostName is null");
         }
-        byte[] userBytes = System.getProperty("user.name", "").getBytes();
-        byte[] hostNameBytes = hostName.getBytes();
+        byte[] userBytes = System.getProperty("user.name", "").getBytes(Charsets.ISO_8859_1);
+        byte[] hostNameBytes = hostName.getBytes(Charsets.ISO_8859_1);
         ChannelBuffer handshake = ChannelBuffers.dynamicBuffer(10 + userBytes.length + hostNameBytes.length);
         handshake.writeByte(SOCKS_VERSION_4); // SOCKS version
         handshake.writeByte(CONNECT); // CONNECT
