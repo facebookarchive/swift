@@ -15,18 +15,18 @@
  */
 package com.facebook.swift.service.explicitidentifiers;
 
-import com.facebook.swift.service.base.TestSuiteBase;
+import com.facebook.swift.service.base.SuiteBase;
 import org.apache.thrift.TException;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 
-public class ExplicitIdentifiersTestSuite extends TestSuiteBase<TestServiceHandler, TestServiceClient>
+public class ExplicitIdentifiersTest extends SuiteBase<ExplicitIdentifiersServiceHandler, ExplicitIdentifiersServiceClient>
 {
-    public ExplicitIdentifiersTestSuite()
+    public ExplicitIdentifiersTest()
     {
-        super(TestServiceHandler.class, TestServiceClient.class);
+        super(ExplicitIdentifiersServiceHandler.class, ExplicitIdentifiersServiceClient.class);
     }
 
     // Client passes all parameters, but in a different order than the server expects

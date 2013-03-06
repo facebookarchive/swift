@@ -15,7 +15,7 @@
  */
 package com.facebook.swift.service.oneway;
 
-public interface TestServiceClient extends TestService, AutoCloseable {
+public interface OneWayServiceClient extends OneWayService, AutoCloseable {
     @Override
     public void close();
 }

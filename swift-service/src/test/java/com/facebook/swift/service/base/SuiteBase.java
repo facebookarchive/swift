@@ -30,7 +30,7 @@ import org.testng.annotations.BeforeMethod;
 
 import java.util.concurrent.ExecutionException;
 
-public class TestSuiteBase<ServiceInterface, ClientInterface> {
+public class SuiteBase<ServiceInterface, ClientInterface> {
     private ThriftCodecManager codecManager = new ThriftCodecManager();
     private ThriftClientManager clientManager;
     private Class<? extends ClientInterface> clientClass;
@@ -39,8 +39,9 @@ public class TestSuiteBase<ServiceInterface, ClientInterface> {
     private ThriftServer server;
     private ServiceInterface handler;
 
-    public TestSuiteBase(Class<? extends ServiceInterface> handlerClass,
-                         Class<? extends ClientInterface> clientClass) {
+    public SuiteBase(
+            Class<? extends ServiceInterface> handlerClass,
+            Class<? extends ClientInterface> clientClass) {
         this.clientClass = clientClass;
         this.handlerClass = handlerClass;
     }

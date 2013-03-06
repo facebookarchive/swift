@@ -40,7 +40,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.fail;
 
-public class AsyncClient extends AsyncTestBase
+public class AsyncClientTest extends AsyncTestBase
 {
     protected ThriftServer syncServer;
 

@@ -33,7 +33,7 @@ import java.util.concurrent.CountDownLatch;
 
 import static org.testng.Assert.assertEquals;
 
-public class AsyncHttpClient extends AsyncTestBase
+public class AsyncHttpClientTest extends AsyncTestBase
 {
     // Test a simple sync client call through HTTP (in this case, to a TServlet running under Jetty)
     @Test

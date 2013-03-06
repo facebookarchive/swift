@@ -15,14 +15,15 @@
  */
 package com.facebook.swift.service.exceptions;
 
-import com.facebook.swift.service.base.TestSuiteBase;
+import com.facebook.swift.service.base.SuiteBase;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
 import org.testng.annotations.Test;
 
-public class ExceptionTestSuite extends TestSuiteBase<TestService, TestService> {
-    public ExceptionTestSuite() {
-        super(TestServiceHandler.class, TestServiceClient.class);
+public class ExceptionTest extends SuiteBase<ExceptionService, ExceptionService>
+{
+    public ExceptionTest() {
+        super(ExceptionServiceHandler.class, ExceptionServiceClient.class);
     }
 
     @Test(expectedExceptions = { ThriftCheckedException.class })

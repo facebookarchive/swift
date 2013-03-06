@@ -21,7 +21,7 @@ import com.facebook.swift.service.ThriftService;
 import com.google.common.base.Optional;
 
 @ThriftService
-public class TestServiceHandler
+public class ExplicitIdentifiersServiceHandler
 {
     private Object lastStringParam;
     private Object lastBooleanParam;

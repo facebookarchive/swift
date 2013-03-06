@@ -15,33 +15,22 @@
  */
 package com.facebook.swift.service.oneway;
 
-import com.facebook.swift.service.base.TestSuiteBase;
 import org.apache.thrift.TException;
-import org.testng.annotations.Test;
 
-@Test
-public class OnewayTestSuite extends TestSuiteBase<TestService, TestService>
+public class OneWayServiceHandler implements OneWayService
 {
-
-    public OnewayTestSuite()
-    {
-        super(TestServiceHandler.class, TestServiceClient.class);
+    @Override
+    public void verifyConnectionState() throws TException {
+        // do nothing, used only to verify two-way communication still works
     }
 
-    @Test
-    public void testOnewayCall()
-            throws TException
-    {
-        getClient().onewayMethod();
-        getClient().verifyConnectionState();
+    @Override
+    public void onewayMethod() throws TException {
+        return;
     }
 
-    @Test
-    public void testOneWayThrow()
-            throws TException, OneWayException
-    {
-        getClient().onewayThrow();
-        getClient().verifyConnectionState();
+    @Override
+    public void onewayThrow() throws TException, OneWayException {
+        throw new OneWayException();
     }
-
 }

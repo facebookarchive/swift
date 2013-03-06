@@ -15,21 +15,19 @@
  */
 package com.facebook.swift.service.oneway;
 
+import com.facebook.swift.service.ThriftMethod;
+import com.facebook.swift.service.ThriftService;
 import org.apache.thrift.TException;
 
-public class TestServiceHandler implements TestService {
-    @Override
-    public void verifyConnectionState() throws TException {
-        // do nothing, used only to verify two-way communication still works
-    }
+@ThriftService
+public interface OneWayService
+{
+    @ThriftMethod
+    public void verifyConnectionState() throws TException;
 
-    @Override
-    public void onewayMethod() throws TException {
-        return;
-    }
+    @ThriftMethod(oneway = true)
+    public void onewayMethod() throws TException;
 
-    @Override
-    public void onewayThrow() throws TException, OneWayException {
-        throw new OneWayException();
-    }
+    @ThriftMethod(oneway = true)
+    public void onewayThrow() throws TException, OneWayException;
 }

@@ -15,18 +15,33 @@
  */
 package com.facebook.swift.service.oneway;
 
-import com.facebook.swift.service.ThriftMethod;
-import com.facebook.swift.service.ThriftService;
+import com.facebook.swift.service.base.SuiteBase;
 import org.apache.thrift.TException;
+import org.testng.annotations.Test;
 
-@ThriftService
-public interface TestService {
-    @ThriftMethod
-    public void verifyConnectionState() throws TException;
+@Test
+public class OnewayTest extends SuiteBase<OneWayService, OneWayService>
+{
 
-    @ThriftMethod(oneway = true)
-    public void onewayMethod() throws TException;
+    public OnewayTest()
+    {
+        super(OneWayServiceHandler.class, OneWayServiceClient.class);
+    }
 
-    @ThriftMethod(oneway = true)
-    public void onewayThrow() throws TException, OneWayException;
+    @Test
+    public void testOnewayCall()
+            throws TException
+    {
+        getClient().onewayMethod();
+        getClient().verifyConnectionState();
+    }
+
+    @Test
+    public void testOneWayThrow()
+            throws TException, OneWayException
+    {
+        getClient().onewayThrow();
+        getClient().verifyConnectionState();
+    }
+
 }

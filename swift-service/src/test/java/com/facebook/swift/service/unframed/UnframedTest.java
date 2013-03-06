@@ -38,7 +38,7 @@ import java.util.concurrent.CountDownLatch;
 
 import static org.testng.Assert.assertEquals;
 
-public class UnframedTestSuite
+public class UnframedTest
 {
     @Test
     public void testUnframedSyncMethod()
