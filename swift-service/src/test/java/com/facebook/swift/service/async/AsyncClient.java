@@ -18,7 +18,6 @@ package com.facebook.swift.service.async;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.ThriftServer;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -26,17 +25,19 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
-import org.jboss.netty.handler.timeout.TimeoutException;
+import org.jboss.netty.handler.timeout.ReadTimeoutException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.fail;
 
 public class AsyncClient extends AsyncTestBase
@@ -76,52 +77,62 @@ public class AsyncClient extends AsyncTestBase
     }
 
     @Test(timeOut = 2000)
-    void testAsyncConnection()
-            throws Exception
+    void testAsyncConnection() throws Exception
     {
-        DelayedMap.AsyncClient client = null;
-        final CountDownLatch latch = new CountDownLatch(1);
-
         ListenableFuture<DelayedMap.AsyncClient> future = createClient(DelayedMap.AsyncClient.class, syncServer);
-        Futures.addCallback(future, new FutureCallback<DelayedMap.AsyncClient>()
+        AsyncConnectionCallback futureCallback = new AsyncConnectionCallback();
+
+        Futures.addCallback(future, futureCallback);
+        futureCallback.waitForAsyncCallsToBeDispatched();
+        futureCallback.checkAsyncCallReturnValues();
+    }
+
+    /* Helper class for testAsyncConnection() */
+    class AsyncConnectionCallback implements FutureCallback<DelayedMap.AsyncClient> {
+        private final CountDownLatch latch = new CountDownLatch(1);
+        private ListenableFuture<String> getBeforeFuture = null;
+        private ListenableFuture<String> getAfterFuture = null;
+        private ListenableFuture<Void> putFuture = null;
+
+        @Override
+        public void onSuccess(DelayedMap.AsyncClient client)
         {
-            @Override
-            public void onSuccess(DelayedMap.AsyncClient client)
-            {
-                ListenableFuture<String> getBeforeFuture;
-                ListenableFuture<String> getAfterFuture;
-                ListenableFuture<Void> putFuture;
-
-                try {
-                    try {
-                        getBeforeFuture = client.getValueSlowly(200, TimeUnit.MILLISECONDS, "testKey");
-                        putFuture = client.putValueSlowly(400, TimeUnit.MILLISECONDS, "testKey", "testValue");
-                        getAfterFuture = client.getValueSlowly(600, TimeUnit.MILLISECONDS, "testKey");
-
-                        assertEquals(Uninterruptibles.getUninterruptibly(getBeforeFuture), "default");
-                        assertEquals(Uninterruptibles.getUninterruptibly(getAfterFuture), "testValue");
-                        Uninterruptibles.getUninterruptibly(putFuture);
-                    }
-                    finally {
-                        client.close();
-                    }
-                }
-                catch (Throwable t) {
-                    onFailure(t);
-                }
-
-                latch.countDown();
+            try {
+                getBeforeFuture = client.getValueSlowly(200, TimeUnit.MILLISECONDS, "testKey");
+                putFuture = client.putValueSlowly(400, TimeUnit.MILLISECONDS, "testKey", "testValue");
+                getAfterFuture = client.getValueSlowly(600, TimeUnit.MILLISECONDS, "testKey");
+            }
+            catch (Throwable t) {
+                onFailure(t);
             }
 
-            @Override
-            public void onFailure(Throwable t)
-            {
-                Throwables.propagate(t);
-                latch.countDown();
-            }
-        });
+            latch.countDown();
+        }
 
-        latch.await();
+        @Override
+        public void onFailure(Throwable t)
+        {
+            latch.countDown();
+        }
+
+        public void waitForAsyncCallsToBeDispatched() throws InterruptedException
+        {
+            latch.await();
+        }
+
+        public void checkAsyncCallReturnValues() throws ExecutionException, InterruptedException
+        {
+            // All these async calls include a delay, so none she be finished at first
+            assertFalse(getBeforeFuture.isDone());
+            assertFalse(getAfterFuture.isDone());
+            assertFalse(putFuture.isDone());
+
+            // Calls are timed to complete in order, but Verify that we can still wait on the
+            // futures out of order
+            assertEquals(getBeforeFuture.get(), "default");
+            assertEquals(getAfterFuture.get(), "testValue");
+            putFuture.get();
+        }
     }
 
     @Test
@@ -176,30 +187,19 @@ public class AsyncClient extends AsyncTestBase
     public void testAsyncTimeout()
             throws Exception
     {
-        ListenableFuture<String> getFuture;
-        final CountDownLatch latch = new CountDownLatch(1);
-
         try (DelayedMap.AsyncClient client = createClient(DelayedMap.AsyncClient.class, syncServer).get()) {
-            getFuture = client.getValueSlowly(1500, TimeUnit.MILLISECONDS, "testKey");
-            Futures.addCallback(getFuture, new FutureCallback<String>()
-            {
-                @Override
-                public void onSuccess(String result)
-                {
-                    fail("Successful result received when timeout was expected");
-                }
-
-                @Override
-                public void onFailure(Throwable t)
-                {
-                    assertTrue(t instanceof TTransportException);
-                    assertTrue(t.getCause() instanceof TimeoutException);
-                    latch.countDown();
-                }
-            });
+            ListenableFuture<String> getFuture = client.getValueSlowly(1500, TimeUnit.MILLISECONDS, "testKey");
+            try {
+                getFuture.get(2000, TimeUnit.MILLISECONDS);
+                fail("Call did not timeout as expected");
+            }
+            catch (java.util.concurrent.TimeoutException e) {
+                fail("Waited too long for channel timeout");
+            }
+            catch (ExecutionException e) {
+                checkTransportException(e.getCause(), ReadTimeoutException.class);
+            }
         }
-
-        assertTrue(latch.await(2000, TimeUnit.MILLISECONDS), "Waited too long for timeout");
     }
 
     @Test
@@ -244,6 +244,25 @@ public class AsyncClient extends AsyncTestBase
         return createServerFromHandler(handler);
     }
 
+    /**
+     * Verify that a {@link Throwable} is a {@link TTransportException} wrapping the expected cause
+     * @param throwable The {@link Throwable} to check
+     * @param expectedCause The expected cause of the {@link TTransportException}
+     */
+    private void checkTransportException(Throwable throwable, Class<? extends Throwable> expectedCause)
+    {
+        assertNotNull(throwable);
+        Throwable cause = throwable.getCause();
+
+        if (!(throwable instanceof TTransportException)) {
+            fail("Exception of type " + throwable.getClass() + " when expecting a TTransportException");
+        }
+        else if (!(expectedCause.isAssignableFrom(throwable.getCause().getClass()))) {
+            fail("TTransportException caused by " + cause.getClass() +
+                 " when expecting a TTransportException caused by " + expectedCause);
+        }
+    }
+
     @BeforeMethod(alwaysRun = true)
     public void setup()
             throws IllegalAccessException, InstantiationException, TException
@@ -256,7 +275,7 @@ public class AsyncClient extends AsyncTestBase
     @AfterMethod(alwaysRun = true)
     public void tearDown()
     {
-        clientManager.close();
         syncServer.close();
+        clientManager.close();
     }
 }

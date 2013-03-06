@@ -15,6 +15,7 @@
  */
 package com.facebook.swift.service.async;
 
+import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.LogEntry;
 import com.facebook.swift.service.ResultCode;
 import com.facebook.swift.service.Scribe;
@@ -23,6 +24,9 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.apache.thrift.TException;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -36,8 +40,7 @@ public class AsyncHttpClient extends AsyncTestBase
     public void testHttpClient()
             throws Exception
     {
-        try (HttpScribeServer server = new HttpScribeServer();
-             ThriftClientManager clientManager = new ThriftClientManager())
+        try (HttpScribeServer server = new HttpScribeServer())
         {
             server.start();
 
@@ -60,8 +63,7 @@ public class AsyncHttpClient extends AsyncTestBase
     public void testHttpAsyncClient()
             throws Exception
     {
-        try (final HttpScribeServer server = new HttpScribeServer();
-             ThriftClientManager clientManager = new ThriftClientManager())
+        try (final HttpScribeServer server = new HttpScribeServer())
         {
             server.start();
             final CountDownLatch latch = new CountDownLatch(1);
@@ -117,5 +119,19 @@ public class AsyncHttpClient extends AsyncTestBase
             // so check that it did so successfully.
             assertEquals(server.getLogEntries().size(), 1);
         }
+    }
+
+    @BeforeMethod(alwaysRun = true)
+    public void setup()
+            throws IllegalAccessException, InstantiationException, TException
+    {
+        codecManager = new ThriftCodecManager();
+        clientManager = new ThriftClientManager(codecManager);
+    }
+
+    @AfterMethod(alwaysRun = true)
+    public void tearDown()
+    {
+        clientManager.close();
     }
 }
