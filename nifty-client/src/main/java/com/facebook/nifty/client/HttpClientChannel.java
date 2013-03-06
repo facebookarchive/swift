@@ -16,7 +16,6 @@
 package com.facebook.nifty.client;
 
 import com.google.common.net.HttpHeaders;
-import org.apache.thrift.protocol.TProtocolException;
 import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;

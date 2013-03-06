@@ -28,6 +28,8 @@ import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.channel.socket.nio.NioSocketChannel;
+import org.jboss.netty.handler.timeout.ReadTimeoutException;
+import org.jboss.netty.handler.timeout.WriteTimeoutException;
 import org.jboss.netty.util.Timeout;
 import org.jboss.netty.util.Timer;
 import org.jboss.netty.util.TimerTask;
@@ -38,7 +40,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 @NotThreadSafe
 public abstract class AbstractClientChannel extends SimpleChannelHandler implements
@@ -270,9 +271,9 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
 
         if (!expiredTimeout.isCancelled()) {
             cancelAllTimeouts();
-            TimeoutException timeoutException =
-                    new TimeoutException("Timed out waiting " + (long) getSendTimeout().toMillis() +
-                                         " ms to send request");
+            WriteTimeoutException timeoutException =
+                    new WriteTimeoutException(
+                            "Timed out waiting " + getSendTimeout() + " to send request");
 
             request.getListener().onChannelError(new TTransportException(timeoutException));
         }
@@ -285,10 +286,9 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
         if (!expiredTimeout.isCancelled()) {
             cancelAllTimeouts();
 
-            TimeoutException timeoutException =
-                    new TimeoutException(
-                            "Timed out waiting " + (long) getReceiveTimeout().toMillis() +
-                            " ms to receive response");
+            ReadTimeoutException timeoutException =
+                    new ReadTimeoutException(
+                            "Timed out waiting " + getReceiveTimeout() + " to receive response");
 
             request.getListener().onChannelError(new TTransportException(timeoutException));
         }
