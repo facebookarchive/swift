@@ -1,6 +1,6 @@
 # Nifty
 
-Nifty is an implementation of [Thrift](http://thrift.apache.org/) clients and servers on [Netty](https://netty.io/).
+Nifty is an implementation of [Thrift](http://thrift.apache.org/) clients and servers on [Netty](http://netty.io/).
 
 It is also the implementation used by [Swift](https://github.com/facebook/swift).
 
