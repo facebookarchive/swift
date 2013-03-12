@@ -236,7 +236,7 @@ cpp_type returns [String value]
     ;
 
 
-integer returns [long value]
+integer returns [Long value]
     : i=INTEGER     { $value = Long.parseLong($i.text); }
     | h=HEX_INTEGER { $value = Long.decode($h.text); }
     ;
