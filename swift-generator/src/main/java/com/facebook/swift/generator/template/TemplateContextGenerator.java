@@ -131,8 +131,7 @@ public class TemplateContextGenerator
 
     public EnumFieldContext fieldFromThrift(final IntegerEnumField field)
     {
-        Preconditions.checkState(field.getValue().get() != null, "field value for integer field %s is null!", field.getName());
-        return new EnumFieldContext(mangleJavaConstantName(field.getName()), field.getValue().get());
+        return new EnumFieldContext(mangleJavaConstantName(field.getName()), field.getValue());
     }
 
     public EnumFieldContext fieldFromThrift(final String value)

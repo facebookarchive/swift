@@ -26,6 +26,7 @@ options {
     package com.facebook.swift.parser.antlr;
 
     import com.facebook.swift.parser.model.*;
+    import com.facebook.swift.parser.util.*;
 
     import java.util.ArrayList;
     import java.util.HashMap;
@@ -133,8 +134,14 @@ const_map returns [Map<ConstValue, ConstValue> value = new HashMap<>()]
     : ^(MAP ( ^(ENTRY k=const_value v=const_value) { $value.put($k.value, $v.value); } )*)
     ;
 
-enum_fields returns [List<IntegerEnumField> value = new ArrayList<>()]
-    : ( ^(k=IDENTIFIER v=integer?) { $value.add(new IntegerEnumField($k.text, $v.value)); } )*
+enum_fields returns [IntegerEnumFieldList value = new IntegerEnumFieldList()]
+    : ( enum_field[$value] { $value.add($enum_field.value); } )*
+    ;
+
+enum_field[IntegerEnumFieldList fieldList] returns [IntegerEnumField value]
+    : ^(k=IDENTIFIER v=integer?) {
+         $value = new IntegerEnumField($k.text, $v.value, $fieldList.getNextImplicitEnumerationValue());
+    }
     ;
 
 senum_values returns [List<String> value = new ArrayList<>()]
@@ -236,7 +243,7 @@ cpp_type returns [String value]
     ;
 
 
-integer returns [long value]
+integer returns [Long value]
     : i=INTEGER     { $value = Long.parseLong($i.text); }
     | h=HEX_INTEGER { $value = Long.decode($h.text); }
     ;
