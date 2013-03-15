@@ -21,7 +21,8 @@ import com.facebook.swift.service.ThriftService;
 import org.apache.thrift.TException;
 
 @ThriftService
-public interface TestService {
+public interface ExceptionService
+{
 
     @ThriftMethod(exception = { @ThriftException(type = ThriftCheckedException.class, id = 1) })
     public void throwExpectedThriftCheckedException() throws ThriftCheckedException,

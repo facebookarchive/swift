@@ -61,12 +61,11 @@ public class AsyncTestBase
     protected <T> ListenableFuture<T> createHttpClient(Class<T> clientClass, int serverPort)
             throws TTransportException, InterruptedException, ExecutionException
     {
-        HostAndPort address = HostAndPort.fromParts("localhost", serverPort);
         ThriftClientConfig config = new ThriftClientConfig().setConnectTimeout(new Duration(1, TimeUnit.SECONDS))
                                                             .setReadTimeout(new Duration(1, TimeUnit.SECONDS))
                                                             .setWriteTimeout(new Duration(1, TimeUnit.SECONDS));
         HttpClientConnector connector =
-                new HttpClientConnector(URI.create("http://localhost:4567/thrift/"));
+                new HttpClientConnector(URI.create("http://localhost:" + serverPort + "/thrift/"));
         return new ThriftClient<>(clientManager, clientClass, config, "asyncTestClient").open(connector);
     }
 

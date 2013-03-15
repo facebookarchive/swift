@@ -23,7 +23,7 @@ import org.apache.thrift.TException;
 import java.io.Closeable;
 
 @ThriftService
-public interface TestServiceClient extends Closeable
+public interface ExplicitIdentifiersServiceClient extends Closeable
 {
     public void close();
 

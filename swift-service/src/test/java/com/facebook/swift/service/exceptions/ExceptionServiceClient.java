@@ -15,7 +15,7 @@
  */
 package com.facebook.swift.service.exceptions;
 
-public interface TestServiceClient extends TestService, AutoCloseable {
+public interface ExceptionServiceClient extends ExceptionService, AutoCloseable {
     @Override
     public void close();
 }

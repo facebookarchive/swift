@@ -17,7 +17,8 @@ package com.facebook.swift.service.exceptions;
 
 import org.apache.thrift.TException;
 
-public class TestServiceHandler implements TestService {
+public class ExceptionServiceHandler implements ExceptionService
+{
     @Override
     public void throwExpectedThriftCheckedException()
       throws TException, ThriftCheckedException {
