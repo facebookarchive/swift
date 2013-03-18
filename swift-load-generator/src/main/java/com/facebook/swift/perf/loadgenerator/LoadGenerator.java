@@ -73,8 +73,8 @@ public class LoadGenerator
                         @Override
                         public void configure(Binder binder)
                         {
-                            thriftClientBinder(binder).bindThriftClient(AsyncClientWorker.LoadTest.class);
-                            thriftClientBinder(binder).bindThriftClient(SyncClientWorker.LoadTest.class);
+                            thriftClientBinder(binder).bindThriftClient(AsyncLoadTest.class);
+                            thriftClientBinder(binder).bindThriftClient(SyncLoadTest.class);
 
                             binder.bind(LoadGeneratorCommandLineConfig.class).toInstance(config);
                             binder.bind(LoadGenerator.class).in(Singleton.class);
