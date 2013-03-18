@@ -23,6 +23,8 @@ import io.airlift.units.Duration;
 import java.io.Closeable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import javax.annotation.Nullable;
 
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
@@ -50,6 +52,9 @@ public final class AsyncClientWorker extends AbstractClientWorker implements Fut
     private NiftyClientChannel channel;
     private NiftyClientConnector<? extends NiftyClientChannel> connector;
     private LoadTest client;
+
+    private AtomicLong sentRequests = new AtomicLong(0);
+    private long connectionRequestCutoff;
 
     @Override
     public void shutdown()
@@ -99,6 +104,12 @@ public final class AsyncClientWorker extends AbstractClientWorker implements Fut
         try {
             ListenableFuture<LoadTest> clientFuture;
 
+            if (client != null) {
+                throw new IllegalStateException("Each worker should create only client at a time");
+            }
+
+            connectionRequestCutoff = requestsProcessed.get() + getOperationsPerConnection();
+
             clientFuture = clientManager.createClient(connector,
                                                       LoadTest.class,
                                                       new Duration(config.connectTimeoutMilliseconds, TimeUnit.SECONDS),
@@ -113,7 +124,7 @@ public final class AsyncClientWorker extends AbstractClientWorker implements Fut
                 @Override
                 public void onSuccess(LoadTest result)
                 {
-                    logger.info("Worker connected");
+                    logger.trace("Worker connected");
 
                     client = result;
                     channel = clientManager.getNiftyChannel(client);
@@ -184,6 +195,10 @@ public final class AsyncClientWorker extends AbstractClientWorker implements Fut
                 if (sendRequest(client) >= pendingOperationsHighWaterMark) {
                     break;
                 }
+
+                if (sentRequests.incrementAndGet() >= connectionRequestCutoff) {
+                    break;
+                }
             }
         }
         catch (TException ex) {
@@ -195,10 +210,11 @@ public final class AsyncClientWorker extends AbstractClientWorker implements Fut
     }
 
     @Override
-    public void onSuccess(Object result)
+    public void onSuccess(@Nullable Object result)
     {
         requestsProcessed.incrementAndGet();
-        if (requestsPending.decrementAndGet() < pendingOperationsLowWaterMark) {
+        if ((requestsPending.decrementAndGet() < pendingOperationsLowWaterMark) &&
+            (sentRequests.get() <= connectionRequestCutoff)) {
             fillRequestPipeline(client);
         }
     }
