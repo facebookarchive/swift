@@ -15,12 +15,10 @@
  */
 package com.facebook.swift.perf.loadgenerator;
 
-import static java.lang.Math.max;
-
 import com.facebook.nifty.client.NiftyClientConnector;
+import com.google.common.base.Function;
 import io.airlift.units.Duration;
 
-import java.io.Closeable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -32,15 +30,15 @@ import org.slf4j.LoggerFactory;
 
 import com.facebook.nifty.client.NiftyClientChannel;
 import com.facebook.swift.service.ThriftClientManager;
-import com.facebook.swift.service.ThriftMethod;
-import com.facebook.swift.service.ThriftService;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 
-public final class AsyncClientWorker extends AbstractClientWorker implements FutureCallback<Object>
+import static java.lang.Math.max;
+
+public final class AsyncClientWorker extends AbstractClientWorker
 {
     private static final Logger logger = LoggerFactory.getLogger(AsyncClientWorker.class);
     private static final int MAX_FRAME_SIZE = 0x7FFFFFFF;
@@ -51,25 +49,12 @@ public final class AsyncClientWorker extends AbstractClientWorker implements Fut
     private final Executor simpleExecutor;
     private NiftyClientChannel channel;
     private NiftyClientConnector<? extends NiftyClientChannel> connector;
-    private LoadTest client;
-
-    private AtomicLong sentRequests = new AtomicLong(0);
-    private long connectionRequestCutoff;
+    private ClientWrapper clientWrapper;
 
     @Override
     public void shutdown()
     {
         this.shutdownRequested = true;
-    }
-
-    @ThriftService(value = "AsyncLoadTest")
-    public static interface LoadTest extends Closeable
-    {
-        @ThriftMethod
-        public ListenableFuture<Void> noop()
-                throws TException;
-
-        public void close();
     }
 
     @Inject
@@ -102,16 +87,10 @@ public final class AsyncClientWorker extends AbstractClientWorker implements Fut
     public void run()
     {
         try {
-            ListenableFuture<LoadTest> clientFuture;
-
-            if (client != null) {
-                throw new IllegalStateException("Each worker should create only client at a time");
-            }
-
-            connectionRequestCutoff = requestsProcessed.get() + getOperationsPerConnection();
+            ListenableFuture<AsyncLoadTest> clientFuture;
 
             clientFuture = clientManager.createClient(connector,
-                                                      LoadTest.class,
+                                                      AsyncLoadTest.class,
                                                       new Duration(config.connectTimeoutMilliseconds, TimeUnit.SECONDS),
                                                       new Duration(config.sendTimeoutMilliseconds, TimeUnit.MILLISECONDS),
                                                       new Duration(config.receiveTimeoutMilliseconds, TimeUnit.MILLISECONDS),
@@ -119,15 +98,25 @@ public final class AsyncClientWorker extends AbstractClientWorker implements Fut
                                                       "AsyncClientWorker",
                                                       null);
 
-            Futures.addCallback(clientFuture, new FutureCallback<LoadTest>()
+            ListenableFuture<ClientWrapper> wrapperFuture = Futures.transform(clientFuture, new Function<AsyncLoadTest, ClientWrapper>()
+            {
+                @Nullable
+                @Override
+                public ClientWrapper apply(@Nullable AsyncLoadTest client)
+                {
+                    return new ClientWrapper(client, config.operationsPerConnection);
+                }
+            });
+
+            Futures.addCallback(wrapperFuture, new FutureCallback<ClientWrapper>()
             {
                 @Override
-                public void onSuccess(LoadTest result)
+                public void onSuccess(ClientWrapper result)
                 {
                     logger.trace("Worker connected");
 
-                    client = result;
-                    channel = clientManager.getNiftyChannel(client);
+                    clientWrapper = result;
+                    channel = clientManager.getNiftyChannel(clientWrapper.getClient());
 
                     // Thrift clients are not thread-safe, and for maximum efficiency, new requests are made
                     // on the channel thread, as the pipeline starts to clear out. So we either need to
@@ -138,7 +127,7 @@ public final class AsyncClientWorker extends AbstractClientWorker implements Fut
                         @Override
                         public void run()
                         {
-                            fillRequestPipeline(client);
+                            fillRequestPipeline(clientWrapper);
                         }
                     });
                 }
@@ -158,45 +147,106 @@ public final class AsyncClientWorker extends AbstractClientWorker implements Fut
     private void onConnectFailed(Throwable cause)
     {
         logger.error("Could not connect: " + cause.getMessage());
-
-        if (client != null) {
-            client.close();
-            client = null;
-        }
+        reconnect();
     }
 
     @Override
-    public void reconnect()
+    public synchronized void reconnect()
     {
-        if (client != null) {
-            client.close();
-            client = null;
-        }
         run();
     }
 
-    protected long sendRequest(final LoadTest client)
+    protected long sendRequest(ClientWrapper clientWrapper)
             throws TException
     {
+        final AsyncLoadTest client = clientWrapper.getClient();
+        ListenableFuture<?> future;
+        Operation operation = nextOperation();
+        switch (operation) {
+            case NOOP:
+                future = client.noop();
+                break;
+            case ONEWAY_NOOP:
+                client.onewayNoop();
+                future = Futures.<Void>immediateFuture(null);
+                break;
+            case ASYNC_NOOP:
+                future = client.asyncNoop();
+                break;
+            case ADD:
+                future = client.add(1,2);
+                break;
+            case ECHO:
+                future = client.echo(getNextSendBuffer());
+                break;
+            case SEND:
+                future = client.send(getNextSendBuffer());
+                break;
+            case RECV:
+                future = client.recv(getNextReceiveBufferSize());
+                break;
+            case SEND_RECV:
+                future = client.sendrecv(getNextSendBuffer(), getNextReceiveBufferSize());
+                break;
+            case ONEWAY_SEND:
+                client.onewaySend(getNextSendBuffer());
+                future = Futures.<Void>immediateFuture(null);
+                break;
+            case ONEWAY_THROW:
+                client.onewayThrow(getNextExceptionCode());
+                future = Futures.<Void>immediateFuture(null);
+                break;
+            case THROW_UNEXPECTED:
+                future = client.throwUnexpected(getNextExceptionCode());
+                break;
+            case THROW_ERROR:
+                future = client.throwError(getNextSendBufferSize());
+                break;
+            case SLEEP:
+                future = client.sleep(getNextSleepMicroseconds());
+                break;
+            case ONEWAY_SLEEP:
+                client.onewaySleep(getNextSleepMicroseconds());
+                future = Futures.<Void>immediateFuture(null);
+                break;
+            case BAD_BURN:
+                future = client.badBurn(getNextBurnMicroseconds());
+                break;
+            case BAD_SLEEP:
+                future = client.badSleep(getNextSleepMicroseconds());
+                break;
+            case ONEWAY_BURN:
+                client.onewayBurn(getNextBurnMicroseconds());
+                future = Futures.<Void>immediateFuture(null);
+                break;
+            case BURN:
+                future = client.burn(getNextBurnMicroseconds());
+                break;
+            default:
+                throw new IllegalStateException("Unknown operation type");
+        }
+
         long pending = requestsPending.incrementAndGet();
-        final ListenableFuture<Void> future = client.noop();
-        Futures.addCallback(future, this, simpleExecutor);
+        Futures.addCallback(future, new RequestCallback(clientWrapper), simpleExecutor);
         return pending;
     }
 
-    protected void fillRequestPipeline(final LoadTest client)
-    {
+    protected void fillRequestPipeline(final ClientWrapper clientWrapper) {
         try {
             while (!shutdownRequested) {
                 if (channel.hasError()) {
                     throw channel.getError();
                 }
 
-                if (sendRequest(client) >= pendingOperationsHighWaterMark) {
+                long pendingCount = sendRequest(clientWrapper);
+
+                clientWrapper.recordRequestReceived();
+                if (clientWrapper.shouldStopSending()) {
+                    reconnect();
                     break;
                 }
 
-                if (sentRequests.incrementAndGet() >= connectionRequestCutoff) {
+                if (pendingCount >= pendingOperationsHighWaterMark) {
                     break;
                 }
             }
@@ -205,30 +255,103 @@ public final class AsyncClientWorker extends AbstractClientWorker implements Fut
             // sending a request failed
             logger.error("Async client request failed: {}",
                          Throwables.getRootCause(ex).getMessage());
-            client.close();
+            clientWrapper.close();
         }
     }
 
-    @Override
-    public void onSuccess(@Nullable Object result)
-    {
-        requestsProcessed.incrementAndGet();
-        if ((requestsPending.decrementAndGet() < pendingOperationsLowWaterMark) &&
-            (sentRequests.get() <= connectionRequestCutoff)) {
-            fillRequestPipeline(client);
+    private class ClientWrapper {
+        private final AtomicLong requestsSent = new AtomicLong(0);
+        private final AtomicLong responsesReceived = new AtomicLong(0);
+        private final long requestLimit;
+        private AsyncLoadTest client;
+
+        public ClientWrapper(AsyncLoadTest client, long requestLimit)
+        {
+            this.client = client;
+            this.requestLimit = requestLimit;
+        }
+
+        public AsyncLoadTest getClient()
+        {
+            return client;
+        }
+
+        public void close()
+        {
+            getClient().close();
+        }
+
+        public long recordRequestReceived()
+        {
+            return requestsSent.incrementAndGet();
+        }
+
+        public long recordResponseReceived()
+        {
+            return responsesReceived.incrementAndGet();
+        }
+
+        public boolean shouldStopSending()
+        {
+            return requestsSent.get() >= requestLimit;
+        }
+
+        public boolean isFinishedReceivingResponses()
+        {
+            return responsesReceived.get() >= requestLimit;
         }
     }
 
-    @Override
-    public void onFailure(Throwable t)
+    private class RequestCallback implements FutureCallback<Object>
     {
-        if (t instanceof TException) {
-            client.close();
-            logger.error("Async client received failure response: {}",
-                         Throwables.getRootCause(t).getMessage());
+        private final ClientWrapper clientWrapper;
+
+        public RequestCallback(ClientWrapper clientWrapper)
+        {
+            this.clientWrapper = clientWrapper;
         }
 
-        requestsFailed.incrementAndGet();
-        requestsPending.decrementAndGet();
+        @Override
+        public void onSuccess(@Nullable Object result)
+        {
+            clientWrapper.recordResponseReceived();
+            if (clientWrapper.isFinishedReceivingResponses())
+            {
+                clientWrapper.close();
+            }
+
+            requestsProcessed.incrementAndGet();
+
+            if (requestsPending.decrementAndGet() < pendingOperationsLowWaterMark) {
+                fillRequestPipeline(clientWrapper);
+            }
+        }
+
+        @Override
+        public void onFailure(Throwable t)
+        {
+            if (t instanceof LoadError) {
+                onSuccess(null);
+                return;
+            }
+
+            clientWrapper.recordResponseReceived();
+            if (clientWrapper.isFinishedReceivingResponses())
+            {
+                clientWrapper.close();
+            }
+
+            if (t instanceof TException) {
+                clientWrapper.close();
+                logger.error("Async client received failure response: {}",
+                             Throwables.getRootCause(t).getMessage());
+            }
+
+            requestsFailed.incrementAndGet();
+
+            if (requestsPending.decrementAndGet() < pendingOperationsLowWaterMark) {
+                fillRequestPipeline(clientWrapper);
+            }
+        }
     }
 }

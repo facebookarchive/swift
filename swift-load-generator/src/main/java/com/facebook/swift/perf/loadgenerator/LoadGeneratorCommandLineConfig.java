@@ -53,4 +53,82 @@ public class LoadGeneratorCommandLineConfig
 
     @Parameter(names = "-recv_timeout_ms", description = "Receive timeout in milliseconds")
     public long receiveTimeoutMilliseconds = 0;
+
+    @Parameter(names = "-weight_noop")
+    public int weightNoop = 0;
+
+    @Parameter(names = "-weight_oneway_noop")
+    public int weightOnewayNoop = 0;
+
+    @Parameter(names = "-weight_async_noop")
+    public int weightAsyncNoop = 0;
+
+    @Parameter(names = "-weight_add")
+    public int weightAdd = 0;
+
+    @Parameter(names = "-weight_echo")
+    public int weightEcho = 0;
+
+    @Parameter(names = "-weight_send")
+    public int weightSend = 0;
+
+    @Parameter(names = "-weight_recv")
+    public int weightRecv = 0;
+
+    @Parameter(names = "-weight_send_recv")
+    public int weightSendRecv = 0;
+
+    @Parameter(names = "-weight_oneway_send")
+    public int weightOnewaySend = 0;
+
+    @Parameter(names = "-weight_oneway_throw")
+    public int weightOnewayThrow = 0;
+
+    @Parameter(names = "-weight_throw_unexpected")
+    public int weightThrowUnexpected = 0;
+
+    @Parameter(names = "-weight_throw_error")
+    public int weightThrowError = 0;
+
+    @Parameter(names = "-weight_sleep")
+    public int weightSleep = 0;
+
+    @Parameter(names = "-weight_oneway_sleep")
+    public int weightOnewaySleep = 0;
+
+    @Parameter(names = "-weight_bad_burn")
+    public int weightBadBurn = 0;
+
+    @Parameter(names = "-weight_bad_sleep")
+    public int weightBadSleep = 0;
+
+    @Parameter(names = "-weight_oneway_burn")
+    public int weightOnewayBurn = 0;
+
+    @Parameter(names = "-weight_burn")
+    public int weightBurn = 0;
+
+    @Parameter(names = "-sleep_avg", description = "Average sleep duration in microseconds")
+    public double sleepAverage = 5000;
+
+    @Parameter(names = "-sleep_sigma", description = "Sigma for sleep duration LogNormal distribution")
+    public double sleepSigma = -1;
+
+    @Parameter(names = "-burn_avg", description = "Average burn duration in microseconds")
+    public double burnAverage = 5000;
+
+    @Parameter(names = "-burn_sigma", description = "Sigma for burn duration LogNormal distribution")
+    public double burnSigma = -1;
+
+    @Parameter(names = "-send_avg", description = "Average buffer size for send operation")
+    public double sendAverage = 16384;
+
+    @Parameter(names = "-send_sigma", description = "Sigma for send buffer size LogNormal distribution")
+    public double sendSigma = -1;
+
+    @Parameter(names = "-recv_avg", description = "Average buffer size for receive operations")
+    public double receiveAverage = 16384;
+
+    @Parameter(names = "-recv_sigma", description = "Sigma for receive buffer size LogNormal distribution")
+    public double receiveSigma = -1;
 }

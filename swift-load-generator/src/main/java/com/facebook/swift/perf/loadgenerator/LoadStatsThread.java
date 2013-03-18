@@ -50,16 +50,8 @@ public class LoadStatsThread extends Thread
                 long currentTime = System.nanoTime();
 
                 for (AbstractClientWorker worker : clientWorkers) {
-                    long workerOpsCompleted = worker.collectSuccessfulOperationCount();
-                    long workerOpsFailed = worker.collectFailedOperationCount();
-
-                    if (workerOpsCompleted + workerOpsFailed == 0) {
-                        // No work was completed, so try reconnecting
-                        worker.reconnect();
-                    }
-
-                    deltaSuccessfulOperations += workerOpsCompleted;
-                    deltaFailedOperations += workerOpsFailed;
+                    deltaSuccessfulOperations += worker.collectSuccessfulOperationCount();
+                    deltaFailedOperations += worker.collectFailedOperationCount();
                 }
 
                 operations += deltaSuccessfulOperations;

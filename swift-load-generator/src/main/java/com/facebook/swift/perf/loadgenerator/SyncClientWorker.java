@@ -15,18 +15,22 @@
  */
 package com.facebook.swift.perf.loadgenerator;
 
+import com.facebook.nifty.client.NiftyClient;
 import com.facebook.nifty.client.NiftyClientChannel;
 import com.facebook.nifty.client.NiftyClientConnector;
+import com.facebook.swift.service.RuntimeTException;
+import com.facebook.swift.service.ThriftClientConfig;
 import com.facebook.swift.service.ThriftClientManager;
-import com.facebook.swift.service.ThriftMethod;
-import com.facebook.swift.service.ThriftService;
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Inject;
+import io.airlift.units.Duration;
+import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 public class SyncClientWorker extends AbstractClientWorker
 {
@@ -38,16 +42,6 @@ public class SyncClientWorker extends AbstractClientWorker
     public void shutdown()
     {
         this.shutdownRequested = true;
-    }
-
-    @ThriftService(value = "SyncLoadTest")
-    public static interface LoadTest extends Closeable
-    {
-        @ThriftMethod
-        public void noop()
-                throws TException;
-
-        public void close();
     }
 
     @Inject
@@ -71,30 +65,119 @@ public class SyncClientWorker extends AbstractClientWorker
             {
                 while (!shutdownRequested) {
                     try {
-                        try (LoadTest client = clientManager.createClient(connector, LoadTest.class).get()) {
-                            logger.info("Worker connected");
+                        try (SyncLoadTest client = clientManager.createClient(
+                                connector,
+                                SyncLoadTest.class,
+                                new Duration(config.connectTimeoutMilliseconds, TimeUnit.SECONDS),
+                                new Duration(config.receiveTimeoutMilliseconds, TimeUnit.MILLISECONDS),
+                                new Duration(config.sendTimeoutMilliseconds, TimeUnit.MILLISECONDS),
+                                ThriftClientConfig.DEFAULT_MAX_FRAME_SIZE,
+                                "SyncClientWorker",
+                                null
+                                ).get()) {
+                            logger.trace("Worker connected");
                             for (int i = 0; i < getOperationsPerConnection(); i++) {
                                 sendRequest(client);
                             }
                         }
                     }
-                    catch (Exception ex) {
-                        ex.printStackTrace(System.out);
+                    catch (ExecutionException | TException ex) {
+                        logger.error("Connection failed: " + ex.getMessage());
+                        Uninterruptibles.sleepUninterruptibly(10, TimeUnit.MILLISECONDS);
+                    }
+                    catch (InterruptedException ex) {
+                        logger.error("Connection interrupted");
+                        Thread.currentThread().interrupt();
                     }
                 }
             }
         }).start();
     }
 
-    private void sendRequest(LoadTest client)
-            throws TException, ExecutionException, InterruptedException
+    private void sendRequest(SyncLoadTest client)
+            throws TException
     {
         try {
-            client.noop();
-        }
-        catch (TException ex) {
+            Operation operation = nextOperation();
+            switch (operation) {
+                case NOOP:
+                    client.noop();
+                    break;
+                case ONEWAY_NOOP:
+                    client.onewayNoop();
+                    break;
+                case ASYNC_NOOP:
+                    client.asyncNoop();
+                    break;
+                case ADD:
+                    long addend1 = getNextAddOperand();
+                    long addend2 = getNextAddOperand();
+                    long result = client.add(addend1, addend2);
+                    if (result != addend1 + addend2) {
+                        logger.error("Server returned incorrect addition result");
+                    }
+                    break;
+                case ECHO:
+                    client.echo(getNextSendBuffer());
+                    break;
+                case SEND:
+                    client.send(getNextSendBuffer());
+                    break;
+                case RECV:
+                    client.recv(getNextReceiveBufferSize());
+                    break;
+                case SEND_RECV:
+                    client.sendrecv(getNextSendBuffer(), getNextReceiveBufferSize());
+                    break;
+                case ONEWAY_SEND:
+                    client.onewaySend(getNextSendBuffer());
+                    break;
+                case ONEWAY_THROW:
+                    client.onewayThrow(getNextExceptionCode());
+                    break;
+                case THROW_UNEXPECTED:
+                    try {
+                        client.throwUnexpected(getNextExceptionCode());
+                    }
+                    catch (TApplicationException e) {
+                        // Exception is expected, don't need to do anything here
+                        break;
+                    }
+                    break;
+                case THROW_ERROR:
+                    try {
+                        client.throwError(getNextSendBufferSize());
+                    }
+                    catch (LoadError e) {
+                        // Exception is expected, don't need to do anything here
+                        break;
+                    }
+                    break;
+                case SLEEP:
+                    client.sleep(getNextSleepMicroseconds());
+                    break;
+                case ONEWAY_SLEEP:
+                    client.onewaySleep(getNextSleepMicroseconds());
+                    break;
+                case BAD_BURN:
+                    client.badBurn(getNextBurnMicroseconds());
+                    break;
+                case BAD_SLEEP:
+                    client.badSleep(getNextSleepMicroseconds());
+                    break;
+                case ONEWAY_BURN:
+                    client.onewayBurn(getNextBurnMicroseconds());
+                    break;
+                case BURN:
+                    client.burn(getNextBurnMicroseconds());
+                    break;
+                default:
+                    throw new IllegalStateException("Unknown operation type");
+            }
+        } catch (RuntimeTException ex) {
+            logger.error(ex.getMessage());
             requestsFailed.incrementAndGet();
-            return;
+            throw ex;
         }
 
         requestsProcessed.incrementAndGet();
