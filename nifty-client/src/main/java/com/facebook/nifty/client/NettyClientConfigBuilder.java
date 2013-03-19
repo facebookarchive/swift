@@ -16,6 +16,7 @@
 package com.facebook.nifty.client;
 
 import com.facebook.nifty.core.NettyConfigBuilderBase;
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.jboss.netty.channel.socket.nio.NioSocketChannelConfig;
 
@@ -32,6 +33,7 @@ public class NettyClientConfigBuilder extends NettyConfigBuilderBase
     private static final int DEFAULT_WORKER_THREAD_COUNT = Runtime.getRuntime().availableProcessors() * 2;
     private int bossThreadCount = DEFAULT_BOSS_THREAD_COUNT;
     private int workerThreadCount = DEFAULT_WORKER_THREAD_COUNT;
+    private String name = "";
 
     private final NioSocketChannelConfig socketChannelConfig = (NioSocketChannelConfig) Proxy.newProxyInstance(
             getClass().getClassLoader(),
@@ -70,4 +72,17 @@ public class NettyClientConfigBuilder extends NettyConfigBuilderBase
     {
         return workerThreadCount;
     }
+
+    public NettyClientConfigBuilder setNiftyName(String name)
+    {
+        Preconditions.checkNotNull(name, "name is null");
+        this.name = name;
+        return this;
+    }
+
+    public String getNiftyName()
+    {
+        return name;
+    }
+
 }

@@ -15,6 +15,12 @@
  */
 package com.facebook.nifty.client;
 
+import com.google.common.base.Strings;
+
+import org.jboss.netty.channel.socket.nio.NioClientBossPool;
+
+import org.jboss.netty.util.ThreadNameDeterminer;
+
 import com.facebook.nifty.client.socks.Socks4ClientBootstrap;
 import com.facebook.nifty.core.ShutdownUtil;
 import com.google.common.util.concurrent.AbstractFuture;
@@ -75,15 +81,20 @@ public class NiftyClient implements Closeable
     {
         this.configBuilder = configBuilder;
 
-        this.hashedWheelTimer = new HashedWheelTimer(renamingDaemonThreadFactory("nifty-client-timer-%s"));
-        this.bossExecutor = newCachedThreadPool(renamingDaemonThreadFactory("nifty-client-boss-%s"));
-        this.workerExecutor = newCachedThreadPool(renamingDaemonThreadFactory("nifty-client-worker-%s"));
+        String name = configBuilder.getNiftyName();
+
+        String prefix = "nifty-client" + (Strings.isNullOrEmpty(name) ? "" : "-" + name);
+
+        this.hashedWheelTimer = new HashedWheelTimer(renamingDaemonThreadFactory(prefix + "-timer-%s"));
+        this.bossExecutor = newCachedThreadPool(renamingDaemonThreadFactory(prefix + "-boss-%s"));
+        this.workerExecutor = newCachedThreadPool(renamingDaemonThreadFactory(prefix + "-worker-%s"));
         this.defaultSocksProxyAddress = defaultSocksProxyAddress;
 
         int bossThreadCount = configBuilder.getNiftyBossThreadCount();
         int workerThreadCount = configBuilder.getNiftyWorkerThreadCount();
-        NioWorkerPool workerPool = new NioWorkerPool(workerExecutor, workerThreadCount);
-        this.channelFactory = new NioClientSocketChannelFactory(bossExecutor, bossThreadCount, workerPool, hashedWheelTimer);
+        NioWorkerPool workerPool = new NioWorkerPool(workerExecutor, workerThreadCount, ThreadNameDeterminer.CURRENT);
+        NioClientBossPool bossPool = new NioClientBossPool(bossExecutor, bossThreadCount, hashedWheelTimer, ThreadNameDeterminer.CURRENT);
+        this.channelFactory = new NioClientSocketChannelFactory(bossPool, workerPool);
     }
 
     public <T extends NiftyClientChannel> ListenableFuture<T> connectAsync(
