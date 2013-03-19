@@ -31,8 +31,9 @@ struct(context, tweaks) ::= <<
 package <context.javaPackage>;
 
 import com.facebook.swift.codec.*;
-import com.google.common.base.*;
 import java.util.*;
+
+import static com.google.common.base.Objects.toStringHelper;
 
 @ThriftStruct("<context.name>")
 public class <context.javaName>
@@ -156,7 +157,7 @@ _toString(context) ::= <<
 @Override
 public String toString()
 {
-    return Objects.toStringHelper(this)
+    return toStringHelper(this)
         <context.fields : { field |<_toStringField(field)>}; separator="\n">
         .toString();
 }
