@@ -33,10 +33,14 @@ package <context.javaPackage>;
 import com.facebook.swift.codec.*;
 import java.util.*;
 
+import static com.google.common.base.Objects.toStringHelper;
+
 @ThriftStruct("<context.name>")
 public class <context.javaName>
 {
     <_structbody(context)>
+
+    <_toString(context)>
 }<\n>
 >>
 
@@ -149,3 +153,16 @@ _exceptionElement(exception) ::= <<
 @ThriftException(type=<exception.type>.class, id=<exception.id>)
 >>
 
+_toString(context) ::= <<
+@Override
+public String toString()
+{
+    return toStringHelper(this)
+        <context.fields : { field |<_toStringField(field)>}; separator="\n">
+        .toString();
+}
+>>
+
+_toStringField(field) ::= <<
+.add("<field.javaName>", <field.javaName>)
+>>
