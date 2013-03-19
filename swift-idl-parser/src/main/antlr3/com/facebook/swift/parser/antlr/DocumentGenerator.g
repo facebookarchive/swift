@@ -44,20 +44,26 @@ document returns [Document value]
 header returns [Header value]
 @init {
     List<String> includes = new ArrayList<>();
-    Map<String, String> namespaces = new HashMap<>();
     List<String> cppIncludes = new ArrayList<>();
+    String defaultNamespace = null;
+    Map<String, String> namespaces = new HashMap<>();
 }
 @after {
-    $value = new Header(includes, namespaces, cppIncludes);
+    $value = new Header(includes, cppIncludes, defaultNamespace, namespaces);
 }
-    : ( include     { includes.add($include.value); }
-      | namespace   { namespaces.put($namespace.language, $namespace.value); }
-      | cpp_include { cppIncludes.add($cpp_include.value); }
+    : ( include           { includes.add($include.value); }
+      | cpp_include       { cppIncludes.add($cpp_include.value); }
+      | default_namespace { defaultNamespace = $default_namespace.value; }
+      | namespace         { namespaces.put($namespace.language, $namespace.value); }
       )*
     ;
 
 include returns [String value]
     : ^(INCLUDE LITERAL) { $value = $LITERAL.text; }
+    ;
+
+default_namespace returns [String value]
+    : ^(DEFAULT_NAMESPACE (v=IDENTIFIER | v=LITERAL)) { $value = $v.text; }
     ;
 
 namespace returns [String language, String value]

@@ -73,9 +73,10 @@ public class Document
     public static Document emptyDocument()
     {
         List<String> includes = emptyList();
-        Map<String, String> namespaces = Collections.emptyMap();
         List<String> cppIncludes = emptyList();
-        Header header = new Header(includes, namespaces, cppIncludes);
+        String defaultNamespace = null;
+        Map<String, String> namespaces = Collections.emptyMap();
+        Header header = new Header(includes, cppIncludes, defaultNamespace, namespaces);
         List<Definition> definitions = emptyList();
         return new Document(header, definitions);
     }
