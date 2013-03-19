@@ -26,6 +26,7 @@ tokens {
     INCLUDE;
     TYPEDEF;
     NAMESPACE;
+    DEFAULT_NAMESPACE;
     CPP_INCLUDE;
     ENUM;
     SENUM;
@@ -76,7 +77,8 @@ include
     ;
 
 namespace
-    : 'namespace' k=IDENTIFIER (v=IDENTIFIER | v=LITERAL) -> ^(NAMESPACE $k $v)
+    : 'namespace' '*' (v=IDENTIFIER | v=LITERAL) -> ^(DEFAULT_NAMESPACE $v)
+    | 'namespace' k=IDENTIFIER (v=IDENTIFIER | v=LITERAL) -> ^(NAMESPACE $k $v)
     | 'cpp_namespace' IDENTIFIER -> ^(NAMESPACE IDENTIFIER["cpp"] IDENTIFIER)
     | 'php_namespace' IDENTIFIER -> ^(NAMESPACE IDENTIFIER["php"] IDENTIFIER)
     ;

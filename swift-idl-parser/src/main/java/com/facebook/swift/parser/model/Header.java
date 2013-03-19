@@ -28,13 +28,15 @@ public class Header
 {
     private final List<String> includes;
     private final Map<String, String> namespaces;
+    private final String defaultNamespace;
     private final List<String> cppIncludes;
 
-    public Header(List<String> includes, Map<String, String> namespaces, List<String> cppIncludes)
+    public Header(List<String> includes, List<String> cppIncludes, String defaultNamespace, Map<String, String> namespaces)
     {
         this.includes = ImmutableList.copyOf(checkNotNull(includes, "includes"));
-        this.namespaces = ImmutableMap.copyOf(checkNotNull(namespaces, "namespaces"));
         this.cppIncludes = ImmutableList.copyOf(checkNotNull(cppIncludes, "cppIncludes"));
+        this.defaultNamespace = checkNotNull(defaultNamespace, "defaultNamespace");
+        this.namespaces = ImmutableMap.copyOf(checkNotNull(namespaces, "namespaces"));
     }
 
     public List<String> getIncludes()
@@ -44,7 +46,11 @@ public class Header
 
     public String getNamespace(final String nameSpaceName)
     {
-        return namespaces.get(nameSpaceName);
+        String namespace = namespaces.get(nameSpaceName);
+        if (namespace == null) {
+            namespace = defaultNamespace;
+        }
+        return namespace;
     }
 
     public Map<String, String> getNamespaces()
@@ -57,13 +63,19 @@ public class Header
         return cppIncludes;
     }
 
+    public String getDefaultNamespace()
+    {
+        return defaultNamespace;
+    }
+
     @Override
     public String toString()
     {
         return Objects.toStringHelper(this)
                 .add("includes", includes)
-                .add("namespaces", namespaces)
                 .add("cppIncludes", cppIncludes)
+                .add("defaultNamespace", defaultNamespace)
+                .add("namespaces", namespaces)
                 .toString();
     }
 }
