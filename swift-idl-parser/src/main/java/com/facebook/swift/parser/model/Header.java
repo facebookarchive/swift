@@ -35,7 +35,7 @@ public class Header
     {
         this.includes = ImmutableList.copyOf(checkNotNull(includes, "includes"));
         this.cppIncludes = ImmutableList.copyOf(checkNotNull(cppIncludes, "cppIncludes"));
-        this.defaultNamespace = checkNotNull(defaultNamespace, "defaultNamespace");
+        this.defaultNamespace = defaultNamespace;
         this.namespaces = ImmutableMap.copyOf(checkNotNull(namespaces, "namespaces"));
     }
 
