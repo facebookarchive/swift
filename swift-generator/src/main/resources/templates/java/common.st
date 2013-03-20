@@ -33,8 +33,6 @@ package <context.javaPackage>;
 import com.facebook.swift.codec.*;
 import java.util.*;
 
-import static com.google.common.base.Objects.toStringHelper;
-
 @ThriftStruct("<context.name>")
 public class <context.javaName>
 {
@@ -157,12 +155,14 @@ _toString(context) ::= <<
 @Override
 public String toString()
 {
-    return toStringHelper(this)
-        <context.fields : { field |<_toStringField(field)>}; separator="\n">
-        .toString();
+    final StringBuilder sb = new StringBuilder();
+    sb.append("<context.javaName>{");
+    <context.fields : { field |<_toStringField(field)>}; separator=".append(\", \");\n">;
+    sb.append('}');
+    return sb.toString();
 }
 >>
 
 _toStringField(field) ::= <<
-.add("<field.javaName>", <field.javaName>)
+sb.append("<field.javaName>=<if(field.stringType)>'<endif>").append(<field.javaName>)<if(field.stringType)>.append('\'')<endif>
 >>

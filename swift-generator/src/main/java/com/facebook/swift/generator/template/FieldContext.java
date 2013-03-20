@@ -69,6 +69,11 @@ public class FieldContext
         return javaSetterName;
     }
 
+    public boolean isStringType()
+    {
+        return getJavaType().equals("String");
+    }
+
     @Override
     public int hashCode()
     {
