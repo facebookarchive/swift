@@ -69,6 +69,7 @@ public class ThriftStructMetadataBuilder<T>
     private final Class<T> structClass;
     private final Class<?> builderClass;
 
+    private final List<String> documentation;
     private final List<FieldMetadata> fields = newArrayList();
 
     // readers
@@ -96,6 +97,8 @@ public class ThriftStructMetadataBuilder<T>
         structName = extractStructName();
         // get the builder class from the annotation or from the Java class
         builderClass = extractBuilderClass();
+        // grab any documentation from the annotation or saved JavaDocs
+        documentation = ThriftCatalog.getThriftDocumentation(structClass);
         // extract all of the annotated constructor and report an error if
         // there is more than one or none
         // also extract thrift fields from the annotated parameters and verify
@@ -619,6 +622,7 @@ public class ThriftStructMetadataBuilder<T>
                 structClass,
                 builderClass,
                 builderMethodInjection,
+                ImmutableList.copyOf(documentation),
                 ImmutableList.copyOf(fieldsMetadata),
                 constructorInjection,
                 methodInjections

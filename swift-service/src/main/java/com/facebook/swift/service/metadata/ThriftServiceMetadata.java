@@ -19,6 +19,7 @@ import com.facebook.swift.codec.metadata.ThriftCatalog;
 import com.facebook.swift.service.ThriftMethod;
 import com.facebook.swift.service.ThriftService;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 
@@ -35,6 +36,7 @@ public class ThriftServiceMetadata
 {
     private final String name;
     private final Map<String, ThriftMethodMetadata> methods;
+    private final ImmutableList<String> documentation;
 
     public ThriftServiceMetadata(Class<?> serviceClass, ThriftCatalog catalog)
     {
@@ -47,6 +49,8 @@ public class ThriftServiceMetadata
         else {
             name = thriftService.value();
         }
+
+        documentation = ThriftCatalog.getThriftDocumentation(serviceClass);
 
         ImmutableMap.Builder<String, ThriftMethodMetadata> builder = ImmutableMap.builder();
         for (Method method : findAnnotatedMethods(serviceClass, ThriftMethod.class)) {
@@ -67,6 +71,7 @@ public class ThriftServiceMetadata
             builder.put(method.getName(), method);
         }
         this.methods = builder.build();
+        this.documentation = ImmutableList.of();
     }
 
     public String getName()
@@ -82,6 +87,11 @@ public class ThriftServiceMetadata
     public Map<String, ThriftMethodMetadata> getMethods()
     {
         return methods;
+    }
+
+    public ImmutableList<String> getDocumentation()
+    {
+        return documentation;
     }
 
     public static ThriftService getThriftServiceAnnotation(Class<?> serviceClass)

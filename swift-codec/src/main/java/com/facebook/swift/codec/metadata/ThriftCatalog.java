@@ -15,6 +15,7 @@
  */
 package com.facebook.swift.codec.metadata;
 
+import com.facebook.swift.codec.ThriftDocumentation;
 import com.facebook.swift.codec.ThriftStruct;
 import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
 import com.facebook.swift.codec.internal.coercion.FromThrift;
@@ -359,6 +360,43 @@ public class ThriftCatalog
         return (ThriftStructMetadata<T>) structMetadata;
     }
 
+    public static ImmutableList<String> getThriftDocumentation(Class<?> objectClass)
+    {
+        ThriftDocumentation documentation = objectClass.getAnnotation(ThriftDocumentation.class);
+
+        if (documentation == null) {
+            try {
+                Class<?> swiftDocsClass = objectClass.getClassLoader().loadClass(objectClass.getName() + "$swift_docs");
+
+                documentation = swiftDocsClass.getAnnotation(ThriftDocumentation.class);
+            }
+            catch (ClassNotFoundException e) {
+                // ignored
+            }
+        }
+
+        return documentation == null ? ImmutableList.<String>of() : ImmutableList.copyOf(documentation.value());
+    }
+
+    public static ImmutableList<String> getThriftDocumentation(Method method)
+    {
+        ThriftDocumentation documentation = method.getAnnotation(ThriftDocumentation.class);
+
+        if (documentation == null) {
+            try {
+                Class<?> objectClass = method.getDeclaringClass();
+                Class<?> swiftDocsClass = objectClass.getClassLoader().loadClass(objectClass.getName() + "$swift_docs");
+
+                documentation = swiftDocsClass.getMethod(method.getName()).getAnnotation(ThriftDocumentation.class);
+            }
+            catch (ReflectiveOperationException e) {
+                // ignored
+            }
+        }
+
+        return documentation == null ? ImmutableList.<String>of() : ImmutableList.copyOf(documentation.value());
+    }
+
     private <T> ThriftStructMetadata<T> extractThriftStructMetadata(Class<T> structClass)
     {
         Preconditions.checkNotNull(structClass, "structClass is null");
@@ -390,4 +428,5 @@ public class ThriftCatalog
                     top);
         }
     }
+
 }
