@@ -22,6 +22,11 @@
   <dependencies>
     <dependency>
       <groupId>com.facebook.swift</groupId>
+      <artifactId>swift-annotations</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.facebook.swift</groupId>
       <artifactId>swift-codec</artifactId>
     </dependency>
 
