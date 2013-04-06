@@ -31,6 +31,7 @@
   </distributionManagement>
 
   <modules>
+    <module>swift-annotations</module>
     <module>swift-codec</module>
     <module>swift-idl-parser</module>
     <module>swift-service</module>
@@ -62,6 +63,12 @@
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>com.facebook.swift</groupId>
+        <artifactId>swift-annotations</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
       <dependency>
         <groupId>com.facebook.swift</groupId>
         <artifactId>swift-codec</artifactId>
