@@ -198,7 +198,7 @@ public class TemplateContextGenerator
 
     private String getterName(final ThriftField field)
     {
-        final String type = typeConverter.convertType(field.getType());
+        final String type = typeConverter.convertType(field.getType()).toLowerCase();
         return ("boolean".equals(type) ? "is" : "get") + mangleJavatypeName(field.getName());
     }
 
