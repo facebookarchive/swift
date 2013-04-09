@@ -100,7 +100,7 @@ public class TypeToJavaConverter
 
         public String convert(final ThriftType type, boolean primitive)
         {
-            return primitive ? "void" : "VOID";
+            return primitive ? "void" : "Void";
         }
     }
 
