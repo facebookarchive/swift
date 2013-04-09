@@ -19,6 +19,7 @@ import com.facebook.swift.generator.template.TemplateContextGenerator;
 import com.facebook.swift.parser.ThriftIdlParser;
 import com.facebook.swift.parser.model.Document;
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.io.Resources;
 
 import java.io.IOException;
@@ -32,6 +33,7 @@ public class SwiftDocumentContext
     private final TypeRegistry typeRegistry;
     private final TypedefRegistry typedefRegistry;
     private final TypeToJavaConverter typeConverter;
+    private final URI thriftUri;
 
     public SwiftDocumentContext(final URI thriftUri,
                                 final String namespace,
@@ -40,14 +42,15 @@ public class SwiftDocumentContext
                                 final TypedefRegistry typedefRegistry) throws IOException
     {
         this.document = ThriftIdlParser.parseThriftIdl(Resources.newReaderSupplier(thriftUri.toURL(), Charsets.UTF_8));
+        this.thriftUri = thriftUri;
         this.namespace = namespace;
         this.generatorConfig = generatorConfig;
         this.typeRegistry = typeRegistry;
         this.typedefRegistry = typedefRegistry;
         this.typeConverter = new TypeToJavaConverter(typeRegistry,
                                                      typedefRegistry,
-                                                     namespace);
-
+                                                     namespace,
+                                                     getJavaPackage());
     }
 
     public String getNamespace()
@@ -78,6 +81,30 @@ public class SwiftDocumentContext
     public TemplateContextGenerator getTemplateContextGenerator()
     {
         return new TemplateContextGenerator(generatorConfig, typeRegistry, typeConverter, namespace);
+    }
+
+    public String getJavaPackage()
+    {
+        String effectiveJavaNamespace = "java.swift";
+        if (generatorConfig.usePlainJavaNamespace()) {
+            effectiveJavaNamespace = "java";
+        }
+
+        // Override takes precedence
+        String javaPackage = generatorConfig.getOverridePackage();
+        // Otherwise fallback on package specified in .thrift file
+        if (javaPackage == null) {
+            javaPackage = getDocument().getHeader().getNamespace(effectiveJavaNamespace);
+        }
+        // Or the default if we don't have an override package or a package in the .thrift file
+        if (javaPackage == null) {
+            javaPackage = generatorConfig.getDefaultPackage();
+        }
+
+        // If none of the above options get us a package to use, fail
+        Preconditions.checkState(javaPackage != null, "thrift uri %s does not declare a '%s' namespace!", thriftUri, effectiveJavaNamespace);
+
+        return javaPackage;
     }
 }
 
