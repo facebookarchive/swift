@@ -39,10 +39,13 @@ public class TypeToJavaConverter
     private final TypedefRegistry typedefRegistry;
 
     private final List<Converter> converters;
+    private final String javaPackage;
 
-    public TypeToJavaConverter(final TypeRegistry typeRegistry,
-                               final TypedefRegistry typedefRegistry,
-                               final String namespace)
+    public TypeToJavaConverter(
+            final TypeRegistry typeRegistry,
+            final TypedefRegistry typedefRegistry,
+            final String namespace,
+            final String javaPackage)
     {
         Preconditions.checkNotNull(typeRegistry);
         Preconditions.checkNotNull(typedefRegistry);
@@ -50,6 +53,7 @@ public class TypeToJavaConverter
         this.typeRegistry = typeRegistry;
         this.typedefRegistry = typedefRegistry;
         this.namespace = namespace;
+        this.javaPackage = javaPackage;
 
         final ImmutableList.Builder<Converter> builder = ImmutableList.builder();
         builder.add(new VoidConverter());
@@ -171,11 +175,21 @@ public class TypeToJavaConverter
             final ThriftType thriftType = typedefRegistry.findType(javatypeName);
             if (thriftType == null) {
                 final SwiftJavaType javaType = typeRegistry.findType(javatypeName);
-                return (javaType == null) ? null : javaType.getSimpleName();
+                return (javaType == null) ? null : shortenClassName(javaType.getClassName());
             }
             else {
                 return TypeToJavaConverter.this.convert(thriftType, primitive);
             }
+        }
+
+        private String shortenClassName(String className)
+        {
+            // If the class is in the package we are currently generating code for, generate
+            // only the simple name, otherwise generate the fully qualified class name.
+            if (className.startsWith(javaPackage) && className.lastIndexOf(".") == javaPackage.length()) {
+                className = className.substring(javaPackage.length() + 1);
+            }
+            return className;
         }
     }
 
