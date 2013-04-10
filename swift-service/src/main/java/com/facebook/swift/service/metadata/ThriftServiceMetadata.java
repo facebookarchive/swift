@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.facebook.swift.codec.metadata.ReflectionHelper.findAnnotatedMethods;
-import static com.facebook.swift.codec.metadata.ReflectionHelper.getAllClassAnnotations;
+import static com.facebook.swift.codec.metadata.ReflectionHelper.getEffectiveClassAnnotations;
 
 @Immutable
 public class ThriftServiceMetadata
@@ -86,7 +86,7 @@ public class ThriftServiceMetadata
 
     public static ThriftService getThriftServiceAnnotation(Class<?> serviceClass)
     {
-        Set<ThriftService> serviceAnnotations = getAllClassAnnotations(serviceClass, ThriftService.class);
+        Set<ThriftService> serviceAnnotations = getEffectiveClassAnnotations(serviceClass, ThriftService.class);
         Preconditions.checkArgument(!serviceAnnotations.isEmpty(), "Service class %s is not annotated with @ThriftService", serviceClass.getName());
         Preconditions.checkArgument(serviceAnnotations.size() == 1,
                 "Service class %s has multiple conflicting @ThriftService annotations: %s",

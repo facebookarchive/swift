@@ -91,7 +91,7 @@ public final class ReflectionHelper
         return TypeToken.of(type).resolveType(FUTURE_RETURN_TYPE).getType();
     }
 
-    public static <T extends Annotation> Set<T> getAllClassAnnotations(Class<?> type, Class<T> annotation)
+    public static <T extends Annotation> Set<T> getEffectiveClassAnnotations(Class<?> type, Class<T> annotation)
     {
         // if the class is directly annotated, it is considered the only annotation
         if (type.isAnnotationPresent(annotation)) {
@@ -100,20 +100,21 @@ public final class ReflectionHelper
 
         // otherwise find all annotations from all super classes and interfaces
         ImmutableSet.Builder<T> builder = ImmutableSet.builder();
-        addAllClassAnnotations(type, annotation, builder);
+        addEffectiveClassAnnotations(type, annotation, builder);
         return builder.build();
     }
 
-    private static <T extends Annotation> void addAllClassAnnotations(Class<?> type, Class<T> annotation, ImmutableSet.Builder<T> builder)
+    private static <T extends Annotation> void addEffectiveClassAnnotations(Class<?> type, Class<T> annotation, ImmutableSet.Builder<T> builder)
     {
         if (type.isAnnotationPresent(annotation)) {
             builder.add(type.getAnnotation(annotation));
+            return;
         }
         if (type.getSuperclass() != null) {
-            addAllClassAnnotations(type.getSuperclass(), annotation, builder);
+            addEffectiveClassAnnotations(type.getSuperclass(), annotation, builder);
         }
         for (Class<?> anInterface : type.getInterfaces()) {
-            addAllClassAnnotations(anInterface, annotation, builder);
+            addEffectiveClassAnnotations(anInterface, annotation, builder);
         }
     }
 
