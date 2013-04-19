@@ -44,7 +44,7 @@ class SyncClientHelpers
             throws TException, InterruptedException
     {
         final ChannelBuffer[] responseHolder = new ChannelBuffer[1];
-        final TException[] exceptionHolder = new TTransportException[1];
+        final TException[] exceptionHolder = new TException[1];
         final CountDownLatch latch = new CountDownLatch(1);
 
         responseHolder[0] = null;
@@ -98,7 +98,7 @@ class SyncClientHelpers
             throws TException, InterruptedException
     {
 
-        final TException[] exceptionHolder = new TTransportException[1];
+        final TException[] exceptionHolder = new TException[1];
         final CountDownLatch latch = new CountDownLatch(1);
 
         exceptionHolder[0] = null;
