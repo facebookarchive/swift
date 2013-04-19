@@ -98,7 +98,7 @@ class SyncClientHelpers
             throws TException, InterruptedException
     {
 
-        final TException[] exceptionHolder = new TTransportException[1];
+        final TException[] exceptionHolder = new TException[1];
         final CountDownLatch latch = new CountDownLatch(1);
 
         exceptionHolder[0] = null;
