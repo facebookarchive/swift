@@ -1,69 +1,12 @@
 # Swift
 
-Swift is an easy-to-use, annotation-based Java library for creating Thrift
-serializable types and services.
+Swift is Facebook's version of the Apache Thrift project
 
-# Swift Codec
+http://thrift.apache.org/
 
-[Swift Codec](swift-codec) is a simple library specifying how Java
-objects are converted to and from Thrift.  This library is similar to JaxB
-(XML) and Jackson (JSON), but for Thrift.  Swift codec supports field, method,
-constructor, and builder injection.  For example:
-
-    @ThriftStruct
-    public class LogEntry
-    {
-        private final String category;
-        private final String message;
-
-        @ThriftConstructor
-        public LogEntry(String category, String message)
-        {
-            this.category = category;
-            this.message = message;
-        }
-
-        @ThriftField(1)
-        public String getCategory()
-        {
-            return category;
-        }
-
-        @ThriftField(2)
-        public String getMessage()
-        {
-            return message;
-        }
-    }    
+The previous java code now lives in a subdirectory at lib/java.  The rest of this repository will contain Facebook's other thrift languages.
 
 
-# Swift Service
+# Merging with Apache Thrift
 
-[Swift Service](swift-service) is a simple library annotating
-services to be exported with Thrift.   For example:
-
-    @ThriftService("scribe")
-    public class InMemoryScribe
-    {
-        private final List<LogEntry> messages = new ArrayList<>();
-
-        public List<LogEntry> getMessages()
-        {
-            return messages;
-        }
-
-        @ThriftMethod("Log")
-        public ResultCode log(List<LogEntry> messages)
-        {
-            this.messages.addAll(messages);
-            return ResultCode.OK;
-        }
-    }
-
-# Swift Generator
-
-[Swift Generator](swift-generator) can create Java code usable with the Swift codec from Thrift IDL files.
-
-# Swift Maven plugin
-
-[Swift Maven plugin](swift-maven-plugin) allows using the code generator from a maven build and generate source code on the fly.
+Facebook lacks sufficient manpower to merge many of the changes back to the apache thrift project, but we'd still like to make our code available if someone else would like to merge it.
