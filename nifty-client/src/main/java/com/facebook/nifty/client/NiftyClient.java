@@ -141,7 +141,6 @@ public class NiftyClient implements Closeable
             public void operationComplete(ChannelFuture future) throws Exception {
                 Channel channel = future.getChannel();
                 if (channel != null && channel.isOpen()) {
-                    // Add the channel to allChannels, and set it up to be removed when closed
                     allChannels.add(channel);
                     channel.getCloseFuture().addListener(new ChannelFutureListener() {
                         @Override
@@ -204,7 +203,6 @@ public class NiftyClient implements Closeable
 
         if (f.isSuccess() && (channel != null)) {
             if (channel.isOpen()) {
-                // Add the channel to allChannels, and set it up to be removed when closed
                 allChannels.add(channel);
                 channel.getCloseFuture().addListener(new ChannelFutureListener() {
                     @Override

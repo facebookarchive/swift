@@ -13,26 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.facebook.nifty.client;
+package com.facebook.nifty.core;
 
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
- * Implementation of {@link TTransport} that buffers the output of a single message,
- * so that an async client can grab the buffer and send it using a {@link NiftyClientChannel}.
+ * Implementation of {@link TTransport} that wraps an incoming message received so that a
+ * {@link org.apache.thrift.protocol.TProtocol} can * be constructed around the wrapper to read
+ * the message.
  */
 @NotThreadSafe
-public class TChannelBufferOutputTransport extends TTransport {
-    private final ChannelBuffer outputBuffer = ChannelBuffers.dynamicBuffer(1024);
+public class TChannelBufferInputTransport extends TTransport {
+    private final ChannelBuffer inputBuffer;
+
+    public TChannelBufferInputTransport(ChannelBuffer inputBuffer) {
+        this.inputBuffer = inputBuffer;
+    }
 
     @Override
     public boolean isOpen() {
-        return true;
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -47,15 +51,12 @@ public class TChannelBufferOutputTransport extends TTransport {
 
     @Override
     public int read(byte[] buf, int off, int len) throws TTransportException {
-        throw new UnsupportedOperationException();
+        inputBuffer.readBytes(buf, off, len);
+        return len;
     }
 
     @Override
     public void write(byte[] buf, int off, int len) throws TTransportException {
-        outputBuffer.writeBytes(buf, off, len);
-    }
-
-    public ChannelBuffer getOutputBuffer() {
-        return outputBuffer;
+        throw new UnsupportedOperationException();
     }
 }

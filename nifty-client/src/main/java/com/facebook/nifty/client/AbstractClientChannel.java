@@ -15,6 +15,7 @@
  */
 package com.facebook.nifty.client;
 
+import com.facebook.nifty.core.TChannelBufferInputTransport;
 import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import io.airlift.units.Duration;
 import org.apache.thrift.TException;
