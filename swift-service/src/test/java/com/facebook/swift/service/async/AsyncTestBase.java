@@ -15,6 +15,7 @@
  */
 package com.facebook.swift.service.async;
 
+import com.facebook.nifty.client.FramedClientChannel;
 import com.facebook.nifty.client.FramedClientConnector;
 import com.facebook.nifty.client.HttpClientConnector;
 import com.facebook.swift.codec.ThriftCodecManager;
@@ -26,10 +27,13 @@ import com.facebook.swift.service.ThriftServerConfig;
 import com.facebook.swift.service.ThriftServiceProcessor;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Uninterruptibles;
 import io.airlift.units.DataSize;
 import io.airlift.units.Duration;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.util.Timer;
 
 import java.net.URI;
 import java.util.concurrent.ExecutionException;
@@ -40,21 +44,48 @@ public class AsyncTestBase
     public static final int MAX_FRAME_SIZE = 0x3fffffff;
     protected ThriftCodecManager codecManager;
     protected ThriftClientManager clientManager;
+    public static final Duration NO_CLIENT_CREATION_DELAY = Duration.valueOf("0ms");
+    public static final Duration DEFAULT_CLIENT_CREATION_DELAY = Duration.valueOf("10ms");
 
     protected <T> ListenableFuture<T> createClient(Class<T> clientClass, ThriftServer server)
-            throws TTransportException, InterruptedException, ExecutionException
+            throws InterruptedException, ExecutionException, TTransportException
     {
-        return createClient(clientClass, server.getPort());
+        return createClient(clientClass, server, DEFAULT_CLIENT_CREATION_DELAY);
     }
 
-    protected <T> ListenableFuture<T> createClient(Class<T> clientClass, int serverPort)
+    protected <T> ListenableFuture<T> createClient(Class<T> clientClass, int port)
+            throws InterruptedException, ExecutionException, TTransportException
+    {
+        return createClient(clientClass, port, DEFAULT_CLIENT_CREATION_DELAY);
+    }
+
+    protected <T> ListenableFuture<T> createClient(Class<T> clientClass, ThriftServer server, final Duration connectDelay)
+            throws TTransportException, InterruptedException, ExecutionException
+    {
+        return createClient(clientClass, server.getPort(), connectDelay);
+    }
+
+    protected <T> ListenableFuture<T> createClient(Class<T> clientClass, int serverPort, final Duration connectDelay)
             throws TTransportException, InterruptedException, ExecutionException
     {
         HostAndPort address = HostAndPort.fromParts("localhost", serverPort);
         ThriftClientConfig config = new ThriftClientConfig().setConnectTimeout(new Duration(1, TimeUnit.SECONDS))
                                                             .setReadTimeout(new Duration(1, TimeUnit.SECONDS))
                                                             .setWriteTimeout(new Duration(1, TimeUnit.SECONDS));
-        FramedClientConnector connector = new FramedClientConnector(address);
+        FramedClientConnector connector = new FramedClientConnector(address) {
+            @Override
+            public FramedClientChannel newThriftClientChannel(
+                    Channel nettyChannel, Timer timer)
+            {
+                if ((long) connectDelay.convertTo(TimeUnit.NANOSECONDS) > 0) {
+                    // Introduce an artificial delay to the client creation process, to test
+                    // cases where the client future is not set immediately when making async
+                    // connections
+                    Uninterruptibles.sleepUninterruptibly((long) connectDelay.convertTo(TimeUnit.NANOSECONDS), TimeUnit.NANOSECONDS);
+                }
+                return super.newThriftClientChannel(nettyChannel, timer);
+            }
+        };
         return new ThriftClient<>(clientManager, clientClass, config, "asyncTestClient").open(connector);
     }
 

@@ -18,11 +18,14 @@ package com.facebook.swift.service.async;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.ThriftServer;
+import com.google.common.base.Optional;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
+import io.airlift.units.Duration;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.handler.timeout.ReadTimeoutException;
@@ -35,10 +38,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
 
 public class AsyncClientTest extends AsyncTestBase
 {
@@ -233,6 +233,23 @@ public class AsyncClientTest extends AsyncTestBase
             // (because the callback is added on this thread and the default callback
             // executor runs callbacks on the same thread, this shouldn't even be a race).
             latch.await(0, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    // Test that an exception thrown while handling a successful async connection get reported
+    // as a failure on the client future.
+    @Test
+    public void testClientCreateFailure()
+            throws InterruptedException, ExecutionException, TTransportException
+    {
+        try {
+            createClient(MalformedService.class, syncServer).get();
+            fail("Should not be able to successfully create a client for MalformedService.class");
+        }
+        catch (ExecutionException e) {
+            Throwable rootCause = Throwables.getRootCause(e);
+            assertTrue(rootCause instanceof IllegalArgumentException);
+            assertTrue(rootCause.getMessage().startsWith("Type can not be coerced to a Thrift type"));
         }
     }
 
