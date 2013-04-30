@@ -21,6 +21,7 @@ import com.facebook.nifty.client.NiftyClientConnector;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.metadata.ThriftMethodMetadata;
 import com.facebook.swift.service.metadata.ThriftServiceMetadata;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
@@ -28,10 +29,8 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import io.airlift.units.Duration;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
@@ -50,6 +49,7 @@ import java.net.SocketAddress;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.annotation.Nullable;
 import javax.annotation.PreDestroy;
 import javax.annotation.concurrent.Immutable;
 
@@ -112,46 +112,39 @@ public class ThriftClientManager implements Closeable
             final String clientName,
             HostAndPort socksProxy)
     {
-        NiftyClientChannel channel = null;
-        try {
-            final SettableFuture<T> clientFuture = SettableFuture.create();
-            ListenableFuture<C> connectFuture =
-                    niftyClient.connectAsync(connector,
-                                             connectTimeout,
-                                             readTimeout,
-                                             writeTimeout,
-                                             maxFrameSize,
-                                             this.toSocksProxyAddress(socksProxy));
-            Futures.addCallback(connectFuture, new FutureCallback<C>()
+        InetSocketAddress socksProxyAddress = this.toSocksProxyAddress(socksProxy);
+        final ListenableFuture<C> connectFuture = niftyClient.connectAsync(connector,
+                                                                           connectTimeout,
+                                                                           readTimeout,
+                                                                           writeTimeout,
+                                                                           maxFrameSize,
+                                                                           socksProxyAddress);
+        ListenableFuture<T> clientFuture = Futures.transform(connectFuture, new Function<C, T>() {
+            @Nullable
+            @Override
+            public T apply(@Nullable C channel)
             {
-                @Override
-                public void onSuccess(C result)
-                {
-                    NiftyClientChannel channel = result;
-
+                try {
                     if (readTimeout.toMillis() > 0) {
                         channel.setReceiveTimeout(readTimeout);
                     }
                     if (writeTimeout.toMillis() > 0) {
                         channel.setSendTimeout(writeTimeout);
                     }
-                    clientFuture.set(createClient(channel, type, Strings.isNullOrEmpty(clientName) ? connector.toString() : clientName));
-                }
 
-                @Override
-                public void onFailure(Throwable t)
-                {
-                    clientFuture.setException(t);
+                    String name = Strings.isNullOrEmpty(clientName) ? connector.toString() : clientName;
+                    return createClient(channel, type, name);
                 }
-            });
-            return clientFuture;
-        }
-        catch (RuntimeException | Error e) {
-            if (channel != null) {
-                channel.close();
+                catch (Throwable t) {
+                    // The channel was created successfully, but client creation failed so the
+                    // channel must be closed now
+                    channel.close();
+                    throw t;
+                }
             }
-            throw e;
-        }
+        });
+
+        return clientFuture;
     }
 
     public <T> T createClient(NiftyClientChannel channel, Class<T> type)
