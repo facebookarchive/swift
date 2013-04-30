@@ -83,7 +83,7 @@ public class AsyncTestBase
                     // connections
                     Uninterruptibles.sleepUninterruptibly((long) connectDelay.convertTo(TimeUnit.NANOSECONDS), TimeUnit.NANOSECONDS);
                 }
-                return super.newThriftClientChannel(nettyChannel, timer);    //To change body of overridden methods use File | Settings | File Templates.
+                return super.newThriftClientChannel(nettyChannel, timer);
             }
         };
         return new ThriftClient<>(clientManager, clientClass, config, "asyncTestClient").open(connector);
