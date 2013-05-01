@@ -119,7 +119,7 @@ exception returns [ThriftException value]
     ;
 
 service returns [Service value]
-    : ^(SERVICE k=IDENTIFIER ^(EXTENDS e=IDENTIFIER?) f=functions) { $value = new Service($k.text, $e.text, $f.value); }
+    : ^(SERVICE k=IDENTIFIER ^(EXTENDS e=IDENTIFIER?) f=functions t=type_annotations) { $value = new Service($k.text, $e.text, $f.value, $t.value); }
     ;
 
 

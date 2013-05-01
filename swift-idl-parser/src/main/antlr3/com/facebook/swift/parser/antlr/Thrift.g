@@ -126,7 +126,7 @@ exception
     ;
 
 service
-    : 'service' s=IDENTIFIER ('extends' e=IDENTIFIER)? '{' f=function* '}' -> ^(SERVICE $s ^(EXTENDS $e?) function*)
+    : 'service' s=IDENTIFIER ('extends' e=IDENTIFIER)? '{' f=function* '}' type_annotations? -> ^(SERVICE $s ^(EXTENDS $e?) function* type_annotations?)
     ;
 
 

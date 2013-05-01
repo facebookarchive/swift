@@ -33,7 +33,7 @@ public class Service
     private final Optional<String> parent;
     private final List<ThriftMethod> methods;
 
-    public Service(String name, String parent, List<ThriftMethod> methods)
+    public Service(String name, String parent, List<ThriftMethod> methods, List<TypeAnnotation> annotations)
     {
         this.name = checkNotNull(name, "name");
         this.parent = Optional.fromNullable(parent);
