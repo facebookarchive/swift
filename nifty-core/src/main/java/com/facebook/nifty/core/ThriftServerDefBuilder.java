@@ -17,6 +17,7 @@ package com.facebook.nifty.core;
 
 import com.facebook.nifty.codec.DefaultThriftFrameCodecFactory;
 import com.facebook.nifty.codec.ThriftFrameCodecFactory;
+import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.facebook.nifty.processor.NiftyProcessor;
 import com.facebook.nifty.processor.NiftyProcessorFactory;
 import io.airlift.units.Duration;
@@ -55,10 +56,9 @@ public class ThriftServerDefBuilder
     private int serverPort;
     private int maxFrameSize;
     private int queuedResponseLimit;
-    private TProtocolFactory inProtocolFact;
-    private TProtocolFactory outProtocolFact;
     private NiftyProcessorFactory niftyProcessorFactory;
     private TProcessorFactory thriftProcessorFactory;
+    private TDuplexProtocolFactory duplexProtocolFactory;
     private Executor executor;
     private String name = "nifty-" + ID.getAndIncrement();
     private Duration clientIdleTimeout;
@@ -71,8 +71,7 @@ public class ThriftServerDefBuilder
         this.serverPort = 8080;
         this.maxFrameSize = 1048576;
         this.queuedResponseLimit = 16;
-        this.inProtocolFact = new TBinaryProtocol.Factory();
-        this.outProtocolFact = new TBinaryProtocol.Factory();
+        this.duplexProtocolFactory = TDuplexProtocolFactory.fromSingleFactory(new TBinaryProtocol.Factory());
         this.executor = new Executor()
         {
             @Override
@@ -106,10 +105,15 @@ public class ThriftServerDefBuilder
     /**
      * Specify protocolFactory for both input and output
      */
+    public ThriftServerDefBuilder speaks(TDuplexProtocolFactory tProtocolFactory)
+    {
+        this.duplexProtocolFactory = tProtocolFactory;
+        return this;
+    }
+
     public ThriftServerDefBuilder speaks(TProtocolFactory tProtocolFactory)
     {
-        this.inProtocolFact = tProtocolFactory;
-        this.outProtocolFact = tProtocolFactory;
+        this.duplexProtocolFactory = TDuplexProtocolFactory.fromSingleFactory(tProtocolFactory);
         return this;
     }
 
@@ -172,24 +176,6 @@ public class ThriftServerDefBuilder
     }
 
     /**
-     * Specify only the input protocol.
-     */
-    public ThriftServerDefBuilder inProtocol(TProtocolFactory tProtocolFactory)
-    {
-        this.inProtocolFact = tProtocolFactory;
-        return this;
-    }
-
-    /**
-     * Specify only the output protocol.
-     */
-    public ThriftServerDefBuilder outProtocol(TProtocolFactory tProtocolFactory)
-    {
-        this.outProtocolFact = tProtocolFactory;
-        return this;
-    }
-
-    /**
      * Specify timeout during which if connected client doesn't send a message, server
      * will disconnect the client
      */
@@ -236,9 +222,8 @@ public class ThriftServerDefBuilder
                 serverPort,
                 maxFrameSize,
                 queuedResponseLimit,
-                inProtocolFact,
-                outProtocolFact,
                 niftyProcessorFactory,
+                duplexProtocolFactory,
                 clientIdleTimeout,
                 thriftFrameCodecFactory,
                 executor);

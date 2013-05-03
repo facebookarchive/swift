@@ -16,9 +16,9 @@
 package com.facebook.nifty.core;
 
 import com.facebook.nifty.codec.ThriftFrameCodecFactory;
+import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.facebook.nifty.processor.NiftyProcessorFactory;
 import io.airlift.units.Duration;
-import org.apache.thrift.protocol.TProtocolFactory;
 
 import java.util.concurrent.Executor;
 
@@ -31,8 +31,7 @@ public class ThriftServerDef
     private final int maxFrameSize;
     private final int queuedResponseLimit;
     private final NiftyProcessorFactory processorFactory;
-    private final TProtocolFactory inProtocolFact;
-    private final TProtocolFactory outProtocolFact;
+    private final TDuplexProtocolFactory duplexProtocolFactory;
 
     private final Duration clientIdleTimeout;
 
@@ -46,8 +45,7 @@ public class ThriftServerDef
             int maxFrameSize,
             int queuedResponseLimit,
             NiftyProcessorFactory processorFactory,
-            TProtocolFactory inProtocolFact,
-            TProtocolFactory outProtocolFact,
+            TDuplexProtocolFactory duplexProtocolFactory,
             Duration clientIdleTimeout,
             ThriftFrameCodecFactory thriftFrameCodecFactory,
             Executor executor)
@@ -57,8 +55,7 @@ public class ThriftServerDef
         this.maxFrameSize = maxFrameSize;
         this.queuedResponseLimit = queuedResponseLimit;
         this.processorFactory = processorFactory;
-        this.inProtocolFact = inProtocolFact;
-        this.outProtocolFact = outProtocolFact;
+        this.duplexProtocolFactory = duplexProtocolFactory;
         this.clientIdleTimeout = clientIdleTimeout;
         this.thriftFrameCodecFactory = thriftFrameCodecFactory;
         this.executor = executor;
@@ -89,14 +86,9 @@ public class ThriftServerDef
         return processorFactory;
     }
 
-    public TProtocolFactory getInProtocolFactory()
+    public TDuplexProtocolFactory getDuplexProtocolFactory()
     {
-        return inProtocolFact;
-    }
-
-    public TProtocolFactory getOutProtocolFactory()
-    {
-        return outProtocolFact;
+        return duplexProtocolFactory;
     }
 
     public Duration getClientIdleTimeout() {

@@ -15,6 +15,7 @@
  */
 package com.facebook.nifty.core;
 
+import org.apache.thrift.protocol.TProtocolFactory;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
@@ -71,9 +72,10 @@ public class NettyServerTransport implements ExternalResourceReleasable
                     throws Exception
             {
                 ChannelPipeline cp = Channels.pipeline();
+                TProtocolFactory inputProtocolFactory = def.getDuplexProtocolFactory().getInputProtocolFactory();
                 cp.addLast(ChannelStatistics.NAME, new ChannelStatistics(allChannels));
                 cp.addLast("frameCodec", def.getThriftFrameCodecFactory().create(def.getMaxFrameSize(),
-                                                                                 def.getInProtocolFactory()));
+                                                                                 inputProtocolFactory));
                 if (def.getClientIdleTimeout() != null) {
                     // Add handlers to detect idle client connections and disconnect them
                     cp.addLast("idleTimeoutHandler", new IdleStateHandler(timer,

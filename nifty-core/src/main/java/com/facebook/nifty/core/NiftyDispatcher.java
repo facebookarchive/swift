@@ -15,6 +15,9 @@
  */
 package com.facebook.nifty.core;
 
+import com.facebook.nifty.duplex.TDuplexProtocolFactory;
+import com.facebook.nifty.duplex.TProtocolPair;
+import com.facebook.nifty.duplex.TTransportPair;
 import com.facebook.nifty.processor.NiftyProcessorFactory;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocol;
@@ -46,19 +49,17 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
     private static final Logger log = LoggerFactory.getLogger(NiftyDispatcher.class);
 
     private final NiftyProcessorFactory processorFactory;
-    private final TProtocolFactory inProtocolFactory;
-    private final TProtocolFactory outProtocolFactory;
     private final Executor exe;
     private final int queuedResponseLimit;
     private final Map<Integer, ThriftMessage> responseMap = new HashMap<>();
     private final AtomicInteger dispatcherSequenceId = new AtomicInteger(0);
     private final AtomicInteger lastResponseWrittenId = new AtomicInteger(0);
+    private final TDuplexProtocolFactory duplexProtocolFactory;
 
     public NiftyDispatcher(ThriftServerDef def)
     {
         this.processorFactory = def.getProcessorFactory();
-        this.inProtocolFactory = def.getInProtocolFactory();
-        this.outProtocolFactory = def.getOutProtocolFactory();
+        this.duplexProtocolFactory = def.getDuplexProtocolFactory();
         this.queuedResponseLimit = def.getQueuedResponseLimit();
         this.exe = def.getExecutor();
     }
@@ -104,8 +105,11 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
             @Override
             public void run()
             {
-                TProtocol inProtocol = inProtocolFactory.getProtocol(messageTransport);
-                TProtocol outProtocol = outProtocolFactory.getProtocol(messageTransport);
+                TTransportPair transportPair = TTransportPair.fromSingleTransport(messageTransport);
+                TProtocolPair protocolPair = duplexProtocolFactory.getProtocolPair(transportPair);
+                TProtocol inProtocol = protocolPair.getInputProtocol();
+                TProtocol outProtocol = protocolPair.getOutputProtocol();
+
                 try {
                     try {
                         RequestContext requestContext = new RequestContext(ctx.getChannel().getRemoteAddress());
