@@ -15,7 +15,7 @@
  */
 package com.facebook.nifty.core;
 
-import org.apache.thrift.TProcessor;
+import com.facebook.nifty.processor.NiftyProcessor;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -39,7 +39,7 @@ public class TestServerDefBuilder
     {
         try {
             new ThriftServerDefBuilder()
-                    .withProcessor(EasyMock.createMock(TProcessor.class))
+                    .withProcessor(EasyMock.createMock(NiftyProcessor.class))
                     .build();
         }
         catch (Exception e) {

@@ -16,8 +16,8 @@
 package com.facebook.nifty.core;
 
 import com.facebook.nifty.codec.ThriftFrameCodecFactory;
+import com.facebook.nifty.processor.NiftyProcessorFactory;
 import io.airlift.units.Duration;
-import org.apache.thrift.TProcessorFactory;
 import org.apache.thrift.protocol.TProtocolFactory;
 
 import java.util.concurrent.Executor;
@@ -30,7 +30,7 @@ public class ThriftServerDef
     private final int serverPort;
     private final int maxFrameSize;
     private final int queuedResponseLimit;
-    private final TProcessorFactory processorFactory;
+    private final NiftyProcessorFactory processorFactory;
     private final TProtocolFactory inProtocolFact;
     private final TProtocolFactory outProtocolFact;
 
@@ -46,7 +46,7 @@ public class ThriftServerDef
             int serverPort,
             int maxFrameSize,
             int queuedResponseLimit,
-            TProcessorFactory factory,
+            NiftyProcessorFactory processorFactory,
             TProtocolFactory inProtocolFact,
             TProtocolFactory outProtocolFact,
             Duration clientIdleTimeout,
@@ -58,7 +58,7 @@ public class ThriftServerDef
         this.serverPort = serverPort;
         this.maxFrameSize = maxFrameSize;
         this.queuedResponseLimit = queuedResponseLimit;
-        this.processorFactory = factory;
+        this.processorFactory = processorFactory;
         this.inProtocolFact = inProtocolFact;
         this.outProtocolFact = outProtocolFact;
         this.clientIdleTimeout = clientIdleTimeout;
@@ -87,7 +87,7 @@ public class ThriftServerDef
         return queuedResponseLimit;
     }
 
-    public TProcessorFactory getProcessorFactory()
+    public NiftyProcessorFactory getProcessorFactory()
     {
         return processorFactory;
     }

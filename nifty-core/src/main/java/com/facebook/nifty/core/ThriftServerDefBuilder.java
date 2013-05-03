@@ -17,14 +17,21 @@ package com.facebook.nifty.core;
 
 import com.facebook.nifty.codec.DefaultThriftFrameCodecFactory;
 import com.facebook.nifty.codec.ThriftFrameCodecFactory;
+import com.facebook.nifty.processor.NiftyProcessor;
+import com.facebook.nifty.processor.NiftyProcessorFactory;
 import io.airlift.units.Duration;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.TProcessorFactory;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
+import org.apache.thrift.transport.TTransport;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.facebook.nifty.processor.NiftyProcessorAdapters.factoryFromTProcessor;
+import static com.facebook.nifty.processor.NiftyProcessorAdapters.factoryFromTProcessorFactory;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Builder for the Thrift Server descriptor. Example :
@@ -48,9 +55,10 @@ public class ThriftServerDefBuilder
     private int serverPort;
     private int maxFrameSize;
     private int queuedResponseLimit;
-    private TProcessorFactory processorFactory;
     private TProtocolFactory inProtocolFact;
     private TProtocolFactory outProtocolFact;
+    private NiftyProcessorFactory niftyProcessorFactory;
+    private TProcessorFactory thriftProcessorFactory;
     private Executor executor;
     private String name = "nifty-" + ID.getAndIncrement();
     private boolean useHeaderTransport;
@@ -110,9 +118,39 @@ public class ThriftServerDefBuilder
     /**
      * Specify the TProcessor.
      */
-    public ThriftServerDefBuilder withProcessor(TProcessor p)
+    public ThriftServerDefBuilder withProcessor(final NiftyProcessor processor)
     {
-        this.processorFactory = new TProcessorFactory(p);
+        this.niftyProcessorFactory = new NiftyProcessorFactory() {
+            @Override
+            public NiftyProcessor getProcessor(TTransport transport)
+            {
+                return processor;
+            }
+        };
+        return this;
+    }
+
+    public ThriftServerDefBuilder withProcessor(TProcessor processor)
+    {
+        this.thriftProcessorFactory = new TProcessorFactory(processor);
+        return this;
+    }
+
+    /**
+     * Anohter way to specify the TProcessor.
+     */
+    public ThriftServerDefBuilder withProcessorFactory(NiftyProcessorFactory processorFactory)
+    {
+        this.niftyProcessorFactory = processorFactory;
+        return this;
+    }
+
+    /**
+     * Anohter way to specify the TProcessor.
+     */
+    public ThriftServerDefBuilder withProcessorFactory(TProcessorFactory processorFactory)
+    {
+        this.thriftProcessorFactory = processorFactory;
         return this;
     }
 
@@ -132,15 +170,6 @@ public class ThriftServerDefBuilder
     public ThriftServerDefBuilder limitQueuedResponsesPerConnection(int queuedResponseLimit)
     {
         this.queuedResponseLimit = queuedResponseLimit;
-        return this;
-    }
-
-    /**
-     * Anohter way to specify the TProcessor.
-     */
-    public ThriftServerDefBuilder withProcessorFactory(TProcessorFactory processorFactory)
-    {
-        this.processorFactory = processorFactory;
         return this;
     }
 
@@ -200,17 +229,24 @@ public class ThriftServerDefBuilder
      */
     public ThriftServerDef build()
     {
-        if (processorFactory == null) {
-            throw new IllegalStateException("processor not defined !");
+        checkState(niftyProcessorFactory != null || thriftProcessorFactory != null,
+                   "Processor not defined!");
+        checkState(niftyProcessorFactory == null || thriftProcessorFactory == null,
+                   "TProcessors will be automatically adapted to NiftyProcessors, don't specify both");
+
+        if (niftyProcessorFactory == null)
+        {
+            niftyProcessorFactory = factoryFromTProcessorFactory(thriftProcessorFactory);
         }
+
         return new ThriftServerDef(
                 name,
                 serverPort,
                 maxFrameSize,
                 queuedResponseLimit,
-                processorFactory,
                 inProtocolFact,
                 outProtocolFact,
+                niftyProcessorFactory,
                 clientIdleTimeout,
                 useHeaderTransport,
                 thriftFrameCodecFactory,
