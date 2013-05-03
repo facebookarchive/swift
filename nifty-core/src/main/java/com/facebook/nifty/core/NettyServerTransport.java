@@ -63,36 +63,31 @@ public class NettyServerTransport implements ExternalResourceReleasable
         this.def = def;
         this.configBuilder = configBuilder;
         this.port = def.getServerPort();
-        if (def.isHeaderTransport()) {
-            throw new UnsupportedOperationException("ASF version does not support THeaderTransport !");
-        }
-        else {
-            this.pipelineFactory = new ChannelPipelineFactory()
-            {
-                @Override
-                public ChannelPipeline getPipeline()
-                        throws Exception
-                {
-                    ChannelPipeline cp = Channels.pipeline();
-                    cp.addLast(ChannelStatistics.NAME, new ChannelStatistics(allChannels));
-                    cp.addLast("frameCodec", def.getThriftFrameCodecFactory().create(def.getMaxFrameSize(),
-                                                                                     def.getInProtocolFactory()));
-                    if (def.getClientIdleTimeout() != null) {
-                        // Add handlers to detect idle client connections and disconnect them
-                        cp.addLast("idleTimeoutHandler", new IdleStateHandler(timer,
-                                                                              (int)def.getClientIdleTimeout().toMillis(),
-                                                                              NO_WRITER_IDLE_TIMEOUT,
-                                                                              NO_ALL_IDLE_TIMEOUT,
-                                                                              TimeUnit.MILLISECONDS
-                                                                              ));
-                        cp.addLast("idleDisconnectHandler", new IdleDisconnectHandler());
-                    }
-                    cp.addLast("dispatcher", new NiftyDispatcher(def));
-                    return cp;
-                }
-            };
-        }
 
+        this.pipelineFactory = new ChannelPipelineFactory()
+        {
+            @Override
+            public ChannelPipeline getPipeline()
+                    throws Exception
+            {
+                ChannelPipeline cp = Channels.pipeline();
+                cp.addLast(ChannelStatistics.NAME, new ChannelStatistics(allChannels));
+                cp.addLast("frameCodec", def.getThriftFrameCodecFactory().create(def.getMaxFrameSize(),
+                                                                                 def.getInProtocolFactory()));
+                if (def.getClientIdleTimeout() != null) {
+                    // Add handlers to detect idle client connections and disconnect them
+                    cp.addLast("idleTimeoutHandler", new IdleStateHandler(timer,
+                                                                          (int)def.getClientIdleTimeout().toMillis(),
+                                                                          NO_WRITER_IDLE_TIMEOUT,
+                                                                          NO_ALL_IDLE_TIMEOUT,
+                                                                          TimeUnit.MILLISECONDS
+                                                                          ));
+                    cp.addLast("idleDisconnectHandler", new IdleDisconnectHandler());
+                }
+                cp.addLast("dispatcher", new NiftyDispatcher(def));
+                return cp;
+            }
+        };
     }
 
     public void start(ServerChannelFactory serverChannelFactory)

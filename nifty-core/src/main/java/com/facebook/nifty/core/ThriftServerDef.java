@@ -36,7 +36,6 @@ public class ThriftServerDef
 
     private final Duration clientIdleTimeout;
 
-    private final boolean headerTransport;
     private final ThriftFrameCodecFactory thriftFrameCodecFactory;
     private final Executor executor;
     private final String name;
@@ -50,7 +49,6 @@ public class ThriftServerDef
             TProtocolFactory inProtocolFact,
             TProtocolFactory outProtocolFact,
             Duration clientIdleTimeout,
-            boolean useHeaderTransport,
             ThriftFrameCodecFactory thriftFrameCodecFactory,
             Executor executor)
     {
@@ -62,7 +60,6 @@ public class ThriftServerDef
         this.inProtocolFact = inProtocolFact;
         this.outProtocolFact = outProtocolFact;
         this.clientIdleTimeout = clientIdleTimeout;
-        this.headerTransport = useHeaderTransport;
         this.thriftFrameCodecFactory = thriftFrameCodecFactory;
         this.executor = executor;
     }
@@ -104,11 +101,6 @@ public class ThriftServerDef
 
     public Duration getClientIdleTimeout() {
         return clientIdleTimeout;
-    }
-
-    public boolean isHeaderTransport()
-    {
-        return headerTransport;
     }
 
     public Executor getExecutor()
