@@ -75,8 +75,8 @@ public class NettyServerTransport implements ExternalResourceReleasable
                 {
                     ChannelPipeline cp = Channels.pipeline();
                     cp.addLast(ChannelStatistics.NAME, new ChannelStatistics(allChannels));
-                    cp.addLast("frameDecoder", new ThriftFrameDecoder(def.getMaxFrameSize(),
-                                                                      def.getInProtocolFactory()));
+                    cp.addLast("frameCodec", def.getThriftFrameCodecFactory().create(def.getMaxFrameSize(),
+                                                                                     def.getInProtocolFactory()));
                     if (def.getClientIdleTimeout() != null) {
                         // Add handlers to detect idle client connections and disconnect them
                         cp.addLast("idleTimeoutHandler", new IdleStateHandler(timer,

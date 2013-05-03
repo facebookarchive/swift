@@ -15,6 +15,7 @@
  */
 package com.facebook.nifty.core;
 
+import com.facebook.nifty.codec.ThriftFrameCodecFactory;
 import io.airlift.units.Duration;
 import org.apache.thrift.TProcessorFactory;
 import org.apache.thrift.protocol.TProtocolFactory;
@@ -36,8 +37,10 @@ public class ThriftServerDef
     private final Duration clientIdleTimeout;
 
     private final boolean headerTransport;
+    private final ThriftFrameCodecFactory thriftFrameCodecFactory;
     private final Executor executor;
     private final String name;
+
     public ThriftServerDef(
             String name,
             int serverPort,
@@ -48,6 +51,7 @@ public class ThriftServerDef
             TProtocolFactory outProtocolFact,
             Duration clientIdleTimeout,
             boolean useHeaderTransport,
+            ThriftFrameCodecFactory thriftFrameCodecFactory,
             Executor executor)
     {
         this.name = name;
@@ -59,6 +63,7 @@ public class ThriftServerDef
         this.outProtocolFact = outProtocolFact;
         this.clientIdleTimeout = clientIdleTimeout;
         this.headerTransport = useHeaderTransport;
+        this.thriftFrameCodecFactory = thriftFrameCodecFactory;
         this.executor = executor;
     }
 
@@ -114,5 +119,10 @@ public class ThriftServerDef
     public String getName()
     {
         return name;
+    }
+
+    public ThriftFrameCodecFactory getThriftFrameCodecFactory()
+    {
+        return thriftFrameCodecFactory;
     }
 }

@@ -52,7 +52,7 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
     private final TProtocolFactory outProtocolFactory;
     private final Executor exe;
     private final int queuedResponseLimit;
-    private final Map<Integer, ChannelBuffer> responseMap = new HashMap<Integer, ChannelBuffer>();
+    private final Map<Integer, ThriftMessage> responseMap = new HashMap<>();
     private final AtomicInteger dispatcherSequenceId = new AtomicInteger(0);
     private final AtomicInteger lastResponseWrittenId = new AtomicInteger(0);
 
@@ -69,8 +69,11 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
     public void messageReceived(ChannelHandlerContext ctx, final MessageEvent e)
             throws Exception
     {
-        if (e.getMessage() instanceof TNiftyTransport) {
-            TNiftyTransport messageTransport = (TNiftyTransport) e.getMessage();
+        if (e.getMessage() instanceof ThriftMessage) {
+            ThriftMessage message = (ThriftMessage) e.getMessage();
+            TNiftyTransport messageTransport = new TNiftyTransport(ctx.getChannel(),
+                                                                   message.getBuffer(),
+                                                                   message.getTransportType());
             processRequest(ctx, messageTransport);
         }
         else {
@@ -134,24 +137,23 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
         // Ensure responses to requests are written in the same order the requests
         // were received.
         synchronized (responseMap) {
-            ChannelBuffer response = messageTransport.getOutputBuffer();
-            ThriftTransportType transportType = messageTransport.getTransportType();
+            ThriftMessage thriftMessage = new ThriftMessage(messageTransport.getOutputBuffer(),
+                                                            messageTransport.getTransportType());
             int currentResponseId = lastResponseWrittenId.get() + 1;
             if (responseSequenceId != currentResponseId) {
                 // This response is NOT next in line of ordered responses, save it to
                 // be sent later, after responses to all earlier requests have been
                 // sent.
-                responseMap.put(responseSequenceId, response);
+                responseMap.put(responseSequenceId, thriftMessage);
             } else {
                 // This response was next in line, write this response now, and see if
                 // there are others next in line that should be sent now as well.
                 do {
-                    response = addFraming(response, transportType);
-                    Channels.write(ctx.getChannel(), response);
+                    Channels.write(ctx.getChannel(), thriftMessage);
                     lastResponseWrittenId.incrementAndGet();
                     ++currentResponseId;
-                    response = responseMap.remove(currentResponseId);
-                } while (null != response);
+                    thriftMessage = responseMap.remove(currentResponseId);
+                } while (null != thriftMessage);
 
                 // Now that we've written some responses, check if reads should be unblocked
                 if (isChannelReadBlocked(ctx)) {
@@ -161,20 +163,6 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
                     }
                 }
             }
-        }
-    }
-
-    private ChannelBuffer addFraming(ChannelBuffer response, ThriftTransportType transportType) {
-        if (transportType == ThriftTransportType.UNFRAMED) {
-            return response;
-        }
-        else if (transportType == ThriftTransportType.FRAMED) {
-            ChannelBuffer frameSizeBuffer = ChannelBuffers.buffer(4);
-            frameSizeBuffer.writeInt(response.readableBytes());
-            return ChannelBuffers.wrappedBuffer(frameSizeBuffer, response);
-        }
-        else {
-            throw new UnsupportedOperationException("Header protocol is not supported");
         }
     }
 
