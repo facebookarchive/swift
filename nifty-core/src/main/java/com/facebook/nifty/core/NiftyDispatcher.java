@@ -106,22 +106,23 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
                 TProtocol inProtocol = inProtocolFactory.getProtocol(messageTransport);
                 TProtocol outProtocol = outProtocolFactory.getProtocol(messageTransport);
                 try {
-                    RequestContext.setCurrentContext(new RequestContext(ctx.getChannel().getRemoteAddress()));
+                    try {
+                        RequestContext.setCurrentContext(new RequestContext(ctx.getChannel().getRemoteAddress()));
+                        processorFactory.getProcessor(messageTransport).process(
+                                inProtocol,
+                                outProtocol
+                        );
+                    }
+                    finally {
+                        RequestContext.clearCurrentContext();
+                    }
 
-                    processorFactory.getProcessor(messageTransport).process(
-                            inProtocol,
-                            outProtocol
-                    );
+                    writeResponse(ctx, messageTransport, requestSequenceId);
                 }
                 catch (TException e1) {
                     log.error("Exception while invoking!", e1);
                     closeChannel(ctx);
                 }
-                finally {
-                    RequestContext.clearCurrentContext();
-                }
-
-                writeResponse(ctx, messageTransport, requestSequenceId);
             }
 
         });
