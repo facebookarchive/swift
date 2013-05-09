@@ -51,17 +51,27 @@ public class DefaultThriftFrameDecoder extends ThriftFrameDecoder
 
         short firstByte = buffer.getUnsignedByte(0);
         if (firstByte >= 0x80) {
+            ChannelBuffer messageBuffer = tryDecodeUnframedMessage(ctx, channel, buffer, inputProtocolFactory);
+
+            if (messageBuffer == null) {
+                return null;
+            }
+
             // A non-zero MSB for the first byte of the message implies the message starts with a
             // protocol id (and thus it is unframed).
-            return new ThriftMessage(tryDecodeUnframedMessage(ctx, channel, buffer, inputProtocolFactory),
-                                     ThriftTransportType.UNFRAMED);
+            return new ThriftMessage(messageBuffer,ThriftTransportType.UNFRAMED);
         } else if (buffer.readableBytes() < MESSAGE_FRAME_SIZE) {
             // Expecting a framed message, but not enough bytes available to read the frame size
             return null;
         } else {
+            ChannelBuffer messageBuffer = tryDecodeFramedMessage(ctx, channel, buffer, true);
+
+            if (messageBuffer == null) {
+                return null;
+            }
+
             // Messages with a zero MSB in the first byte are framed messages
-            return new ThriftMessage(tryDecodeFramedMessage(ctx, channel, buffer, true),
-                                     ThriftTransportType.FRAMED);
+            return new ThriftMessage(messageBuffer, ThriftTransportType.FRAMED);
         }
     }
 
