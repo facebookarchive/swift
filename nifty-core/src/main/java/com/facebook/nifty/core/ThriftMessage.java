@@ -19,8 +19,8 @@ import org.jboss.netty.buffer.ChannelBuffer;
 
 public class ThriftMessage
 {
-    private ChannelBuffer buffer;
-    private ThriftTransportType transportType;
+    private final ChannelBuffer buffer;
+    private final ThriftTransportType transportType;
 
     public ThriftMessage(ChannelBuffer buffer, ThriftTransportType transportType)
     {
