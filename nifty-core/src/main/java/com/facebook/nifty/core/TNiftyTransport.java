@@ -42,6 +42,11 @@ public class TNiftyTransport extends TTransport
         this.out = ChannelBuffers.dynamicBuffer(DEFAULT_OUTPUT_BUFFER_SIZE);
     }
 
+    public TNiftyTransport(Channel channel, ThriftMessage message)
+    {
+        this(channel, message.getBuffer(), message.getTransportType());
+    }
+
     @Override
     public boolean isOpen()
     {

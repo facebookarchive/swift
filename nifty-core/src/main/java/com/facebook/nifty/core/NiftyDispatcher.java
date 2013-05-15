@@ -21,7 +21,6 @@ import com.facebook.nifty.duplex.TTransportPair;
 import com.facebook.nifty.processor.NiftyProcessorFactory;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.protocol.TProtocolFactory;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.Channels;
@@ -65,22 +64,19 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
     }
 
     @Override
-    public void messageReceived(ChannelHandlerContext ctx, final MessageEvent e)
+    public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
             throws Exception
     {
         if (e.getMessage() instanceof ThriftMessage) {
             ThriftMessage message = (ThriftMessage) e.getMessage();
-            TNiftyTransport messageTransport = new TNiftyTransport(ctx.getChannel(),
-                                                                   message.getBuffer(),
-                                                                   message.getTransportType());
-            processRequest(ctx, messageTransport);
+            processRequest(ctx, message);
         }
         else {
             ctx.sendUpstream(e);
         }
     }
 
-    private void processRequest(final ChannelHandlerContext ctx, final TNiftyTransport messageTransport) {
+    private void processRequest(final ChannelHandlerContext ctx, final ThriftMessage message) {
         // Remember the ordering of requests as they arrive, used to enforce an order on the
         // responses.
         final int requestSequenceId = dispatcherSequenceId.incrementAndGet();
@@ -105,6 +101,8 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
             @Override
             public void run()
             {
+                TNiftyTransport messageTransport = new TNiftyTransport(ctx.getChannel(), message);
+
                 TTransportPair transportPair = TTransportPair.fromSingleTransport(messageTransport);
                 TProtocolPair protocolPair = duplexProtocolFactory.getProtocolPair(transportPair);
                 TProtocol inProtocol = protocolPair.getInputProtocol();
@@ -120,7 +118,8 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
                         RequestContext.clearCurrentContext();
                     }
 
-                    writeResponse(ctx, messageTransport, requestSequenceId);
+                    ThriftMessage response = message.getMessageFactory().create(messageTransport.getOutputBuffer());
+                    writeResponse(ctx, response, requestSequenceId, message.isOrderedResponsesRequired());
                 }
                 catch (TException e1) {
                     log.error("Exception while invoking!", e1);
@@ -132,28 +131,42 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
     }
 
     private void writeResponse(ChannelHandlerContext ctx,
-                               TNiftyTransport messageTransport,
-                               int responseSequenceId) {
+                               ThriftMessage response,
+                               int responseSequenceId,
+                               boolean isOrderedResponsesRequired)
+    {
+        if (isOrderedResponsesRequired) {
+            writeResponseInOrder(ctx, response, responseSequenceId);
+        }
+        else {
+            // No ordering required, just write the response immediately
+            Channels.write(ctx.getChannel(), response);
+        }
+    }
+
+
+    private void writeResponseInOrder(ChannelHandlerContext ctx,
+                                      ThriftMessage response,
+                                      int responseSequenceId)
+    {
         // Ensure responses to requests are written in the same order the requests
         // were received.
         synchronized (responseMap) {
-            ThriftMessage thriftMessage = new ThriftMessage(messageTransport.getOutputBuffer(),
-                                                            messageTransport.getTransportType());
             int currentResponseId = lastResponseWrittenId.get() + 1;
             if (responseSequenceId != currentResponseId) {
                 // This response is NOT next in line of ordered responses, save it to
                 // be sent later, after responses to all earlier requests have been
                 // sent.
-                responseMap.put(responseSequenceId, thriftMessage);
+                responseMap.put(responseSequenceId, response);
             } else {
                 // This response was next in line, write this response now, and see if
                 // there are others next in line that should be sent now as well.
                 do {
-                    Channels.write(ctx.getChannel(), thriftMessage);
+                    Channels.write(ctx.getChannel(), response);
                     lastResponseWrittenId.incrementAndGet();
                     ++currentResponseId;
-                    thriftMessage = responseMap.remove(currentResponseId);
-                } while (null != thriftMessage);
+                    response = responseMap.remove(currentResponseId);
+                } while (null != response);
 
                 // Now that we've written some responses, check if reads should be unblocked
                 if (isChannelReadBlocked(ctx)) {
