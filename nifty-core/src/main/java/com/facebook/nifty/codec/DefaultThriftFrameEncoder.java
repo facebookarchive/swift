@@ -38,10 +38,16 @@ public class DefaultThriftFrameEncoder extends ThriftFrameEncoder
                                    Channel channel,
                                    ThriftMessage message) throws Exception
     {
+        int frameSize = message.getBuffer().readableBytes();
+
         if (message.getBuffer().readableBytes() > maxFrameSize)
         {
-            Channels.fireExceptionCaught(ctx, new TooLongFrameException("Frame size exceeded on encode"));
-            return ChannelBuffers.EMPTY_BUFFER;
+            Channels.fireExceptionCaught(ctx, new TooLongFrameException(
+                    String.format(
+                            "Frame size exceeded on encode: frame was %d bytes, maximum allowed is %d bytes",
+                            frameSize,
+                            maxFrameSize)));
+            return null;
         }
 
         switch (message.getTransportType()) {
