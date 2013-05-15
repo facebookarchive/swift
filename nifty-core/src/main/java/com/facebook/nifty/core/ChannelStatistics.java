@@ -111,12 +111,6 @@ public class ChannelStatistics extends SimpleChannelHandler
     {
         return bytesWritten.get();
     }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
-            throws Exception
-    {
-    }
 }
 
 

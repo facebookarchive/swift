@@ -121,8 +121,8 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
                     ThriftMessage response = message.getMessageFactory().create(messageTransport.getOutputBuffer());
                     writeResponse(ctx, response, requestSequenceId, message.isOrderedResponsesRequired());
                 }
-                catch (TException e1) {
-                    log.error("Exception while invoking!", e1);
+                catch (TException e) {
+                    Channels.fireExceptionCaught(ctx, e);
                     closeChannel(ctx);
                 }
             }
@@ -185,6 +185,9 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
     {
         // Any out of band exception are caught here and we tear down the socket
         closeChannel(ctx);
+
+        // Send for logging
+        ctx.sendUpstream(e);
     }
 
     private void closeChannel(ChannelHandlerContext ctx)

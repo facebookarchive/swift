@@ -30,7 +30,6 @@ import org.apache.thrift.transport.TTransport;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.facebook.nifty.processor.NiftyProcessorAdapters.factoryFromTProcessor;
 import static com.facebook.nifty.processor.NiftyProcessorAdapters.factoryFromTProcessorFactory;
 import static com.google.common.base.Preconditions.checkState;
 
@@ -64,14 +63,23 @@ public class ThriftServerDefBuilder
     private Duration clientIdleTimeout;
 
     /**
+     * The default maximum allowable size for a single incoming thrift request or outgoing thrift
+     * response. A server can configure the actual maximum to be much higher (up to 0x7FFFFFFF or
+     * almost 2 GB). This default could also be safely bumped up, but 64MB is chosen simply
+     * because it seems reasonable that if you are sending requests or responses larger than
+     * that, it should be a conscious decision (something you must manually configure).
+     */
+    private static final int MAX_FRAME_SIZE = 64 * 1024 * 1024;
+
+    /**
      * Create a ThriftServerDefBuilder with common defaults
      */
     public ThriftServerDefBuilder()
     {
         this.serverPort = 8080;
-        this.maxFrameSize = 1048576;
+        this.maxFrameSize = MAX_FRAME_SIZE;
         this.queuedResponseLimit = 16;
-        this.duplexProtocolFactory = TDuplexProtocolFactory.fromSingleFactory(new TBinaryProtocol.Factory());
+        this.duplexProtocolFactory = TDuplexProtocolFactory.fromSingleFactory(new TBinaryProtocol.Factory(true, true));
         this.executor = new Executor()
         {
             @Override

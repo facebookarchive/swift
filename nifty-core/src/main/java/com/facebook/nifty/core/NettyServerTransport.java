@@ -27,6 +27,8 @@ import org.jboss.netty.channel.ServerChannelFactory;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.timeout.IdleStateHandler;
+import org.jboss.netty.logging.InternalLoggerFactory;
+import org.jboss.netty.logging.Slf4JLoggerFactory;
 import org.jboss.netty.util.ExternalResourceReleasable;
 import org.jboss.netty.util.Timer;
 import org.slf4j.Logger;
@@ -80,14 +82,15 @@ public class NettyServerTransport implements ExternalResourceReleasable
                 if (def.getClientIdleTimeout() != null) {
                     // Add handlers to detect idle client connections and disconnect them
                     cp.addLast("idleTimeoutHandler", new IdleStateHandler(timer,
-                                                                          (int)def.getClientIdleTimeout().toMillis(),
+                                                                          (int) def.getClientIdleTimeout().toMillis(),
                                                                           NO_WRITER_IDLE_TIMEOUT,
                                                                           NO_ALL_IDLE_TIMEOUT,
-                                                                          TimeUnit.MILLISECONDS
-                                                                          ));
+                                                                          TimeUnit.MILLISECONDS));
                     cp.addLast("idleDisconnectHandler", new IdleDisconnectHandler());
                 }
+
                 cp.addLast("dispatcher", new NiftyDispatcher(def));
+                cp.addLast("exceptionLogger", new NiftyExceptionLogger());
                 return cp;
             }
         };
@@ -105,6 +108,13 @@ public class NettyServerTransport implements ExternalResourceReleasable
 
     public void start(ServerChannelFactory serverChannelFactory)
     {
+        if (!(InternalLoggerFactory.getDefaultFactory() instanceof Slf4JLoggerFactory)) {
+            log.warn("Nifty always logs to slf4j, but netty is currently configured to use a " +
+                     "different logging implementation. To correct this call " +
+                     "InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory()) " +
+                     "during your server's startup");
+        }
+
         bootstrap = new ServerBootstrap(serverChannelFactory);
         bootstrap.setOptions(configBuilder.getOptions());
         bootstrap.setPipelineFactory(pipelineFactory);
@@ -138,7 +148,8 @@ public class NettyServerTransport implements ExternalResourceReleasable
         }
     }
 
-    public Channel getServerChannel() {
+    public Channel getServerChannel()
+    {
         return serverChannel;
     }
 
