@@ -27,9 +27,17 @@ import static io.airlift.units.DataSize.Unit.MEGABYTE;
 public class ThriftServerConfig
 {
     private int port;
-    private DataSize maxFrameSize = new DataSize(1, MEGABYTE);
     private int workerThreads = 200;
     private Duration clientIdleTimeout;
+
+    /**
+     * The default maximum allowable size for a single incoming thrift request or outgoing thrift
+     * response. A server can configure the actual maximum to be much higher (up to 0x7FFFFFFF or
+     * almost 2 GB). This default could also be safely bumped up, but 64MB is chosen simply
+     * because it seems reasonable that if you are sending requests or responses larger than
+     * that, it should be a conscious decision (something you must manually configure).
+     */
+    private DataSize maxFrameSize = new DataSize(64, MEGABYTE);
 
     @Min(0)
     @Max(65535)
