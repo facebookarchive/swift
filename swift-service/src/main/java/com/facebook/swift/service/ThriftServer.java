@@ -34,6 +34,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.net.SocketAddress;
 import java.util.concurrent.ExecutorService;
 
 import javax.annotation.PostConstruct;
@@ -54,7 +55,7 @@ public class ThriftServer implements Closeable
 
     private final NettyServerTransport transport;
     private final int workerThreads;
-    private final int port;
+    private final int configuredPort;
     private final DefaultChannelGroup allChannels = new DefaultChannelGroup();
 
     private final ExecutorService acceptorExecutor;
@@ -80,7 +81,7 @@ public class ThriftServer implements Closeable
     {
         TProcessorFactory processorFactory = new TProcessorFactory(processor);
 
-        port = getSpecifiedOrRandomPort(config);
+        configuredPort = config.getPort();
 
         workerThreads = config.getWorkerThreads();
 
@@ -93,7 +94,7 @@ public class ThriftServer implements Closeable
 
         ThriftServerDef thriftServerDef = ThriftServerDef.newBuilder()
                                                          .name("thrift")
-                                                         .listen(port)
+                                                         .listen(configuredPort)
                                                          .limitFrameSizeTo((int) config.getMaxFrameSize().toBytes())
                                                          .clientIdleTimeout(config.getClientIdleTimeout())
                                                          .withProcessorFactory(processorFactory)
@@ -102,24 +103,30 @@ public class ThriftServer implements Closeable
         transport = new NettyServerTransport(thriftServerDef, new NettyConfigBuilder(), allChannels, timer);
     }
 
-    private int getSpecifiedOrRandomPort(ThriftServerConfig config)
-    {
-        if (config.getPort() != 0) {
-            return config.getPort();
-        }
-        try (ServerSocket s = new ServerSocket()) {
-            s.bind(new InetSocketAddress(0));
-            return s.getLocalPort();
-        }
-        catch (IOException e) {
-            throw new IllegalStateException("Unable to get a random port", e);
-        }
-    }
-
     @Managed
     public int getPort()
     {
-        return port;
+        if (configuredPort != 0) {
+            return configuredPort;
+        }
+
+        if (transport.getServerChannel() == null) {
+            throw new IllegalStateException("Cannot determine the randomly port before the server is started");
+        }
+
+        return getBoundPort();
+    }
+
+    private int getBoundPort()
+    {
+        // If the server was configured to bind to port 0, a random port will actually be bound instead
+        SocketAddress socketAddress = transport.getServerChannel().getLocalAddress();
+        if (socketAddress instanceof InetSocketAddress) {
+            InetSocketAddress inetSocketAddress = (InetSocketAddress) socketAddress;
+            return inetSocketAddress.getPort();
+        }
+
+        throw new IllegalStateException("Unable to determine the bound port");
     }
 
     @Managed
