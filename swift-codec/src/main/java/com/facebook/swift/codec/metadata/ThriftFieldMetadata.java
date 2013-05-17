@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableList;
 
 import javax.annotation.concurrent.Immutable;
 import java.util.List;
+import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -123,5 +124,24 @@ public class ThriftFieldMetadata
         sb.append(", coercion=").append(coercion);
         sb.append('}');
         return sb.toString();
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(id, type, name);
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        final ThriftFieldMetadata other = (ThriftFieldMetadata) obj;
+        return Objects.equals(this.id, other.id) && Objects.equals(this.type, other.type) && Objects.equals(this.name, other.name);
     }
 }

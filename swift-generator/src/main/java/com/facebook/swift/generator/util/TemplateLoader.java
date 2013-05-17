@@ -17,11 +17,13 @@ package com.facebook.swift.generator.util;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.Resources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stringtemplate.v4.AttributeRenderer;
 import org.stringtemplate.v4.ST;
 import org.stringtemplate.v4.STErrorListener;
 import org.stringtemplate.v4.STGroup;
@@ -31,6 +33,7 @@ import org.stringtemplate.v4.misc.STMessage;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.Map;
 
 import javax.annotation.Nonnull;
 
@@ -53,10 +56,18 @@ public class TemplateLoader
 
     private final Iterable<String> templateFileNames;
     private volatile STGroup stg = null;
+    private Map<Class<?>, ? extends AttributeRenderer> attributeRenderers = ImmutableMap.of();
 
     public TemplateLoader(final Iterable<String> templateFileNames)
     {
         this.templateFileNames = templateFileNames;
+    }
+
+    public TemplateLoader(final Iterable<String> templateFileNames,
+                          final Map<Class<?>, ? extends AttributeRenderer> attributeRenderers)
+    {
+        this(templateFileNames);
+        this.attributeRenderers = attributeRenderers;
     }
 
     public ST load(final String templateName) throws IOException
@@ -76,6 +87,11 @@ public class TemplateLoader
             stg = new STGroup();
             for (String templateFileName : templateFileNames) {
                 stg.importTemplates(getTemplateGroupFromFile(templateFileName));
+            }
+            for (Map.Entry<Class<?>, ? extends AttributeRenderer> entry : attributeRenderers.entrySet()) {
+                Class<?> cls = entry.getKey();
+                AttributeRenderer renderer = entry.getValue();
+                stg.registerRenderer(cls, renderer);
             }
         }
 

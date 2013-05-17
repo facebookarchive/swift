@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>swift-root</artifactId>
+        <groupId>com.facebook.swift</groupId>
+        <version>0.7.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>swift2thrift-generator-cli</artifactId>
+    <packaging>jar</packaging>
+    <name>${project.artifactId}</name>
+    <description>Command-line interface for swift2thrift-generator</description>
+
+    <properties>
+        <fb.main.basedir>${project.parent.basedir}</fb.main.basedir>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.facebook.swift</groupId>
+            <artifactId>swift-generator</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>14.0.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.beust</groupId>
+            <artifactId>jcommander</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <configuration>
+                    <transformers>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                            <mainClass>com.facebook.swift.generator.swift2thrift.Main</mainClass>
+                        </transformer>
+                    </transformers>
+                    <shadedArtifactAttached>true</shadedArtifactAttached>
+                    <shadedClassifierName>standalone</shadedClassifierName>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

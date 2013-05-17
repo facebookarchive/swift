@@ -21,10 +21,25 @@
   <dependencies>
     <dependency>
       <groupId>com.facebook.swift</groupId>
+      <artifactId>swift-annotations</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.facebook.swift</groupId>
       <artifactId>swift-idl-parser</artifactId>
     </dependency>
 
     <dependency>
+      <groupId>com.facebook.swift</groupId>
+      <artifactId>swift-codec</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.facebook.swift</groupId>
+      <artifactId>swift-service</artifactId>
+    </dependency>
+
+      <dependency>
       <groupId>org.antlr</groupId>
       <artifactId>stringtemplate</artifactId>
     </dependency>
