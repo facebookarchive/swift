@@ -17,7 +17,6 @@ package com.facebook.swift.service;
 
 import com.facebook.nifty.client.NiftyClientChannel;
 import org.apache.thrift.TException;
-import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.buffer.ChannelBuffer;
 
 import java.util.concurrent.CountDownLatch;
