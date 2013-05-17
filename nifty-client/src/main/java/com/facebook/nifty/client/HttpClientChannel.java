@@ -15,6 +15,7 @@
  */
 package com.facebook.nifty.client;
 
+import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.google.common.net.HttpHeaders;
 import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -38,30 +39,16 @@ public class HttpClientChannel extends AbstractClientChannel {
     private Map<String, String> headerDictionary;
     private final String endpointUri;
 
-    public HttpClientChannel(Channel channel,
-                             Timer timer,
-                             String hostName,
-                             String endpointUri) {
-        super(channel, timer);
+    protected HttpClientChannel(Channel channel,
+                                Timer timer,
+                                TDuplexProtocolFactory protocolFactory,
+                                String hostName,
+                                String endpointUri) {
+        super(channel, timer, protocolFactory);
 
         this.underlyingNettyChannel = channel;
         this.hostName = hostName;
         this.endpointUri = endpointUri;
-    }
-
-    @Override
-    protected int extractSequenceId(ChannelBuffer message)
-            throws TTransportException
-    {
-        try {
-            int sequenceId;
-            int stringLength;
-            stringLength = message.getInt(4);
-            sequenceId = message.getInt(8 + stringLength);
-            return sequenceId;
-        } catch (Throwable t) {
-            throw new TTransportException("Could not find sequenceId in Thrift message");
-        }
     }
 
     @Override

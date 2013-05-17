@@ -15,32 +15,51 @@
  */
 package com.facebook.nifty.client;
 
+import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.google.common.net.HostAndPort;
+import org.apache.thrift.protocol.TBinaryProtocol;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.ChannelFuture;
 
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 
 public abstract class AbstractClientConnector<T extends NiftyClientChannel>
         implements NiftyClientConnector<T>
 {
-    private final InetSocketAddress address;
+    private final SocketAddress address;
+    private final TDuplexProtocolFactory protocolFactory;
 
-    public AbstractClientConnector(InetSocketAddress address) {
+    public AbstractClientConnector(SocketAddress address, TDuplexProtocolFactory protocolFactory)
+    {
         this.address = address;
-    }
-
-    public AbstractClientConnector(HostAndPort address) {
-        this(new InetSocketAddress(address.getHostText(), address.getPort()));
+        this.protocolFactory = protocolFactory;
     }
 
     @Override
-    public ChannelFuture connect(ClientBootstrap bootstrap) {
+    public ChannelFuture connect(ClientBootstrap bootstrap)
+    {
         return bootstrap.connect(address);
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return address.toString();
+    }
+
+    protected TDuplexProtocolFactory getProtocolFactory()
+    {
+        return protocolFactory;
+    }
+
+    protected static SocketAddress toSocketAddress(HostAndPort address)
+    {
+        return new InetSocketAddress(address.getHostText(), address.getPort());
+    }
+
+    protected static TDuplexProtocolFactory defaultProtocolFactory()
+    {
+        return TDuplexProtocolFactory.fromSingleFactory(new TBinaryProtocol.Factory());
     }
 }

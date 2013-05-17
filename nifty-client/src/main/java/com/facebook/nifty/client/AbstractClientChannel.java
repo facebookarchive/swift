@@ -15,14 +15,19 @@
  */
 package com.facebook.nifty.client;
 
+import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import io.airlift.units.Duration;
 import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TMessage;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
@@ -50,10 +55,12 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
     private final Map<Integer, Request> requestMap = new HashMap<Integer, Request>();
     private volatile TException channelError;
     private final Timer timer;
+    private final TDuplexProtocolFactory protocolFactory;
 
-    public AbstractClientChannel(Channel nettyChannel, Timer timer) {
+    protected AbstractClientChannel(Channel nettyChannel, Timer timer, TDuplexProtocolFactory protocolFactory) {
         this.nettyChannel = nettyChannel;
         this.timer = timer;
+        this.protocolFactory = protocolFactory;
     }
 
     @Override
@@ -61,10 +68,28 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
         return nettyChannel;
     }
 
+    @Override
+    public TDuplexProtocolFactory getProtocolFactory()
+    {
+        return protocolFactory;
+    }
+
     protected abstract ChannelBuffer extractResponse(Object message) throws TTransportException;
 
-    protected abstract int extractSequenceId(ChannelBuffer message)
-            throws TTransportException;
+    protected int extractSequenceId(ChannelBuffer messageBuffer)
+            throws TTransportException
+    {
+        try {
+            messageBuffer.markReaderIndex();
+            TTransport inputTransport = new TChannelBufferInputTransport(messageBuffer);
+            TProtocol inputProtocol = getProtocolFactory().getInputProtocolFactory().getProtocol(inputTransport);
+            TMessage message = inputProtocol.readMessageBegin();
+            messageBuffer.resetReaderIndex();
+            return message.seqid;
+        } catch (Throwable t) {
+            throw new TTransportException("Could not find sequenceId in Thrift message");
+        }
+    }
 
     protected abstract ChannelFuture writeRequest(ChannelBuffer request);
 
@@ -236,6 +261,12 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
         } else {
             request.getListener().onResponseReceived(response);
         }
+    }
+
+    @Override
+    public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception
+    {
+        onError(new TTransportException("Client was disconnected by server"));
     }
 
     protected void onError(Throwable t)

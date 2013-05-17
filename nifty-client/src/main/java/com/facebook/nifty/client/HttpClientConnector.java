@@ -15,6 +15,7 @@
  */
 package com.facebook.nifty.client;
 
+import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.google.common.net.HostAndPort;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelPipeline;
@@ -38,33 +39,33 @@ public class HttpClientConnector extends AbstractClientConnector<HttpClientChann
     public HttpClientConnector(String hostNameAndPort, String servicePath)
             throws URISyntaxException
     {
-        super(new InetSocketAddress(HostAndPort.fromString(hostNameAndPort).getHostText(),
-                                    HostAndPort.fromString(hostNameAndPort).getPortOrDefault(80)));
-
-        this.endpointUri = new URI("http", hostNameAndPort, servicePath, null, null);
+        this(hostNameAndPort, servicePath, defaultProtocolFactory());
     }
 
     public HttpClientConnector(URI uri)
     {
-        super(HostAndPort.fromParts(checkNotNull(uri).getHost(), getPort(uri)));
+        this(uri, defaultProtocolFactory());
+    }
+
+    public HttpClientConnector(String hostNameAndPort, String servicePath, TDuplexProtocolFactory protocolFactory)
+            throws URISyntaxException
+    {
+        super(new InetSocketAddress(HostAndPort.fromString(hostNameAndPort).getHostText(),
+                                    HostAndPort.fromString(hostNameAndPort).getPortOrDefault(80)),
+              protocolFactory);
+
+        this.endpointUri = new URI("http", hostNameAndPort, servicePath, null, null);
+    }
+
+    public HttpClientConnector(URI uri, TDuplexProtocolFactory protocolFactory)
+    {
+        super(toSocketAddress(HostAndPort.fromParts(checkNotNull(uri).getHost(), getPortFromURI(uri))),
+              defaultProtocolFactory());
 
         checkArgument(uri.isAbsolute() && !uri.isOpaque(),
                       "HttpClientConnector requires an absolute URI with a path");
 
         this.endpointUri = uri;
-    }
-
-    public static int getPort(URI uri)
-    {
-        URI uriNN = checkNotNull(uri);
-        if (uri.getScheme().toLowerCase().equals("http")) {
-            return uriNN.getPort() == -1 ? 80 : uriNN.getPort();
-        } else if (uri.getScheme().toLowerCase().equals("https")) {
-            return uriNN.getPort() == -1 ? 443 : uriNN.getPort();
-        } else {
-            throw new IllegalArgumentException("HttpClientConnector only connects to HTTP/HTTPS " +
-                                               "URIs");
-        }
     }
 
     @Override
@@ -73,6 +74,7 @@ public class HttpClientConnector extends AbstractClientConnector<HttpClientChann
         HttpClientChannel channel =
                 new HttpClientChannel(nettyChannel,
                                       timer,
+                                      getProtocolFactory(),
                                       endpointUri.getHost(),
                                       endpointUri.getPath());
         channel.getNettyChannel().getPipeline().addLast("thriftHandler", channel);
@@ -100,5 +102,18 @@ public class HttpClientConnector extends AbstractClientConnector<HttpClientChann
     public String toString()
     {
         return endpointUri.toString();
+    }
+
+    private static int getPortFromURI(URI uri)
+    {
+        URI uriNN = checkNotNull(uri);
+        if (uri.getScheme().toLowerCase().equals("http")) {
+            return uriNN.getPort() == -1 ? 80 : uriNN.getPort();
+        } else if (uri.getScheme().toLowerCase().equals("https")) {
+            return uriNN.getPort() == -1 ? 443 : uriNN.getPort();
+        } else {
+            throw new IllegalArgumentException("HttpClientConnector only connects to HTTP/HTTPS " +
+                                               "URIs");
+        }
     }
 }

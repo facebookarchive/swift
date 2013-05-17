@@ -15,23 +15,18 @@
  */
 package com.facebook.nifty.client;
 
-import org.apache.thrift.transport.TTransportException;
+import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.ChannelPipelineFactory;
-import org.jboss.netty.channel.Channels;
-import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
-import org.jboss.netty.handler.codec.frame.LengthFieldPrepender;
 import org.jboss.netty.util.Timer;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
 @NotThreadSafe
 public class FramedClientChannel extends AbstractClientChannel {
-    public FramedClientChannel(Channel channel, Timer timer) {
-        super(channel, timer);
+    protected FramedClientChannel(Channel channel, Timer timer, TDuplexProtocolFactory protocolFactory) {
+        super(channel, timer, protocolFactory);
     }
 
     @Override
@@ -46,19 +41,6 @@ public class FramedClientChannel extends AbstractClientChannel {
         }
 
         return buffer;
-    }
-
-    @Override
-    protected int extractSequenceId(ChannelBuffer message) throws TTransportException {
-        try {
-            int sequenceId;
-            int stringLength;
-            stringLength = message.getInt(4);
-            sequenceId = message.getInt(8 + stringLength);
-            return sequenceId;
-        } catch (Throwable t) {
-            throw new TTransportException("Could not find sequenceId in Thrift message");
-        }
     }
 
     @Override
