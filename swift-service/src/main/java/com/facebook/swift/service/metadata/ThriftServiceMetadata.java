@@ -24,6 +24,7 @@ import com.google.common.collect.Iterables;
 
 import javax.annotation.concurrent.Immutable;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Map;
 import java.util.Set;
 
@@ -39,6 +40,10 @@ public class ThriftServiceMetadata
     public ThriftServiceMetadata(Class<?> serviceClass, ThriftCatalog catalog)
     {
         Preconditions.checkNotNull(serviceClass, "serviceClass is null");
+        Preconditions.checkArgument(
+                Modifier.isPublic(serviceClass.getModifiers()),
+                "Class " + serviceClass + " is has @ThriftService annotation but is not public");
+
         ThriftService thriftService = getThriftServiceAnnotation(serviceClass);
 
         if (thriftService.value().length() == 0) {

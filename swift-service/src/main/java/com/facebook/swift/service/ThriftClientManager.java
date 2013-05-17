@@ -18,6 +18,7 @@ package com.facebook.swift.service;
 import com.facebook.nifty.client.NiftyClient;
 import com.facebook.nifty.client.NiftyClientChannel;
 import com.facebook.nifty.client.NiftyClientConnector;
+import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.metadata.ThriftMethodMetadata;
 import com.facebook.swift.service.metadata.ThriftServiceMetadata;
@@ -35,7 +36,6 @@ import com.google.common.util.concurrent.SettableFuture;
 import io.airlift.units.Duration;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
-import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocolException;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TTransportException;
@@ -289,13 +289,12 @@ public class ThriftClientManager implements Closeable
     {
         private static final Object[] NO_ARGS = new Object[0];
         private final String clientDescription;
-        private final TProtocolFactory in;
-        private final TProtocolFactory out;
 
         private final NiftyClientChannel channel;
 
         private final Map<Method, ThriftMethodHandler> methods;
         private final AtomicInteger sequenceId = new AtomicInteger(1);
+        private final TDuplexProtocolFactory protocolFactory;
 
         private ThriftInvocationHandler(
                 String clientDescription,
@@ -305,10 +304,7 @@ public class ThriftClientManager implements Closeable
             this.clientDescription = clientDescription;
             this.channel = channel;
             this.methods = methods;
-
-            TProtocolFactory protocolFactory = new TBinaryProtocol.Factory();
-            this.in = protocolFactory;
-            this.out = protocolFactory;
+            this.protocolFactory = channel.getProtocolFactory();
         }
 
         public NiftyClientChannel getChannel()
@@ -348,7 +344,7 @@ public class ThriftClientManager implements Closeable
                 if (methodHandler == null) {
                     throw new TApplicationException(UNKNOWN_METHOD, "Unknown method : '" + method + "'");
                 }
-                return methodHandler.invoke(in, out, channel, sequenceId.getAndIncrement(), args);
+                return methodHandler.invoke(protocolFactory, channel, sequenceId.getAndIncrement(), args);
             }
             catch (TException e) {
                 Class<? extends TException> thrownType = e.getClass();

@@ -31,6 +31,7 @@ import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -146,7 +147,7 @@ public final class ReflectionHelper
 
         // gather all publicly available methods
         // this returns everything, even if it's declared in a parent
-        for (Method method : type.getMethods()) {
+        for (Method method : type.getDeclaredMethods()) {
             // skip methods that are used internally by the vm for implementing covariance, etc
             if (method.isSynthetic() || method.isBridge() || isStatic(method.getModifiers())) {
                 continue;
@@ -159,6 +160,10 @@ public final class ReflectionHelper
                     method.getName(),
                     method.getParameterTypes());
             if (managedMethod != null) {
+                if (!Modifier.isPublic(managedMethod.getModifiers())) {
+                    throw new IllegalArgumentException("Method " + method.getName() + " on class " + type.getName() + " has @ThriftMethod annotation but is not public");
+                }
+
                 result.add(managedMethod);
             }
         }
