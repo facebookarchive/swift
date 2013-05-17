@@ -20,13 +20,18 @@ import com.facebook.nifty.core.NettyServerConfigBuilder;
 import com.google.inject.Provider;
 
 public class LoadTesterNettyConfigProvider implements Provider<NettyServerConfig> {
-    public LoadTesterNettyConfigProvider() {
+    private final NiftyLoadTester.LoadTesterConfig config;
+
+    @Inject
+    public LoadTesterNettyConfigProvider(NiftyLoadTester.LoadTesterConfig config)
+    {
+        this.config = config;
     }
 
     @Override
     public NettyServerConfig get() {
         NettyServerConfigBuilder configBuilder = new NettyServerConfigBuilder();
-        configBuilder.getServerSocketChannelConfig().setBacklog(1024);
+        configBuilder.getServerSocketChannelConfig().setBacklog(config.getAcceptBacklog());
         return configBuilder.build();
     }
 }

@@ -116,6 +116,7 @@ public class NiftyLoadTester
         private boolean useTaskQueue = false;
         private int numTaskThreads = 8;
         private int queuedResponseLimit = 500;
+        private int acceptBacklog = 1024;
 
         public int getServerPort()
         {
@@ -170,6 +171,17 @@ public class NiftyLoadTester
         public void setQueuedResponseLimit(int queuedResponseLimit)
         {
             this.queuedResponseLimit = queuedResponseLimit;
+        }
+
+        public int getAcceptBacklog()
+        {
+            return acceptBacklog;
+        }
+
+        @Config("acceptBacklog")
+        public void setAcceptBacklog(int acceptBacklog)
+        {
+            this.acceptBacklog = acceptBacklog;
         }
     }
 }
