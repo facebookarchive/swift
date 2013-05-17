@@ -81,6 +81,8 @@ public class ThriftServiceProcessor implements TProcessor
         serviceStats = statsBuilder.build();
     }
 
+
+
     public Map<String, ThriftMethodProcessor> getMethods()
     {
         return methods;
