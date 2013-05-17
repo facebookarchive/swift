@@ -25,6 +25,7 @@ import com.google.common.collect.Iterables;
 import javax.annotation.concurrent.Immutable;
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.facebook.swift.codec.metadata.ReflectionHelper.findAnnotatedMethods;
@@ -35,6 +36,8 @@ public class ThriftServiceMetadata
 {
     private final String name;
     private final Map<String, ThriftMethodMetadata> methods;
+    private final Map<String, ThriftMethodMetadata> declaredMethods;
+    private final ThriftServiceMetadata parentService;
 
     public ThriftServiceMetadata(Class<?> serviceClass, ThriftCatalog catalog)
     {
@@ -49,13 +52,27 @@ public class ThriftServiceMetadata
         }
 
         ImmutableMap.Builder<String, ThriftMethodMetadata> builder = ImmutableMap.builder();
+        ImmutableMap.Builder<String, ThriftMethodMetadata> declaredBuilder = ImmutableMap.builder();
         for (Method method : findAnnotatedMethods(serviceClass, ThriftMethod.class)) {
             if (method.isAnnotationPresent(ThriftMethod.class)) {
                 ThriftMethodMetadata methodMetadata = new ThriftMethodMetadata(method, catalog);
                 builder.put(methodMetadata.getName(), methodMetadata);
+                if (method.getDeclaringClass().equals(serviceClass)) {
+                    declaredBuilder.put(methodMetadata.getName(), methodMetadata);
+                }
             }
         }
         methods = builder.build();
+        declaredMethods = declaredBuilder.build();
+
+        ThriftServiceMetadata parentService = null;
+        for (Class<?> parent : serviceClass.getInterfaces()) {
+            if (!getEffectiveClassAnnotations(parent, ThriftService.class).isEmpty()) {
+                Preconditions.checkState(parentService == null, "service " + serviceClass.getSimpleName() + " extends multiple services");
+                parentService = new ThriftServiceMetadata(parent, catalog);
+            }
+        }
+        this.parentService = parentService;
     }
 
     public ThriftServiceMetadata(String name, ThriftMethodMetadata... methods)
@@ -67,6 +84,8 @@ public class ThriftServiceMetadata
             builder.put(method.getName(), method);
         }
         this.methods = builder.build();
+        this.declaredMethods = this.methods;
+        this.parentService = null;
     }
 
     public String getName()
@@ -84,6 +103,11 @@ public class ThriftServiceMetadata
         return methods;
     }
 
+    public Map<String, ThriftMethodMetadata> getDeclaredMethods()
+    {
+        return declaredMethods;
+    }
+
     public static ThriftService getThriftServiceAnnotation(Class<?> serviceClass)
     {
         Set<ThriftService> serviceAnnotations = getEffectiveClassAnnotations(serviceClass, ThriftService.class);
@@ -95,5 +119,29 @@ public class ThriftServiceMetadata
         );
 
         return Iterables.getOnlyElement(serviceAnnotations);
+    }
+
+    public ThriftServiceMetadata getParentService()
+    {
+        return parentService;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(name, methods, parentService);
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        final ThriftServiceMetadata other = (ThriftServiceMetadata) obj;
+        return Objects.equals(this.name, other.name) && Objects.equals(this.methods, other.methods) && Objects.equals(this.parentService, other.parentService);
     }
 }

@@ -38,6 +38,7 @@ public class ThriftStructMetadata<T>
     private final ThriftMethodInjection builderMethod;
 
     private final SortedMap<Short, ThriftFieldMetadata> fields;
+    private final List<ThriftFieldMetadata> unsortedFields;
 
     private final ThriftConstructorInjection constructor;
     private final List<ThriftMethodInjection> methodInjections;
@@ -56,6 +57,7 @@ public class ThriftStructMetadata<T>
         this.structName = checkNotNull(structName, "structName is null");
         this.structClass = checkNotNull(structClass, "structClass is null");
         this.constructor = checkNotNull(constructor, "constructor is null");
+        this.unsortedFields = ImmutableList.copyOf(fields);
         this.fields = ImmutableSortedMap.copyOf(uniqueIndex(checkNotNull(fields, "fields is null"), new Function<ThriftFieldMetadata, Short>()
         {
             @Override
@@ -97,6 +99,11 @@ public class ThriftStructMetadata<T>
         return fields.values();
     }
 
+    public List<ThriftFieldMetadata> getUnsortedFields()
+    {
+        return unsortedFields;
+    }
+
     public ThriftConstructorInjection getConstructor()
     {
         return constructor;
@@ -105,6 +112,11 @@ public class ThriftStructMetadata<T>
     public List<ThriftMethodInjection> getMethodInjections()
     {
         return methodInjections;
+    }
+
+    public boolean isException()
+    {
+        return Exception.class.isAssignableFrom(structClass);
     }
 
     @Override

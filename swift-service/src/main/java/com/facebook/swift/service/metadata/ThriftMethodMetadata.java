@@ -36,10 +36,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.facebook.swift.codec.metadata.ReflectionHelper.extractParameterNames;
 import static com.google.common.base.Preconditions.checkState;
@@ -197,5 +194,28 @@ public class ThriftMethodMetadata
         Type returnType = method.getGenericReturnType();
         Class<?> rawType = TypeToken.of(returnType).getRawType();
         return ListenableFuture.class.isAssignableFrom(rawType);
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        final ThriftMethodMetadata that = (ThriftMethodMetadata) o;
+
+        return Objects.equals(name, that.name) && Objects.equals(returnType, that.returnType) &&
+                Objects.equals(parameters, that.parameters) && Objects.equals(method, that.method) &&
+                Objects.equals(exceptions, that.exceptions) && Objects.equals(oneway, that.oneway);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(name, returnType, parameters, method, exceptions, oneway);
     }
 }
