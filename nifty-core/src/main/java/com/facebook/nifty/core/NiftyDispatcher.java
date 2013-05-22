@@ -141,6 +141,7 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
         else {
             // No ordering required, just write the response immediately
             Channels.write(ctx.getChannel(), response);
+            lastResponseWrittenId.incrementAndGet();
         }
     }
 
