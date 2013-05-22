@@ -118,8 +118,11 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
                         RequestContext.clearCurrentContext();
                     }
 
-                    ThriftMessage response = message.getMessageFactory().create(messageTransport.getOutputBuffer());
-                    writeResponse(ctx, response, requestSequenceId, message.isOrderedResponsesRequired());
+                    // Only write response if the client is still there
+                    if (ctx.getChannel().isConnected()) {
+                        ThriftMessage response = message.getMessageFactory().create(messageTransport.getOutputBuffer());
+                        writeResponse(ctx, response, requestSequenceId, message.isOrderedResponsesRequired());
+                    }
                 }
                 catch (TException e) {
                     Channels.fireExceptionCaught(ctx, e);
