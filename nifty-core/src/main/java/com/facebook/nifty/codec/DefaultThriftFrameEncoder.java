@@ -62,6 +62,9 @@ public class DefaultThriftFrameEncoder extends ThriftFrameEncoder
             case HEADER:
                 throw new UnsupportedOperationException("Header transport is not supported");
 
+            case HTTP:
+                throw new UnsupportedOperationException("HTTP transport is not supported");
+
             default:
                 throw new UnsupportedOperationException("Unrecognized transport type");
         }

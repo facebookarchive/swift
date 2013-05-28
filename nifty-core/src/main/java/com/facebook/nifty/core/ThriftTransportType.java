@@ -18,5 +18,6 @@ package com.facebook.nifty.core;
 public enum ThriftTransportType {
     UNFRAMED,
     FRAMED,
+    HTTP,
     HEADER
 }
