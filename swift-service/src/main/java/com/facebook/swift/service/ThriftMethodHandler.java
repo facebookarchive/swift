@@ -16,8 +16,8 @@
 package com.facebook.swift.service;
 
 import com.facebook.nifty.client.NiftyClientChannel;
-import com.facebook.nifty.client.TChannelBufferInputTransport;
-import com.facebook.nifty.client.TChannelBufferOutputTransport;
+import com.facebook.nifty.core.TChannelBufferInputTransport;
+import com.facebook.nifty.core.TChannelBufferOutputTransport;
 import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.facebook.swift.codec.ThriftCodec;
 import com.facebook.swift.codec.ThriftCodecManager;
