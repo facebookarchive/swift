@@ -122,7 +122,7 @@ public final class ReflectionHelper
     {
         ImmutableList.Builder<Method> methods = ImmutableList.builder();
 
-        for (Class<?> clazz = type; (clazz != null) && !clazz.equals(Object.class); clazz = clazz.getSuperclass()) {
+        for (Class<?> clazz = type; clazz != null && !clazz.equals(Object.class); clazz = clazz.getSuperclass()) {
             methods.addAll(ImmutableList.copyOf(clazz.getDeclaredMethods()));
         }
         return methods.build();
@@ -131,7 +131,7 @@ public final class ReflectionHelper
     public static Iterable<Field> getAllDeclaredFields(Class<?> type)
     {
         ImmutableList.Builder<Field> fields = ImmutableList.builder();
-        for (Class<?> clazz = type; (clazz != null) && !clazz.equals(Object.class); clazz = clazz.getSuperclass()) {
+        for (Class<?> clazz = type; clazz != null && !clazz.equals(Object.class); clazz = clazz.getSuperclass()) {
             fields.addAll(ImmutableList.copyOf(clazz.getDeclaredFields()));
         }
         return fields.build();
@@ -248,7 +248,7 @@ public final class ReflectionHelper
         @Override
         protected boolean isNamed(Annotation annotation)
         {
-            return (annotation instanceof ThriftField) || super.isNamed(annotation);
+            return annotation instanceof ThriftField || super.isNamed(annotation);
         }
     }
 

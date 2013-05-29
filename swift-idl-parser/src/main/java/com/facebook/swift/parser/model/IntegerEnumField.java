@@ -31,7 +31,7 @@ public class IntegerEnumField
     {
         this.name = checkNotNull(name, "name");
         this.explicitValue = Optional.fromNullable(explicitValue);
-        this.effectiveValue = (this.explicitValue.isPresent()) ? this.explicitValue.get() : defaultValue;
+        this.effectiveValue = this.explicitValue.isPresent() ? this.explicitValue.get() : defaultValue;
     }
 
     public String getName()
