@@ -18,11 +18,13 @@ package com.facebook.swift.service.async;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.ThriftServer;
+import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
+import io.airlift.units.Duration;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.handler.timeout.ReadTimeoutException;
@@ -234,6 +236,15 @@ public class AsyncClientTest extends AsyncTestBase
             // executor runs callbacks on the same thread, this shouldn't even be a race).
             latch.await(0, TimeUnit.MILLISECONDS);
         }
+    }
+
+    // Test that an exception thrown while handling a successful async connection get reported
+    // as a failure on the client future.
+    @Test(expectedExceptions = { ExecutionException.class })
+    public void testClientCreateFailure()
+            throws InterruptedException, ExecutionException, TTransportException
+    {
+        createClient(MalformedService.class, syncServer).get();
     }
 
     private ThriftServer createSyncServer()
