@@ -110,7 +110,6 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
             // of an estimate than a hard limit. Netty may continue to decode and process several
             // more requests that were in the latest read, even while further reads on the channel
             // have been blocked.
-<<<<<<< HEAD
             if (requestSequenceId > lastResponseWrittenId.get() + queuedResponseLimit &&
                 !DispatcherContext.isChannelReadBlocked(ctx))
             {
