@@ -21,6 +21,8 @@ import com.facebook.nifty.client.NiftyClient;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.airlift.units.Duration;
+import org.jboss.netty.logging.InternalLoggerFactory;
+import org.jboss.netty.logging.Slf4JLoggerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
@@ -43,19 +45,20 @@ public class TestNiftyClientTimeout
 
     @BeforeTest(alwaysRun = true)
     public void init() {
-      // must load DelegateSelectorProvider before entire test suite to
-      // properly wire up selector provider.
-      DelegateSelectorProvider.init();
+        // must load DelegateSelectorProvider before entire test suite to
+        // properly wire up selector provider.
+        DelegateSelectorProvider.init();
     }
 
     @BeforeMethod(alwaysRun = true)
     public void setup() {
-      DelegateSelectorProvider.makeDeaf();
+        InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory());
+        DelegateSelectorProvider.makeDeaf();
     }
 
     @AfterMethod(alwaysRun = true)
     public void tearDown() {
-      DelegateSelectorProvider.makeUndeaf();
+        DelegateSelectorProvider.makeUndeaf();
     }
 
     @Test(timeOut = 2000)

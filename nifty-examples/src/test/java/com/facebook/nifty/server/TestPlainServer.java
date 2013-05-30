@@ -31,6 +31,8 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransportException;
+import org.jboss.netty.logging.InternalLoggerFactory;
+import org.jboss.netty.logging.Slf4JLoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterMethod;
@@ -57,6 +59,7 @@ public class TestPlainServer
     public void setup()
     {
         bootstrap = null;
+        InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory());
     }
 
     @AfterMethod(alwaysRun = true)

@@ -27,6 +27,8 @@ import com.google.inject.Stage;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TTransportException;
+import org.jboss.netty.logging.InternalLoggerFactory;
+import org.jboss.netty.logging.Slf4JLoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
@@ -50,6 +52,7 @@ public class TestNiftyClient
     @BeforeMethod(alwaysRun = true)
     public void setup() throws IOException
     {
+        InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory());
         ServerSocket s = new ServerSocket();
         s.bind(new InetSocketAddress(0));
         port = s.getLocalPort();

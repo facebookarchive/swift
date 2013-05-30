@@ -27,9 +27,12 @@ import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
+import org.jboss.netty.logging.InternalLoggerFactory;
+import org.jboss.netty.logging.Slf4JLoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
@@ -43,6 +46,12 @@ public class TestPlainClient {
     private NiftyBootstrap bootstrap;
     private static Logger log = LoggerFactory.getLogger(TestPlainClient.class);
     int port;
+
+    @BeforeMethod(alwaysRun = true)
+    public void setup()
+    {
+        InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory());
+    }
 
     @Test
     public void testPlainUnframedClient() throws TException {
