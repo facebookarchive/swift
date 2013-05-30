@@ -333,15 +333,6 @@ public class Swift2ThriftGenerator {
         }
     }
 
-    // Returns the basename of @filename, i.e., strips off path and extension.
-    // Should be replaced with Files.getNameWithoutExtension from guava 14
-    private static String basename(String filename)
-    {
-        String nameWithoutPath = new File(filename).getName();
-        int pos = nameWithoutPath.indexOf('.');
-        return pos != -1 ? nameWithoutPath.substring(0, pos) : nameWithoutPath;
-    }
-
     private void gen() throws IOException {
         ImmutableMap.Builder<ThriftType, String> typenameMap = ImmutableMap.builder();
         ImmutableMap.Builder<ThriftServiceMetadata, String> serviceMap = ImmutableMap.builder();
@@ -349,12 +340,12 @@ public class Swift2ThriftGenerator {
         for (ThriftType t: usedIncludedTypes) {
             String filename = includeMap.get(t);
             includes.add(filename);
-            typenameMap.put(t, basename(filename));
+            typenameMap.put(t, Files.getNameWithoutExtension(filename));
         }
         for (ThriftServiceMetadata s: usedIncludedServices) {
             String filename = includeMap.get(s);
             includes.add(filename);
-            serviceMap.put(s, basename(filename));
+            serviceMap.put(s, Files.getNameWithoutExtension(filename));
         }
         this.thriftTypeRenderer = new ThriftTypeRenderer(typenameMap.build());
         ThriftServiceMetadataRenderer serviceRenderer = new ThriftServiceMetadataRenderer(serviceMap.build());

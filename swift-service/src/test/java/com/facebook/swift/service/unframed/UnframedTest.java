@@ -63,7 +63,7 @@ public class UnframedTest
         TestServerInfo info = startServer();
         ThriftClientManager clientManager = new ThriftClientManager();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ResultCode[] resultHolder = new ResultCode[0];
+        final ResultCode[] resultHolder = new ResultCode[1];
 
         ListenableFuture<AsyncScribe> clientFuture = createUnframedClient(clientManager, AsyncScribe.class, info.port);
         Futures.addCallback(clientFuture, new FutureCallback<AsyncScribe>()
