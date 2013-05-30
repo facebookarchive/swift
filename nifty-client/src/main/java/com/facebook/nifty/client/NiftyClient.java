@@ -194,7 +194,7 @@ public class NiftyClient implements Closeable
             throw new TTransportException(message, f.getCause());
         }
 
-        if (f.isSuccess() && (channel != null)) {
+        if (f.isSuccess() && channel != null) {
             if (channel.isOpen()) {
                 allChannels.add(channel);
             }
