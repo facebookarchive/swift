@@ -35,6 +35,8 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.google.common.base.Preconditions.checkState;
+
 /**
  * Dispatch TNiftyTransport to the TProcessor and write output back.
  *
@@ -69,10 +71,29 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
     {
         if (e.getMessage() instanceof ThriftMessage) {
             ThriftMessage message = (ThriftMessage) e.getMessage();
+            checkResponseOrderingRequirements(ctx, message);
             processRequest(ctx, message);
         }
         else {
             ctx.sendUpstream(e);
+        }
+    }
+
+    private void checkResponseOrderingRequirements(ChannelHandlerContext ctx, ThriftMessage message)
+    {
+        boolean messageRequiresOrderedResponses = message.isOrderedResponsesRequired();
+
+        if (!DispatcherContext.isResponseOrderingRequirementInitialized(ctx)) {
+            // This is the first request. This message will decide whether all responses on the
+            // channel must be strictly ordered, or whether out-of-order is allowed.
+            DispatcherContext.setResponseOrderingRequired(ctx, messageRequiresOrderedResponses);
+        }
+        else {
+            // This is not the first request. Verify that the ordering requirement on this message
+            // is consistent with the requirement on the channel itself.
+            checkState(
+                    messageRequiresOrderedResponses == DispatcherContext.isResponseOrderingRequired(ctx),
+                    "Every message on a single channel must specify the same requirement for response ordering");
         }
     }
 
@@ -90,9 +111,9 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
             // more requests that were in the latest read, even while further reads on the channel
             // have been blocked.
             if ((requestSequenceId > lastResponseWrittenId.get() + queuedResponseLimit) &&
-                !isChannelReadBlocked(ctx))
+                !DispatcherContext.isChannelReadBlocked(ctx))
             {
-                blockChannelReads(ctx);
+                DispatcherContext.blockChannelReads(ctx);
             }
         }
 
@@ -121,7 +142,7 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
                     // Only write response if the client is still there
                     if (ctx.getChannel().isConnected()) {
                         ThriftMessage response = message.getMessageFactory().create(messageTransport.getOutputBuffer());
-                        writeResponse(ctx, response, requestSequenceId, message.isOrderedResponsesRequired());
+                        writeResponse(ctx, response, requestSequenceId, DispatcherContext.isResponseOrderingRequired(ctx));
                     }
                 }
                 catch (TException e) {
@@ -173,10 +194,10 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
                 } while (null != response);
 
                 // Now that we've written some responses, check if reads should be unblocked
-                if (isChannelReadBlocked(ctx)) {
+                if (DispatcherContext.isChannelReadBlocked(ctx)) {
                     int lastRequestSequenceId = dispatcherSequenceId.get();
                     if (lastRequestSequenceId <= lastResponseWrittenId.get() + queuedResponseLimit) {
-                        unblockChannelReads(ctx);
+                        DispatcherContext.unblockChannelReads(ctx);
                     }
                 }
             }
@@ -201,38 +222,83 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
         }
     }
 
-    private enum ReadBlockedState {
-        NOT_BLOCKED,
-        BLOCKED,
-    }
-
     @Override
     public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
         // Reads always start out unblocked
-        ctx.setAttachment(ReadBlockedState.NOT_BLOCKED);
+        DispatcherContext.unblockChannelReads(ctx);
         super.channelOpen(ctx, e);
     }
 
-    private boolean isChannelReadBlocked(ChannelHandlerContext ctx) {
-        return ctx.getAttachment() == ReadBlockedState.BLOCKED;
-    }
+    private static class DispatcherContext
+    {
+        private ReadBlockedState readBlockedState = ReadBlockedState.NOT_BLOCKED;
+        private boolean responseOrderingRequired = false;
+        private boolean responseOrderingRequirementInitialized = false;
 
-    private void blockChannelReads(ChannelHandlerContext ctx) {
-        // Remember that reads are blocked (there is no Channel.getReadable())
-        ctx.setAttachment(ReadBlockedState.BLOCKED);
+        public static boolean isChannelReadBlocked(ChannelHandlerContext ctx) {
+            return getDispatcherContext(ctx).readBlockedState == ReadBlockedState.BLOCKED;
+        }
 
-        // NOTE: this shuts down reads, but isn't a 100% guarantee we won't get any more messages.
-        // It sets up the channel so that the polling loop will not report any new read events
-        // and netty won't read any more data from the socket, but any messages already fully read
-        // from the socket before this ran may still be decoded and arrive at this handler. Thus
-        // the limit on queued messages before we block reads is more of a guidance than a hard
-        // limit.
-        ctx.getChannel().setReadable(false);
-    }
+        public static void blockChannelReads(ChannelHandlerContext ctx) {
+            // Remember that reads are blocked (there is no Channel.getReadable())
+            getDispatcherContext(ctx).readBlockedState = ReadBlockedState.BLOCKED;
 
-    private void unblockChannelReads(ChannelHandlerContext ctx) {
-        // Remember that reads are unblocked (there is no Channel.getReadable())
-        ctx.setAttachment(ReadBlockedState.NOT_BLOCKED);
-        ctx.getChannel().setReadable(true);
+            // NOTE: this shuts down reads, but isn't a 100% guarantee we won't get any more messages.
+            // It sets up the channel so that the polling loop will not report any new read events
+            // and netty won't read any more data from the socket, but any messages already fully read
+            // from the socket before this ran may still be decoded and arrive at this handler. Thus
+            // the limit on queued messages before we block reads is more of a guidance than a hard
+            // limit.
+            ctx.getChannel().setReadable(false);
+        }
+
+        public static void unblockChannelReads(ChannelHandlerContext ctx) {
+            // Remember that reads are unblocked (there is no Channel.getReadable())
+            getDispatcherContext(ctx).readBlockedState = ReadBlockedState.NOT_BLOCKED;
+            ctx.getChannel().setReadable(true);
+        }
+
+        public static void setResponseOrderingRequired(ChannelHandlerContext ctx, boolean required)
+        {
+            DispatcherContext dispatcherContext = getDispatcherContext(ctx);
+            dispatcherContext.responseOrderingRequirementInitialized = true;
+            dispatcherContext.responseOrderingRequired = required;
+        }
+
+        public static boolean isResponseOrderingRequired(ChannelHandlerContext ctx)
+        {
+            return getDispatcherContext(ctx).responseOrderingRequired;
+        }
+
+        public static boolean isResponseOrderingRequirementInitialized(ChannelHandlerContext ctx)
+        {
+            return getDispatcherContext(ctx).responseOrderingRequirementInitialized;
+        }
+
+        private static DispatcherContext getDispatcherContext(ChannelHandlerContext ctx)
+        {
+            DispatcherContext dispatcherContext;
+            Object attachment = ctx.getAttachment();
+
+            if (attachment == null) {
+                // No context was added yet, add one
+                dispatcherContext = new DispatcherContext();
+                ctx.setAttachment(dispatcherContext);
+            }
+            else if (!(attachment instanceof DispatcherContext)) {
+                // There was a context, but it was the wrong type. This should never happen.
+                throw new IllegalStateException("NiftyDispatcher handler context should be of type NiftyDispatcher.DispatcherContext");
+            }
+            else {
+                dispatcherContext = (DispatcherContext) attachment;
+            }
+
+            return dispatcherContext;
+        }
+
+        private enum ReadBlockedState {
+            NOT_BLOCKED,
+            BLOCKED,
+        }
     }
 }
