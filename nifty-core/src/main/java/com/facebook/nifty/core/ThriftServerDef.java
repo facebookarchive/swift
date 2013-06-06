@@ -29,6 +29,7 @@ public class ThriftServerDef
 {
     private final int serverPort;
     private final int maxFrameSize;
+    private final int maxConnections;
     private final int queuedResponseLimit;
     private final NiftyProcessorFactory processorFactory;
     private final TDuplexProtocolFactory duplexProtocolFactory;
@@ -44,6 +45,7 @@ public class ThriftServerDef
             int serverPort,
             int maxFrameSize,
             int queuedResponseLimit,
+            int maxConnections,
             NiftyProcessorFactory processorFactory,
             TDuplexProtocolFactory duplexProtocolFactory,
             Duration clientIdleTimeout,
@@ -53,6 +55,7 @@ public class ThriftServerDef
         this.name = name;
         this.serverPort = serverPort;
         this.maxFrameSize = maxFrameSize;
+        this.maxConnections = maxConnections;
         this.queuedResponseLimit = queuedResponseLimit;
         this.processorFactory = processorFactory;
         this.duplexProtocolFactory = duplexProtocolFactory;
@@ -74,6 +77,11 @@ public class ThriftServerDef
     public int getMaxFrameSize()
     {
         return maxFrameSize;
+    }
+
+    public int getMaxConnections()
+    {
+        return maxConnections;
     }
 
     public int getQueuedResponseLimit()

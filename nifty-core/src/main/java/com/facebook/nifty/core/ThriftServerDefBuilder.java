@@ -54,6 +54,7 @@ public class ThriftServerDefBuilder
     private ThriftFrameCodecFactory thriftFrameCodecFactory;
     private int serverPort;
     private int maxFrameSize;
+    private int maxConnections;
     private int queuedResponseLimit;
     private NiftyProcessorFactory niftyProcessorFactory;
     private TProcessorFactory thriftProcessorFactory;
@@ -78,6 +79,7 @@ public class ThriftServerDefBuilder
     {
         this.serverPort = 8080;
         this.maxFrameSize = MAX_FRAME_SIZE;
+        this.maxConnections = 0;
         this.queuedResponseLimit = 16;
         this.duplexProtocolFactory = TDuplexProtocolFactory.fromSingleFactory(new TBinaryProtocol.Factory(true, true));
         this.executor = new Executor()
@@ -165,11 +167,20 @@ public class ThriftServerDefBuilder
     }
 
     /**
-     * Set frame size limit.  Default is 1M
+     * Set frame size limit.  Default is MAX_FRAME_SIZE
      */
     public ThriftServerDefBuilder limitFrameSizeTo(int maxFrameSize)
     {
         this.maxFrameSize = maxFrameSize;
+        return this;
+    }
+
+    /**
+     * Set maximum number of connections. Default is 0 (unlimited)
+     */
+    public ThriftServerDefBuilder limitConnectionsTo(int maxConnections)
+    {
+        this.maxConnections = maxConnections;
         return this;
     }
 
@@ -219,6 +230,7 @@ public class ThriftServerDefBuilder
                    "Processor not defined!");
         checkState(niftyProcessorFactory == null || thriftProcessorFactory == null,
                    "TProcessors will be automatically adapted to NiftyProcessors, don't specify both");
+        checkState(maxConnections >= 0, "maxConnections should be 0 (for unlimited) or positive");
 
         if (niftyProcessorFactory == null)
         {
@@ -230,6 +242,7 @@ public class ThriftServerDefBuilder
                 serverPort,
                 maxFrameSize,
                 queuedResponseLimit,
+                maxConnections,
                 niftyProcessorFactory,
                 duplexProtocolFactory,
                 clientIdleTimeout,
