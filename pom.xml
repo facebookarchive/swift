@@ -11,7 +11,7 @@
 
   <groupId>com.facebook.swift</groupId>
   <artifactId>swift-root</artifactId>
-  <version>0.6.0-SNAPSHOT</version>
+  <version>0.6.0-rtgw-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>${project.artifactId}</name>
   <description>Annotation based Thrift implementation</description>
@@ -57,7 +57,7 @@
     <dep.airlift.version>0.70</dep.airlift.version>
     <dep.antlr.version>3.5</dep.antlr.version>
     <dep.maven-api.version>2.2.1</dep.maven-api.version>
-    <dep.fb.nifty.version>0.6.0-SNAPSHOT</dep.fb.nifty.version>
+    <dep.fb.nifty.version>0.6.0-rtgw-SNAPSHOT</dep.fb.nifty.version>
   </properties>
 
   <dependencyManagement>
