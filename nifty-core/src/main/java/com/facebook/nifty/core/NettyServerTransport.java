@@ -157,7 +157,7 @@ public class NettyServerTransport implements ExternalResourceReleasable
         bootstrap.releaseExternalResources();
     }
 
-    private class ConnectionLimiter extends SimpleChannelUpstreamHandler
+    private static class ConnectionLimiter extends SimpleChannelUpstreamHandler
     {
         private final AtomicInteger numConnections;
         private final int maxConnections;
@@ -169,6 +169,7 @@ public class NettyServerTransport implements ExternalResourceReleasable
         }
 
         @Override
+        @SuppressWarnings("PMD.CollapsibleIfStatements")
         public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception
         {
             if (maxConnections > 0) {
@@ -182,6 +183,7 @@ public class NettyServerTransport implements ExternalResourceReleasable
         }
 
         @Override
+        @SuppressWarnings("PMD.CollapsibleIfStatements")
         public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception
         {
             if (maxConnections > 0) {
