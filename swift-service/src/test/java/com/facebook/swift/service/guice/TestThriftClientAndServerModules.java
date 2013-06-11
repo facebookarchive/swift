@@ -18,14 +18,9 @@ package com.facebook.swift.service.guice;
 import com.facebook.nifty.client.FramedClientConnector;
 import com.facebook.nifty.client.NiftyClientChannel;
 import com.facebook.nifty.client.NiftyClientConnector;
+import com.facebook.nifty.core.RequestContext;
 import com.facebook.swift.codec.guice.ThriftCodecModule;
-import com.facebook.swift.service.LogEntry;
-import com.facebook.swift.service.ResultCode;
-import com.facebook.swift.service.Scribe;
-import com.facebook.swift.service.SwiftScribe;
-import com.facebook.swift.service.ThriftClient;
-import com.facebook.swift.service.ThriftClientConfig;
-import com.facebook.swift.service.ThriftServer;
+import com.facebook.swift.service.*;
 import com.facebook.swift.service.puma.TestPuma;
 import com.facebook.swift.service.puma.swift.PumaReadServer;
 import com.facebook.swift.service.puma.swift.PumaReadService;
@@ -72,10 +67,22 @@ public class TestThriftClientAndServerModules
             new LogEntry("bye", "world")
     );
 
+    static private class TestThriftEventHandler extends ThriftEventHandler
+    {
+        public int count = 0;
+        @Override
+        public Object getContext(String methodName, RequestContext requestContext)
+        {
+            count++;
+            return null;
+        }
+    }
+
     @Test
     public void testThriftClientAndServerModules()
             throws Exception
     {
+        final List<Object> eventHandlerContexts = newArrayList();
         Injector injector = Guice.createInjector(Stage.PRODUCTION,
                 new ConfigurationModule(new ConfigurationFactory(ImmutableMap.<String, String>of())),
                 new ThriftCodecModule(),
@@ -101,6 +108,19 @@ public class TestThriftClientAndServerModules
                         binder.bind(PumaReadServer.class).in(Scopes.SINGLETON);
                         // export puma service implementation
                         thriftServerBinder(binder).exportThriftService(PumaReadServer.class);
+
+                        // create an instance event handler
+                        thriftServerBinder(binder).addEventHandler(new ThriftEventHandler() {
+                            @Override
+                            public Object getContext(String methodName, RequestContext requestContext)
+                            {
+                                eventHandlerContexts.add(new Object());
+                                return null;
+                            }
+                        });
+                        // create a class event handler
+                        binder.bind(TestThriftEventHandler.class).in(Scopes.SINGLETON);
+                        thriftServerBinder(binder).addEventHandler(TestThriftEventHandler.class);
                     }
                 });
 
@@ -111,6 +131,8 @@ public class TestThriftClientAndServerModules
             try (Scribe scribe = scribeClient.open(localFramedConnector(server.getPort())).get()) {
                 assertEquals(scribe.log(MESSAGES), ResultCode.OK);
                 assertEquals(injector.getInstance(SwiftScribe.class).getMessages(), newArrayList(MESSAGES));
+                assertEquals(eventHandlerContexts.size(), 1);
+                assertEquals(injector.getInstance(TestThriftEventHandler.class).count, 1);
             }
 
             // test puma
@@ -118,6 +140,8 @@ public class TestThriftClientAndServerModules
             try (PumaReadService puma = pumaClient.open(localFramedConnector(server.getPort())).get()) {
                 List<ReadResultQueryInfoTimeString> results = puma.getResultTimeString(TestPuma.PUMA_REQUEST);
                 verifyPumaResults(results);
+                assertEquals(eventHandlerContexts.size(), 2);
+                assertEquals(injector.getInstance(TestThriftEventHandler.class).count, 2);
             }
         }
     }

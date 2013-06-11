@@ -53,6 +53,8 @@ public class ThriftMethodProcessor
 {
     private static final Logger LOG = LoggerFactory.getLogger(ThriftMethodProcessor.class);
     private final String name;
+    private final String serviceName;
+    private final String qualifiedName;
     private final Object service;
     private final Method method;
     private final String resultStructName;
@@ -67,13 +69,16 @@ public class ThriftMethodProcessor
 
     public ThriftMethodProcessor(
             Object service,
+            String serviceName,
             ThriftMethodMetadata methodMetadata,
             ThriftCodecManager codecManager
     )
     {
         this.service = service;
+        this.serviceName = serviceName;
 
         name = methodMetadata.getName();
+        qualifiedName = serviceName + "." + name;
         resultStructName = name + "_result";
 
         method = methodMetadata.getMethod();
@@ -123,18 +128,32 @@ public class ThriftMethodProcessor
         return stats;
     }
 
-    public void process(TProtocol in, TProtocol out, int sequenceId)
+    public String getServiceName()
+    {
+        return serviceName;
+    }
+
+    public String getQualifiedName()
+    {
+        return qualifiedName;
+    }
+
+    public void process(TProtocol in, TProtocol out, int sequenceId, ContextChain contextChain)
             throws Exception
     {
         long start = System.nanoTime();
 
+        String methodName = serviceName + "." + name;
         // read args
+        contextChain.preRead(methodName);
         Object[] args = readArguments(in);
+        contextChain.postRead(methodName, args);
 
         // invoke method
         Object result;
         try {
             result = invokeMethod(args);
+            contextChain.preWrite(methodName, result);
 
             if (!oneway) {
                 // write success reply
@@ -145,11 +164,13 @@ public class ThriftMethodProcessor
                               (short) 0,
                               successCodec,
                               result);
+                contextChain.postWrite(methodName, result);
             }
 
             stats.addSuccessTime(nanosSince(start));
         }
         catch (Exception e) {
+            contextChain.preWriteException(methodName, e);
             if (!oneway) {
                 ExceptionProcessor exceptionCodec = exceptionCodecs.get(e.getClass());
                 if (exceptionCodec != null) {
@@ -161,6 +182,7 @@ public class ThriftMethodProcessor
                                   exceptionCodec.getId(),
                                   exceptionCodec.getCodec(),
                                   e);
+                    contextChain.postWriteException(methodName, e);
                     stats.addErrorTime(nanosSince(start));
                 } else {
                     // unexpected exception
@@ -176,6 +198,7 @@ public class ThriftMethodProcessor
                     out.writeMessageEnd();
                     out.getTransport().flush();
 
+                    contextChain.postWriteException(methodName, applicationException);
                     stats.addErrorTime(nanosSince(start));
                 }
             } else {

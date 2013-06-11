@@ -16,8 +16,10 @@
 package com.facebook.swift.service.puma;
 
 import com.facebook.nifty.client.FramedClientConnector;
+import com.facebook.nifty.processor.NiftyProcessor;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.ThriftClientManager;
+import com.facebook.swift.service.ThriftEventHandler;
 import com.facebook.swift.service.ThriftServer;
 import com.facebook.swift.service.ThriftServiceProcessor;
 import com.facebook.swift.service.puma.swift.PumaReadServer;
@@ -78,7 +80,7 @@ public class TestPuma
     {
         // create server and start
         PumaReadServer puma = new PumaReadServer();
-        ThriftServiceProcessor processor = new ThriftServiceProcessor(new ThriftCodecManager(), puma);
+        ThriftServiceProcessor processor = new ThriftServiceProcessor(new ThriftCodecManager(), ImmutableList.<ThriftEventHandler>of(), puma);
 
         // create server and client
         try (
@@ -119,7 +121,7 @@ public class TestPuma
         ReadSemanticException exception = new ReadSemanticException("my exception");
         puma.setException(exception);
 
-        TProcessor processor = new ThriftServiceProcessor(new ThriftCodecManager(), puma);
+        NiftyProcessor processor = new ThriftServiceProcessor(new ThriftCodecManager(), ImmutableList.<ThriftEventHandler>of(), puma);
         try (
                 ThriftServer server = new ThriftServer(processor).start();
                 ThriftClientManager clientManager = new ThriftClientManager();

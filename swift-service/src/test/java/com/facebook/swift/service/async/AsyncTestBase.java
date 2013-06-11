@@ -19,12 +19,8 @@ import com.facebook.nifty.client.FramedClientChannel;
 import com.facebook.nifty.client.FramedClientConnector;
 import com.facebook.nifty.client.HttpClientConnector;
 import com.facebook.swift.codec.ThriftCodecManager;
-import com.facebook.swift.service.ThriftClient;
-import com.facebook.swift.service.ThriftClientConfig;
-import com.facebook.swift.service.ThriftClientManager;
-import com.facebook.swift.service.ThriftServer;
-import com.facebook.swift.service.ThriftServerConfig;
-import com.facebook.swift.service.ThriftServiceProcessor;
+import com.facebook.swift.service.*;
+import com.google.common.collect.ImmutableList;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -111,7 +107,7 @@ public class AsyncTestBase
     protected ThriftServer createServerFromHandler(Object handler)
             throws IllegalAccessException, InstantiationException
     {
-        ThriftServiceProcessor processor = new ThriftServiceProcessor(codecManager, handler);
+        ThriftServiceProcessor processor = new ThriftServiceProcessor(codecManager, ImmutableList.<ThriftEventHandler>of(), handler);
         ThriftServerConfig config = new ThriftServerConfig();
         config.setMaxFrameSize(new DataSize(MAX_FRAME_SIZE, DataSize.Unit.BYTE));
 
