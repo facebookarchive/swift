@@ -15,6 +15,8 @@
  */
 package com.facebook.swift.service;
 
+import com.facebook.nifty.core.RequestContext;
+import com.facebook.nifty.processor.NiftyProcessor;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.metadata.ThriftMethodMetadata;
 import com.facebook.swift.service.metadata.ThriftServiceMetadata;
@@ -47,10 +49,11 @@ import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
  * method parameters, and does not support Thrift exceptions properly.
  */
 @ThreadSafe
-public class ThriftServiceProcessor implements TProcessor
+public class ThriftServiceProcessor implements NiftyProcessor
 {
     private final Map<String, ThriftMethodProcessor> methods;
     private final Multimap<String, ThriftMethodStats> serviceStats;
+    private final ThriftEventHandlerChain eventHandlers;
 
     /**
      * @param services the services to expose; services must be thread safe
@@ -72,13 +75,15 @@ public class ThriftServiceProcessor implements TProcessor
         for (Object service : services) {
             ThriftServiceMetadata serviceMetadata = new ThriftServiceMetadata(service.getClass(), codecManager.getCatalog());
             for (ThriftMethodMetadata methodMetadata : serviceMetadata.getMethods().values()) {
-                ThriftMethodProcessor methodProcessor = new ThriftMethodProcessor(service, methodMetadata, codecManager);
+                ThriftMethodProcessor methodProcessor = new ThriftMethodProcessor(service,
+                        serviceMetadata.getName(), methodMetadata, codecManager);
                 processorBuilder.put(methodMetadata.getName(), methodProcessor);
                 statsBuilder.put(serviceMetadata.getName(), methodProcessor.getStats());
             }
         }
         methods = processorBuilder.build();
         serviceStats = statsBuilder.build();
+        eventHandlers = new ThriftEventHandlerChain();
     }
 
     public Map<String, ThriftMethodProcessor> getMethods()
@@ -93,7 +98,7 @@ public class ThriftServiceProcessor implements TProcessor
 
     @Override
     @SuppressWarnings("PMD.EmptyCatchBlock")
-    public boolean process(TProtocol in, TProtocol out)
+    public boolean process(TProtocol in, TProtocol out, RequestContext requestContext)
             throws TException
     {
         TMessage message = in.readMessageBegin();
@@ -124,7 +129,8 @@ public class ThriftServiceProcessor implements TProcessor
             }
 
             // invoke method
-            method.process(in, out, sequenceId);
+            method.process(in, out, sequenceId,
+                    eventHandlers.getContextChain(method.getServiceName() + "." + methodName, requestContext));
 
             return true;
         }
@@ -140,5 +146,10 @@ public class ThriftServiceProcessor implements TProcessor
             catch (TException ignore) {
             }
         }
+    }
+
+    ThriftEventHandlerChain getEventHandlers()
+    {
+        return eventHandlers;
     }
 }

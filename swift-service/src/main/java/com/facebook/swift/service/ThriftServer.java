@@ -18,11 +18,12 @@ package com.facebook.swift.service;
 import com.facebook.nifty.core.NettyConfigBuilder;
 import com.facebook.nifty.core.NettyServerTransport;
 import com.facebook.nifty.core.ThriftServerDef;
+import com.facebook.nifty.processor.NiftyProcessor;
+import com.facebook.nifty.processor.NiftyProcessorFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
-import org.apache.thrift.TProcessor;
-import org.apache.thrift.TProcessorFactory;
+import org.apache.thrift.transport.TTransport;
 import org.jboss.netty.channel.ServerChannelFactory;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
@@ -31,9 +32,7 @@ import org.jboss.netty.util.Timer;
 import org.weakref.jmx.Managed;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.net.SocketAddress;
 import java.util.concurrent.ExecutorService;
 
@@ -66,20 +65,27 @@ public class ThriftServer implements Closeable
 
     private State state = State.NOT_STARTED;
 
-    public ThriftServer(TProcessor processor)
+    public ThriftServer(NiftyProcessor processor)
     {
         this(processor, new ThriftServerConfig());
     }
 
-    public ThriftServer(TProcessor processor, ThriftServerConfig config)
+    public ThriftServer(NiftyProcessor processor, ThriftServerConfig config)
     {
         this(processor, config, new HashedWheelTimer());
     }
 
     @Inject
-    public ThriftServer(TProcessor processor, ThriftServerConfig config, @ThriftServerTimer Timer timer)
+    public ThriftServer(final NiftyProcessor processor, ThriftServerConfig config, @ThriftServerTimer Timer timer)
     {
-        TProcessorFactory processorFactory = new TProcessorFactory(processor);
+        NiftyProcessorFactory processorFactory = new NiftyProcessorFactory()
+        {
+            @Override
+            public NiftyProcessor getProcessor(TTransport transport)
+            {
+                return processor;
+            }
+        };
 
         configuredPort = config.getPort();
 

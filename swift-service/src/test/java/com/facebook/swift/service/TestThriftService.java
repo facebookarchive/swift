@@ -16,6 +16,9 @@
 package com.facebook.swift.service;
 
 import com.facebook.nifty.client.FramedClientConnector;
+import com.facebook.nifty.core.RequestContext;
+import com.facebook.nifty.processor.NiftyProcessor;
+import com.facebook.nifty.processor.NiftyProcessorAdapters;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.scribe.LogEntry;
 import com.facebook.swift.service.scribe.ResultCode;
@@ -26,17 +29,19 @@ import com.google.common.collect.Lists;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nullable;
+import java.net.InetSocketAddress;
 import java.util.List;
 
 import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.net.HostAndPort.fromParts;
-import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.*;
 
 /**
  * Demonstrates creating a Thrift service using Swift.
@@ -48,7 +53,7 @@ public class TestThriftService
             throws Exception
     {
         SwiftScribe scribeService = new SwiftScribe();
-        TProcessor processor = new ThriftServiceProcessor(new ThriftCodecManager(), scribeService);
+        NiftyProcessor processor = new ThriftServiceProcessor(new ThriftCodecManager(), scribeService);
 
         List<LogEntry> messages = testProcessor(processor);
         assertEquals(scribeService.getMessages(), newArrayList(concat(toSwiftLogEntry(messages), toSwiftLogEntry(messages))));
@@ -72,7 +77,12 @@ public class TestThriftService
         new ThriftServiceProcessor(new ThriftCodecManager(), new SwiftScribe(), new ConflictingLogService());
     }
 
-    private List<LogEntry> testProcessor(TProcessor processor)
+    private List<LogEntry> testProcessor(TProcessor processor) throws Exception
+    {
+        return testProcessor(NiftyProcessorAdapters.processorFromTProcessor(processor));
+    }
+
+    private List<LogEntry> testProcessor(NiftyProcessor processor)
             throws Exception
     {
         ImmutableList<LogEntry> messages = ImmutableList.of(
@@ -134,5 +144,107 @@ public class TestThriftService
         public void Log(List<String> messages) throws TException
         {
         }
+    }
+
+    static class EventHandler extends ThriftEventHandler
+    {
+        private final boolean niftyProcessor;
+        private int getContextCounter = 0, preReadCounter = 0, postReadCounter = 0,
+                preWriteCounter = 0, postWriteCounter = 0;
+        private final List<Object> ctxs = newArrayList();
+
+        EventHandler(boolean niftyProcessor)
+        {
+            this.niftyProcessor = niftyProcessor;
+        }
+
+        public boolean validate(int count)
+        {
+            return getContextCounter == count && preReadCounter == count && postReadCounter == count &&
+                    preWriteCounter == count && postWriteCounter == count;
+        }
+
+        @Override
+        public Object getContext(String methodName, RequestContext requestContext)
+        {
+            assertEquals(methodName, "scribe.Log");
+            if (niftyProcessor) {
+                assertNotNull(requestContext);
+                assertTrue(((InetSocketAddress)requestContext.getRemoteAddress()).getAddress().isLoopbackAddress());
+            } else {
+                assertNull(requestContext);
+            }
+            Object ctx = new Object();
+            ctxs.add(ctx);
+            getContextCounter++;
+            return ctx;
+        }
+
+        @Override
+        public void preRead(Object context, String methodName)
+        {
+            assertEquals(methodName, "scribe.Log");
+            assertEquals(context, ctxs.get(preReadCounter++));
+        }
+
+        @Override
+        public void postRead(Object context, String methodName, Object[] args)
+        {
+            assertEquals(methodName, "scribe.Log");
+            assertEquals(context, ctxs.get(postReadCounter++));
+            assertEquals(args.length, 1);
+            assertTrue(args[0] instanceof List);
+        }
+
+        @Override
+        public void preWrite(Object context, String methodName, Object result)
+        {
+            assertEquals(methodName, "scribe.Log");
+            assertEquals(context, ctxs.get(preWriteCounter++));
+            assertTrue(result instanceof com.facebook.swift.service.ResultCode);
+        }
+
+        @Override
+        public void postWrite(Object context, String methodName, Object result)
+        {
+            assertEquals(methodName, "scribe.Log");
+            assertEquals(context, ctxs.get(postWriteCounter++));
+            assertTrue(result instanceof com.facebook.swift.service.ResultCode);
+        }
+    }
+
+    public void swiftEventHandlerTester(boolean niftyProcessor) throws Exception
+    {
+        SwiftScribe scribeService = new SwiftScribe();
+        final ThriftServiceProcessor processor = new ThriftServiceProcessor(new ThriftCodecManager(), scribeService);
+        EventHandler eventHandler = new EventHandler(niftyProcessor);
+        EventHandler secondHandler = new EventHandler(niftyProcessor);
+        processor.getEventHandlers().addEventHandler(eventHandler);
+        processor.getEventHandlers().addEventHandler(secondHandler);
+
+        List<LogEntry> messages = niftyProcessor ?
+                testProcessor(processor) : testProcessor(new TProcessor()
+        {
+            @Override
+            public boolean process(TProtocol in, TProtocol out) throws TException
+            {
+                return processor.process(in, out, null);
+            }
+        });
+        assertEquals(scribeService.getMessages(), newArrayList(concat(toSwiftLogEntry(messages), toSwiftLogEntry(messages))));
+        assertTrue(eventHandler.validate(2));
+        assertTrue(secondHandler.validate(2));
+    }
+
+    @Test
+    public void testSwiftEventHandlersWithNiftyProcessor() throws Exception
+    {
+        swiftEventHandlerTester(true);
+    }
+
+    @Test
+    public void testSwiftEventHandlersWithTProcessor() throws Exception
+    {
+        swiftEventHandlerTester(false);
     }
 }

@@ -15,6 +15,7 @@
  */
 package com.facebook.swift.service.guice;
 
+import com.facebook.nifty.processor.NiftyProcessor;
 import com.facebook.swift.service.ThriftMethodProcessor;
 import com.facebook.swift.service.ThriftServer;
 import com.facebook.swift.service.ThriftServerConfig;
@@ -28,7 +29,6 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
-import org.apache.thrift.TProcessor;
 import org.jboss.netty.util.HashedWheelTimer;
 import org.jboss.netty.util.Timer;
 import org.weakref.jmx.guice.ExportBinder;
@@ -53,7 +53,7 @@ public class ThriftServerModule implements Module
 
         newSetBinder(binder, ThriftServiceExport.class).permitDuplicates();
         binder.bind(ThriftServiceProcessor.class).toProvider(ThriftServiceProcessorProvider.class).in(Scopes.SINGLETON);
-        binder.bind(TProcessor.class).to(Key.get(ThriftServiceProcessor.class)).in(Scopes.SINGLETON);
+        binder.bind(NiftyProcessor.class).to(Key.get(ThriftServiceProcessor.class)).in(Scopes.SINGLETON);
 
         bindConfig(binder).to(ThriftServerConfig.class);
         binder.bind(ThriftServer.class).in(Scopes.SINGLETON);
