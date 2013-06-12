@@ -53,7 +53,7 @@ public class TestThriftService
             throws Exception
     {
         SwiftScribe scribeService = new SwiftScribe();
-        NiftyProcessor processor = new ThriftServiceProcessor(new ThriftCodecManager(), scribeService);
+        NiftyProcessor processor = new ThriftServiceProcessor(new ThriftCodecManager(), ImmutableList.<ThriftEventHandler>of(), scribeService);
 
         List<LogEntry> messages = testProcessor(processor);
         assertEquals(scribeService.getMessages(), newArrayList(concat(toSwiftLogEntry(messages), toSwiftLogEntry(messages))));
@@ -74,7 +74,8 @@ public class TestThriftService
     public void testConflictingServices()
             throws Exception
     {
-        new ThriftServiceProcessor(new ThriftCodecManager(), new SwiftScribe(), new ConflictingLogService());
+        new ThriftServiceProcessor(new ThriftCodecManager(), ImmutableList.<ThriftEventHandler>of(),
+                new SwiftScribe(), new ConflictingLogService());
     }
 
     private List<LogEntry> testProcessor(TProcessor processor) throws Exception
@@ -216,11 +217,10 @@ public class TestThriftService
     public void swiftEventHandlerTester(boolean niftyProcessor) throws Exception
     {
         SwiftScribe scribeService = new SwiftScribe();
-        final ThriftServiceProcessor processor = new ThriftServiceProcessor(new ThriftCodecManager(), scribeService);
         EventHandler eventHandler = new EventHandler(niftyProcessor);
         EventHandler secondHandler = new EventHandler(niftyProcessor);
-        processor.getEventHandlers().addEventHandler(eventHandler);
-        processor.getEventHandlers().addEventHandler(secondHandler);
+        List<EventHandler> handlers = ImmutableList.of(eventHandler, secondHandler);
+        final ThriftServiceProcessor processor = new ThriftServiceProcessor(new ThriftCodecManager(), handlers, scribeService);
 
         List<LogEntry> messages = niftyProcessor ?
                 testProcessor(processor) : testProcessor(new TProcessor()

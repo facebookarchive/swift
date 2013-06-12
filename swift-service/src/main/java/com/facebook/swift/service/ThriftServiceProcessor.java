@@ -53,17 +53,18 @@ public class ThriftServiceProcessor implements NiftyProcessor
 {
     private final Map<String, ThriftMethodProcessor> methods;
     private final Multimap<String, ThriftMethodStats> serviceStats;
-    private final ThriftEventHandlerChain eventHandlers;
+    private final List<ThriftEventHandler> eventHandlers;
 
     /**
+     * @param eventHandlers event handlers to attach to services
      * @param services the services to expose; services must be thread safe
      */
-    public ThriftServiceProcessor(ThriftCodecManager codecManager, Object... services)
+    public ThriftServiceProcessor(ThriftCodecManager codecManager, List<? extends ThriftEventHandler> eventHandlers, Object... services)
     {
-        this(codecManager, ImmutableList.copyOf(services));
+        this(codecManager, eventHandlers, ImmutableList.copyOf(services));
     }
 
-    public ThriftServiceProcessor(ThriftCodecManager codecManager, List<Object> services)
+    public ThriftServiceProcessor(ThriftCodecManager codecManager, List<? extends ThriftEventHandler> eventHandlers, List<?> services)
     {
         Preconditions.checkNotNull(codecManager, "codecManager is null");
         Preconditions.checkNotNull(services, "service is null");
@@ -83,7 +84,7 @@ public class ThriftServiceProcessor implements NiftyProcessor
         }
         methods = processorBuilder.build();
         serviceStats = statsBuilder.build();
-        eventHandlers = new ThriftEventHandlerChain();
+        this.eventHandlers = ImmutableList.copyOf(eventHandlers);
     }
 
     public Map<String, ThriftMethodProcessor> getMethods()
@@ -129,8 +130,9 @@ public class ThriftServiceProcessor implements NiftyProcessor
             }
 
             // invoke method
-            method.process(in, out, sequenceId,
-                    eventHandlers.getContextChain(method.getServiceName() + "." + methodName, requestContext));
+            ContextChain context = new ContextChain(eventHandlers, method.getServiceName() + "." + methodName,
+                                                    requestContext);
+            method.process(in, out, sequenceId, context);
 
             return true;
         }
@@ -146,10 +148,5 @@ public class ThriftServiceProcessor implements NiftyProcessor
             catch (TException ignore) {
             }
         }
-    }
-
-    ThriftEventHandlerChain getEventHandlers()
-    {
-        return eventHandlers;
     }
 }

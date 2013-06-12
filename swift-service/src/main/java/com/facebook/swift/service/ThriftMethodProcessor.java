@@ -15,7 +15,6 @@
  */
 package com.facebook.swift.service;
 
-import com.facebook.nifty.core.RequestContext;
 import com.facebook.swift.codec.ThriftCodec;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.codec.internal.TProtocolReader;
@@ -129,7 +128,7 @@ public class ThriftMethodProcessor
         return serviceName;
     }
 
-    public void process(TProtocol in, TProtocol out, int sequenceId, ThriftEventHandlerChain.ContextChain contextChain)
+    public void process(TProtocol in, TProtocol out, int sequenceId, ContextChain contextChain)
             throws Exception
     {
         long start = System.nanoTime();
