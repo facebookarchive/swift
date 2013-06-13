@@ -18,15 +18,12 @@ package com.facebook.nifty.core;
 import com.google.inject.Inject;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
-import org.jboss.netty.util.HashedWheelTimer;
-import org.jboss.netty.util.Timer;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * A lifecycle object that manages starting up and shutting down multiple core channels.
@@ -34,10 +31,10 @@ import java.util.concurrent.Executors;
 public class NiftyBootstrap
 {
     private final ChannelGroup allChannels;
+    private final NettyServerConfig nettyServerConfig;
     private ArrayList<NettyServerTransport> transports;
     private ExecutorService bossExecutor;
     private ExecutorService workerExecutor;
-    private final Timer timer;
     private NioServerSocketChannelFactory serverChannelFactory;
 
     /**
@@ -46,17 +43,16 @@ public class NiftyBootstrap
     @Inject
     public NiftyBootstrap(
             Set<ThriftServerDef> thriftServerDefs,
-            NettyConfigBuilder configBuilder,
+            NettyServerConfig nettyServerConfig,
             ChannelGroup allChannels)
     {
         this.allChannels = allChannels;
         this.transports = new ArrayList<>();
-        this.timer = new HashedWheelTimer();
+        this.nettyServerConfig = nettyServerConfig;
         for (ThriftServerDef thriftServerDef : thriftServerDefs) {
             transports.add(new NettyServerTransport(thriftServerDef,
-                                                    configBuilder,
-                                                    allChannels,
-                                                    timer));
+                                                    nettyServerConfig,
+                                                    allChannels));
         }
 
     }
@@ -64,8 +60,8 @@ public class NiftyBootstrap
     @PostConstruct
     public void start()
     {
-        bossExecutor = Executors.newCachedThreadPool();
-        workerExecutor = Executors.newCachedThreadPool();
+        bossExecutor = nettyServerConfig.getBossExecutor();
+        workerExecutor = nettyServerConfig.getWorkerExecutor();
         serverChannelFactory = new NioServerSocketChannelFactory(bossExecutor, workerExecutor);
         for (NettyServerTransport transport : transports) {
             transport.start(serverChannelFactory);
@@ -84,7 +80,6 @@ public class NiftyBootstrap
             }
         }
 
-        ShutdownUtil.shutdownChannelFactory(serverChannelFactory, bossExecutor,
-                                            workerExecutor, allChannels);
+        ShutdownUtil.shutdownChannelFactory(serverChannelFactory, bossExecutor, workerExecutor, allChannels);
     }
 }

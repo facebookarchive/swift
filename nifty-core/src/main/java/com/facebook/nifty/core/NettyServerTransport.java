@@ -25,8 +25,6 @@ import org.jboss.netty.handler.timeout.IdleStateHandler;
 import org.jboss.netty.logging.InternalLoggerFactory;
 import org.jboss.netty.logging.Slf4JLoggerFactory;
 import org.jboss.netty.util.ExternalResourceReleasable;
-import org.jboss.netty.util.HashedWheelTimer;
-import org.jboss.netty.util.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,8 +34,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static java.util.concurrent.Executors.newCachedThreadPool;
 
 /**
  * A core channel the decode framed Thrift message, dispatches to the TProcessor given
@@ -58,22 +54,21 @@ public class NettyServerTransport implements ExternalResourceReleasable
     private ServerChannelFactory channelFactory;
     private Channel serverChannel;
     private final ThriftServerDef def;
-    private final NettyConfigBuilder configBuilder;
+    private final NettyServerConfig nettyServerConfig;
 
     public NettyServerTransport(final ThriftServerDef def)
     {
-        this(def, new NettyConfigBuilder(), new DefaultChannelGroup(), new HashedWheelTimer());
+        this(def, NettyServerConfig.newBuilder().build(), new DefaultChannelGroup());
     }
 
     @Inject
     public NettyServerTransport(
             final ThriftServerDef def,
-            NettyConfigBuilder configBuilder,
-            final ChannelGroup allChannels,
-            final Timer timer)
+            final NettyServerConfig nettyServerConfig,
+            final ChannelGroup allChannels)
     {
         this.def = def;
-        this.configBuilder = configBuilder;
+        this.nettyServerConfig = nettyServerConfig;
         this.port = def.getServerPort();
         this.allChannels = allChannels;
         // connectionLimiter must be instantiated exactly once (and thus outside the pipeline factory)
@@ -93,7 +88,7 @@ public class NettyServerTransport implements ExternalResourceReleasable
                                                                                  inputProtocolFactory));
                 if (def.getClientIdleTimeout() != null) {
                     // Add handlers to detect idle client connections and disconnect them
-                    cp.addLast("idleTimeoutHandler", new IdleStateHandler(timer,
+                    cp.addLast("idleTimeoutHandler", new IdleStateHandler(nettyServerConfig.getTimer(),
                                                                           (int) def.getClientIdleTimeout().toMillis(),
                                                                           NO_WRITER_IDLE_TIMEOUT,
                                                                           NO_ALL_IDLE_TIMEOUT,
@@ -110,14 +105,15 @@ public class NettyServerTransport implements ExternalResourceReleasable
 
     public void start()
     {
-        start(newCachedThreadPool(), newCachedThreadPool());
-    }
+        bossExecutor = nettyServerConfig.getBossExecutor();
+        int bossThreadCount = nettyServerConfig.getBossThreadCount();
+        ioWorkerExecutor = nettyServerConfig.getWorkerExecutor();
+        int ioWorkerThreadCount = nettyServerConfig.getWorkerThreadCount();
 
-    public void start(ExecutorService bossExecutor, ExecutorService ioWorkerExecutor)
-    {
-        this.bossExecutor = bossExecutor;
-        this.ioWorkerExecutor = ioWorkerExecutor;
-        this.channelFactory = new NioServerSocketChannelFactory(bossExecutor, ioWorkerExecutor);
+        channelFactory = new NioServerSocketChannelFactory(bossExecutor,
+                                                           bossThreadCount,
+                                                           ioWorkerExecutor,
+                                                           ioWorkerThreadCount);
         start(channelFactory);
     }
 
@@ -131,7 +127,7 @@ public class NettyServerTransport implements ExternalResourceReleasable
         }
 
         bootstrap = new ServerBootstrap(serverChannelFactory);
-        bootstrap.setOptions(configBuilder.getOptions());
+        bootstrap.setOptions(nettyServerConfig.getBootstrapOptions());
         bootstrap.setPipelineFactory(pipelineFactory);
         log.info("starting transport {}:{}", def.getName(), port);
         serverChannel = bootstrap.bind(new InetSocketAddress(port));

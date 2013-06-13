@@ -15,7 +15,8 @@
  */
 package com.facebook.nifty.guice;
 
-import com.facebook.nifty.core.NettyConfigBuilder;
+import com.facebook.nifty.core.NettyServerConfig;
+import com.facebook.nifty.core.NettyServerConfigBuilder;
 import com.facebook.nifty.core.ThriftServerDef;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -45,32 +46,34 @@ public abstract class NiftyModule extends AbstractModule
         return new DefaultChannelGroup();
     }
 
-    public NiftyModule withDefaultNettyConfig()
+    public NiftyModule useDefaultNettyServerConfig()
+    {
+        withNettyServerConfig(new Provider<NettyServerConfig>() {
+            @Override
+            public NettyServerConfig get()
+            {
+                return NettyServerConfig.newBuilder().build();
+            }
+        });
+        return this;
+    }
+
+    public NiftyModule withNettyServerConfig(Class<? extends Provider<NettyServerConfig>> providerClass)
     {
         if (!configBound) {
-            binder().bind(NettyConfigBuilder.class).toInstance(new NettyConfigBuilder());
+            binder().bind(NettyServerConfig.class).toProvider(providerClass);
             configBound = true;
             return this;
         }
         throw iae();
     }
 
-    public NiftyModule withNettyConfig(Class<? extends Provider<NettyConfigBuilder>> providerClass)
-    {
-        if (!configBound) {
-            binder().bind(NettyConfigBuilder.class).toProvider(providerClass);
-            configBound = true;
-            return this;
-        }
-        throw iae();
-    }
-
-    public NiftyModule withNettyConfig(Provider<NettyConfigBuilder> provider)
+    public NiftyModule withNettyServerConfig(Provider<NettyServerConfig> provider)
     {
         if (!configBound) {
             // workaround for guice issue # 487
-            com.google.inject.Provider<NettyConfigBuilder> guiceProvider = Providers.guicify(provider);
-            binder().bind(NettyConfigBuilder.class).toProvider(guiceProvider);
+            com.google.inject.Provider<NettyServerConfig> guiceProvider = Providers.guicify(provider);
+            binder().bind(NettyServerConfig.class).toProvider(guiceProvider);
             configBound = true;
             return this;
         }
@@ -146,6 +149,6 @@ public abstract class NiftyModule extends AbstractModule
 
     private IllegalStateException iae()
     {
-        return new IllegalStateException("config already bound ! call useDefaultNettyConfig or withNettyConfig only once");
+        return new IllegalStateException("Config already bound! Call useDefaultNettyServerConfig() or withNettyServerConfig() only once");
     }
 }

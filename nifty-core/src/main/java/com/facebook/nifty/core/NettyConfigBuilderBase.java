@@ -15,29 +15,122 @@
  */
 package com.facebook.nifty.core;
 
-import com.google.inject.Inject;
+import com.google.common.base.Preconditions;
+import org.jboss.netty.util.Timer;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 /*
  * Hooks for configuring various parts of Netty.
  */
-public abstract class NettyConfigBuilderBase
+public abstract class NettyConfigBuilderBase<T extends NettyConfigBuilderBase<T>>
 {
-    private final Map<String, Object> options = new HashMap<String, Object>();
+    // These constants come directly from Netty but are private in Netty.
+    private static final int DEFAULT_BOSS_THREAD_COUNT = 1;
+    private static final int DEFAULT_WORKER_THREAD_COUNT = Runtime.getRuntime().availableProcessors() * 2;
 
-    @Inject
-    public NettyConfigBuilderBase()
-    {
-    }
+    private final Map<String, Object> options = new HashMap<>();
+    private String niftyName;
+    private int bossThreadCount = DEFAULT_BOSS_THREAD_COUNT;
+    private int workerThreadCount = DEFAULT_WORKER_THREAD_COUNT;
+    private ExecutorService bossThreadExecutor;
+    private ExecutorService workerThreadExecutor;
+    private Timer timer;
 
-    public Map<String, Object> getOptions()
+    public Map<String, Object> getBootstrapOptions()
     {
         return Collections.unmodifiableMap(options);
+    }
+
+    /**
+     * Sets a netty {@link Timer} that will be used to trigger read, write, and connection
+     * timeouts. Defaults to creating a new {@link org.jboss.netty.util.HashedWheelTimer}
+     *
+     * @param timer
+     * @return
+     */
+    public T setTimer(Timer timer)
+    {
+        this.timer = timer;
+        return (T) this;
+    }
+
+    protected Timer getTimer()
+    {
+        return timer;
+    }
+
+    /**
+     * Sets an identifier which will be added to all thread created by the boss and worker
+     * executors.
+     *
+     * @param niftyName
+     * @return
+     */
+    protected T setNiftyName(String niftyName)
+    {
+        Preconditions.checkNotNull(niftyName, "niftyName cannot be null");
+        this.niftyName = niftyName;
+        return (T) this;
+    }
+
+    public String getNiftyName()
+    {
+        return niftyName;
+    }
+
+    public T setBossThreadExecutor(ExecutorService bossThreadExecutor)
+    {
+        this.bossThreadExecutor = bossThreadExecutor;
+        return (T) this;
+    }
+
+    protected ExecutorService getBossExecutor()
+    {
+        return bossThreadExecutor;
+    }
+
+    /**
+     * Sets the number of threads that will be used to manage
+     * @param bossThreadCount
+     * @return
+     */
+    public T setBossThreadCount(int bossThreadCount)
+    {
+        this.bossThreadCount = bossThreadCount;
+        return (T) this;
+    }
+
+    protected int getBossThreadCount()
+    {
+        return bossThreadCount;
+    }
+
+    public T setWorkerThreadExecutor(ExecutorService workerThreadExecutor)
+    {
+        this.workerThreadExecutor = workerThreadExecutor;
+        return (T) this;
+    }
+
+    protected ExecutorService getWorkerExecutor()
+    {
+        return workerThreadExecutor;
+    }
+
+    public T setWorkerThreadCount(int workerThreadCount)
+    {
+        this.workerThreadCount = workerThreadCount;
+        return (T) this;
+    }
+
+    protected int getWorkerThreadCount()
+    {
+        return workerThreadCount;
     }
 
     // Magic alert ! Content of this class is considered ugly and magical.

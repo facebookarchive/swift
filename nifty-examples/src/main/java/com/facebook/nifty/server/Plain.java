@@ -15,7 +15,8 @@
  */
 package com.facebook.nifty.server;
 
-import com.facebook.nifty.core.NettyConfigBuilder;
+import com.facebook.nifty.core.NettyServerConfig;
+import com.facebook.nifty.core.NettyServerConfigBuilder;
 import com.facebook.nifty.core.NiftyBootstrap;
 import com.facebook.nifty.core.ThriftServerDefBuilder;
 import com.facebook.nifty.guice.NiftyModule;
@@ -49,22 +50,25 @@ public class Plain
                     protected void configureNifty()
                     {
                         bind().toInstance(new ThriftServerDefBuilder()
-                                .listen(8080)
-                                .withProcessor(new scribe.Processor<scribe.Iface>(new scribe.Iface()
-                                {
-                                    @Override
-                                    public ResultCode Log(List<LogEntry> messages)
-                                            throws TException
-                                    {
-                                        for (LogEntry message : messages) {
-                                            log.info("{}: {}", message.getCategory(), message.getMessage());
-                                        }
-                                        return ResultCode.OK;
-                                    }
-                                }))
-                                .build()
+                                                  .listen(8080)
+                                                  .withProcessor(new scribe.Processor<scribe
+                                                          .Iface>(new scribe.Iface()
+                                                  {
+                                                      @Override
+                                                      public ResultCode Log(List<LogEntry> messages)
+                                                              throws TException
+                                                      {
+                                                          for (LogEntry message : messages) {
+                                                              log.info("{}: {}",
+                                                                       message.getCategory(),
+                                                                       message.getMessage());
+                                                          }
+                                                          return ResultCode.OK;
+                                                      }
+                                                  }))
+                                                  .build()
                         );
-                        withNettyConfig(NettyConfigProvider.class);
+                        withNettyServerConfig(NettyConfigProvider.class);
                     }
                 }
         ).getInstance(NiftyBootstrap.class);
@@ -81,16 +85,16 @@ public class Plain
         });
     }
 
-    public static class NettyConfigProvider implements Provider<NettyConfigBuilder>
+    public static class NettyConfigProvider implements Provider<NettyServerConfig>
     {
         @Override
-        public NettyConfigBuilder get()
+        public NettyServerConfig get()
         {
-            NettyConfigBuilder nettyConfigBuilder = new NettyConfigBuilder();
+            NettyServerConfigBuilder nettyConfigBuilder = new NettyServerConfigBuilder();
             nettyConfigBuilder.getSocketChannelConfig().setTcpNoDelay(true);
             nettyConfigBuilder.getSocketChannelConfig().setConnectTimeoutMillis(5000);
             nettyConfigBuilder.getSocketChannelConfig().setTcpNoDelay(true);
-            return nettyConfigBuilder;
+            return nettyConfigBuilder.build();
         }
     }
 }

@@ -68,7 +68,7 @@ public class NiftyLoadTester
                                  protected void configureNifty()
                                  {
                                      bind().toProvider(LoadTestServerProvider.class);
-                                     withNettyConfig(LoadTesterNettyConfigProvider.class);
+                                     withNettyServerConfig(LoadTesterNettyConfigProvider.class);
                                  }
                              })
              .getInstance(LifeCycleManager.class)

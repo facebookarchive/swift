@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.facebook.nifty.client;
+package com.facebook.nifty.core;
 
-import com.facebook.nifty.core.NettyConfigBuilderBase;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
+import org.jboss.netty.channel.socket.ServerSocketChannelConfig;
 import org.jboss.netty.channel.socket.nio.NioSocketChannelConfig;
 import org.jboss.netty.util.HashedWheelTimer;
 import org.jboss.netty.util.Timer;
 
 import java.lang.reflect.Proxy;
-import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadFactory;
 
@@ -33,25 +32,27 @@ import static java.util.concurrent.Executors.newCachedThreadPool;
 /*
  * Hooks for configuring various parts of Netty.
  */
-public class NettyClientConfigBuilder extends NettyConfigBuilderBase<NettyClientConfigBuilder>
+public class NettyServerConfigBuilder extends NettyConfigBuilderBase<NettyServerConfigBuilder>
 {
-    private InetSocketAddress defaultSocksProxyAddress = null;
-
     private final NioSocketChannelConfig socketChannelConfig = (NioSocketChannelConfig) Proxy.newProxyInstance(
             getClass().getClassLoader(),
             new Class<?>[]{NioSocketChannelConfig.class},
-            new Magic("")
+            new Magic("child.")
     );
+    private final ServerSocketChannelConfig serverSocketChannelConfig = (ServerSocketChannelConfig) Proxy.newProxyInstance(
+            getClass().getClassLoader(),
+            new Class<?>[]{ServerSocketChannelConfig.class},
+            new Magic(""));
 
     @Inject
-    public NettyClientConfigBuilder()
+    public NettyServerConfigBuilder()
     {
     }
 
     /**
      * Returns an implementation of {@link NioSocketChannelConfig} which will be applied to all
-     * {@link org.jboss.netty.channel.socket.nio.NioSocketChannel} instances created for client
-     * connections.
+     * {@link org.jboss.netty.channel.socket.nio.NioSocketChannel} instances created to manage
+     * connections accepted by the server.
      *
      * @return A mutable {@link NioSocketChannelConfig}
      */
@@ -61,19 +62,18 @@ public class NettyClientConfigBuilder extends NettyConfigBuilderBase<NettyClient
     }
 
     /**
-     * A default SOCKS proxy address for client connections. Defaults to {@code null} if not
-     * supplied.
+     * Returns an implementation of {@link ServerSocketChannelConfig}
+     * which will be applied to the {@link org.jboss.netty.channel.socket.ServerSocketChannel}
+     * the server will use to accept connections.
      *
-     * @param defaultSocksProxyAddress The address of the SOCKS proxy server
-     * @return This builder
+     * @return A mutable {@link ServerSocketChannelConfig}
      */
-    public NettyClientConfigBuilder setDefaultSocksProxyAddress(InetSocketAddress defaultSocksProxyAddress)
+    public ServerSocketChannelConfig getServerSocketChannelConfig()
     {
-        this.defaultSocksProxyAddress = defaultSocksProxyAddress;
-        return this;
+        return serverSocketChannelConfig;
     }
 
-    public NettyClientConfig build()
+    public NettyServerConfig build()
     {
         Timer timer = getTimer();
         ExecutorService bossExecutor = getBossExecutor();
@@ -81,9 +81,8 @@ public class NettyClientConfigBuilder extends NettyConfigBuilderBase<NettyClient
         ExecutorService workerExecutor = getWorkerExecutor();
         int workerThreadCount = getWorkerThreadCount();
 
-        return new NettyClientConfig(
+        return new NettyServerConfig(
                 getBootstrapOptions(),
-                defaultSocksProxyAddress,
                 timer != null ? timer : buildDefaultTimer(),
                 bossExecutor != null ? bossExecutor : buildDefaultBossExecutor(),
                 bossThreadCount,
@@ -94,27 +93,27 @@ public class NettyClientConfigBuilder extends NettyConfigBuilderBase<NettyClient
 
     private Timer buildDefaultTimer()
     {
-        return new HashedWheelTimer(renamingDaemonThreadFactory(threadNamePattern("-timer-%s")));
+        return new HashedWheelTimer(renamingThreadFactory(threadNamePattern("-timer-%s")));
     }
 
     private ExecutorService buildDefaultBossExecutor()
     {
-        return newCachedThreadPool(renamingDaemonThreadFactory(threadNamePattern("-boss-%s")));
+        return newCachedThreadPool(renamingThreadFactory(threadNamePattern("-boss-%s")));
     }
 
     private ExecutorService buildDefaultWorkerExecutor()
     {
-        return newCachedThreadPool(renamingDaemonThreadFactory(threadNamePattern("-worker-%s")));
+        return newCachedThreadPool(renamingThreadFactory(threadNamePattern("-worker-%s")));
     }
 
     private String threadNamePattern(String suffix)
     {
         String niftyName = getNiftyName();
-        return "nifty-client" + (Strings.isNullOrEmpty(niftyName) ? "" : "-" + niftyName) + suffix;
+        return "nifty-server" + (Strings.isNullOrEmpty(niftyName) ? "" : "-" + niftyName) + suffix;
     }
 
-    private ThreadFactory renamingDaemonThreadFactory(String nameFormat)
+    private ThreadFactory renamingThreadFactory(String nameFormat)
     {
-        return new ThreadFactoryBuilder().setNameFormat(nameFormat).setDaemon(true).build();
+        return new ThreadFactoryBuilder().setNameFormat(nameFormat).build();
     }
 }

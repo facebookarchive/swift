@@ -15,13 +15,10 @@
  */
 package com.facebook.nifty.server.util;
 
-import com.facebook.nifty.core.NettyConfigBuilder;
 import com.facebook.nifty.core.NettyServerTransport;
 import com.facebook.nifty.core.ThriftServerDef;
 import com.facebook.nifty.core.ThriftServerDefBuilder;
 import org.apache.thrift.TProcessor;
-import org.jboss.netty.channel.group.DefaultChannelGroup;
-import org.jboss.netty.util.HashedWheelTimer;
 
 import java.net.InetSocketAddress;
 
@@ -29,15 +26,7 @@ public class ScopedNiftyServer implements AutoCloseable {
     private final NettyServerTransport server;
 
     public ScopedNiftyServer(ThriftServerDefBuilder defBuilder) {
-        NettyConfigBuilder configBuilder = new NettyConfigBuilder();
-
-        ThriftServerDef def = defBuilder.build();
-
-        server = new NettyServerTransport(def,
-                                          configBuilder,
-                                          new DefaultChannelGroup(),
-                                          new HashedWheelTimer());
-
+        server = new NettyServerTransport(defBuilder.build());
         server.start();
     }
 

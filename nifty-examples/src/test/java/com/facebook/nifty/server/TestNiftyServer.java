@@ -66,8 +66,9 @@ public class TestNiftyServer
 
     private void startServer(final ThriftServerDefBuilder thriftServerDefBuilder)
     {
-        server = new NettyServerTransport(thriftServerDefBuilder.build(), new NettyConfigBuilder(),
-                    new DefaultChannelGroup(), new HashedWheelTimer());
+        server = new NettyServerTransport(thriftServerDefBuilder.build(),
+                                          NettyServerConfig.newBuilder().build(),
+                                          new DefaultChannelGroup());
         server.start();
         port = ((InetSocketAddress)server.getServerChannel().getLocalAddress()).getPort();
     }

@@ -49,14 +49,14 @@ public class TestNettyConfigBuilder
     @Test
     public void testNettyConfigBuilder()
     {
-        NettyConfigBuilder configBuilder = new NettyConfigBuilder();
+        NettyServerConfigBuilder configBuilder = new NettyServerConfigBuilder();
 
         configBuilder.getServerSocketChannelConfig().setReceiveBufferSize(10000);
         configBuilder.getServerSocketChannelConfig().setBacklog(1000);
         configBuilder.getServerSocketChannelConfig().setReuseAddress(true);
 
         ServerBootstrap bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory());
-        bootstrap.setOptions(configBuilder.getOptions());
+        bootstrap.setOptions(configBuilder.getBootstrapOptions());
         bootstrap.setPipelineFactory(Channels.pipelineFactory(Channels.pipeline()));
         Channel serverChannel = bootstrap.bind(new InetSocketAddress(port));
 

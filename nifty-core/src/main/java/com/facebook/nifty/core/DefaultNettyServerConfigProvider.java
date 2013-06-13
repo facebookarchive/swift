@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.facebook.nifty.perf;
+package com.facebook.nifty.core;
 
-import com.facebook.nifty.core.NettyServerConfig;
-import com.facebook.nifty.core.NettyServerConfigBuilder;
 import com.google.inject.Provider;
 
-public class LoadTesterNettyConfigProvider implements Provider<NettyServerConfig> {
-    public LoadTesterNettyConfigProvider() {
-    }
-
+public class DefaultNettyServerConfigProvider implements Provider<NettyServerConfig>
+{
     @Override
-    public NettyServerConfig get() {
-        NettyServerConfigBuilder configBuilder = new NettyServerConfigBuilder();
-        configBuilder.getServerSocketChannelConfig().setBacklog(1024);
-        return configBuilder.build();
+    public NettyServerConfig get()
+    {
+        return NettyServerConfig.newBuilder().build();
     }
 }

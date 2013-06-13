@@ -15,8 +15,6 @@
  */
 package com.facebook.nifty.client;
 
-import com.google.common.base.Strings;
-
 import org.jboss.netty.channel.socket.nio.NioClientBossPool;
 
 import org.jboss.netty.util.ThreadNameDeterminer;
@@ -25,7 +23,6 @@ import com.facebook.nifty.client.socks.Socks4ClientBootstrap;
 import com.facebook.nifty.core.ShutdownUtil;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.airlift.units.Duration;
 import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.bootstrap.ClientBootstrap;
@@ -36,16 +33,13 @@ import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioWorkerPool;
-import org.jboss.netty.util.HashedWheelTimer;
+import org.jboss.netty.util.Timer;
 
 import javax.annotation.Nullable;
 import java.io.Closeable;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-
-import static java.util.concurrent.Executors.newCachedThreadPool;
 
 public class NiftyClient implements Closeable
 {
@@ -54,46 +48,37 @@ public class NiftyClient implements Closeable
     private static final Duration DEFAULT_WRITE_TIMEOUT = new Duration(2, TimeUnit.SECONDS);
     private static final int DEFAULT_MAX_FRAME_SIZE = 16777216;
 
-    private final NettyClientConfigBuilder configBuilder;
+    private final NettyClientConfig nettyClientConfig;
     private final ExecutorService bossExecutor;
     private final ExecutorService workerExecutor;
     private final NioClientSocketChannelFactory channelFactory;
     private final InetSocketAddress defaultSocksProxyAddress;
     private final ChannelGroup allChannels = new DefaultChannelGroup();
-    private final HashedWheelTimer hashedWheelTimer;
+    private final Timer timer;
 
     /**
      * Creates a new NiftyClient with defaults: cachedThreadPool for bossExecutor and workerExecutor
      */
     public NiftyClient()
     {
-        this(new NettyClientConfigBuilder());
+        this(NettyClientConfig.newBuilder().build());
     }
 
-    public NiftyClient(NettyClientConfigBuilder configBuilder)
+    public NiftyClient(NettyClientConfig nettyClientConfig)
     {
-        this(configBuilder, null);
-    }
+        this.nettyClientConfig = nettyClientConfig;
 
-    public NiftyClient(
-            NettyClientConfigBuilder configBuilder,
-            @Nullable InetSocketAddress defaultSocksProxyAddress)
-    {
-        this.configBuilder = configBuilder;
+        this.timer = nettyClientConfig.getTimer();
+        this.bossExecutor = nettyClientConfig.getBossExecutor();
+        this.workerExecutor = nettyClientConfig.getWorkerExecutor();
+        this.defaultSocksProxyAddress = nettyClientConfig.getDefaultSocksProxyAddress();
 
-        String name = configBuilder.getNiftyName();
+        int bossThreadCount = nettyClientConfig.getBossThreadCount();
+        int workerThreadCount = nettyClientConfig.getWorkerThreadCount();
 
-        String prefix = "nifty-client" + (Strings.isNullOrEmpty(name) ? "" : "-" + name);
-
-        this.hashedWheelTimer = new HashedWheelTimer(renamingDaemonThreadFactory(prefix + "-timer-%s"));
-        this.bossExecutor = newCachedThreadPool(renamingDaemonThreadFactory(prefix + "-boss-%s"));
-        this.workerExecutor = newCachedThreadPool(renamingDaemonThreadFactory(prefix + "-worker-%s"));
-        this.defaultSocksProxyAddress = defaultSocksProxyAddress;
-
-        int bossThreadCount = configBuilder.getNiftyBossThreadCount();
-        int workerThreadCount = configBuilder.getNiftyWorkerThreadCount();
         NioWorkerPool workerPool = new NioWorkerPool(workerExecutor, workerThreadCount, ThreadNameDeterminer.CURRENT);
-        NioClientBossPool bossPool = new NioClientBossPool(bossExecutor, bossThreadCount, hashedWheelTimer, ThreadNameDeterminer.CURRENT);
+        NioClientBossPool bossPool = new NioClientBossPool(bossExecutor, bossThreadCount, timer, ThreadNameDeterminer.CURRENT);
+
         this.channelFactory = new NioClientSocketChannelFactory(bossPool, workerPool);
     }
 
@@ -132,7 +117,7 @@ public class NiftyClient implements Closeable
             @Nullable InetSocketAddress socksProxyAddress)
     {
         ClientBootstrap bootstrap = createClientBootstrap(socksProxyAddress);
-        bootstrap.setOptions(configBuilder.getOptions());
+        bootstrap.setOptions(nettyClientConfig.getBootstrapOptions());
         bootstrap.setOption("connectTimeoutMillis", (long)connectTimeout.toMillis());
         bootstrap.setPipelineFactory(clientChannelConnector.newChannelPipelineFactory(maxFrameSize));
         ChannelFuture nettyChannelFuture = clientChannelConnector.connect(bootstrap);
@@ -180,7 +165,7 @@ public class NiftyClient implements Closeable
     {
         // TODO: implement send timeout for sync client
         ClientBootstrap bootstrap = createClientBootstrap(socksProxyAddress);
-        bootstrap.setOptions(configBuilder.getOptions());
+        bootstrap.setOptions(nettyClientConfig.getBootstrapOptions());
         bootstrap.setOption("connectTimeoutMillis", (long) connectTimeout.toMillis());
         bootstrap.setPipelineFactory(new NiftyClientChannelPipelineFactory(maxFrameSize));
         ChannelFuture f = bootstrap.connect(addr);
@@ -217,17 +202,12 @@ public class NiftyClient implements Closeable
     {
         // Stop the timer thread first, so no timeouts can fire during the rest of the
         // shutdown process
-        hashedWheelTimer.stop();
+        timer.stop();
 
         ShutdownUtil.shutdownChannelFactory(channelFactory,
                                             bossExecutor,
                                             workerExecutor,
                                             allChannels);
-    }
-
-    private ThreadFactory renamingDaemonThreadFactory(String nameFormat)
-    {
-        return new ThreadFactoryBuilder().setNameFormat(nameFormat).setDaemon(true).build();
     }
 
     private ClientBootstrap createClientBootstrap(InetSocketAddress socksProxyAddress)
@@ -256,7 +236,7 @@ public class NiftyClient implements Closeable
                     if (future.isSuccess()) {
                         Channel nettyChannel = future.getChannel();
                         T channel = clientChannelConnector.newThriftClientChannel(nettyChannel,
-                                                                                  hashedWheelTimer);
+                                                                                  timer);
                         channel.setReceiveTimeout(receiveTimeout);
                         channel.setSendTimeout(sendTimeout);
                         set(channel);
