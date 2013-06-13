@@ -32,6 +32,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.inject.Inject;
 import io.airlift.units.Duration;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
@@ -83,8 +84,14 @@ public class ThriftClientManager implements Closeable
 
     public ThriftClientManager(ThriftCodecManager codecManager)
     {
+        this(codecManager, new NiftyClient());
+    }
+
+    @Inject
+    public ThriftClientManager(ThriftCodecManager codecManager, NiftyClient niftyClient)
+    {
         this.codecManager = codecManager;
-        this.niftyClient = new NiftyClient();
+        this.niftyClient = niftyClient;
     }
 
     public <T, C extends NiftyClientChannel> ListenableFuture<T> createClient(

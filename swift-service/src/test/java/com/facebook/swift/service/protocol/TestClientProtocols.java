@@ -16,7 +16,7 @@
 package com.facebook.swift.service.protocol;
 
 import com.facebook.nifty.client.FramedClientConnector;
-import com.facebook.nifty.core.NettyConfigBuilder;
+import com.facebook.nifty.core.NettyServerConfig;
 import com.facebook.nifty.core.NettyServerTransport;
 import com.facebook.nifty.core.ThriftServerDef;
 import com.facebook.nifty.duplex.TDuplexProtocolFactory;
@@ -39,7 +39,6 @@ import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
-import org.jboss.netty.util.HashedWheelTimer;
 import org.testng.annotations.Test;
 
 import java.net.InetSocketAddress;
@@ -125,7 +124,7 @@ public class TestClientProtocols
                                                  .withProcessor(processor)
                                                  .speaks(protocolFactory).build();
 
-            server = new NettyServerTransport(def, new NettyConfigBuilder(), new DefaultChannelGroup(), new HashedWheelTimer());
+            server = new NettyServerTransport(def, NettyServerConfig.newBuilder().build(), new DefaultChannelGroup());
             server.start();
         }
 

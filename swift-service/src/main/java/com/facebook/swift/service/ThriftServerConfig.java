@@ -26,8 +26,13 @@ import static io.airlift.units.DataSize.Unit.MEGABYTE;
 
 public class ThriftServerConfig
 {
+    private static final int DEFAULT_BOSS_THREAD_COUNT = 1;
+    private static final int DEFAULT_IO_WORKER_THREAD_COUNT = 2 * Runtime.getRuntime().availableProcessors();
+
     private int port;
     private int workerThreads = 200;
+    private int acceptorThreadCount = DEFAULT_BOSS_THREAD_COUNT;
+    private int ioThreadCount = DEFAULT_IO_WORKER_THREAD_COUNT;
     private Duration clientIdleTimeout;
 
     /**
@@ -87,6 +92,30 @@ public class ThriftServerConfig
     public ThriftServerConfig setClientIdleTimeout(Duration clientIdleTimeout)
     {
         this.clientIdleTimeout = clientIdleTimeout;
+        return this;
+    }
+
+    public int getAcceptorThreadCount()
+    {
+        return acceptorThreadCount;
+    }
+
+    @Config("thrift.acceptor-threads.count")
+    public ThriftServerConfig setAcceptorThreadCount(int acceptorThreadCount)
+    {
+        this.acceptorThreadCount = acceptorThreadCount;
+        return this;
+    }
+
+    public int getIoThreadCount()
+    {
+        return ioThreadCount;
+    }
+
+    @Config("thrift.io-threads.count")
+    public ThriftServerConfig setIoThreadCount(int ioThreadCount)
+    {
+        this.ioThreadCount = ioThreadCount;
         return this;
     }
 }

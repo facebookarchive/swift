@@ -15,6 +15,7 @@
  */
 package com.facebook.swift.service.guice;
 
+import com.facebook.nifty.client.NiftyClient;
 import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.ThriftClientManager.ThriftClientMetadata;
 import com.facebook.swift.service.ThriftMethodHandler;
@@ -42,6 +43,8 @@ public class ThriftClientModule implements Module
     @Override
     public void configure(Binder binder)
     {
+        binder.bind(NiftyClient.class).in(Scopes.SINGLETON);
+
         // Bind single shared ThriftClientManager
         binder.bind(ThriftClientManager.class).in(Scopes.SINGLETON);
 

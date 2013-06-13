@@ -15,7 +15,8 @@
  */
 package com.facebook.swift.service;
 
-import com.facebook.nifty.core.NettyConfigBuilder;
+import com.facebook.nifty.core.NettyServerConfig;
+import com.facebook.nifty.core.NettyServerConfigBuilder;
 import com.facebook.nifty.core.NettyServerTransport;
 import com.facebook.nifty.core.ThriftServerDef;
 import com.google.common.base.Preconditions;
@@ -31,11 +32,11 @@ import org.jboss.netty.util.Timer;
 import org.weakref.jmx.Managed;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.net.SocketAddress;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -54,13 +55,15 @@ public class ThriftServer implements Closeable
     }
 
     private final NettyServerTransport transport;
-    private final int workerThreads;
     private final int configuredPort;
     private final DefaultChannelGroup allChannels = new DefaultChannelGroup();
 
+    private final Executor workerExecutor;
     private final ExecutorService acceptorExecutor;
     private final ExecutorService ioExecutor;
-    private final ExecutorService workerExecutor;
+    private final Integer workerThreads;
+    private final int acceptorThreads;
+    private final int ioThreads;
 
     private final ServerChannelFactory serverChannelFactory;
 
@@ -83,14 +86,17 @@ public class ThriftServer implements Closeable
 
         configuredPort = config.getPort();
 
-        workerThreads = config.getWorkerThreads();
-
-        workerExecutor = newFixedThreadPool(workerThreads, new ThreadFactoryBuilder().setNameFormat("thrift-worker-%s").build());
-
         acceptorExecutor = newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("thrift-acceptor-%s").build());
+        acceptorThreads = config.getAcceptorThreadCount();
         ioExecutor = newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("thrift-io-%s").build());
+        ioThreads = config.getIoThreadCount();
 
-        serverChannelFactory = new NioServerSocketChannelFactory(acceptorExecutor, ioExecutor);
+        serverChannelFactory = new NioServerSocketChannelFactory(acceptorExecutor, acceptorThreads, ioExecutor, ioThreads);
+
+        workerThreads = config.getWorkerThreads();
+        workerExecutor = newFixedThreadPool(
+                getWorkerThreads(),
+                new ThreadFactoryBuilder().setNameFormat("thrift-worker-%s").build());
 
         ThriftServerDef thriftServerDef = ThriftServerDef.newBuilder()
                                                          .name("thrift")
@@ -100,21 +106,50 @@ public class ThriftServer implements Closeable
                                                          .withProcessorFactory(processorFactory)
                                                          .using(workerExecutor).build();
 
-        transport = new NettyServerTransport(thriftServerDef, new NettyConfigBuilder(), allChannels, timer);
+        NettyServerConfigBuilder nettyServerConfigBuilder = NettyServerConfig.newBuilder();
+
+        nettyServerConfigBuilder.setBossThreadCount(config.getAcceptorThreadCount());
+        nettyServerConfigBuilder.setWorkerThreadCount(config.getIoThreadCount());
+        nettyServerConfigBuilder.setTimer(timer);
+
+        NettyServerConfig nettyServerConfig = nettyServerConfigBuilder.build();
+
+        transport = new NettyServerTransport(thriftServerDef, nettyServerConfig, allChannels);
+    }
+
+    /**
+     * A ThriftServer constructor that takes raw Netty configuration parameters
+     */
+    public ThriftServer(NettyServerConfig nettyServerConfig, ThriftServerDef thriftServerDef)
+    {
+        configuredPort = thriftServerDef.getServerPort();
+        workerExecutor = thriftServerDef.getExecutor();
+        acceptorExecutor = nettyServerConfig.getBossExecutor();
+        acceptorThreads = nettyServerConfig.getBossThreadCount();
+        ioExecutor = nettyServerConfig.getWorkerExecutor();
+        ioThreads = nettyServerConfig.getWorkerThreadCount();
+        serverChannelFactory = new NioServerSocketChannelFactory(acceptorExecutor, acceptorThreads, ioExecutor, ioThreads);
+
+        if (workerExecutor instanceof ThreadPoolExecutor) {
+            workerThreads = ((ThreadPoolExecutor) workerExecutor).getPoolSize();
+        }
+        else {
+            // No way to ask a generic Executor for the number of threads it is running
+            workerThreads = null;
+        }
+
+        transport = new NettyServerTransport(thriftServerDef, nettyServerConfig, allChannels);
     }
 
     @Managed
-    public int getPort()
+    public Integer getPort()
     {
         if (configuredPort != 0) {
             return configuredPort;
         }
-
-        if (transport.getServerChannel() == null) {
-            throw new IllegalStateException("Cannot determine the randomly port before the server is started");
+        else {
+            return getBoundPort();
         }
-
-        return getBoundPort();
     }
 
     private int getBoundPort()
@@ -126,13 +161,26 @@ public class ThriftServer implements Closeable
             return inetSocketAddress.getPort();
         }
 
-        throw new IllegalStateException("Unable to determine the bound port");
+        // Cannot determine the randomly assigned port until the server is started
+        return 0;
     }
 
     @Managed
     public int getWorkerThreads()
     {
         return workerThreads;
+    }
+
+    @Managed
+    public int getAcceptorThreads()
+    {
+        return acceptorThreads;
+    }
+
+    @Managed
+    public int getIoThreads()
+    {
+        return ioThreads;
     }
 
     public synchronized boolean isRunning() {
@@ -162,7 +210,9 @@ public class ThriftServer implements Closeable
             try {
                 transport.stop();
 
-                shutdownExecutor(workerExecutor, "workerExecutor");
+                if (workerExecutor instanceof ExecutorService) {
+                    shutdownExecutor((ExecutorService) workerExecutor, "workerExecutor");
+                }
                 shutdownChannelFactory(serverChannelFactory, acceptorExecutor, ioExecutor, allChannels);
             }
             catch (InterruptedException e) {
