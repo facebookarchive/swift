@@ -75,4 +75,11 @@ public class ContextChain
             handlers.get(i).postWriteException(contexts.get(i), methodName, e);
         }
     }
+
+    public void done(String methodName)
+    {
+        for (int i = 0; i < handlers.size(); i++) {
+            handlers.get(i).done(contexts.get(i), methodName);
+        }
+    }
 }

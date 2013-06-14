@@ -130,9 +130,13 @@ public class ThriftServiceProcessor implements NiftyProcessor
             }
 
             // invoke method
-            ContextChain context = new ContextChain(eventHandlers, method.getServiceName() + "." + methodName,
-                                                    requestContext);
-            method.process(in, out, sequenceId, context);
+            String fullMethodName = method.getServiceName() + "." + methodName;
+            ContextChain context = new ContextChain(eventHandlers, fullMethodName, requestContext);
+            try {
+                method.process(in, out, sequenceId, context);
+            } finally {
+                context.done(fullMethodName);
+            }
 
             return true;
         }

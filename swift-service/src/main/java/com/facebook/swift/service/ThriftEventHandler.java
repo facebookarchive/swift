@@ -30,4 +30,5 @@ public class ThriftEventHandler
     public void preWriteException(Object context, String methodName, Exception e) {}
     public void postWrite(Object context, String methodName, Object result) {}
     public void postWriteException(Object context, String methodName, Exception e) {}
+    public void done(Object context, String methodName) {}
 }
