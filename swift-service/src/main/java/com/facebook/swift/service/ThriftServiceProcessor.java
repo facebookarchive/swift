@@ -52,7 +52,6 @@ import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
 public class ThriftServiceProcessor implements NiftyProcessor
 {
     private final Map<String, ThriftMethodProcessor> methods;
-    private final Multimap<String, ThriftMethodStats> serviceStats;
     private final List<ThriftEventHandler> eventHandlers;
 
     /**
@@ -72,29 +71,21 @@ public class ThriftServiceProcessor implements NiftyProcessor
 
         // NOTE: ImmutableMap enforces that we don't have duplicate method names
         ImmutableMap.Builder<String, ThriftMethodProcessor> processorBuilder = ImmutableMap.builder();
-        ImmutableMultimap.Builder<String, ThriftMethodStats> statsBuilder = ImmutableMultimap.builder();
         for (Object service : services) {
             ThriftServiceMetadata serviceMetadata = new ThriftServiceMetadata(service.getClass(), codecManager.getCatalog());
             for (ThriftMethodMetadata methodMetadata : serviceMetadata.getMethods().values()) {
                 ThriftMethodProcessor methodProcessor = new ThriftMethodProcessor(service,
                         serviceMetadata.getName(), methodMetadata, codecManager);
                 processorBuilder.put(methodMetadata.getName(), methodProcessor);
-                statsBuilder.put(serviceMetadata.getName(), methodProcessor.getStats());
             }
         }
         methods = processorBuilder.build();
-        serviceStats = statsBuilder.build();
         this.eventHandlers = ImmutableList.copyOf(eventHandlers);
     }
 
     public Map<String, ThriftMethodProcessor> getMethods()
     {
         return methods;
-    }
-
-    public Multimap<String, ThriftMethodStats> getServiceStats()
-    {
-        return serviceStats;
     }
 
     @Override
