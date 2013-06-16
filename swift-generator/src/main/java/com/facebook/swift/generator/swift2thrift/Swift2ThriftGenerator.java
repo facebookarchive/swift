@@ -254,6 +254,26 @@ public class Swift2ThriftGenerator {
                     }
                 }
             }
+            for (ThriftType ex : method.getValue().getExceptions().values()) {
+            	if (!verifyField(ex)) {
+                    ok = false;
+                    if (!quiet) {
+                        LOG.error("Unknown exception type {} in {}.{}",
+                                thriftTypeRenderer.toString(ex),
+                                service.getName(),
+                                method.getKey());
+                    }
+                }            	
+            }
+            if (!verifyField(method.getValue().getReturnType())) {
+                ok = false;
+                if (!quiet) {
+                    LOG.error("Unknown return type {} in {}.{}",
+                            thriftTypeRenderer.toString(method.getValue().getReturnType()),
+                            service.getName(),
+                            method.getKey());
+                }
+            }
         }
         knownServices.add(service);
         return ok;

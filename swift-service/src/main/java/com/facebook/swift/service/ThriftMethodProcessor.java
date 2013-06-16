@@ -165,6 +165,8 @@ public class ThriftMethodProcessor
                       new TApplicationException(INTERNAL_ERROR,
                                                 "Internal error processing " + method.getName());
                     applicationException.initCause(e);
+                    System.err.println("Internal error processing " + method.getName());
+                    e.printStackTrace();
 
                     // Application exceptions are sent to client, and the connection can be reused
                     out.writeMessageBegin(new TMessage(name, TMessageType.EXCEPTION, sequenceId));
