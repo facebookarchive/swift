@@ -33,6 +33,8 @@ import org.apache.thrift.protocol.TMessage;
 import org.apache.thrift.protocol.TMessageType;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weakref.jmx.Flatten;
 import org.weakref.jmx.Managed;
 
@@ -49,6 +51,7 @@ import static org.apache.thrift.TApplicationException.INTERNAL_ERROR;
 @ThreadSafe
 public class ThriftMethodProcessor
 {
+    private static final Logger LOG = LoggerFactory.getLogger(ThriftMethodProcessor.class);
     private final String name;
     private final Object service;
     private final Method method;
@@ -165,6 +168,7 @@ public class ThriftMethodProcessor
                       new TApplicationException(INTERNAL_ERROR,
                                                 "Internal error processing " + method.getName());
                     applicationException.initCause(e);
+                    LOG.error("Internal error processing {}", method.getName(), e);
 
                     // Application exceptions are sent to client, and the connection can be reused
                     out.writeMessageBegin(new TMessage(name, TMessageType.EXCEPTION, sequenceId));
