@@ -18,8 +18,10 @@ package com.facebook.swift.service.base;
 import com.facebook.nifty.client.FramedClientConnector;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.ThriftClientManager;
+import com.facebook.swift.service.ThriftEventHandler;
 import com.facebook.swift.service.ThriftServer;
 import com.facebook.swift.service.ThriftServiceProcessor;
+import com.google.common.collect.ImmutableList;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.thrift.transport.TTransportException;
@@ -78,7 +80,7 @@ public class SuiteBase<ServiceInterface, ClientInterface> {
 
     private ThriftServer createServer(ServiceInterface handler)
             throws IllegalAccessException, InstantiationException {
-        ThriftServiceProcessor processor = new ThriftServiceProcessor(codecManager, handler);
+        ThriftServiceProcessor processor = new ThriftServiceProcessor(codecManager, ImmutableList.<ThriftEventHandler>of(), handler);
         return new ThriftServer(processor);
     }
 

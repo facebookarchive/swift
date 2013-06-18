@@ -21,15 +21,7 @@ import com.facebook.nifty.core.NettyServerTransport;
 import com.facebook.nifty.core.ThriftServerDef;
 import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.facebook.swift.codec.ThriftCodecManager;
-import com.facebook.swift.service.LogEntry;
-import com.facebook.swift.service.ResultCode;
-import com.facebook.swift.service.Scribe;
-import com.facebook.swift.service.ThriftClient;
-import com.facebook.swift.service.ThriftClientConfig;
-import com.facebook.swift.service.ThriftClientManager;
-import com.facebook.swift.service.ThriftMethod;
-import com.facebook.swift.service.ThriftService;
-import com.facebook.swift.service.ThriftServiceProcessor;
+import com.facebook.swift.service.*;
 import com.google.common.collect.ImmutableList;
 import com.google.common.net.HostAndPort;
 import io.airlift.units.Duration;
@@ -117,7 +109,8 @@ public class TestClientProtocols
         public ScopedServer(TProtocolFactory protocolFactory)
                 throws TTransportException, InterruptedException
         {
-            ThriftServiceProcessor processor = new ThriftServiceProcessor(new ThriftCodecManager(), new ScribeHandler());
+            ThriftServiceProcessor processor = new ThriftServiceProcessor(new ThriftCodecManager(),
+                    ImmutableList.<ThriftEventHandler>of(), new ScribeHandler());
 
             ThriftServerDef def = ThriftServerDef.newBuilder()
                                                  .listen(0)
