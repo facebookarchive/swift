@@ -15,6 +15,8 @@
  */
 package com.facebook.swift.service;
 
+import com.facebook.nifty.core.RequestContext;
+import com.facebook.nifty.processor.NiftyProcessor;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.metadata.ThriftMethodMetadata;
 import com.facebook.swift.service.metadata.ThriftServiceMetadata;
@@ -47,20 +49,21 @@ import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
  * method parameters, and does not support Thrift exceptions properly.
  */
 @ThreadSafe
-public class ThriftServiceProcessor implements TProcessor
+public class ThriftServiceProcessor implements NiftyProcessor
 {
     private final Map<String, ThriftMethodProcessor> methods;
-    private final Multimap<String, ThriftMethodStats> serviceStats;
+    private final List<ThriftEventHandler> eventHandlers;
 
     /**
+     * @param eventHandlers event handlers to attach to services
      * @param services the services to expose; services must be thread safe
      */
-    public ThriftServiceProcessor(ThriftCodecManager codecManager, Object... services)
+    public ThriftServiceProcessor(ThriftCodecManager codecManager, List<? extends ThriftEventHandler> eventHandlers, Object... services)
     {
-        this(codecManager, ImmutableList.copyOf(services));
+        this(codecManager, eventHandlers, ImmutableList.copyOf(services));
     }
 
-    public ThriftServiceProcessor(ThriftCodecManager codecManager, List<Object> services)
+    public ThriftServiceProcessor(ThriftCodecManager codecManager, List<? extends ThriftEventHandler> eventHandlers, List<?> services)
     {
         Preconditions.checkNotNull(codecManager, "codecManager is null");
         Preconditions.checkNotNull(services, "service is null");
@@ -68,17 +71,16 @@ public class ThriftServiceProcessor implements TProcessor
 
         // NOTE: ImmutableMap enforces that we don't have duplicate method names
         ImmutableMap.Builder<String, ThriftMethodProcessor> processorBuilder = ImmutableMap.builder();
-        ImmutableMultimap.Builder<String, ThriftMethodStats> statsBuilder = ImmutableMultimap.builder();
         for (Object service : services) {
             ThriftServiceMetadata serviceMetadata = new ThriftServiceMetadata(service.getClass(), codecManager.getCatalog());
             for (ThriftMethodMetadata methodMetadata : serviceMetadata.getMethods().values()) {
-                ThriftMethodProcessor methodProcessor = new ThriftMethodProcessor(service, methodMetadata, codecManager);
+                ThriftMethodProcessor methodProcessor = new ThriftMethodProcessor(service,
+                        serviceMetadata.getName(), methodMetadata, codecManager);
                 processorBuilder.put(methodMetadata.getName(), methodProcessor);
-                statsBuilder.put(serviceMetadata.getName(), methodProcessor.getStats());
             }
         }
         methods = processorBuilder.build();
-        serviceStats = statsBuilder.build();
+        this.eventHandlers = ImmutableList.copyOf(eventHandlers);
     }
 
     public Map<String, ThriftMethodProcessor> getMethods()
@@ -86,14 +88,9 @@ public class ThriftServiceProcessor implements TProcessor
         return methods;
     }
 
-    public Multimap<String, ThriftMethodStats> getServiceStats()
-    {
-        return serviceStats;
-    }
-
     @Override
     @SuppressWarnings("PMD.EmptyCatchBlock")
-    public boolean process(TProtocol in, TProtocol out)
+    public boolean process(TProtocol in, TProtocol out, RequestContext requestContext)
             throws TException
     {
         TMessage message = in.readMessageBegin();
@@ -124,7 +121,13 @@ public class ThriftServiceProcessor implements TProcessor
             }
 
             // invoke method
-            method.process(in, out, sequenceId);
+            String fullMethodName = method.getServiceName() + "." + methodName;
+            ContextChain context = new ContextChain(eventHandlers, fullMethodName, requestContext);
+            try {
+                method.process(in, out, sequenceId, context);
+            } finally {
+                context.done(fullMethodName);
+            }
 
             return true;
         }

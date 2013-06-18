@@ -16,6 +16,7 @@
 package com.facebook.swift.service.guice;
 
 import com.facebook.swift.codec.ThriftCodecManager;
+import com.facebook.swift.service.ThriftEventHandler;
 import com.facebook.swift.service.ThriftServiceProcessor;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -62,17 +63,38 @@ public class ThriftServiceExporter
         newSetBinder(binder, ThriftServiceExport.class).addBinding().toInstance(new ThriftServiceExport(key));
     }
 
+    public void addEventHandler(ThriftEventHandler handler)
+    {
+        Preconditions.checkNotNull(handler, "handler is null");
+        newSetBinder(binder, ThriftEventHandler.class).addBinding().toInstance(handler);
+    }
+
+    public void addEventHandler(Key<? extends ThriftEventHandler> key)
+    {
+        Preconditions.checkNotNull(key, "key is null");
+        newSetBinder(binder, ThriftEventHandler.class).addBinding().to(key);
+    }
+
+    public void addEventHandler(Class<? extends ThriftEventHandler> cls)
+    {
+        Preconditions.checkNotNull(cls, "cls is null");
+        newSetBinder(binder, ThriftEventHandler.class).addBinding().to(cls);
+    }
+
     public static class ThriftServiceProcessorProvider implements Provider<ThriftServiceProcessor>
     {
         private final Injector injector;
         private final ThriftCodecManager codecManager;
+        private final Set<ThriftEventHandler> eventHandlers;
         private final Set<ThriftServiceExport> serviceExports;
 
         @Inject
-        public ThriftServiceProcessorProvider(Injector injector, ThriftCodecManager codecManager, Set<ThriftServiceExport> serviceExports)
+        public ThriftServiceProcessorProvider(Injector injector, ThriftCodecManager codecManager,
+                                              Set<ThriftEventHandler> eventHandlers, Set<ThriftServiceExport> serviceExports)
         {
             this.injector = injector;
             this.codecManager = codecManager;
+            this.eventHandlers = eventHandlers;
             this.serviceExports = serviceExports;
         }
 
@@ -84,7 +106,7 @@ public class ThriftServiceExporter
                 Object server = injector.getInstance(serviceExport.getKey());
                 servers.add(server);
             }
-            return new ThriftServiceProcessor(codecManager, servers.build());
+            return new ThriftServiceProcessor(codecManager, ImmutableList.copyOf(eventHandlers), servers.build());
         }
     }
 
