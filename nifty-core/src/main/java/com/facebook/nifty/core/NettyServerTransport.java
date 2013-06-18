@@ -19,11 +19,13 @@ import org.apache.thrift.protocol.TProtocolFactory;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.group.ChannelGroup;
+import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.timeout.IdleStateHandler;
 import org.jboss.netty.logging.InternalLoggerFactory;
 import org.jboss.netty.logging.Slf4JLoggerFactory;
 import org.jboss.netty.util.ExternalResourceReleasable;
+import org.jboss.netty.util.HashedWheelTimer;
 import org.jboss.netty.util.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +36,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static java.util.concurrent.Executors.newCachedThreadPool;
 
 /**
  * A core channel the decode framed Thrift message, dispatches to the TProcessor given
@@ -48,9 +52,18 @@ public class NettyServerTransport implements ExternalResourceReleasable
     private static final int NO_WRITER_IDLE_TIMEOUT = 0;
     private static final int NO_ALL_IDLE_TIMEOUT = 0;
     private ServerBootstrap bootstrap;
+    private final ChannelGroup allChannels;
+    private ExecutorService bossExecutor;
+    private ExecutorService ioWorkerExecutor;
+    private ServerChannelFactory channelFactory;
     private Channel serverChannel;
     private final ThriftServerDef def;
     private final NettyConfigBuilder configBuilder;
+
+    public NettyServerTransport(final ThriftServerDef def)
+    {
+        this(def, new NettyConfigBuilder(), new DefaultChannelGroup(), new HashedWheelTimer());
+    }
 
     @Inject
     public NettyServerTransport(
@@ -62,6 +75,7 @@ public class NettyServerTransport implements ExternalResourceReleasable
         this.def = def;
         this.configBuilder = configBuilder;
         this.port = def.getServerPort();
+        this.allChannels = allChannels;
         // connectionLimiter must be instantiated exactly once (and thus outside the pipeline factory)
         final ConnectionLimiter connectionLimiter = new ConnectionLimiter(def.getMaxConnections());
 
@@ -96,12 +110,15 @@ public class NettyServerTransport implements ExternalResourceReleasable
 
     public void start()
     {
-        start(new NioServerSocketChannelFactory());
+        start(newCachedThreadPool(), newCachedThreadPool());
     }
 
     public void start(ExecutorService bossExecutor, ExecutorService ioWorkerExecutor)
     {
-        start(new NioServerSocketChannelFactory(bossExecutor, ioWorkerExecutor));
+        this.bossExecutor = bossExecutor;
+        this.ioWorkerExecutor = ioWorkerExecutor;
+        this.channelFactory = new NioServerSocketChannelFactory(bossExecutor, ioWorkerExecutor);
+        start(channelFactory);
     }
 
     public void start(ServerChannelFactory serverChannelFactory)
@@ -143,6 +160,16 @@ public class NettyServerTransport implements ExternalResourceReleasable
             });
             latch.await();
             serverChannel = null;
+        }
+
+        // If the channelFactory was created by us, we should also clean it up. If the
+        // channelFactory was passed in by NiftyBootstrap, then it may be shared so don't clean
+        // it up.
+        if (channelFactory != null) {
+            ShutdownUtil.shutdownChannelFactory(channelFactory,
+                                                bossExecutor,
+                                                ioWorkerExecutor,
+                                                allChannels);
         }
     }
 
