@@ -34,7 +34,7 @@ constructor, and builder injection.  For example:
         {
             return message;
         }
-    }    
+    }
 
 
 # Swift Service
@@ -62,7 +62,9 @@ services to be exported with Thrift.   For example:
 
 # Swift Generator
 
-[Swift Generator](swift-generator) can create Java code usable with the Swift codec from Thrift IDL files.
+[Swift Generator](swift-generator) is a library that creates Java code usable with the Swift codec from Thrift IDL files.
+
+[Swift Generator CLI](swift-generator-cli) is a command-line front-end to this generator.
 
 # Swift Maven plugin
 
