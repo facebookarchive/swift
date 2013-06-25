@@ -51,11 +51,6 @@
 
     <dependency>
       <groupId>io.airlift</groupId>
-      <artifactId>units</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>io.airlift</groupId>
       <artifactId>configuration</artifactId>
     </dependency>
 
@@ -77,6 +72,16 @@
     <dependency>
       <groupId>io.airlift</groupId>
       <artifactId>bootstrap</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.airlift</groupId>
+      <artifactId>jmx</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.weakref</groupId>
+      <artifactId>jmxutils</artifactId>
     </dependency>
 
     <dependency>

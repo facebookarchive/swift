@@ -38,9 +38,13 @@ import io.airlift.bootstrap.LifeCycleManager;
 import io.airlift.bootstrap.LifeCycleModule;
 import io.airlift.configuration.ConfigurationFactory;
 import io.airlift.configuration.ConfigurationModule;
+import io.airlift.jmx.JmxModule;
+import org.weakref.jmx.guice.MBeanModule;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+
+import java.util.Map;
 
 import static com.facebook.swift.service.guice.ThriftClientBinder.thriftClientBinder;
 
@@ -64,10 +68,12 @@ public class LoadGenerator
         } else {
             injector = Guice.createInjector(
                     Stage.PRODUCTION,
-                    new ConfigurationModule(new ConfigurationFactory(ImmutableMap.<String, String>of())),
+                    new ConfigurationModule(new ConfigurationFactory(buildConfigMap(config))),
                     new LifeCycleModule(),
                     new ThriftCodecModule(),
                     new ThriftClientModule(),
+                    new JmxModule(),
+                    new MBeanModule(),
                     new Module()
                     {
                         @Override
@@ -115,6 +121,27 @@ public class LoadGenerator
         this.config = config;
         this.clientWorkerProvider = clientWorkerProvider;
         this.clientManager = clientManager;
+    }
+
+    private static Map<String, String> buildConfigMap(LoadGeneratorCommandLineConfig config)
+    {
+        ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+        if (config.connectTimeoutMilliseconds > 0) {
+            addParam(builder, "connect-timeout", config.connectTimeoutMilliseconds + "ms");
+        }
+        if (config.receiveTimeoutMilliseconds > 0) {
+            addParam(builder, "read-timeout", config.receiveTimeoutMilliseconds + "ms");
+        }
+        if (config.sendTimeoutMilliseconds > 0) {
+            addParam(builder, "write-timeout", config.sendTimeoutMilliseconds + "ms");
+        }
+        return builder.build();
+    }
+
+    private static void addParam(ImmutableMap.Builder<String, String> builder, String param, String value)
+    {
+        builder.put("SyncLoadTest.thrift.client." + param, value);
+        builder.put("AsyncLoadTest.thrift.client." + param, value);
     }
 
     @PostConstruct

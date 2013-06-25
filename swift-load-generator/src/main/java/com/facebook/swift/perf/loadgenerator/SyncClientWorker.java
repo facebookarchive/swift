@@ -19,6 +19,7 @@ import com.facebook.nifty.client.NiftyClient;
 import com.facebook.nifty.client.NiftyClientChannel;
 import com.facebook.nifty.client.NiftyClientConnector;
 import com.facebook.swift.service.RuntimeTException;
+import com.facebook.swift.service.ThriftClient;
 import com.facebook.swift.service.ThriftClientConfig;
 import com.facebook.swift.service.ThriftClientManager;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -35,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 public class SyncClientWorker extends AbstractClientWorker
 {
     private static final Logger logger = LoggerFactory.getLogger(SyncClientWorker.class);
+    private final ThriftClient<SyncLoadTest> client;
     private volatile boolean shutdownRequested = false;
     private NiftyClientConnector<? extends NiftyClientChannel> connector;
 
@@ -47,11 +49,12 @@ public class SyncClientWorker extends AbstractClientWorker
     @Inject
     public SyncClientWorker(
             LoadGeneratorCommandLineConfig config,
-            ThriftClientManager clientManager,
+            ThriftClient<SyncLoadTest> client,
             NiftyClientConnector<? extends NiftyClientChannel> connector)
     {
-        super(clientManager, config);
+        super(config);
         this.connector = connector;
+        this.client = client;
     }
 
     @Override
@@ -65,16 +68,7 @@ public class SyncClientWorker extends AbstractClientWorker
             {
                 while (!shutdownRequested) {
                     try {
-                        try (SyncLoadTest client = clientManager.createClient(
-                                connector,
-                                SyncLoadTest.class,
-                                new Duration(config.connectTimeoutMilliseconds, TimeUnit.SECONDS),
-                                new Duration(config.receiveTimeoutMilliseconds, TimeUnit.MILLISECONDS),
-                                new Duration(config.sendTimeoutMilliseconds, TimeUnit.MILLISECONDS),
-                                ThriftClientConfig.DEFAULT_MAX_FRAME_SIZE,
-                                "SyncClientWorker",
-                                null
-                                ).get()) {
+                        try (SyncLoadTest client = SyncClientWorker.this.client.open(connector).get()) {
                             logger.trace("Worker connected");
                             for (int i = 0; i < getOperationsPerConnection(); i++) {
                                 sendRequest(client);

@@ -26,7 +26,6 @@ import java.util.Random;
 public abstract class AbstractClientWorker implements Runnable
 {
     protected final LoadGeneratorCommandLineConfig config;
-    protected final ThriftClientManager clientManager;
     protected final HostAndPort serverHostAndPort;
     private final Random randomGenerator = new Random();
     protected AtomicLong requestsProcessed = new AtomicLong(0);
@@ -34,11 +33,8 @@ public abstract class AbstractClientWorker implements Runnable
     protected AtomicLong requestsPending = new AtomicLong(0);
     private final int totalWeight;
 
-    public AbstractClientWorker(
-            ThriftClientManager clientManager,
-            LoadGeneratorCommandLineConfig config)
+    public AbstractClientWorker(LoadGeneratorCommandLineConfig config)
     {
-        this.clientManager = clientManager;
         this.config = config;
         this.serverHostAndPort = HostAndPort.fromParts(config.serverAddress, config.serverPort);
         this.totalWeight =
