@@ -234,6 +234,11 @@ public final class AsyncClientWorker extends AbstractClientWorker
     }
 
     protected void fillRequestPipeline(final ClientWrapper clientWrapper) {
+        // We've already finished sending requests on this client
+        if (clientWrapper.shouldStopSending()) {
+            return;
+        }
+
         try {
             while (!shutdownRequested) {
                 if (channel.hasError()) {
@@ -332,7 +337,7 @@ public final class AsyncClientWorker extends AbstractClientWorker
             requestsProcessed.incrementAndGet();
 
             if (requestsPending.decrementAndGet() < pendingOperationsLowWaterMark) {
-                fillRequestPipeline(clientWrapper);
+                fillCurrentClientPipeline();
             }
         }
 
@@ -359,8 +364,17 @@ public final class AsyncClientWorker extends AbstractClientWorker
             requestsFailed.incrementAndGet();
 
             if (requestsPending.decrementAndGet() < pendingOperationsLowWaterMark) {
-                fillRequestPipeline(clientWrapper);
+                fillCurrentClientPipeline();
             }
+        }
+
+        private void fillCurrentClientPipeline()
+        {
+            // Fill the pipeline using the most recently connected client controlled by this
+            // worker (which is not necessarily the same client as the one that has just received
+            // a success or failure callback)
+            ClientWrapper currentClientWrapper = AsyncClientWorker.this.clientWrapper;
+            fillRequestPipeline(currentClientWrapper);
         }
     }
 }
