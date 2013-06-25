@@ -21,6 +21,7 @@ import io.airlift.units.Duration;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Nullable;
 
@@ -40,6 +41,7 @@ import static java.lang.Math.max;
 
 public final class AsyncClientWorker extends AbstractClientWorker
 {
+    private static final AtomicInteger clientCounter = new AtomicInteger(0);
     private static final Logger logger = LoggerFactory.getLogger(AsyncClientWorker.class);
     private static final int MAX_FRAME_SIZE = 0x7FFFFFFF;
 
@@ -263,12 +265,14 @@ public final class AsyncClientWorker extends AbstractClientWorker
         private final AtomicLong requestsSent = new AtomicLong(0);
         private final AtomicLong responsesReceived = new AtomicLong(0);
         private final long requestLimit;
+        private final int clientId;
         private AsyncLoadTest client;
 
         public ClientWrapper(AsyncLoadTest client, long requestLimit)
         {
             this.client = client;
             this.requestLimit = requestLimit;
+            this.clientId = clientCounter.getAndIncrement();
         }
 
         public AsyncLoadTest getClient()
@@ -299,6 +303,11 @@ public final class AsyncClientWorker extends AbstractClientWorker
         public boolean isFinishedReceivingResponses()
         {
             return responsesReceived.get() >= requestLimit;
+        }
+
+        public int getClientId()
+        {
+            return clientId;
         }
     }
 
