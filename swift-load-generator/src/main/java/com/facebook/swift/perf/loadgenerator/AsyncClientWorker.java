@@ -247,7 +247,7 @@ public final class AsyncClientWorker extends AbstractClientWorker
 
                 long pendingCount = sendRequest(clientWrapper);
 
-                clientWrapper.recordRequestReceived();
+                clientWrapper.recordRequestSent();
                 if (clientWrapper.shouldStopSending()) {
                     reconnect();
                     break;
@@ -290,7 +290,7 @@ public final class AsyncClientWorker extends AbstractClientWorker
             getClient().close();
         }
 
-        public long recordRequestReceived()
+        public long recordRequestSent()
         {
             return requestsSent.incrementAndGet();
         }
