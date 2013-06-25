@@ -22,6 +22,7 @@ import io.airlift.units.Duration;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Nullable;
 
@@ -41,6 +42,7 @@ import static java.lang.Math.max;
 
 public final class AsyncClientWorker extends AbstractClientWorker
 {
+    private static final AtomicInteger clientCounter = new AtomicInteger(0);
     private static final Logger logger = LoggerFactory.getLogger(AsyncClientWorker.class);
     private static final int MAX_FRAME_SIZE = 0x7FFFFFFF;
     private final ThriftClient<AsyncLoadTest> client;
@@ -50,7 +52,6 @@ public final class AsyncClientWorker extends AbstractClientWorker
     private final long pendingOperationsLowWaterMark;
     private final long pendingOperationsHighWaterMark;
     private final Executor simpleExecutor;
-    private NiftyClientChannel channel;
     private NiftyClientConnector<? extends NiftyClientChannel> connector;
     private ClientWrapper clientWrapper;
 
@@ -103,7 +104,7 @@ public final class AsyncClientWorker extends AbstractClientWorker
                 @Override
                 public ClientWrapper apply(@Nullable AsyncLoadTest client)
                 {
-                    return new ClientWrapper(client, config.operationsPerConnection);
+                    return new ClientWrapper(clientManager, client, config.operationsPerConnection);
                 }
             });
 
@@ -115,7 +116,7 @@ public final class AsyncClientWorker extends AbstractClientWorker
                     logger.trace("Worker connected");
 
                     clientWrapper = result;
-                    channel = clientManager.getNiftyChannel(clientWrapper.getClient());
+                    NiftyClientChannel channel = clientManager.getNiftyChannel(clientWrapper.getClient());
 
                     // Thrift clients are not thread-safe, and for maximum efficiency, new requests are made
                     // on the channel thread, as the pipeline starts to clear out. So we either need to
@@ -231,15 +232,20 @@ public final class AsyncClientWorker extends AbstractClientWorker
     }
 
     protected void fillRequestPipeline(final ClientWrapper clientWrapper) {
+        // We've already finished sending requests on this client
+        if (clientWrapper.shouldStopSending()) {
+            return;
+        }
+
         try {
             while (!shutdownRequested) {
-                if (channel.hasError()) {
-                    throw channel.getError();
+                if (clientWrapper.hasError()) {
+                    throw clientWrapper.getError();
                 }
 
                 long pendingCount = sendRequest(clientWrapper);
 
-                clientWrapper.recordRequestReceived();
+                clientWrapper.recordRequestSent();
                 if (clientWrapper.shouldStopSending()) {
                     reconnect();
                     break;
@@ -262,12 +268,16 @@ public final class AsyncClientWorker extends AbstractClientWorker
         private final AtomicLong requestsSent = new AtomicLong(0);
         private final AtomicLong responsesReceived = new AtomicLong(0);
         private final long requestLimit;
+        private final int clientId;
+        private final ThriftClientManager clientManager;
         private AsyncLoadTest client;
 
-        public ClientWrapper(AsyncLoadTest client, long requestLimit)
+        public ClientWrapper(ThriftClientManager clientManager, AsyncLoadTest client, long requestLimit)
         {
+            this.clientManager = clientManager;
             this.client = client;
             this.requestLimit = requestLimit;
+            this.clientId = clientCounter.getAndIncrement();
         }
 
         public AsyncLoadTest getClient()
@@ -275,12 +285,27 @@ public final class AsyncClientWorker extends AbstractClientWorker
             return client;
         }
 
+        public NiftyClientChannel getChannel()
+        {
+            return clientManager.getNiftyChannel(getClient());
+        }
+
+        public TException getError()
+        {
+            return getChannel().getError();
+        }
+
+        public boolean hasError()
+        {
+            return getError() != null;
+        }
+
         public void close()
         {
             getClient().close();
         }
 
-        public long recordRequestReceived()
+        public long recordRequestSent()
         {
             return requestsSent.incrementAndGet();
         }
@@ -298,6 +323,11 @@ public final class AsyncClientWorker extends AbstractClientWorker
         public boolean isFinishedReceivingResponses()
         {
             return responsesReceived.get() >= requestLimit;
+        }
+
+        public int getClientId()
+        {
+            return clientId;
         }
     }
 
@@ -322,7 +352,7 @@ public final class AsyncClientWorker extends AbstractClientWorker
             requestsProcessed.incrementAndGet();
 
             if (requestsPending.decrementAndGet() < pendingOperationsLowWaterMark) {
-                fillRequestPipeline(clientWrapper);
+                fillCurrentClientPipeline();
             }
         }
 
@@ -349,8 +379,17 @@ public final class AsyncClientWorker extends AbstractClientWorker
             requestsFailed.incrementAndGet();
 
             if (requestsPending.decrementAndGet() < pendingOperationsLowWaterMark) {
-                fillRequestPipeline(clientWrapper);
+                fillCurrentClientPipeline();
             }
+        }
+
+        private void fillCurrentClientPipeline()
+        {
+            // Fill the pipeline using the most recently connected client controlled by this
+            // worker (which is not necessarily the same client as the one that has just received
+            // a success or failure callback)
+            ClientWrapper currentClientWrapper = AsyncClientWorker.this.clientWrapper;
+            fillRequestPipeline(currentClientWrapper);
         }
     }
 }
