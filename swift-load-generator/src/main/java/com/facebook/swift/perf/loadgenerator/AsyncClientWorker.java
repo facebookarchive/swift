@@ -16,6 +16,7 @@
 package com.facebook.swift.perf.loadgenerator;
 
 import com.facebook.nifty.client.NiftyClientConnector;
+import com.facebook.swift.service.ThriftClient;
 import com.google.common.base.Function;
 import io.airlift.units.Duration;
 
@@ -42,6 +43,8 @@ public final class AsyncClientWorker extends AbstractClientWorker
 {
     private static final Logger logger = LoggerFactory.getLogger(AsyncClientWorker.class);
     private static final int MAX_FRAME_SIZE = 0x7FFFFFFF;
+    private final ThriftClient<AsyncLoadTest> client;
+    private final ThriftClientManager clientManager;
 
     private volatile boolean shutdownRequested = false;
     private final long pendingOperationsLowWaterMark;
@@ -61,11 +64,14 @@ public final class AsyncClientWorker extends AbstractClientWorker
     public AsyncClientWorker(
             LoadGeneratorCommandLineConfig config,
             ThriftClientManager clientManager,
+            ThriftClient<AsyncLoadTest> client,
             NiftyClientConnector<? extends NiftyClientChannel> connector)
     {
-        super(clientManager, config);
+        super(config);
 
         this.connector = connector;
+        this.clientManager = clientManager;
+        this.client = client;
 
         // Keep the pipe full with between target and target * 2 operations
         pendingOperationsLowWaterMark = max(config.targetAsyncOperationsPending * 9 / 10, 1);
@@ -89,14 +95,7 @@ public final class AsyncClientWorker extends AbstractClientWorker
         try {
             ListenableFuture<AsyncLoadTest> clientFuture;
 
-            clientFuture = clientManager.createClient(connector,
-                                                      AsyncLoadTest.class,
-                                                      new Duration(config.connectTimeoutMilliseconds, TimeUnit.SECONDS),
-                                                      new Duration(config.sendTimeoutMilliseconds, TimeUnit.MILLISECONDS),
-                                                      new Duration(config.receiveTimeoutMilliseconds, TimeUnit.MILLISECONDS),
-                                                      MAX_FRAME_SIZE,
-                                                      "AsyncClientWorker",
-                                                      null);
+            clientFuture = client.open(connector);
 
             ListenableFuture<ClientWrapper> wrapperFuture = Futures.transform(clientFuture, new Function<AsyncLoadTest, ClientWrapper>()
             {
