@@ -24,7 +24,7 @@ import java.util.concurrent.CountDownLatch;
 /**
  * Helper class simulating synchronous operations on asynchronous {@link NiftyClientChannel}
  */
-class SyncClientHelpers
+public class SyncClientHelpers
 {
     /**
      * Sends a single message synchronously, and blocks until the responses is received.
