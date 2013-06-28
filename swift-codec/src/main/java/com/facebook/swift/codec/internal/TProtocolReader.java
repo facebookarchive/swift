@@ -23,9 +23,11 @@ import org.apache.thrift.protocol.TMap;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolUtil;
 import org.apache.thrift.protocol.TSet;
+import org.apache.thrift.protocol.TStruct;
 import org.apache.thrift.protocol.TType;
 
 import javax.annotation.concurrent.NotThreadSafe;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,11 +55,12 @@ public class TProtocolReader
         return protocol;
     }
 
-    public void readStructBegin()
+    public TStruct readStructBegin()
             throws TException
     {
-        protocol.readStructBegin();
+        TStruct struct = protocol.readStructBegin();
         currentField = null;
+        return struct;
     }
 
     public void readStructEnd()
