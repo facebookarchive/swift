@@ -98,6 +98,12 @@ public class TProtocolReader
         return currentField.type;
     }
 
+    public String getFieldName()
+    {
+        checkState(currentField != null, "No current field");
+        return currentField.name;
+    }
+
     public void skipFieldData()
             throws TException
     {
