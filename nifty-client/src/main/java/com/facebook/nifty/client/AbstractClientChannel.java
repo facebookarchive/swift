@@ -175,7 +175,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
                             cancelRequestTimeouts(request);
                             listener.onRequestSent();
                             if (oneway) {
-                                retireRequest(sequenceId);
+                                retireRequest(request);
                             } else {
                                 queueReceiveTimeout(request);
                             }
@@ -227,11 +227,9 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
         return request;
     }
 
-    private Request retireRequest(int sequenceId)
+    private void retireRequest(Request request)
     {
-        Request request = requestMap.remove(sequenceId);
         cancelRequestTimeouts(request);
-        return request;
     }
 
     private void cancelRequestTimeouts(Request request)
@@ -256,10 +254,11 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
 
     private void onResponseReceived(int sequenceId, ChannelBuffer response)
     {
-        Request request = retireRequest(sequenceId);
+        Request request = requestMap.remove(sequenceId);
         if (request == null) {
             onError(new TTransportException("Bad sequence id in response: " + sequenceId));
         } else {
+            retireRequest(request);
             request.getListener().onResponseReceived(response);
         }
     }
