@@ -11,7 +11,7 @@
 
   <groupId>com.facebook.swift</groupId>
   <artifactId>swift-root</artifactId>
-  <version>0.7.0</version>
+  <version>0.7.1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>${project.artifactId}</name>
   <description>Annotation based Thrift implementation</description>
