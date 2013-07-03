@@ -16,15 +16,13 @@
 package com.facebook.swift.service.guice;
 
 import com.facebook.nifty.client.NiftyClient;
+import com.facebook.swift.service.ThriftClientEventHandler;
 import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.ThriftClientManager.ThriftClientMetadata;
 import com.facebook.swift.service.ThriftMethodHandler;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.inject.Binder;
-import com.google.inject.Module;
-import com.google.inject.Provides;
-import com.google.inject.Scopes;
+import com.google.inject.*;
 import org.weakref.jmx.guice.ExportBinder;
 import org.weakref.jmx.guice.MapObjectNameFunction;
 
@@ -34,6 +32,7 @@ import javax.management.ObjectName;
 import java.util.Map;
 import java.util.Set;
 
+import static com.facebook.swift.service.guice.ClientEventHandlersBinder.clientEventHandlersBinder;
 import static com.google.inject.multibindings.Multibinder.newSetBinder;
 import static io.airlift.configuration.ConfigurationModule.bindConfig;
 import static java.lang.String.format;
@@ -47,6 +46,7 @@ public class ThriftClientModule implements Module
 
         // Bind single shared ThriftClientManager
         binder.bind(ThriftClientManager.class).in(Scopes.SINGLETON);
+        clientEventHandlersBinder(binder);
 
         // We bind the ThriftClientProviderProviders in a Set so below we can export the thrift methods to JMX
         newSetBinder(binder, ThriftClientBinder.ThriftClientProvider.class).permitDuplicates();

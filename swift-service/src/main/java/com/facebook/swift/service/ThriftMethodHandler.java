@@ -59,6 +59,7 @@ import static org.apache.thrift.protocol.TMessageType.REPLY;
 public class ThriftMethodHandler
 {
     private final String name;
+    private final String qualifiedName;
     private final List<ParameterHandler> parameterCodecs;
     private final ThriftCodec<Object> successCodec;
     private final Map<Short, ThriftCodec<Object>> exceptionCodecs;
@@ -71,6 +72,7 @@ public class ThriftMethodHandler
     public ThriftMethodHandler(ThriftMethodMetadata methodMetadata, ThriftCodecManager codecManager)
     {
         name = methodMetadata.getName();
+        qualifiedName = methodMetadata.getQualifiedName();
         invokeAsynchronously = methodMetadata.isAsync();
 
         oneway = methodMetadata.getOneway();
@@ -106,6 +108,11 @@ public class ThriftMethodHandler
         return name;
     }
 
+    public String getQualifiedName()
+    {
+        return qualifiedName;
+    }
+
     @Managed
     @Flatten
     public ThriftMethodStats getStats()
@@ -116,6 +123,7 @@ public class ThriftMethodHandler
     public Object invoke(final TDuplexProtocolFactory protocolFactory,
                          final NiftyClientChannel channel,
                          final int sequenceId,
+                         final ClientContextChain contextChain,
                          final Object... args)
             throws Exception
     {
@@ -126,18 +134,19 @@ public class ThriftMethodHandler
         if (invokeAsynchronously)
         {
             // This method declares a Future return value: run it asynchronously
-            return asynchronousInvoke(protocolFactory, channel, sequenceId, args);
+            return asynchronousInvoke(protocolFactory, channel, sequenceId, contextChain, args);
         }
         else
         {
             // This method declares an immediate return value: run it synchronously
-            return synchronousInvoke(protocolFactory, channel, sequenceId, args);
+            return synchronousInvoke(protocolFactory, channel, sequenceId, contextChain, args);
         }
     }
 
     private Object synchronousInvoke(TDuplexProtocolFactory protocolFactory,
                                      NiftyClientChannel channel,
                                      int sequenceId,
+                                     ClientContextChain contextChain,
                                      Object[] args)
             throws Exception
     {
@@ -150,21 +159,41 @@ public class ThriftMethodHandler
             TProtocol outputProtocol = protocolFactory.getOutputProtocolFactory().getProtocol(outputTransport);
 
             // write request
+            contextChain.preWrite(getQualifiedName(), args);
             writeArguments(outputProtocol, sequenceId, args);
+            contextChain.postWrite(getQualifiedName(), args);
 
             if (!this.oneway) {
                 ChannelBuffer responseBuffer;
 
-                responseBuffer = SyncClientHelpers.sendSynchronousTwoWayMessage(channel, requestBuffer);
+                try {
+                    responseBuffer = SyncClientHelpers.sendSynchronousTwoWayMessage(channel, requestBuffer);
+                } catch (Exception e) {
+                    contextChain.preReadException(getQualifiedName(), e);
+                    throw e;
+                }
 
                 TTransport inputTransport = new TChannelBufferInputTransport(responseBuffer);
                 TProtocol inputProtocol = protocolFactory.getInputProtocolFactory().getProtocol(inputTransport);
                 waitForResponse(inputProtocol, sequenceId);
 
                 // read results
-                results = readResponse(inputProtocol);
+                contextChain.preRead(getQualifiedName());
+                try {
+                    results = readResponse(inputProtocol);
+                    contextChain.postRead(getQualifiedName(), results);
+                } catch (Exception e) {
+                    contextChain.postReadException(getQualifiedName(), e);
+                    throw e;
+                }
             } else {
-                SyncClientHelpers.sendSynchronousOneWayMessage(channel, requestBuffer);
+                try {
+                    SyncClientHelpers.sendSynchronousOneWayMessage(channel, requestBuffer);
+                    contextChain.preRead(getQualifiedName());
+                } catch (Exception e) {
+                    contextChain.preReadException(getQualifiedName(), e);
+                    throw e;
+                }
             }
 
             stats.addSuccessTime(nanosSince(start));
@@ -179,6 +208,7 @@ public class ThriftMethodHandler
     public ListenableFuture<Object> asynchronousInvoke(final TDuplexProtocolFactory protocolFactory,
                                                        final NiftyClientChannel channel,
                                                        final int sequenceId,
+                                                       final ClientContextChain contextChain,
                                                        final Object[] args)
         throws Exception
     {
@@ -189,12 +219,18 @@ public class ThriftMethodHandler
 
             TChannelBufferOutputTransport outTransport = new TChannelBufferOutputTransport();
             TProtocol outProtocol = protocolFactory.getOutputProtocolFactory().getProtocol(outTransport);
+            contextChain.preWrite(getQualifiedName(), args);
             writeArguments(outProtocol, sequenceId, args);
+            contextChain.postWrite(getQualifiedName(), args);
 
             // send message and setup listener to handle the response
             channel.sendAsynchronousRequest(outTransport.getOutputBuffer(), false, new NiftyClientChannel.Listener() {
+                boolean sentOk = false;
+
                 @Override
-                public void onRequestSent() {}
+                public void onRequestSent() {
+                    sentOk = true;
+                }
 
                 @Override
                 public void onResponseReceived(ChannelBuffer message) {
@@ -202,7 +238,9 @@ public class ThriftMethodHandler
                         TTransport inputTransport = new TChannelBufferInputTransport(message);
                         TProtocol inputProtocol = protocolFactory.getInputProtocolFactory().getProtocol(inputTransport);
                         waitForResponse(inputProtocol, sequenceId);
+                        contextChain.preRead(getQualifiedName());
                         Object results = readResponse(inputProtocol);
+                        contextChain.postRead(getQualifiedName(), results);
                         stats.addSuccessTime(nanosSince(start));
                         future.set(results);
                     } catch (Exception e) {
@@ -215,8 +253,13 @@ public class ThriftMethodHandler
                     onException(e);
                 }
 
-                private void onException(Throwable cause) {
-                    future.setException(cause);
+                private void onException(Exception e) {
+                    if (sentOk) {
+                        contextChain.postReadException(getQualifiedName(), e);
+                    } else {
+                        contextChain.preReadException(getQualifiedName(), e);
+                    }
+                    future.setException(e);
                 }
             });
 
