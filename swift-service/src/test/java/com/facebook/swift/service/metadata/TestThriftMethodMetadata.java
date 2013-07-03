@@ -76,7 +76,7 @@ public class TestThriftMethodMetadata
 
     private void assertExceptions(String methodName, Class<? extends Exception>... expectedExceptions) throws Exception
     {
-        ThriftMethodMetadata metadata = new ThriftMethodMetadata(DummyService.class.getMethod(methodName), new ThriftCatalog());
+        ThriftMethodMetadata metadata = new ThriftMethodMetadata("DummyService", DummyService.class.getMethod(methodName), new ThriftCatalog());
         Map<Short, Type> actualIdMap = new TreeMap<>();
         Map<Short, Type> expectedIdMap = new TreeMap<>();
 

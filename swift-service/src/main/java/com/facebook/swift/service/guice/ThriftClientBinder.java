@@ -17,9 +17,11 @@ package com.facebook.swift.service.guice;
 
 import com.facebook.swift.service.ThriftClient;
 import com.facebook.swift.service.ThriftClientConfig;
+import com.facebook.swift.service.ThriftClientEventHandler;
 import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.ThriftClientManager.ThriftClientMetadata;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Binder;
@@ -36,6 +38,7 @@ import org.weakref.jmx.guice.ExportBinder;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.Set;
 import java.util.UUID;
 
 import static com.facebook.swift.service.ThriftClientManager.DEFAULT_NAME;
@@ -57,7 +60,7 @@ public class ThriftClientBinder
         this.binder = binder;
     }
 
-    public <T> void bindThriftClient(Class<T> clientInterface)
+    public <T> ClientEventHandlersBinder bindThriftClient(Class<T> clientInterface)
     {
         Preconditions.checkNotNull(clientInterface, "clientInterface is null");
         String typeName = getServiceName(clientInterface);
@@ -72,8 +75,12 @@ public class ThriftClientBinder
 
         // Bind ThriftClient to a provider which knows how to find the ThriftClientConfig using
         // the random @Named annotation
+        Multibinder<ThriftClientEventHandler> eventHandlersBinder = Multibinder.newSetBinder(binder,
+                ThriftClientEventHandler.class, thriftClientConfigKey);
+        ThriftClientProvider<T> provider = new ThriftClientProvider<>(clientInterface, DEFAULT_NAME,
+                Key.get(ThriftClientConfig.class, thriftClientConfigKey),
+                Key.get(new TypeLiteral<Set<ThriftClientEventHandler>>() {}, thriftClientConfigKey));
         TypeLiteral<ThriftClient<T>> typeLiteral = toThriftClientTypeLiteral(clientInterface);
-        ThriftClientProvider<T> provider = new ThriftClientProvider<>(clientInterface, DEFAULT_NAME, Key.get(ThriftClientConfig.class, thriftClientConfigKey));
         binder.bind(typeLiteral).toProvider(provider).in(Scopes.SINGLETON);
 
         // Export client to jmx
@@ -85,9 +92,11 @@ public class ThriftClientBinder
 
         // Add the provider itself to a SetBinding so later we can export the thrift methods to JMX
         Multibinder.newSetBinder(binder, ThriftClientProvider.class).addBinding().toInstance(provider);
+
+        return new ClientEventHandlersBinder(eventHandlersBinder);
     }
 
-    public <T> void bindThriftClient(Class<T> clientInterface, Class<? extends Annotation> annotationType)
+    public <T> ClientEventHandlersBinder bindThriftClient(Class<T> clientInterface, Class<? extends Annotation> annotationType)
     {
         Preconditions.checkNotNull(clientInterface, "clientInterface is null");
         String typeName = getServiceName(clientInterface);
@@ -101,10 +110,13 @@ public class ThriftClientBinder
 
         // Bind ThriftClient to a provider which knows how to find the ThriftClientConfig using
         // the random @Named annotation
-        TypeLiteral<ThriftClient<T>> typeLiteral = toThriftClientTypeLiteral(clientInterface);
+        Multibinder<ThriftClientEventHandler> eventHandlersBinder = Multibinder.newSetBinder(binder,
+                ThriftClientEventHandler.class, thriftClientConfigKey);
         ThriftClientProvider<T> provider = new ThriftClientProvider<>(clientInterface,
                 name,
-                Key.get(ThriftClientConfig.class, thriftClientConfigKey));
+                Key.get(ThriftClientConfig.class, thriftClientConfigKey),
+                Key.get(new TypeLiteral<Set<ThriftClientEventHandler>>() {}, thriftClientConfigKey));
+        TypeLiteral<ThriftClient<T>> typeLiteral = toThriftClientTypeLiteral(clientInterface);
         binder.bind(Key.get(typeLiteral, annotationType)).toProvider(provider).in(Scopes.SINGLETON);
 
         // Export client to jmx
@@ -116,6 +128,8 @@ public class ThriftClientBinder
 
         // Add the provider itself to a SetBinding so later we can export the thrift methods to JMX
         Multibinder.newSetBinder(binder, ThriftClientProvider.class).addBinding().toInstance(provider);
+
+        return new ClientEventHandlersBinder(eventHandlersBinder);
     }
 
     private static String getServiceName(Class<?> clientInterface)
@@ -145,14 +159,18 @@ public class ThriftClientBinder
         private final Class<T> clientType;
         private final String clientName;
         private final Key<ThriftClientConfig> configKey;
+        private final Key<Set<ThriftClientEventHandler>> eventHandlersKey;
         private ThriftClientManager clientManager;
         private Injector injector;
 
-        public ThriftClientProvider(Class<T> clientType, String clientName, Key<ThriftClientConfig> configKey)
+        public ThriftClientProvider(Class<T> clientType, String clientName, Key<ThriftClientConfig> configKey,
+                                    Key<Set<ThriftClientEventHandler>> eventHandlersKey)
         {
             Preconditions.checkNotNull(clientType, "clientInterface is null");
             Preconditions.checkNotNull(clientName, "clientName is null");
             Preconditions.checkNotNull(configKey, "configKey is null");
+            Preconditions.checkNotNull(eventHandlersKey, "eventHandlersKey is null");
+            this.eventHandlersKey = eventHandlersKey;
             this.clientType = clientType;
             this.clientName = clientName;
             this.configKey = configKey;
@@ -176,7 +194,8 @@ public class ThriftClientBinder
             Preconditions.checkState(clientManager != null, "clientManager has not been set");
             Preconditions.checkState(injector != null, "injector has not been set");
             ThriftClientConfig clientConfig = injector.getInstance(configKey);
-            return new ThriftClient<>(clientManager, clientType, clientConfig, clientName);
+            Set<ThriftClientEventHandler> handlersSet = injector.getInstance(eventHandlersKey);
+            return new ThriftClient<>(clientManager, clientType, clientConfig, clientName, ImmutableList.copyOf(handlersSet));
         }
 
         public ThriftClientMetadata getClientMetadata()

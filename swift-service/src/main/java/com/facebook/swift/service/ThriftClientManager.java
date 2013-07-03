@@ -28,7 +28,9 @@ import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -46,7 +48,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nullable;
@@ -76,6 +80,7 @@ public class ThriftClientManager implements Closeable
                     return new ThriftClientMetadata(typeAndName.getType(), typeAndName.getName(), codecManager);
                 }
             });
+    private final Set<ThriftClientEventHandler> globalEventHandlers;
 
     public ThriftClientManager()
     {
@@ -84,14 +89,15 @@ public class ThriftClientManager implements Closeable
 
     public ThriftClientManager(ThriftCodecManager codecManager)
     {
-        this(codecManager, new NiftyClient());
+        this(codecManager, new NiftyClient(), ImmutableSet.<ThriftClientEventHandler>of());
     }
 
     @Inject
-    public ThriftClientManager(ThriftCodecManager codecManager, NiftyClient niftyClient)
+    public ThriftClientManager(ThriftCodecManager codecManager, NiftyClient niftyClient, Set<ThriftClientEventHandler> globalEventHandlers)
     {
         this.codecManager = codecManager;
         this.niftyClient = niftyClient;
+        this.globalEventHandlers = globalEventHandlers;
     }
 
     public <T, C extends NiftyClientChannel> ListenableFuture<T> createClient(
@@ -106,6 +112,7 @@ public class ThriftClientManager implements Closeable
                 DEFAULT_WRITE_TIMEOUT,
                 DEFAULT_MAX_FRAME_SIZE,
                 DEFAULT_NAME,
+                ImmutableList.<ThriftClientEventHandler>of(),
                 null);
     }
 
@@ -117,6 +124,7 @@ public class ThriftClientManager implements Closeable
             final Duration writeTimeout,
             final int maxFrameSize,
             final String clientName,
+            final List<? extends ThriftClientEventHandler> eventHandlers,
             HostAndPort socksProxy)
     {
         InetSocketAddress socksProxyAddress = this.toSocksProxyAddress(socksProxy);
@@ -141,7 +149,7 @@ public class ThriftClientManager implements Closeable
                     }
 
                     String name = Strings.isNullOrEmpty(clientName) ? connector.toString() : clientName;
-                    return createClient(channel, type, name);
+                    return createClient(channel, type, name, eventHandlers);
                 }
                 catch (Throwable t) {
                     // The channel was created successfully, but client creation failed so the
@@ -157,16 +165,23 @@ public class ThriftClientManager implements Closeable
 
     public <T> T createClient(NiftyClientChannel channel, Class<T> type)
     {
-        return createClient(channel, type, DEFAULT_NAME);
+        return createClient(channel, type, DEFAULT_NAME, ImmutableList.<ThriftClientEventHandler>of());
     }
 
-    public <T> T createClient(NiftyClientChannel channel, Class<T> type, String name)
+    public <T> T createClient(NiftyClientChannel channel, Class<T> type, List<? extends ThriftClientEventHandler> eventHandlers)
+    {
+        return createClient(channel, type, DEFAULT_NAME, eventHandlers);
+    }
+
+    public <T> T createClient(NiftyClientChannel channel, Class<T> type, String name, List<? extends ThriftClientEventHandler> eventHandlers)
     {
         ThriftClientMetadata clientMetadata = clientMetadataCache.getUnchecked(new TypeAndName(type, name));
 
         String clientDescription = clientMetadata.getName() + " " + channel.toString();
 
-        ThriftInvocationHandler handler = new ThriftInvocationHandler(clientDescription, channel, clientMetadata.getMethodHandlers());
+        ThriftInvocationHandler handler = new ThriftInvocationHandler(clientDescription, channel,
+                clientMetadata.getMethodHandlers(),
+                ImmutableList.<ThriftClientEventHandler>builder().addAll(globalEventHandlers).addAll(eventHandlers).build());
 
         return type.cast(Proxy.newProxyInstance(
                 type.getClassLoader(),
@@ -296,16 +311,19 @@ public class ThriftClientManager implements Closeable
         private final Map<Method, ThriftMethodHandler> methods;
         private final AtomicInteger sequenceId = new AtomicInteger(1);
         private final TDuplexProtocolFactory protocolFactory;
+        private final List<? extends ThriftClientEventHandler> eventHandlers;
 
         private ThriftInvocationHandler(
                 String clientDescription,
                 NiftyClientChannel channel,
-                Map<Method, ThriftMethodHandler> methods)
+                Map<Method, ThriftMethodHandler> methods,
+                List<? extends ThriftClientEventHandler> eventHandlers)
         {
             this.clientDescription = clientDescription;
             this.channel = channel;
             this.methods = methods;
             this.protocolFactory = channel.getProtocolFactory();
+            this.eventHandlers = eventHandlers;
         }
 
         public NiftyClientChannel getChannel()
@@ -345,7 +363,12 @@ public class ThriftClientManager implements Closeable
                 if (methodHandler == null) {
                     throw new TApplicationException(UNKNOWN_METHOD, "Unknown method : '" + method + "'");
                 }
-                return methodHandler.invoke(protocolFactory, channel, sequenceId.getAndIncrement(), args);
+                ClientContextChain context = new ClientContextChain(eventHandlers, methodHandler.getQualifiedName());
+                try {
+                    return methodHandler.invoke(protocolFactory, channel, sequenceId.getAndIncrement(), context, args);
+                } finally {
+                    context.done(methodHandler.getQualifiedName());
+                }
             }
             catch (TException e) {
                 Class<? extends TException> thrownType = e.getClass();

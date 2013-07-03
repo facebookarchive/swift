@@ -59,6 +59,7 @@ import static org.apache.thrift.protocol.TMessageType.REPLY;
 public class ThriftMethodHandler
 {
     private final String name;
+    private final String qualifiedName;
     private final List<ParameterHandler> parameterCodecs;
     private final ThriftCodec<Object> successCodec;
     private final Map<Short, ThriftCodec<Object>> exceptionCodecs;
@@ -71,6 +72,7 @@ public class ThriftMethodHandler
     public ThriftMethodHandler(ThriftMethodMetadata methodMetadata, ThriftCodecManager codecManager)
     {
         name = methodMetadata.getName();
+        qualifiedName = methodMetadata.getQualifiedName();
         invokeAsynchronously = methodMetadata.isAsync();
 
         oneway = methodMetadata.getOneway();
@@ -106,6 +108,11 @@ public class ThriftMethodHandler
         return name;
     }
 
+    public String getQualifiedName()
+    {
+        return qualifiedName;
+    }
+
     @Managed
     @Flatten
     public ThriftMethodStats getStats()
@@ -116,6 +123,7 @@ public class ThriftMethodHandler
     public Object invoke(final TDuplexProtocolFactory protocolFactory,
                          final NiftyClientChannel channel,
                          final int sequenceId,
+                         final ClientContextChain contextChain,
                          final Object... args)
             throws Exception
     {
@@ -126,18 +134,19 @@ public class ThriftMethodHandler
         if (invokeAsynchronously)
         {
             // This method declares a Future return value: run it asynchronously
-            return asynchronousInvoke(protocolFactory, channel, sequenceId, args);
+            return asynchronousInvoke(protocolFactory, channel, sequenceId, contextChain, args);
         }
         else
         {
             // This method declares an immediate return value: run it synchronously
-            return synchronousInvoke(protocolFactory, channel, sequenceId, args);
+            return synchronousInvoke(protocolFactory, channel, sequenceId, contextChain, args);
         }
     }
 
     private Object synchronousInvoke(TDuplexProtocolFactory protocolFactory,
                                      NiftyClientChannel channel,
                                      int sequenceId,
+                                     ClientContextChain contextChain,
                                      Object[] args)
             throws Exception
     {
@@ -150,7 +159,9 @@ public class ThriftMethodHandler
             TProtocol outputProtocol = protocolFactory.getOutputProtocolFactory().getProtocol(outputTransport);
 
             // write request
+            contextChain.preWrite(getQualifiedName(), args);
             writeArguments(outputProtocol, sequenceId, args);
+            contextChain.postWrite(getQualifiedName(), args);
 
             if (!this.oneway) {
                 ChannelBuffer responseBuffer;
@@ -162,9 +173,17 @@ public class ThriftMethodHandler
                 waitForResponse(inputProtocol, sequenceId);
 
                 // read results
-                results = readResponse(inputProtocol);
+                contextChain.preRead(getQualifiedName());
+                try {
+                    results = readResponse(inputProtocol);
+                    contextChain.postRead(getQualifiedName(), results);
+                } catch (Exception e) {
+                    contextChain.postReadException(getQualifiedName(), e);
+                    throw e;
+                }
             } else {
                 SyncClientHelpers.sendSynchronousOneWayMessage(channel, requestBuffer);
+                contextChain.preRead(getQualifiedName());
             }
 
             stats.addSuccessTime(nanosSince(start));
@@ -179,6 +198,7 @@ public class ThriftMethodHandler
     public ListenableFuture<Object> asynchronousInvoke(final TDuplexProtocolFactory protocolFactory,
                                                        final NiftyClientChannel channel,
                                                        final int sequenceId,
+                                                       ClientContextChain contextChain,
                                                        final Object[] args)
         throws Exception
     {

@@ -45,13 +45,14 @@ import static com.google.common.base.Preconditions.checkState;
 public class ThriftMethodMetadata
 {
     private final String name;
+    private final String qualifiedName;
     private final ThriftType returnType;
     private final List<ThriftFieldMetadata> parameters;
     private final Method method;
     private final ImmutableMap<Short, ThriftType> exceptions;
     private final boolean oneway;
 
-    public ThriftMethodMetadata(Method method, ThriftCatalog catalog)
+    public ThriftMethodMetadata(String serviceName, Method method, ThriftCatalog catalog)
     {
         Preconditions.checkNotNull(method, "method is null");
         Preconditions.checkNotNull(catalog, "catalog is null");
@@ -69,6 +70,7 @@ public class ThriftMethodMetadata
         else {
             name = thriftMethod.value();
         }
+        this.qualifiedName = serviceName + "." + name;
 
         returnType = catalog.getThriftType(method.getGenericReturnType());
 
@@ -217,5 +219,10 @@ public class ThriftMethodMetadata
     public int hashCode()
     {
         return Objects.hash(name, returnType, parameters, method, exceptions, oneway);
+    }
+
+    public String getQualifiedName()
+    {
+        return qualifiedName;
     }
 }
