@@ -18,7 +18,10 @@ package com.facebook.swift.service;
 import com.facebook.nifty.client.NiftyClient;
 import com.facebook.nifty.client.NiftyClientChannel;
 import com.facebook.nifty.client.NiftyClientConnector;
-import com.facebook.nifty.duplex.TDuplexProtocolFactory;
+import com.facebook.nifty.core.TChannelBufferInputTransport;
+import com.facebook.nifty.core.TChannelBufferOutputTransport;
+import com.facebook.nifty.duplex.TProtocolPair;
+import com.facebook.nifty.duplex.TTransportPair;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.metadata.ThriftMethodMetadata;
 import com.facebook.swift.service.metadata.ThriftServiceMetadata;
@@ -38,7 +41,10 @@ import com.google.inject.Inject;
 import io.airlift.units.Duration;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolException;
+import org.apache.thrift.transport.TMemoryBuffer;
+import org.apache.thrift.transport.TMemoryInputTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.channel.Channel;
 
@@ -57,6 +63,7 @@ import javax.annotation.Nullable;
 import javax.annotation.PreDestroy;
 import javax.annotation.concurrent.Immutable;
 
+import static com.facebook.nifty.duplex.TTransportPair.fromSeparateTransports;
 import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_CONNECT_TIMEOUT;
 import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_READ_TIMEOUT;
 import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_WRITE_TIMEOUT;
@@ -310,8 +317,11 @@ public class ThriftClientManager implements Closeable
 
         private final Map<Method, ThriftMethodHandler> methods;
         private final AtomicInteger sequenceId = new AtomicInteger(1);
-        private final TDuplexProtocolFactory protocolFactory;
         private final List<? extends ThriftClientEventHandler> eventHandlers;
+        private final TChannelBufferInputTransport inputTransport;
+        private final TChannelBufferOutputTransport outputTransport;
+        private final TProtocol inputProtocol;
+        private final TProtocol outputProtocol;
 
         private ThriftInvocationHandler(
                 String clientDescription,
@@ -322,8 +332,15 @@ public class ThriftClientManager implements Closeable
             this.clientDescription = clientDescription;
             this.channel = channel;
             this.methods = methods;
-            this.protocolFactory = channel.getProtocolFactory();
             this.eventHandlers = eventHandlers;
+
+            this.inputTransport = new TChannelBufferInputTransport();
+            this.outputTransport = new TChannelBufferOutputTransport();
+
+            TTransportPair transportPair = fromSeparateTransports(this.inputTransport, this.outputTransport);
+            TProtocolPair protocolPair = channel.getProtocolFactory().getProtocolPair(transportPair);
+            this.inputProtocol = protocolPair.getInputProtocol();
+            this.outputProtocol = protocolPair.getOutputProtocol();
         }
 
         public NiftyClientChannel getChannel()
@@ -365,7 +382,14 @@ public class ThriftClientManager implements Closeable
                 }
                 ClientContextChain context = new ClientContextChain(eventHandlers, methodHandler.getQualifiedName());
                 try {
-                    return methodHandler.invoke(protocolFactory, channel, sequenceId.getAndIncrement(), context, args);
+                    return methodHandler.invoke(channel,
+                                                inputTransport,
+                                                outputTransport,
+                                                inputProtocol,
+                                                outputProtocol,
+                                                sequenceId.getAndIncrement(),
+                                                context,
+                                                args);
                 } finally {
                     context.done(methodHandler.getQualifiedName());
                 }
