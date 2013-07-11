@@ -46,43 +46,8 @@ public class ThriftClientModule implements Module
 
         // Bind single shared ThriftClientManager
         binder.bind(ThriftClientManager.class).in(Scopes.SINGLETON);
+
+        // Create a multibinder for global event handlers
         clientEventHandlersBinder(binder);
-
-        // We bind the ThriftClientProviderProviders in a Set so below we can export the thrift methods to JMX
-        newSetBinder(binder, ThriftClientBinder.ThriftClientProvider.class).permitDuplicates();
-        ExportBinder.newExporter(binder)
-                .exportMap(ObjectName.class, ThriftMethodHandler.class)
-                .withGeneratedName(new MapObjectNameFunction<ObjectName, ThriftMethodHandler>()
-                {
-                    @Override
-                    public ObjectName name(ObjectName key, ThriftMethodHandler value)
-                    {
-                        return key;
-                    }
-                });
-    }
-
-    @Provides
-    @Singleton
-    public Map<ObjectName, ThriftMethodHandler> getMethodProcessors(Set<ThriftClientBinder.ThriftClientProvider> clientProviders)
-    {
-        try {
-            // extract method handles into a map so they can be exported individually into jmx
-            ImmutableMap.Builder<ObjectName, ThriftMethodHandler> builder = ImmutableMap.builder();
-            for (ThriftClientBinder.ThriftClientProvider<?> clientProvider : clientProviders) {
-                ThriftClientMetadata clientMetadata = clientProvider.getClientMetadata();
-                for (ThriftMethodHandler methodHandler : clientMetadata.getMethodHandlers().values()) {
-                    String name = format("com.facebook.swift.client:type=%s,clientName=%s,name=%s",
-                            clientMetadata.getClientType(),
-                            clientMetadata.getClientName(),
-                            methodHandler.getName());
-                    builder.put(ObjectName.getInstance(name), methodHandler);
-                }
-            }
-            return builder.build();
-        }
-        catch (MalformedObjectNameException e) {
-            throw Throwables.propagate(e);
-        }
     }
 }
