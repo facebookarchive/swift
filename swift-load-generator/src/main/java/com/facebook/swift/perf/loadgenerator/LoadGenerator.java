@@ -24,6 +24,7 @@ import com.facebook.swift.codec.guice.ThriftCodecModule;
 import com.facebook.swift.service.ThriftClientEventHandler;
 import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.guice.ThriftClientModule;
+import com.facebook.swift.service.guice.ThriftClientStatsModule;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.google.inject.*;
@@ -65,6 +66,7 @@ public class LoadGenerator
                     new LifeCycleModule(),
                     new ThriftCodecModule(),
                     new ThriftClientModule(),
+                    new ThriftClientStatsModule(),
                     new JmxModule(),
                     new MBeanModule(),
                     new Module()
