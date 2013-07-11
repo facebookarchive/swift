@@ -25,37 +25,114 @@ import javax.annotation.concurrent.NotThreadSafe;
 /**
  * Implementation of {@link TTransport} that buffers the output of a single message,
  * so that an async client can grab the buffer and send it
+ *
+ * Allows for reusing the same transport to write multiple messages via
+ * {@link com.facebook.nifty.core.TChannelBufferOutputTransport#resetOutputBuffer()}
  */
 @NotThreadSafe
-public class TChannelBufferOutputTransport extends TTransport {
-    private final ChannelBuffer outputBuffer = ChannelBuffers.dynamicBuffer(1024);
+public class TChannelBufferOutputTransport extends TTransport
+{
+    private static final int DEFAULT_MINIMUM_SIZE = 1024;
+
+    // This threshold sets how many times the buffer must be under-utilized before we'll
+    // reclaim some memory by reallocating it with half the current size
+    private static final int UNDER_USE_THRESHOLD = 5;
+
+    private ChannelBuffer outputBuffer;
+    private final int minimumSize;
+    private int bufferUnderUsedCounter;
+
+    public TChannelBufferOutputTransport()
+    {
+        this.minimumSize = DEFAULT_MINIMUM_SIZE;
+        outputBuffer = ChannelBuffers.dynamicBuffer(this.minimumSize);
+    }
+
+    public TChannelBufferOutputTransport(int minimumSize)
+    {
+        this.minimumSize = Math.min(DEFAULT_MINIMUM_SIZE, minimumSize);
+        outputBuffer = ChannelBuffers.dynamicBuffer(this.minimumSize);
+    }
 
     @Override
-    public boolean isOpen() {
+    public boolean isOpen()
+    {
         return true;
     }
 
     @Override
-    public void open() throws TTransportException {
+    public void open() throws TTransportException
+    {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void close() {
+    public void close()
+    {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public int read(byte[] buf, int off, int len) throws TTransportException {
+    public int read(byte[] buf, int off, int len) throws TTransportException
+    {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void write(byte[] buf, int off, int len) throws TTransportException {
+    public void write(byte[] buf, int off, int len) throws TTransportException
+    {
         outputBuffer.writeBytes(buf, off, len);
     }
 
-    public ChannelBuffer getOutputBuffer() {
+    /**
+     * Resets the state of this transport so it can be used to write more messages
+     */
+    public void resetOutputBuffer()
+    {
+        int shrunkenSize = shrinkBufferSize();
+
+        if (outputBuffer.writerIndex() < shrunkenSize) {
+            // Less than the shrunken size of the buffer was actually used, so increment
+            // the under-use counter
+            ++bufferUnderUsedCounter;
+        }
+        else {
+            // More than the shrunken size of the buffer was actually used, reset
+            // the counter so we won't shrink the buffer soon
+            bufferUnderUsedCounter = 0;
+        }
+
+        if (shouldShrinkBuffer()) {
+            outputBuffer = ChannelBuffers.dynamicBuffer(shrunkenSize);
+            bufferUnderUsedCounter = 0;
+        } else {
+            outputBuffer.clear();
+        }
+    }
+
+    public ChannelBuffer getOutputBuffer()
+    {
         return outputBuffer;
+    }
+
+    /**
+     * Checks whether we should shrink the buffer, which should happen if we've under-used it
+     * UNDER_USE_THRESHOLD times in a row
+     */
+    @SuppressWarnings("PMD.UselessParentheses")
+    private boolean shouldShrinkBuffer()
+    {
+        // We want to shrink the buffer if it has been under-utilized UNDER_USE_THRESHOLD
+        // times in a row, and the size after shrinking would not be smaller than the minimum size
+        return bufferUnderUsedCounter > UNDER_USE_THRESHOLD &&
+               shrinkBufferSize() >= minimumSize;
+    }
+
+    /**
+     * Returns the size the buffer will be if we shrink it
+     */
+    private int shrinkBufferSize()
+    {
+        return outputBuffer.capacity() >> 1;
     }
 }
