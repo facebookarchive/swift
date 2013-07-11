@@ -55,7 +55,7 @@ public class ThriftServiceMetadata
         ImmutableMap.Builder<String, ThriftMethodMetadata> declaredBuilder = ImmutableMap.builder();
         for (Method method : findAnnotatedMethods(serviceClass, ThriftMethod.class)) {
             if (method.isAnnotationPresent(ThriftMethod.class)) {
-                ThriftMethodMetadata methodMetadata = new ThriftMethodMetadata(method, catalog);
+                ThriftMethodMetadata methodMetadata = new ThriftMethodMetadata(name, method, catalog);
                 builder.put(methodMetadata.getName(), methodMetadata);
                 if (method.getDeclaringClass().equals(serviceClass)) {
                     declaredBuilder.put(methodMetadata.getName(), methodMetadata);

@@ -18,11 +18,14 @@ package com.facebook.swift.service;
 import com.facebook.nifty.client.NiftyClientChannel;
 import com.facebook.nifty.client.NiftyClientConnector;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import io.airlift.units.Duration;
 import org.weakref.jmx.Managed;
+
+import java.util.List;
 
 public class ThriftClient<T>
 {
@@ -35,11 +38,12 @@ public class ThriftClient<T>
 
     private final HostAndPort socksProxy;
     private final int maxFrameSize;
+    private final List<? extends ThriftClientEventHandler> eventHandlers;
 
     @Inject
     public ThriftClient(ThriftClientManager clientManager, Class<T> clientType)
     {
-        this(clientManager, clientType, new ThriftClientConfig(), ThriftClientManager.DEFAULT_NAME);
+        this(clientManager, clientType, new ThriftClientConfig(), ThriftClientManager.DEFAULT_NAME, ImmutableList.<ThriftClientEventHandler>of());
     }
 
     public ThriftClient(
@@ -48,13 +52,25 @@ public class ThriftClient<T>
             ThriftClientConfig clientConfig,
             String clientName)
     {
+        this(clientManager, clientType, clientConfig, clientName, ImmutableList.<ThriftClientEventHandler>of());
+    }
+
+    public ThriftClient(
+            ThriftClientManager clientManager,
+            Class<T> clientType,
+            ThriftClientConfig clientConfig,
+            String clientName,
+            List<? extends ThriftClientEventHandler> eventHandlers)
+    {
         Preconditions.checkNotNull(clientManager, "clientManager is null");
         Preconditions.checkNotNull(clientType, "clientInterface is null");
         Preconditions.checkNotNull(clientName, "clientName is null");
+        Preconditions.checkNotNull(eventHandlers, "eventHandlers is null");
 
         this.clientManager = clientManager;
         this.clientType = clientType;
         this.clientName = clientName;
+        this.eventHandlers = eventHandlers;
         connectTimeout = clientConfig.getConnectTimeout();
         readTimeout = clientConfig.getReadTimeout();
         writeTimeout = clientConfig.getWriteTimeout();
@@ -122,6 +138,7 @@ public class ThriftClient<T>
                 writeTimeout,
                 maxFrameSize,
                 clientName,
+                eventHandlers,
                 socksProxy);
     }
 
@@ -132,6 +149,6 @@ public class ThriftClient<T>
      */
     public T open(NiftyClientChannel channel)
     {
-        return clientManager.createClient(channel, clientType, clientName);
+        return clientManager.createClient(channel, clientType, clientName, eventHandlers);
     }
 }
