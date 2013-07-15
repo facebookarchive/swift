@@ -47,6 +47,10 @@ public class NettyServerConfigBuilder extends NettyConfigBuilderBase<NettyServer
     @Inject
     public NettyServerConfigBuilder()
     {
+        // Thrift turns TCP_NODELAY by default, and turning it off can have latency implications
+        // so let's turn it on by default as well. It can still be switched off by explicitly
+        // calling setTcpNodelay(false) after construction.
+        getSocketChannelConfig().setTcpNoDelay(true);
     }
 
     /**
