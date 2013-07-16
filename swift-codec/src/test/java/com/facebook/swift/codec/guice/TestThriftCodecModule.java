@@ -59,7 +59,7 @@ public class TestThriftCodecModule
 
                         thriftCodecBinder(binder).bindThriftCodec(new TypeLiteral<Map<Integer, List<String>>>() {});
 
-                        thriftCodecBinder(binder).bindThriftCodec(new ThriftCodec<ValueClass>()
+                        thriftCodecBinder(binder).bindCustomThriftCodec(new ThriftCodec<ValueClass>()
                         {
                             @Override
                             public ThriftType getType()
