@@ -47,30 +47,58 @@ public class ThriftCodecBinder
         this.binder = binder;
     }
 
-    public void bindThriftCodec(ThriftCodec<?> thriftCodec)
+    public void bindCustomThriftCodec(ThriftCodec<?> thriftCodec)
     {
         Preconditions.checkNotNull(thriftCodec, "thriftCodec is null");
 
-        // bind the instance to the internal thrift codec set
+        // bind the custom codec instance to the internal thrift codec set
         newSetBinder(binder, new TypeLiteral<ThriftCodec<?>>() {}, InternalThriftCodec.class).addBinding().toInstance(thriftCodec);
 
-        // make the codec available to user code for binding
+        // make the custom codec available to user code for binding
         Type type = thriftCodec.getType().getJavaType();
         binder.bind(getThriftCodecKey(type)).toProvider(new ThriftCodecProvider(type)).in(Scopes.SINGLETON);
+    }
+
+    public void bindCustomThriftCodec(Class<? extends ThriftCodec<?>> thriftCodecType)
+    {
+        Preconditions.checkNotNull(thriftCodecType, "thriftCodecType is null");
+        bindCustomThriftCodec(Key.get(thriftCodecType));
+    }
+
+    public void bindCustomThriftCodec(TypeLiteral<? extends ThriftCodec<?>> thriftCodecType)
+    {
+        Preconditions.checkNotNull(thriftCodecType, "thriftCodecType is null");
+        bindCustomThriftCodec(Key.get(thriftCodecType));
+    }
+
+    public void bindCustomThriftCodec(Key<? extends ThriftCodec<?>> thriftCodecKey)
+    {
+        Preconditions.checkNotNull(thriftCodecKey, "thriftCodecKey is null");
+
+        // bind the custom codec type to the internal thrift codec set
+        newSetBinder(binder, new TypeLiteral<ThriftCodec<?>>() {}, InternalThriftCodec.class).addBinding().to(thriftCodecKey);
+
+        // make the custom codec available to user code for binding
+        binder.bind(thriftCodecKey).in(Scopes.SINGLETON);
     }
 
     public void bindThriftCodec(Class<?> type)
     {
         Preconditions.checkNotNull(type, "type is null");
-
-        binder.bind(getThriftCodecKey(type)).toProvider(new ThriftCodecProvider(type)).in(Scopes.SINGLETON);
+        bindThriftCodec(TypeLiteral.get(type));
     }
 
     public void bindThriftCodec(TypeLiteral<?> type)
     {
         Preconditions.checkNotNull(type, "type is null");
+        bindThriftCodec(Key.get(type));
+    }
 
-        binder.bind(getThriftCodecKey(type.getType())).toProvider(new ThriftCodecProvider(type.getType())).in(Scopes.SINGLETON);
+    public void bindThriftCodec(Key<?> key)
+    {
+        Preconditions.checkNotNull(key, "key is null");
+        Type type = key.getTypeLiteral().getType();
+        binder.bind(getThriftCodecKey(type)).toProvider(new ThriftCodecProvider(type)).in(Scopes.SINGLETON);
     }
 
     public void bindListThriftCodec(Class<?> type)
