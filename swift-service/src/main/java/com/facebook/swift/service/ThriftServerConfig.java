@@ -36,6 +36,7 @@ public class ThriftServerConfig
     private static final int DEFAULT_WORKER_THREAD_COUNT = 200;
 
     private int port;
+    private int acceptBacklog = 1024;
     private int connectionLimit;
     private int acceptorThreadCount = DEFAULT_BOSS_THREAD_COUNT;
     private int ioThreadCount = DEFAULT_IO_WORKER_THREAD_COUNT;
@@ -69,6 +70,35 @@ public class ThriftServerConfig
     public DataSize getMaxFrameSize()
     {
         return maxFrameSize;
+    }
+
+    /**
+     * Sets the number of pending connections that the {@link java.net.ServerSocket} will
+     * queue up before the server process can actually accept them. If your server may take a lot
+     * of connections in a very short interval, you'll want to set this higher to avoid rejecting
+     * some of the connections. Setting this to 0 will apply an implementation-specific default.
+     * </b>
+     * The default value is 1024.
+     * </b>
+     * Actual behavior of the socket backlog is dependent on OS and JDK implementation, and it may
+     * even be ignored on some systems. See JDK docs
+     * <a href="http://docs.oracle.com/javase/7/docs/api/java/net/ServerSocket.html#ServerSocket(int, int)">here</a>
+     * for details.
+     *
+     * @param acceptBacklog
+     * @return
+     */
+    @Config("thrift.accept-backlog")
+    public ThriftServerConfig setAcceptBacklog(int acceptBacklog)
+    {
+        this.acceptBacklog = acceptBacklog;
+        return this;
+    }
+
+    @Min(0)
+    public int getAcceptBacklog()
+    {
+        return acceptBacklog;
     }
 
     /**
