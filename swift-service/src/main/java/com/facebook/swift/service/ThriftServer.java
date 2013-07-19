@@ -106,7 +106,7 @@ public class ThriftServer implements Closeable
                                                          .name("thrift")
                                                          .listen(configuredPort)
                                                          .limitFrameSizeTo((int) config.getMaxFrameSize().toBytes())
-                                                         .clientIdleTimeout(config.getClientIdleTimeout())
+                                                         .clientIdleTimeout(config.getIdleConnectionTimeout())
                                                          .withProcessorFactory(processorFactory)
                                                          .limitConnectionsTo(config.getConnectionLimit())
                                                          .using(workerExecutor).build();

@@ -39,7 +39,7 @@ public class ThriftServerConfig
     private int connectionLimit;
     private int acceptorThreadCount = DEFAULT_BOSS_THREAD_COUNT;
     private int ioThreadCount = DEFAULT_IO_WORKER_THREAD_COUNT;
-    private Duration clientIdleTimeout;
+    private Duration idleConnectionTimeout = Duration.valueOf("60s");
     private Optional<Integer> workerThreads = Optional.absent();
     private Optional<ExecutorService> workerExecutor = Optional.absent();
 
@@ -130,9 +130,9 @@ public class ThriftServerConfig
         return this;
     }
 
-    public Duration getClientIdleTimeout()
+    public Duration getIdleConnectionTimeout()
     {
-        return this.clientIdleTimeout;
+        return this.idleConnectionTimeout;
     }
 
     /**
@@ -142,13 +142,13 @@ public class ThriftServerConfig
      *
      * The default is 60s.
      *
-     * @param clientIdleTimeout The timeout
+     * @param idleConnectionTimeout The timeout
      * @return This {@link ThriftServerConfig} instance
      */
-    @Config("thrift.client-idle-timeout")
-    public ThriftServerConfig setClientIdleTimeout(Duration clientIdleTimeout)
+    @Config("thrift.idle-connection-timeout")
+    public ThriftServerConfig setIdleConnectionTimeout(Duration idleConnectionTimeout)
     {
-        this.clientIdleTimeout = clientIdleTimeout;
+        this.idleConnectionTimeout = idleConnectionTimeout;
         return this;
     }
 
