@@ -62,7 +62,6 @@ public class ThriftServer implements Closeable
     private final Executor workerExecutor;
     private final ExecutorService acceptorExecutor;
     private final ExecutorService ioExecutor;
-    private final Integer workerThreads;
     private final int acceptorThreads;
     private final int ioThreads;
 
@@ -94,6 +93,8 @@ public class ThriftServer implements Closeable
 
         configuredPort = config.getPort();
 
+        workerExecutor = config.getWorkerExecutor();
+
         acceptorExecutor = newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("thrift-acceptor-%s").build());
         acceptorThreads = config.getAcceptorThreadCount();
         ioExecutor = newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("thrift-io-%s").build());
@@ -101,17 +102,13 @@ public class ThriftServer implements Closeable
 
         serverChannelFactory = new NioServerSocketChannelFactory(acceptorExecutor, acceptorThreads, ioExecutor, ioThreads);
 
-        workerThreads = config.getWorkerThreads();
-        workerExecutor = newFixedThreadPool(
-                getWorkerThreads(),
-                new ThreadFactoryBuilder().setNameFormat("thrift-worker-%s").build());
-
         ThriftServerDef thriftServerDef = ThriftServerDef.newBuilder()
                                                          .name("thrift")
                                                          .listen(configuredPort)
                                                          .limitFrameSizeTo((int) config.getMaxFrameSize().toBytes())
                                                          .clientIdleTimeout(config.getClientIdleTimeout())
                                                          .withProcessorFactory(processorFactory)
+                                                         .limitConnectionsTo(config.getConnectionLimit())
                                                          .using(workerExecutor).build();
 
         NettyServerConfigBuilder nettyServerConfigBuilder = NettyServerConfig.newBuilder();
@@ -137,15 +134,6 @@ public class ThriftServer implements Closeable
         ioExecutor = nettyServerConfig.getWorkerExecutor();
         ioThreads = nettyServerConfig.getWorkerThreadCount();
         serverChannelFactory = new NioServerSocketChannelFactory(acceptorExecutor, acceptorThreads, ioExecutor, ioThreads);
-
-        if (workerExecutor instanceof ThreadPoolExecutor) {
-            workerThreads = ((ThreadPoolExecutor) workerExecutor).getPoolSize();
-        }
-        else {
-            // No way to ask a generic Executor for the number of threads it is running
-            workerThreads = null;
-        }
-
         transport = new NettyServerTransport(thriftServerDef, nettyServerConfig, allChannels);
     }
 
@@ -160,6 +148,19 @@ public class ThriftServer implements Closeable
         }
     }
 
+    @Managed
+    public int getWorkerThreads()
+    {
+        if (workerExecutor instanceof ThreadPoolExecutor) {
+            return ((ThreadPoolExecutor) workerExecutor).getPoolSize();
+        }
+
+        // Not a ThreadPoolExecutor. It may still be an ExecutorService that uses threads to do
+        // it's work, but we have no way to ask a generic Executor for the number of threads it is
+        // running.
+        return 0;
+    }
+
     private int getBoundPort()
     {
         // If the server was configured to bind to port 0, a random port will actually be bound instead
@@ -171,12 +172,6 @@ public class ThriftServer implements Closeable
 
         // Cannot determine the randomly assigned port until the server is started
         return 0;
-    }
-
-    @Managed
-    public int getWorkerThreads()
-    {
-        return workerThreads;
     }
 
     @Managed
