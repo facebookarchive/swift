@@ -73,11 +73,11 @@ public class AsyncTestBase
             public FramedClientChannel newThriftClientChannel(
                     Channel nettyChannel, Timer timer)
             {
-                if ((long) connectDelay.convertTo(TimeUnit.NANOSECONDS) > 0) {
+                if (connectDelay.toMillis() > 0) {
                     // Introduce an artificial delay to the client creation process, to test
                     // cases where the client future is not set immediately when making async
                     // connections
-                    Uninterruptibles.sleepUninterruptibly((long) connectDelay.convertTo(TimeUnit.NANOSECONDS), TimeUnit.NANOSECONDS);
+                    Uninterruptibles.sleepUninterruptibly(connectDelay.toMillis(), TimeUnit.MILLISECONDS);
                 }
                 return super.newThriftClientChannel(nettyChannel, timer);
             }
