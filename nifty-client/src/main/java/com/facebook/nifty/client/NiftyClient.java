@@ -118,7 +118,7 @@ public class NiftyClient implements Closeable
     {
         ClientBootstrap bootstrap = createClientBootstrap(socksProxyAddress);
         bootstrap.setOptions(nettyClientConfig.getBootstrapOptions());
-        bootstrap.setOption("connectTimeoutMillis", (long)connectTimeout.toMillis());
+        bootstrap.setOption("connectTimeoutMillis", connectTimeout.toMillis());
         bootstrap.setPipelineFactory(clientChannelConnector.newChannelPipelineFactory(maxFrameSize));
         ChannelFuture nettyChannelFuture = clientChannelConnector.connect(bootstrap);
         nettyChannelFuture.addListener(new ChannelFutureListener() {
@@ -166,7 +166,7 @@ public class NiftyClient implements Closeable
         // TODO: implement send timeout for sync client
         ClientBootstrap bootstrap = createClientBootstrap(socksProxyAddress);
         bootstrap.setOptions(nettyClientConfig.getBootstrapOptions());
-        bootstrap.setOption("connectTimeoutMillis", (long) connectTimeout.toMillis());
+        bootstrap.setOption("connectTimeoutMillis", connectTimeout.toMillis());
         bootstrap.setPipelineFactory(new NiftyClientChannelPipelineFactory(maxFrameSize));
         ChannelFuture f = bootstrap.connect(addr);
         f.await();

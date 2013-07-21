@@ -42,7 +42,7 @@ limitations under the License.
         <!-- it dependends on airlift, which is 1.7 only.               -->
         <!-- <project.build.targetJdk>1.6</project.build.targetJdk>     -->
 
-        <dep.airlift.version>0.70</dep.airlift.version>
+        <dep.airlift.version>0.78-SNAPSHOT</dep.airlift.version>
     </properties>
 
     <url>https://facebook.github.com/nifty</url>
@@ -113,13 +113,13 @@ limitations under the License.
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpclient</artifactId>
-                <version>4.2.2</version>
+                <version>4.2.5</version>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpcore</artifactId>
-                <version>4.2.3</version>
+                <version>4.2.4</version>
             </dependency>
 
             <dependency>

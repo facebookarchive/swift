@@ -114,7 +114,7 @@ public class TNiftyClientTransport extends TNiftyAsyncClientTransport
     private int read(byte[] bytes, int offset, int length, Duration timeout)
             throws InterruptedException, TTransportException
     {
-        long timeRemaining = (long)timeout.convertTo(TimeUnit.NANOSECONDS);
+        long timeRemaining = timeout.roundTo(TimeUnit.NANOSECONDS);
         lock.lock();
         try {
             while (!closed) {
@@ -147,7 +147,6 @@ public class TNiftyClientTransport extends TNiftyAsyncClientTransport
         finally {
             lock.unlock();
         }
-        throw new TTransportException(String.format("read timeout, %d ms has elapsed",
-                                                    (long)timeout.toMillis()));
+        throw new TTransportException(String.format("read timeout, %d ms has elapsed", timeout.toMillis()));
     }
 }

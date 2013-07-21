@@ -328,7 +328,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
     private void queueSendTimeout(final Request request)
     {
         if (this.sendTimeout != null) {
-            double sendTimeoutMs = this.sendTimeout.toMillis();
+            long sendTimeoutMs = this.sendTimeout.toMillis();
             if (sendTimeoutMs > 0) {
                 TimerTask sendTimeoutTask = new IoThreadBoundTimerTask(this, new TimerTask() {
                     @Override
@@ -337,9 +337,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
                     }
                 });
 
-                Timeout sendTimeout = timer.newTimeout(sendTimeoutTask,
-                                                       (long) sendTimeoutMs,
-                                                       TimeUnit.MILLISECONDS);
+                Timeout sendTimeout = timer.newTimeout(sendTimeoutTask, sendTimeoutMs, TimeUnit.MILLISECONDS);
                 request.setSendTimeout(sendTimeout);
             }
         }
@@ -348,7 +346,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
     private void queueReceiveTimeout(final Request request)
     {
         if (this.requestTimeout != null) {
-            double requestTimeoutMs = this.requestTimeout.toMillis();
+            long requestTimeoutMs = this.requestTimeout.toMillis();
             if (requestTimeoutMs > 0) {
                 TimerTask receiveTimeoutTask = new IoThreadBoundTimerTask(this, new TimerTask() {
                     @Override
@@ -357,9 +355,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
                     }
                 });
 
-                Timeout timeout = timer.newTimeout(receiveTimeoutTask,
-                                                   (long) requestTimeoutMs,
-                                                   TimeUnit.MILLISECONDS);
+                Timeout timeout = timer.newTimeout(receiveTimeoutTask, requestTimeoutMs, TimeUnit.MILLISECONDS);
                 request.setReceiveTimeout(timeout);
             }
         }
