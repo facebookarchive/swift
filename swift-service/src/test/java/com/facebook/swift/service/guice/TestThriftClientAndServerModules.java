@@ -20,7 +20,14 @@ import com.facebook.nifty.client.NiftyClientChannel;
 import com.facebook.nifty.client.NiftyClientConnector;
 import com.facebook.nifty.core.RequestContext;
 import com.facebook.swift.codec.guice.ThriftCodecModule;
-import com.facebook.swift.service.*;
+import com.facebook.swift.service.LogEntry;
+import com.facebook.swift.service.ResultCode;
+import com.facebook.swift.service.Scribe;
+import com.facebook.swift.service.SwiftScribe;
+import com.facebook.swift.service.ThriftClient;
+import com.facebook.swift.service.ThriftClientConfig;
+import com.facebook.swift.service.ThriftEventHandler;
+import com.facebook.swift.service.ThriftServer;
 import com.facebook.swift.service.puma.TestPuma;
 import com.facebook.swift.service.puma.swift.PumaReadServer;
 import com.facebook.swift.service.puma.swift.PumaReadService;
@@ -39,7 +46,7 @@ import com.google.inject.Stage;
 import com.google.inject.TypeLiteral;
 import io.airlift.configuration.ConfigurationFactory;
 import io.airlift.configuration.ConfigurationModule;
-import io.airlift.jmx.JmxModule;
+import io.airlift.jmx.testing.TestingJmxModule;
 import io.airlift.units.Duration;
 import org.testng.annotations.Test;
 import org.weakref.jmx.guice.MBeanModule;
@@ -47,7 +54,6 @@ import org.weakref.jmx.guice.MBeanModule;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.facebook.swift.service.guice.ThriftClientBinder.thriftClientBinder;
 import static com.facebook.swift.service.guice.ThriftServiceExporter.thriftServerBinder;
@@ -88,7 +94,7 @@ public class TestThriftClientAndServerModules
                 new ThriftCodecModule(),
                 new ThriftClientModule(),
                 new ThriftServerModule(),
-                new JmxModule(),
+                new TestingJmxModule(),
                 new MBeanModule(),
                 new Module()
                 {
