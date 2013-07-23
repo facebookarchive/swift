@@ -64,12 +64,6 @@ public class ThriftCodecManager
         this(new CompilerThriftCodecFactory(), codecs);
     }
 
-    @Inject
-    public ThriftCodecManager(@InternalThriftCodec Set<ThriftCodec<?>> codecs)
-    {
-        this(new CompilerThriftCodecFactory(), codecs);
-    }
-
     public ThriftCodecManager(ThriftCodecFactory factory, ThriftCodec<?>... codecs)
     {
         this(factory, new ThriftCatalog(), ImmutableSet.copyOf(codecs));
@@ -80,7 +74,8 @@ public class ThriftCodecManager
         this(factory, new ThriftCatalog(), codecs);
     }
 
-    public ThriftCodecManager(final ThriftCodecFactory factory, final ThriftCatalog catalog, Set<ThriftCodec<?>> codecs)
+    @Inject
+    public ThriftCodecManager(final ThriftCodecFactory factory, final ThriftCatalog catalog, @InternalThriftCodec Set<ThriftCodec<?>> codecs)
     {
         Preconditions.checkNotNull(factory, "factory is null");
         Preconditions.checkNotNull(catalog, "catalog is null");
