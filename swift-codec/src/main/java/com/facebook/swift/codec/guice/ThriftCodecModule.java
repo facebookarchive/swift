@@ -18,6 +18,9 @@ package com.facebook.swift.codec.guice;
 import com.facebook.swift.codec.InternalThriftCodec;
 import com.facebook.swift.codec.ThriftCodec;
 import com.facebook.swift.codec.ThriftCodecManager;
+import com.facebook.swift.codec.internal.ThriftCodecFactory;
+import com.facebook.swift.codec.internal.compiler.CompilerThriftCodecFactory;
+import com.facebook.swift.codec.metadata.ThriftCatalog;
 import com.google.inject.Binder;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
@@ -33,6 +36,8 @@ public class ThriftCodecModule implements Module
         binder.disableCircularProxies();
         binder.requireExplicitBindings();
 
+        binder.bind(ThriftCodecFactory.class).to(CompilerThriftCodecFactory.class).in(Scopes.SINGLETON);
+        binder.bind(ThriftCatalog.class).in(Scopes.SINGLETON);
         binder.bind(ThriftCodecManager.class).in(Scopes.SINGLETON);
         newSetBinder(binder, new TypeLiteral<ThriftCodec<?>>() {}, InternalThriftCodec.class).permitDuplicates();
     }
