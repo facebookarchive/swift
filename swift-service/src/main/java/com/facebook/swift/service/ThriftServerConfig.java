@@ -73,6 +73,18 @@ public class ThriftServerConfig
     }
 
     /**
+     * Sets a maximum frame size
+     * @param maxFrameSize
+     * @return
+     */
+    @Config("thrift.max-frame-size")
+    public ThriftServerConfig setMaxFrameSize(DataSize maxFrameSize)
+    {
+        this.maxFrameSize = maxFrameSize;
+        return this;
+    }
+
+    /**
      * Sets the number of pending connections that the {@link java.net.ServerSocket} will
      * queue up before the server process can actually accept them. If your server may take a lot
      * of connections in a very short interval, you'll want to set this higher to avoid rejecting
@@ -99,18 +111,6 @@ public class ThriftServerConfig
     public int getAcceptBacklog()
     {
         return acceptBacklog;
-    }
-
-    /**
-     * Sets a maximum frame size
-     * @param maxFrameSize
-     * @return
-     */
-    @Config("thrift.max-frame-size")
-    public ThriftServerConfig setMaxFrameSize(DataSize maxFrameSize)
-    {
-        this.maxFrameSize = maxFrameSize;
-        return this;
     }
 
     @Min(1)
