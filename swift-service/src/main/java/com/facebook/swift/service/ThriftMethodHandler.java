@@ -152,7 +152,6 @@ public class ThriftMethodHandler
         writeArguments(outputProtocol, sequenceId, args);
         // Don't need to copy the output buffer for sync case
         ChannelBuffer requestBuffer = outputTransport.getOutputBuffer();
-        outputTransport.flush();
         contextChain.postWrite(getQualifiedName(), args);
 
         if (!this.oneway) {
@@ -204,7 +203,6 @@ public class ThriftMethodHandler
         outputTransport.resetOutputBuffer();
         writeArguments(outputProtocol, sequenceId, args);
         ChannelBuffer requestBuffer = outputTransport.getOutputBuffer().copy();
-        outputTransport.flush();
         contextChain.postWrite(getQualifiedName(), args);
 
         // send message and setup listener to handle the response
@@ -296,6 +294,7 @@ public class ThriftMethodHandler
         writer.writeStructEnd();
 
         out.writeMessageEnd();
+        out.getTransport().flush();
     }
 
     private void waitForResponse(TProtocol in, int sequenceId)
