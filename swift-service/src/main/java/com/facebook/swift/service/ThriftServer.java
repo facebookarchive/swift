@@ -183,13 +183,22 @@ public class ThriftServer implements Closeable
         if (state == State.RUNNING) {
             try {
                 transport.stop();
-
-                shutdownExecutor(workerExecutor, "workerExecutor");
-                shutdownChannelFactory(serverChannelFactory, acceptorExecutor, ioExecutor, allChannels);
             }
-            catch (InterruptedException e) {
+            catch (Exception e) {
                 Thread.currentThread().interrupt();
             }
+        }
+
+        // Executors are created in the constructor, so we should shut them down here even if the
+        // server was never actually started
+        try {
+            if (workerExecutor instanceof ExecutorService) {
+                shutdownExecutor((ExecutorService) workerExecutor, "workerExecutor");
+            }
+            shutdownChannelFactory(serverChannelFactory, acceptorExecutor, ioExecutor, allChannels);
+        }
+        catch (Exception e) {
+            Thread.currentThread().interrupt();
         }
 
         state = State.CLOSED;
