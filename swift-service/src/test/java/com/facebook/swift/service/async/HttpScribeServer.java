@@ -22,7 +22,7 @@ import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.server.TServlet;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.nio.SelectChannelConnector;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
@@ -47,7 +47,7 @@ public class HttpScribeServer implements AutoCloseable
 
     public int getLocalPort()
     {
-        return jettyServer.getConnectors()[0].getLocalPort();
+        return ((ServerConnector) jettyServer.getConnectors()[0]).getLocalPort();
     }
 
     public List<LogEntry> getLogEntries() throws ServletException
@@ -60,7 +60,7 @@ public class HttpScribeServer implements AutoCloseable
     {
         Server httpServer = new Server();
 
-        SelectChannelConnector connector = new SelectChannelConnector();
+        ServerConnector connector = new ServerConnector(httpServer);
         connector.setPort(0);
         httpServer.addConnector(connector);
 
@@ -77,11 +77,6 @@ public class HttpScribeServer implements AutoCloseable
         httpServer.start();
 
         return httpServer;
-    }
-
-    private int getServerPort(Server server)
-    {
-        return server.getConnectors()[0].getLocalPort();
     }
 
     private TestThriftServlet getServerServlet(Server server)
