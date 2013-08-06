@@ -47,16 +47,13 @@ public class DelayedMap
     public static interface AsyncService
     {
         @ThriftMethod
-        public ListenableFuture<String> getValueSlowly(long timeout, TimeUnit unit, String key)
-                throws TException;
+        public ListenableFuture<String> getValueSlowly(long timeout, TimeUnit unit, String key);
 
         @ThriftMethod
-        public ListenableFuture<Void> putValueSlowly(long timeout, TimeUnit unit, String key, String value)
-                throws TException;
+        public ListenableFuture<Void> putValueSlowly(long timeout, TimeUnit unit, String key, String value);
 
         @ThriftMethod
-        public ListenableFuture<List<String>> getMultipleValues(long timeout, TimeUnit unit, List<String> keys)
-                throws TException;
+        public ListenableFuture<List<String>> getMultipleValues(long timeout, TimeUnit unit, List<String> keys);
     }
 
 
@@ -80,15 +77,12 @@ public class DelayedMap
     public interface AsyncClient extends Closeable
     {
         @ThriftMethod
-        public ListenableFuture<String> getValueSlowly(long timeout, TimeUnit unit, String key)
-                throws TException;
+        public ListenableFuture<String> getValueSlowly(long timeout, TimeUnit unit, String key);
 
         @ThriftMethod
-        public ListenableFuture<Void> putValueSlowly(long timeout, TimeUnit unit, String key, String value)
-                throws TException;
+        public ListenableFuture<Void> putValueSlowly(long timeout, TimeUnit unit, String key, String value);
 
         @ThriftMethod
-        public ListenableFuture<List<String>> getMultipleValues(long timeout, TimeUnit unit, List<String> keys)
-                throws TException;
+        public ListenableFuture<List<String>> getMultipleValues(long timeout, TimeUnit unit, List<String> keys);
     }
 }

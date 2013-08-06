@@ -15,41 +15,45 @@
  */
 package com.facebook.swift.service.async;
 
-import com.google.common.util.concurrent.Futures;
+import com.facebook.nifty.client.FramedClientConnector;
+import com.facebook.swift.service.ThriftClientManager;
+import com.facebook.swift.service.ThriftServer;
+import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.apache.thrift.TException;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-public class DelayedMapAsyncHandler implements DelayedMap.AsyncService
+public class DelayedMapAsyncProxyHandler implements DelayedMap.AsyncService
 {
-    private DelayedMapSyncHandler innerHandler = new DelayedMapSyncHandler();
+    private final DelayedMap.AsyncClient asyncClient;
+
+    public DelayedMapAsyncProxyHandler(ThriftClientManager clientManager, ThriftServer targetServer)
+            throws ExecutionException, InterruptedException
+    {
+        FramedClientConnector connector = new FramedClientConnector(HostAndPort.fromParts("localhost", targetServer.getPort()));
+        asyncClient = clientManager.createClient(connector, DelayedMap.AsyncClient.class).get();
+    }
 
     @Override
     public ListenableFuture<Void> putValueSlowly(long timeout,
                                TimeUnit unit,
                                String key,
                                String value)
-            throws TException
     {
-        innerHandler.putValueSlowly(timeout, unit, key, value);
-        return Futures.immediateFuture((Void)null);
+        return asyncClient.putValueSlowly(timeout, unit, key, value);
     }
 
     @Override
-    public ListenableFuture<String> getValueSlowly(long timeout,
-                                 TimeUnit unit,
-                                 String key)
-            throws TException
+    public ListenableFuture<String> getValueSlowly(long timeout, TimeUnit unit, String key)
     {
-        return Futures.immediateFuture(innerHandler.getValueSlowly(timeout, unit, key));
+        return asyncClient.getValueSlowly(timeout, unit, key);
     }
 
     @Override
     public ListenableFuture<List<String>> getMultipleValues(long timeout, TimeUnit unit, List<String> keys)
-            throws TException
     {
-        return Futures.immediateFuture(innerHandler.getMultipleValues(timeout, unit, keys));
+        return asyncClient.getMultipleValues(timeout, unit, keys);
     }
 }
