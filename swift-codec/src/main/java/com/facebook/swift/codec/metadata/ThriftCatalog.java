@@ -331,7 +331,7 @@ public class ThriftCatalog
     {
         ThriftEnumMetadata<?> enumMetadata = enums.get(enumClass);
         if (enumMetadata == null) {
-            enumMetadata = new ThriftEnumMetadata<>((Class<T>) enumClass);
+            enumMetadata = new ThriftEnumMetadataBuilder<>((Class<T>) enumClass).build();
 
             ThriftEnumMetadata<?> current = enums.putIfAbsent(enumClass, enumMetadata);
             if (current != null) {

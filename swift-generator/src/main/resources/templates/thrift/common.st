@@ -18,7 +18,7 @@ namespace java.swift <context.namespace>
 >>
 
 _enum(enum) ::= <<
-enum <enum.enumClass.simpleName> {
+enum <enum.enumName> {
 <if(enum.explicitThriftValue)><_enumWithValues(enum)><else><_enumWithoutValues(enum)><endif>
 }
 >>

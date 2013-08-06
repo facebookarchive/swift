@@ -18,6 +18,7 @@ package com.facebook.swift.codec;
 import com.facebook.swift.codec.internal.ThriftCodecFactory;
 import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
 import com.facebook.swift.codec.metadata.ThriftEnumMetadata;
+import com.facebook.swift.codec.metadata.ThriftEnumMetadataBuilder;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.collect.ImmutableList;
@@ -98,8 +99,8 @@ public class TestThriftCodecManager
     public void testEnum()
             throws Exception
     {
-        ThriftEnumMetadata<Fruit> fruitEnumMetadata = new ThriftEnumMetadata<>(Fruit.class);
-        ThriftEnumMetadata<Letter> letterEnumMetadata = new ThriftEnumMetadata<>(Letter.class);
+        ThriftEnumMetadata<Fruit> fruitEnumMetadata = new ThriftEnumMetadataBuilder<>(Fruit.class).build();
+        ThriftEnumMetadata<Letter> letterEnumMetadata = new ThriftEnumMetadataBuilder<>(Letter.class).build();
         testRoundTripSerialize(Fruit.CHERRY);
         testRoundTripSerialize(Letter.C);
         testRoundTripSerialize(enumType(fruitEnumMetadata), Fruit.CHERRY);

@@ -33,11 +33,17 @@ public class ThriftEnumMetadata<T extends Enum<T>>
     private final Class<T> enumClass;
     private final Map<Integer, T> byEnumValue;
     private final Map<T, Integer> byEnumConstant;
+    private final String enumName;
 
-    public ThriftEnumMetadata(Class<T> enumClass)
+    public ThriftEnumMetadata(
+            String enumName,
+            Class<T> enumClass)
             throws RuntimeException
     {
+        Preconditions.checkNotNull(enumName, "enumName must not be null");
         Preconditions.checkNotNull(enumClass, "enumClass must not be null");
+
+        this.enumName = enumName;
         this.enumClass = enumClass;
 
         Method enumValueMethod = null;
@@ -96,6 +102,11 @@ public class ThriftEnumMetadata<T extends Enum<T>>
             byEnumValue = null;
             byEnumConstant = null;
         }
+    }
+
+    public String getEnumName()
+    {
+        return enumName;
     }
 
     public Class<T> getEnumClass()

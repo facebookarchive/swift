@@ -46,7 +46,7 @@ public class ThriftTypeRenderer implements AttributeRenderer
             case I16:       return "i16";
             case I32:       return "i32";
             case I64:       return "i64";
-            case ENUM:      return prefix(t) + t.getEnumMetadata().getEnumClass().getSimpleName();
+            case ENUM:      return prefix(t) + t.getEnumMetadata().getEnumName();
             case MAP:       return "map<" + toString(t.getKeyType()) + ", " + toString(t.getValueType()) + ">";
             case SET:       return "set<" + toString(t.getValueType()) + ">";
             case LIST:      return "list<" + toString(t.getValueType()) + ">";
