@@ -21,14 +21,14 @@ import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.metadata.ThriftMethodMetadata;
 import com.facebook.swift.service.metadata.ThriftServiceMetadata;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Multimap;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
-import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TMessage;
 import org.apache.thrift.protocol.TMessageType;
 import org.apache.thrift.protocol.TProtocol;
@@ -90,14 +90,15 @@ public class ThriftServiceProcessor implements NiftyProcessor
 
     @Override
     @SuppressWarnings("PMD.EmptyCatchBlock")
-    public boolean process(TProtocol in, TProtocol out, RequestContext requestContext)
+    public ListenableFuture<Boolean> process(final TProtocol in, TProtocol out, RequestContext requestContext)
             throws TException
     {
-        TMessage message = in.readMessageBegin();
-        String methodName = message.name;
-        int sequenceId = message.seqid;
-
         try {
+            final SettableFuture<Boolean> resultFuture = SettableFuture.create();
+            TMessage message = in.readMessageBegin();
+            String methodName = message.name;
+            int sequenceId = message.seqid;
+
             // lookup method
             ThriftMethodProcessor method = methods.get(methodName);
             if (method == null) {
@@ -121,28 +122,32 @@ public class ThriftServiceProcessor implements NiftyProcessor
             }
 
             // invoke method
-            String qualifiedMethodName = method.getQualifiedName();
-            ContextChain context = new ContextChain(eventHandlers, qualifiedMethodName, requestContext);
-            try {
-                method.process(in, out, sequenceId, context);
-            }
-            finally {
-                context.done();
-            }
+            final ContextChain context = new ContextChain(eventHandlers, method.getQualifiedName(), requestContext);
+            ListenableFuture<Boolean> processResult = method.process(in, out, sequenceId, context);
 
-            return true;
+            Futures.addCallback(
+                    processResult,
+                    new FutureCallback<Boolean>()
+                    {
+                        @Override
+                        public void onSuccess(Boolean result)
+                        {
+                            context.done();
+                            resultFuture.set(result);
+                        }
+
+                        @Override
+                        public void onFailure(Throwable t)
+                        {
+                            context.done();
+                            resultFuture.setException(t);
+                        }
+                    });
+
+            return resultFuture;
         }
         catch (Exception e) {
-            // Other exceptions are not recoverable. The input or output streams may be corrupt.
-            Throwables.propagateIfInstanceOf(e, TException.class);
-            throw new TException(e);
-        }
-        finally {
-            try {
-                in.readMessageEnd();
-            }
-            catch (TException ignore) {
-            }
+            return Futures.immediateFailedFuture(e);
         }
     }
 }

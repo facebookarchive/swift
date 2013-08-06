@@ -28,7 +28,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeToken;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 import org.apache.thrift.TApplicationException;
+import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TMessage;
 import org.apache.thrift.protocol.TMessageType;
 import org.apache.thrift.protocol.TProtocol;
@@ -42,6 +48,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Map;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 
 import static org.apache.thrift.TApplicationException.INTERNAL_ERROR;
@@ -127,94 +134,119 @@ public class ThriftMethodProcessor
         return qualifiedName;
     }
 
-    public void process(TProtocol in, TProtocol out, int sequenceId, ContextChain contextChain)
+    public ListenableFuture<Boolean> process(TProtocol in, final TProtocol out, final int sequenceId, final ContextChain contextChain)
             throws Exception
     {
-        String methodName = serviceName + "." + name;
         // read args
         contextChain.preRead();
         Object[] args = readArguments(in);
         contextChain.postRead(args);
 
+        in.readMessageEnd();
+
         // invoke method
-        Object result;
-        try {
-            result = invokeMethod(args);
-            contextChain.preWrite(result);
+        final ListenableFuture<?> invokeFuture = invokeMethod(args);
+        final SettableFuture<Boolean> resultFuture = SettableFuture.create();
 
-            if (!oneway) {
-                // write success reply
-                writeResponse(out,
-                              sequenceId,
-                              TMessageType.REPLY,
-                              "success",
-                              (short) 0,
-                              successCodec,
-                              result);
-                contextChain.postWrite(result);
-            }
-        }
-        catch (Exception e) {
-            contextChain.preWriteException(e);
-            if (!oneway) {
-                ExceptionProcessor exceptionCodec = exceptionCodecs.get(e.getClass());
-                if (exceptionCodec != null) {
-                    // write expected exception response
-                    writeResponse(out,
-                                  sequenceId,
-                                  TMessageType.REPLY,
-                                  "exception",
-                                  exceptionCodec.getId(),
-                                  exceptionCodec.getCodec(),
-                                  e);
-                    contextChain.postWriteException(e);
-                } else {
-                    // unexpected exception
-                    TApplicationException applicationException =
-                      new TApplicationException(INTERNAL_ERROR,
-                                                "Internal error processing " + method.getName());
-                    applicationException.initCause(e);
-                    LOG.error("Internal error processing {}", method.getName(), e);
+        Futures.addCallback(invokeFuture, new FutureCallback<Object>()
+        {
+            @Override
+            public void onSuccess(Object result)
+            {
+                if (oneway) {
+                    resultFuture.set(true);
+                }
+                else {
+                    // write success reply
+                    try {
+                        contextChain.preWrite(result);
 
-                    // Application exceptions are sent to client, and the connection can be reused
-                    out.writeMessageBegin(new TMessage(name, TMessageType.EXCEPTION, sequenceId));
-                    applicationException.write(out);
-                    out.writeMessageEnd();
-                    out.getTransport().flush();
+                        writeResponse(out,
+                                      sequenceId,
+                                      TMessageType.REPLY,
+                                      "success",
+                                      (short) 0,
+                                      successCodec,
+                                      result);
 
-                    contextChain.postWriteException(applicationException);
+                        contextChain.postWrite(result);
+
+                        resultFuture.set(true);
+                    }
+                    catch (Exception e) {
+                        // An exception occurred trying to serialize a return value onto the output protocol
+                        resultFuture.setException(e);
+                    }
                 }
             }
-        }
+
+            @Override
+            public void onFailure(Throwable t)
+            {
+                try {
+                    contextChain.preWriteException(t);
+                    if (!oneway) {
+                        ExceptionProcessor exceptionCodec = exceptionCodecs.get(t.getClass());
+                        if (exceptionCodec != null) {
+                            // write expected exception response
+                            writeResponse(out,
+                                          sequenceId,
+                                          TMessageType.REPLY,
+                                          "exception",
+                                          exceptionCodec.getId(),
+                                          exceptionCodec.getCodec(),
+                                          t);
+                            contextChain.postWriteException(t);
+                        } else {
+                            // unexpected exception
+                            TApplicationException applicationException =
+                                    new TApplicationException(INTERNAL_ERROR,
+                                                              "Internal error processing " + method.getName());
+                            applicationException.initCause(t);
+                            LOG.error("Internal error processing {}", method.getName(), t);
+
+                            // Application exceptions are sent to client, and the connection can be reused
+                            out.writeMessageBegin(new TMessage(name, TMessageType.EXCEPTION, sequenceId));
+                            applicationException.write(out);
+                            out.writeMessageEnd();
+                            out.getTransport().flush();
+
+                            contextChain.postWriteException(applicationException);
+                        }
+                    }
+
+                    resultFuture.set(true);
+                }
+                catch (Exception e) {
+                    // An exception occurred trying to serialize an exception onto the output protocol
+                    resultFuture.setException(e);
+                }
+            }
+        });
+
+        return resultFuture;
     }
 
-    private Object invokeMethod(Object[] args)
-            throws Exception
+    private ListenableFuture<?> invokeMethod(Object[] args)
     {
         try {
             Object response = method.invoke(service, args);
-            if (response instanceof Future)
-            {
-                // Server-side async isn't implemented yet, so if the server method returns
-                // a future, we have to wait for it.
-                return ((Future<?>)response).get();
+            if (response instanceof ListenableFuture) {
+                return (ListenableFuture<?>) response;
             }
-            return response;
+            return Futures.immediateFuture(response);
         }
-        catch (Throwable e) {
-            // strip off the InvocationTargetException wrapper if present
-            if (e instanceof InvocationTargetException) {
-                InvocationTargetException invocationTargetException = (InvocationTargetException) e;
-                if (invocationTargetException.getTargetException() != null) {
-                    e = invocationTargetException.getTargetException();
-                }
+        catch (IllegalAccessException | IllegalArgumentException e) {
+            // These really should never happen, since the method metadata should have prevented it
+            return Futures.immediateFailedFuture(e);
+        }
+        catch (InvocationTargetException e) {
+            Throwable cause = e.getCause();
+            if (cause != null) {
+                return Futures.immediateFailedFuture(cause);
             }
 
-            // rethrow Exceptions or Errors
-            Throwables.propagateIfPossible(e, Exception.class);
-
-            // Wrap random extensions of Throwable in a runtime exception
-            throw Throwables.propagate(e);
+            return Futures.immediateFailedFuture(e);
         }
     }
 
@@ -278,7 +310,8 @@ public class ThriftMethodProcessor
                                    String responseFieldName,
                                    short responseFieldId,
                                    ThriftCodec<T> responseCodec,
-                                   T result) throws Exception {
+                                   T result) throws Exception
+    {
         out.writeMessageBegin(new TMessage(name, responseType, sequenceId));
 
         TProtocolWriter writer = new TProtocolWriter(out);

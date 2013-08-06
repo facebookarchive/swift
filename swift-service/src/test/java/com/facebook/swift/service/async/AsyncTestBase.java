@@ -96,19 +96,29 @@ public class AsyncTestBase
         return new ThriftClient<>(clientManager, clientClass, config, "asyncTestClient").open(connector);
     }
 
-    protected ThriftServer createAsyncServer()
-            throws InstantiationException, IllegalAccessException, TException
+    protected ThriftServer createTargetServer(int numThreads)
+            throws TException, InstantiationException, IllegalAccessException
     {
-        DelayedMapAsyncHandler handler = new DelayedMapAsyncHandler();
-        handler.putValueSlowly(0, TimeUnit.MILLISECONDS, "testKey", "default");
-        return createServerFromHandler(handler);
+        DelayedMapSyncHandler handler = new DelayedMapSyncHandler();
+        return createServerFromHandler(new ThriftServerConfig().setWorkerThreads(numThreads), handler);
+    }
+
+    protected ThriftServer createAsyncServer(int numThreads, ThriftClientManager clientManager, ThriftServer targetServer) throws Exception
+    {
+        DelayedMapAsyncProxyHandler handler = new DelayedMapAsyncProxyHandler(clientManager, targetServer);
+        return createServerFromHandler(new ThriftServerConfig().setWorkerThreads(numThreads), handler);
     }
 
     protected ThriftServer createServerFromHandler(Object handler)
+            throws InstantiationException, IllegalAccessException
+    {
+        return createServerFromHandler(new ThriftServerConfig(), handler);
+    }
+
+    protected ThriftServer createServerFromHandler(ThriftServerConfig config, Object handler)
             throws IllegalAccessException, InstantiationException
     {
         ThriftServiceProcessor processor = new ThriftServiceProcessor(codecManager, ImmutableList.<ThriftEventHandler>of(), handler);
-        ThriftServerConfig config = new ThriftServerConfig();
         config.setMaxFrameSize(new DataSize(MAX_FRAME_SIZE, DataSize.Unit.BYTE));
 
         return new ThriftServer(processor, config).start();

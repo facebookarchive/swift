@@ -16,6 +16,8 @@
 package com.facebook.swift.service.async;
 
 import org.apache.thrift.TException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,9 +25,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static com.google.common.collect.Maps.newConcurrentMap;
+
 public class DelayedMapSyncHandler implements DelayedMap.Service
 {
-    private Map<String, String> store = new HashMap<>();
+    private static final Logger LOGGER =LoggerFactory.getLogger(DelayedMapSyncHandler.class);
+
+    private Map<String, String> store = newConcurrentMap();
 
     @Override
     public void putValueSlowly(long timeout,
@@ -34,8 +40,10 @@ public class DelayedMapSyncHandler implements DelayedMap.Service
                                String value)
             throws TException
     {
+        LOGGER.info("put started");
         checkedSleep(timeout, unit);
         store.put(key, value);
+        LOGGER.info("put finished");
     }
 
     @Override

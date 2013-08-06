@@ -223,14 +223,7 @@ public class TestThriftService
         final ThriftServiceProcessor processor = new ThriftServiceProcessor(new ThriftCodecManager(), handlers, scribeService);
 
         List<LogEntry> messages = niftyProcessor ?
-                testProcessor(processor) : testProcessor(new TProcessor()
-        {
-            @Override
-            public boolean process(TProtocol in, TProtocol out) throws TException
-            {
-                return processor.process(in, out, null);
-            }
-        });
+                testProcessor(processor) : testProcessor(NiftyProcessorAdapters.processorToTProcessor(processor));
         assertEquals(scribeService.getMessages(), newArrayList(concat(toSwiftLogEntry(messages), toSwiftLogEntry(messages))));
         assertTrue(eventHandler.validate(2));
         assertTrue(secondHandler.validate(2));
