@@ -33,6 +33,7 @@ import io.airlift.bootstrap.LifeCycleModule;
 import io.airlift.configuration.ConfigurationFactory;
 import io.airlift.configuration.ConfigurationModule;
 import io.airlift.jmx.JmxModule;
+import io.airlift.node.NodeModule;
 import org.weakref.jmx.guice.MBeanModule;
 
 import javax.annotation.PostConstruct;
@@ -67,6 +68,7 @@ public class LoadGenerator
                     new ThriftCodecModule(),
                     new ThriftClientModule(),
                     new ThriftClientStatsModule(),
+                    new NodeModule(),
                     new JmxModule(),
                     new MBeanModule(),
                     new Module()
