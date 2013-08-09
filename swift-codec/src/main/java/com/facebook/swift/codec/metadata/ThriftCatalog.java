@@ -15,6 +15,7 @@
  */
 package com.facebook.swift.codec.metadata;
 
+import com.facebook.swift.codec.ThriftDocumentation;
 import com.facebook.swift.codec.ThriftStruct;
 import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
 import com.facebook.swift.codec.internal.coercion.FromThrift;
@@ -29,6 +30,7 @@ import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ListenableFuture;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
@@ -357,6 +359,84 @@ public class ThriftCatalog
             }
         }
         return (ThriftStructMetadata<T>) structMetadata;
+    }
+
+    private static Class<?> getSwiftMetaClassOf(Class<?> cls) throws ClassNotFoundException
+    {
+        ClassLoader loader = cls.getClassLoader();
+        if (loader == null) {
+            throw new ClassNotFoundException("null class loader");
+        }
+        return loader.loadClass(cls.getName() + "$swift_meta");
+    }
+
+    @SuppressWarnings("PMD.EmptyCatchBlock")
+    public static ImmutableList<String> getThriftDocumentation(Class<?> objectClass)
+    {
+        ThriftDocumentation documentation = objectClass.getAnnotation(ThriftDocumentation.class);
+
+        if (documentation == null) {
+            try {
+                Class<?> swiftDocsClass = getSwiftMetaClassOf(objectClass);
+
+                documentation = swiftDocsClass.getAnnotation(ThriftDocumentation.class);
+            }
+            catch (ClassNotFoundException e) {
+                // ignored
+            }
+        }
+
+        return documentation == null ? ImmutableList.<String>of() : ImmutableList.copyOf(documentation.value());
+    }
+
+    @SuppressWarnings("PMD.EmptyCatchBlock")
+    public static ImmutableList<String> getThriftDocumentation(Method method)
+    {
+        ThriftDocumentation documentation = method.getAnnotation(ThriftDocumentation.class);
+
+        if (documentation == null) {
+            try {
+                Class<?> swiftDocsClass = getSwiftMetaClassOf(method.getDeclaringClass());
+
+                documentation = swiftDocsClass.getDeclaredMethod(method.getName()).getAnnotation(ThriftDocumentation.class);
+            }
+            catch (ReflectiveOperationException e) {
+                // ignored
+            }
+        }
+
+        return documentation == null ? ImmutableList.<String>of() : ImmutableList.copyOf(documentation.value());
+    }
+
+    @SuppressWarnings("PMD.EmptyCatchBlock")
+    public static ImmutableList<String> getThriftDocumentation(Field field)
+    {
+        ThriftDocumentation documentation = field.getAnnotation(ThriftDocumentation.class);
+
+        if (documentation == null) {
+            try {
+                Class<?> swiftDocsClass = getSwiftMetaClassOf(field.getDeclaringClass());
+
+                documentation = swiftDocsClass.getDeclaredField(field.getName()).getAnnotation(ThriftDocumentation.class);
+            }
+            catch (ReflectiveOperationException e) {
+                // ignored
+            }
+        }
+
+        return documentation == null ? ImmutableList.<String>of() : ImmutableList.copyOf(documentation.value());
+    }
+
+    @SuppressWarnings("PMD.EmptyCatchBlock")
+    public static <T extends Enum<T>> ImmutableList<String> getThriftDocumentation(Enum<T> enumConstant)
+    {
+        try {
+            Field f = enumConstant.getDeclaringClass().getField(enumConstant.name());
+            return getThriftDocumentation(f);
+        } catch (ReflectiveOperationException e) {
+            // ignore
+        }
+        return ImmutableList.<String>of();
     }
 
     private <T> ThriftStructMetadata<T> extractThriftStructMetadata(Class<T> structClass)

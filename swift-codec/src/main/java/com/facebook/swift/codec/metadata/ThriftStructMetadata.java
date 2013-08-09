@@ -37,6 +37,7 @@ public class ThriftStructMetadata<T>
     private final Class<?> builderClass;
     private final ThriftMethodInjection builderMethod;
 
+    private final ImmutableList<String> documentation;
     private final SortedMap<Short, ThriftFieldMetadata> fields;
     private final List<ThriftFieldMetadata> unsortedFields;
 
@@ -48,6 +49,7 @@ public class ThriftStructMetadata<T>
             Class<T> structClass,
             Class<?> builderClass,
             ThriftMethodInjection builderMethod,
+            List<String> documentation,
             List<ThriftFieldMetadata> fields,
             ThriftConstructorInjection constructor,
             List<ThriftMethodInjection> methodInjections)
@@ -58,6 +60,7 @@ public class ThriftStructMetadata<T>
         this.structClass = checkNotNull(structClass, "structClass is null");
         this.constructor = checkNotNull(constructor, "constructor is null");
         this.unsortedFields = ImmutableList.copyOf(fields);
+        this.documentation = ImmutableList.copyOf(checkNotNull(documentation, "documentation is null"));
         this.fields = ImmutableSortedMap.copyOf(uniqueIndex(checkNotNull(fields, "fields is null"), new Function<ThriftFieldMetadata, Short>()
         {
             @Override
@@ -92,6 +95,11 @@ public class ThriftStructMetadata<T>
     public ThriftFieldMetadata getField(int id)
     {
         return fields.get((short) id);
+    }
+
+    public ImmutableList<String> getDocumentation()
+    {
+        return documentation;
     }
 
     public Collection<ThriftFieldMetadata> getFields()

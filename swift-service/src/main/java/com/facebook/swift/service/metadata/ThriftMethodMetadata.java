@@ -50,6 +50,7 @@ public class ThriftMethodMetadata
     private final List<ThriftFieldMetadata> parameters;
     private final Method method;
     private final ImmutableMap<Short, ThriftType> exceptions;
+    private final ImmutableList<String> documentation;
     private final boolean oneway;
 
     public ThriftMethodMetadata(String serviceName, Method method, ThriftCatalog catalog)
@@ -72,6 +73,7 @@ public class ThriftMethodMetadata
         }
         this.qualifiedName = serviceName + "." + name;
 
+        documentation = ThriftCatalog.getThriftDocumentation(method);
         returnType = catalog.getThriftType(method.getGenericReturnType());
 
         ImmutableList.Builder<ThriftFieldMetadata> builder = ImmutableList.builder();
@@ -146,6 +148,11 @@ public class ThriftMethodMetadata
     public ThriftType getException(short id)
     {
         return exceptions.get(id);
+    }
+
+    public ImmutableList<String> getDocumentation()
+    {
+        return documentation;
     }
 
     public Method getMethod()
