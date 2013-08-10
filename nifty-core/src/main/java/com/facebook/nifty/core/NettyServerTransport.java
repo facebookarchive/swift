@@ -16,6 +16,7 @@
 package com.facebook.nifty.core;
 
 import com.google.common.primitives.Ints;
+
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
@@ -41,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -140,8 +142,15 @@ public class NettyServerTransport implements ExternalResourceReleasable
         bootstrap = new ServerBootstrap(serverChannelFactory);
         bootstrap.setOptions(nettyServerConfig.getBootstrapOptions());
         bootstrap.setPipelineFactory(pipelineFactory);
-        log.info("starting transport {}:{}", def.getName(), port);
         serverChannel = bootstrap.bind(new InetSocketAddress(port));
+        SocketAddress actualSocket = serverChannel.getLocalAddress();
+        if (actualSocket instanceof InetSocketAddress) {
+            int actualPort = ((InetSocketAddress) actualSocket).getPort();
+            log.info("started transport {}:{} (:{})", def.getName(), actualPort, port);
+        }
+        else {
+            log.info("started transport {}:{}", def.getName(), port);
+        }
     }
 
     public void stop()
