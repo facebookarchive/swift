@@ -34,6 +34,7 @@
     <module>swift-annotations</module>
     <module>swift-codec</module>
     <module>swift-idl-parser</module>
+    <module>swift-javadoc</module>
     <module>swift-service</module>
     <module>swift-generator</module>
     <module>swift-generator-cli</module>

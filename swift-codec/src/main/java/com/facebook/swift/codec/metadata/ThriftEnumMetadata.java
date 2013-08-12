@@ -17,10 +17,12 @@ package com.facebook.swift.codec.metadata;
 
 import com.facebook.swift.codec.ThriftEnumValue;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.List;
 import java.util.Map;
 
 import javax.annotation.concurrent.Immutable;
@@ -34,6 +36,8 @@ public class ThriftEnumMetadata<T extends Enum<T>>
     private final Map<Integer, T> byEnumValue;
     private final Map<T, Integer> byEnumConstant;
     private final String enumName;
+    private final ImmutableList<String> documentation;
+    private final ImmutableMap<T, ImmutableList<String>> elementDocs;
 
     public ThriftEnumMetadata(
             String enumName,
@@ -74,6 +78,7 @@ public class ThriftEnumMetadata<T extends Enum<T>>
             }
         }
 
+        ImmutableMap.Builder<T, ImmutableList<String>> elementDocs = ImmutableMap.builder();
         if (enumValueMethod != null) {
             ImmutableMap.Builder<Integer, T> byEnumValue = ImmutableMap.builder();
             ImmutableMap.Builder<T, Integer> byEnumConstant = ImmutableMap.builder();
@@ -94,6 +99,7 @@ public class ThriftEnumMetadata<T extends Enum<T>>
 
                 byEnumValue.put(value, enumConstant);
                 byEnumConstant.put(enumConstant, value);
+                elementDocs.put(enumConstant, ThriftCatalog.getThriftDocumentation(enumConstant));
             }
             this.byEnumValue = byEnumValue.build();
             this.byEnumConstant = byEnumConstant.build();
@@ -101,7 +107,12 @@ public class ThriftEnumMetadata<T extends Enum<T>>
         else {
             byEnumValue = null;
             byEnumConstant = null;
+            for (T enumConstant : enumClass.getEnumConstants()) {
+                elementDocs.put(enumConstant, ThriftCatalog.getThriftDocumentation(enumConstant));
+            }
         }
+        this.elementDocs = elementDocs.build();
+        this.documentation = ThriftCatalog.getThriftDocumentation(enumClass);
     }
 
     public String getEnumName()
@@ -127,6 +138,16 @@ public class ThriftEnumMetadata<T extends Enum<T>>
     public Map<T, Integer> getByEnumConstant()
     {
         return byEnumConstant;
+    }
+
+    public ImmutableList<String> getDocumentation()
+    {
+        return documentation;
+    }
+
+    public Map<T, ImmutableList<String>> getElementsDocumentation()
+    {
+        return elementDocs;
     }
 
     @Override

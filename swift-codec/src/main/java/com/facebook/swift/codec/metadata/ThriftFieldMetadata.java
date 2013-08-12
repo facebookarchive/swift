@@ -37,6 +37,7 @@ public class ThriftFieldMetadata
     private final List<ThriftInjection> injections;
     private final ThriftExtraction extraction;
     private final TypeCoercion coercion;
+    private final ImmutableList<String> documentation;
 
     public ThriftFieldMetadata(
             short id,
@@ -59,6 +60,17 @@ public class ThriftFieldMetadata
         this.injections = ImmutableList.copyOf(injections);
         this.extraction = extraction;
         this.coercion = coercion;
+
+        if (extraction instanceof ThriftFieldExtractor) {
+            ThriftFieldExtractor e = (ThriftFieldExtractor)extraction;
+            this.documentation = ThriftCatalog.getThriftDocumentation(e.getField());
+        } else if (extraction instanceof ThriftMethodExtractor) {
+            ThriftMethodExtractor e = (ThriftMethodExtractor)extraction;
+            this.documentation = ThriftCatalog.getThriftDocumentation(e.getMethod());
+        } else {
+            // no extraction = no documentation
+            this.documentation = ImmutableList.of();
+        }
     }
 
     public short getId()
@@ -109,6 +121,11 @@ public class ThriftFieldMetadata
     public TypeCoercion getCoercion()
     {
         return coercion;
+    }
+
+    public ImmutableList<String> getDocumentation()
+    {
+        return documentation;
     }
 
     @Override
