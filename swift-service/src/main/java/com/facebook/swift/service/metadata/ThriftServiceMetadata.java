@@ -25,9 +25,7 @@ import com.google.common.collect.Iterables;
 
 import javax.annotation.concurrent.Immutable;
 import java.lang.reflect.Method;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import static com.facebook.swift.codec.metadata.ReflectionHelper.findAnnotatedMethods;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getEffectiveClassAnnotations;
@@ -56,18 +54,55 @@ public class ThriftServiceMetadata
         documentation = ThriftCatalog.getThriftDocumentation(serviceClass);
 
         ImmutableMap.Builder<String, ThriftMethodMetadata> builder = ImmutableMap.builder();
-        ImmutableMap.Builder<String, ThriftMethodMetadata> declaredBuilder = ImmutableMap.builder();
+        ImmutableMap.Builder<String, ThriftMethodMetadata> declaredUnsortedBuilder = ImmutableMap.builder();
+        ArrayList<AbstractMap.SimpleEntry<String, Integer>> namesWithOrders = new ArrayList<>();
         for (Method method : findAnnotatedMethods(serviceClass, ThriftMethod.class)) {
             if (method.isAnnotationPresent(ThriftMethod.class)) {
                 ThriftMethodMetadata methodMetadata = new ThriftMethodMetadata(name, method, catalog);
                 builder.put(methodMetadata.getName(), methodMetadata);
                 if (method.getDeclaringClass().equals(serviceClass)) {
-                    declaredBuilder.put(methodMetadata.getName(), methodMetadata);
+                    declaredUnsortedBuilder.put(methodMetadata.getName(), methodMetadata);
+                    namesWithOrders.add(new AbstractMap.SimpleEntry<>(methodMetadata.getName(), ThriftCatalog.getMethodOrder(method)));
                 }
             }
         }
         methods = builder.build();
-        declaredMethods = declaredBuilder.build();
+
+        // sort declared methods by order (if specified by @ThriftOrder) or lexicographically
+        Collections.sort(namesWithOrders, new Comparator<AbstractMap.SimpleEntry<String, Integer>>()
+        {
+            @Override
+            public int compare(AbstractMap.SimpleEntry<String, Integer> o1, AbstractMap.SimpleEntry<String, Integer> o2)
+            {
+                Integer order1 = o1.getValue();
+                Integer order2 = o2.getValue();
+                if (order1 != null && order2 != null) {
+                    // if both are @ThriftOrder'ed, the lesser goes first
+                    if (order1.equals(order2)) {
+                        // same order, compare lexicographically
+                        return o1.getKey().compareTo(o2.getKey());
+                    }
+                    return order1 - order2;
+                } else if (order1 != null && order2 == null) {
+                    // ordered goes before unordered
+                    return -1;
+                } else if (order1 == null && order2 != null) {
+                    // same
+                    return 1;
+                } else {
+                    // both unordered, compare lexicographically
+                    return o1.getKey().compareTo(o2.getKey());
+                }
+            }
+        });
+        ImmutableMap<String, ThriftMethodMetadata> declaredUnsorted = declaredUnsortedBuilder.build();
+        ImmutableMap.Builder<String, ThriftMethodMetadata> declaredSortedBuilder = ImmutableMap.builder();
+
+        for (AbstractMap.SimpleEntry<String, Integer> e : namesWithOrders) {
+            String methodName = e.getKey();
+            declaredSortedBuilder.put(methodName, declaredUnsorted.get(methodName));
+        }
+        declaredMethods = declaredSortedBuilder.build();
 
         ThriftServiceMetadata parentService = null;
         for (Class<?> parent : serviceClass.getInterfaces()) {
