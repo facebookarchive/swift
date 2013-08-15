@@ -16,11 +16,11 @@
 package com.facebook.nifty.processor;
 
 import com.facebook.nifty.core.RequestContext;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocol;
 
 public interface NiftyProcessor
 {
-    public boolean process(TProtocol in, TProtocol out, RequestContext requestContext)
-            throws TException;
+    public ListenableFuture<Boolean> process(TProtocol in, TProtocol out, RequestContext requestContext) throws TException;
 }

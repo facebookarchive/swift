@@ -19,6 +19,9 @@ import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.facebook.nifty.duplex.TProtocolPair;
 import com.facebook.nifty.duplex.TTransportPair;
 import com.facebook.nifty.processor.NiftyProcessorFactory;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocol;
 import org.jboss.netty.channel.ChannelHandlerContext;
@@ -47,8 +50,6 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class NiftyDispatcher extends SimpleChannelUpstreamHandler
 {
-    private static final Logger log = LoggerFactory.getLogger(NiftyDispatcher.class);
-
     private final NiftyProcessorFactory processorFactory;
     private final Executor exe;
     private final int queuedResponseLimit;
@@ -122,35 +123,66 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
             @Override
             public void run()
             {
-                TNiftyTransport messageTransport = new TNiftyTransport(ctx.getChannel(), message);
+                final TNiftyTransport messageTransport = new TNiftyTransport(ctx.getChannel(), message);
 
                 TTransportPair transportPair = TTransportPair.fromSingleTransport(messageTransport);
                 TProtocolPair protocolPair = duplexProtocolFactory.getProtocolPair(transportPair);
                 TProtocol inProtocol = protocolPair.getInputProtocol();
                 TProtocol outProtocol = protocolPair.getOutputProtocol();
 
+                ListenableFuture<Boolean> processFuture;
+
                 try {
                     try {
                         RequestContext requestContext = new RequestContext(ctx.getChannel().getRemoteAddress());
                         RequestContext.setCurrentContext(requestContext);
-                        processorFactory.getProcessor(messageTransport).process(inProtocol, outProtocol, requestContext);
+                        processFuture = processorFactory.getProcessor(messageTransport).process(inProtocol, outProtocol, requestContext);
                     }
                     finally {
+                        // RequestContext does NOT stay set while we are waiting for the process
+                        // future to complete. This is by design because we'll might move on to the
+                        // next request using this thread before this one is completed. If you need
+                        // the context throughout an asynchronous handler, you need to read and store
+                        // it before returning a future.
                         RequestContext.clearCurrentContext();
                     }
 
-                    // Only write response if the client is still there
-                    if (ctx.getChannel().isConnected()) {
-                        ThriftMessage response = message.getMessageFactory().create(messageTransport.getOutputBuffer());
-                        writeResponse(ctx, response, requestSequenceId, DispatcherContext.isResponseOrderingRequired(ctx));
-                    }
+                    Futures.addCallback(
+                            processFuture,
+                            new FutureCallback<Boolean>()
+                            {
+                                @Override
+                                public void onSuccess(Boolean result)
+                                {
+                                    try {
+                                        // Only write response if the client is still there
+                                        if (ctx.getChannel().isConnected()) {
+                                            ThriftMessage response = message.getMessageFactory().create(messageTransport.getOutputBuffer());
+                                            writeResponse(ctx, response, requestSequenceId, DispatcherContext.  isResponseOrderingRequired(ctx));
+                                        }
+                                    }
+                                    catch (Throwable t) {
+                                        onDispatchException(t);
+                                    }
+                                }
+
+                                @Override
+                                public void onFailure(Throwable t)
+                                {
+                                    onDispatchException(t);
+                                }
+                            });
                 }
                 catch (TException e) {
-                    Channels.fireExceptionCaught(ctx, e);
-                    closeChannel(ctx);
+                    onDispatchException(e);
                 }
             }
 
+            private void onDispatchException(Throwable t)
+            {
+                Channels.fireExceptionCaught(ctx, t);
+                closeChannel(ctx);
+            }
         });
     }
 

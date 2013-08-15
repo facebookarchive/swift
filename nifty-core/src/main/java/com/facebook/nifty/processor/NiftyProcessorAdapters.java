@@ -16,11 +16,18 @@
 package com.facebook.nifty.processor;
 
 import com.facebook.nifty.core.RequestContext;
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.CheckedFuture;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.TProcessorFactory;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TTransport;
+
+import javax.annotation.Nullable;
+import java.util.concurrent.ExecutionException;
 
 public class NiftyProcessorAdapters
 {
@@ -36,9 +43,9 @@ public class NiftyProcessorAdapters
         return new NiftyProcessor()
         {
             @Override
-            public boolean process(TProtocol in, TProtocol out, RequestContext requestContext) throws TException
+            public ListenableFuture<Boolean> process(TProtocol in, TProtocol out, RequestContext requestContext) throws TException
             {
-                return standardThriftProcessor.process(in, out);
+                return Futures.immediateFuture(standardThriftProcessor.process(in, out));
             }
         };
     }
@@ -91,7 +98,14 @@ public class NiftyProcessorAdapters
             @Override
             public boolean process(TProtocol in, TProtocol out) throws TException
             {
-                return niftyProcessor.process(in, out, null);
+                try {
+                    return niftyProcessor.process(in, out, null).get();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new TException(e);
+                } catch (ExecutionException e) {
+                    throw new TException(e);
+                }
             }
         };
     }
