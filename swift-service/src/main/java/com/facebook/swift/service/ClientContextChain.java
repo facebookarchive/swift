@@ -57,10 +57,10 @@ public class ClientContextChain
         }
     }
 
-    public void preReadException(Exception e)
+    public void preReadException(Throwable t)
     {
         for (int i = 0; i < handlers.size(); i++) {
-            handlers.get(i).preReadException(contexts.get(i), methodName, e);
+            handlers.get(i).preReadException(contexts.get(i), methodName, t);
         }
     }
 
@@ -71,10 +71,10 @@ public class ClientContextChain
         }
     }
 
-    public void postReadException(Exception e)
+    public void postReadException(Throwable t)
     {
         for (int i = 0; i < handlers.size(); i++) {
-            handlers.get(i).postReadException(contexts.get(i), methodName, e);
+            handlers.get(i).postReadException(contexts.get(i), methodName, t);
         }
     }
 

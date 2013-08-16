@@ -79,7 +79,7 @@ public class ThriftClientStatsHandler extends ThriftClientEventHandler
     }
 
     @Override
-    public void preReadException(Object context, String methodName, Exception e)
+    public void preReadException(Object context, String methodName, Throwable t)
     {
         preRead(context, methodName);
         ((PerCallMethodStats)context).success = false;
@@ -92,7 +92,7 @@ public class ThriftClientStatsHandler extends ThriftClientEventHandler
     }
 
     @Override
-    public void postReadException(Object context, String methodName, Exception e)
+    public void postReadException(Object context, String methodName, Throwable t)
     {
         postRead(context, methodName, null);
         ((PerCallMethodStats)context).success = false;
