@@ -132,15 +132,15 @@ public class ThriftMethodProcessor
     {
         String methodName = serviceName + "." + name;
         // read args
-        contextChain.preRead(methodName);
+        contextChain.preRead();
         Object[] args = readArguments(in);
-        contextChain.postRead(methodName, args);
+        contextChain.postRead(args);
 
         // invoke method
         Object result;
         try {
             result = invokeMethod(args);
-            contextChain.preWrite(methodName, result);
+            contextChain.preWrite(result);
 
             if (!oneway) {
                 // write success reply
@@ -151,11 +151,11 @@ public class ThriftMethodProcessor
                               (short) 0,
                               successCodec,
                               result);
-                contextChain.postWrite(methodName, result);
+                contextChain.postWrite(result);
             }
         }
         catch (Exception e) {
-            contextChain.preWriteException(methodName, e);
+            contextChain.preWriteException(e);
             if (!oneway) {
                 ExceptionProcessor exceptionCodec = exceptionCodecs.get(e.getClass());
                 if (exceptionCodec != null) {
@@ -167,7 +167,7 @@ public class ThriftMethodProcessor
                                   exceptionCodec.getId(),
                                   exceptionCodec.getCodec(),
                                   e);
-                    contextChain.postWriteException(methodName, e);
+                    contextChain.postWriteException(e);
                 } else {
                     // unexpected exception
                     TApplicationException applicationException =
@@ -182,7 +182,7 @@ public class ThriftMethodProcessor
                     out.writeMessageEnd();
                     out.getTransport().flush();
 
-                    contextChain.postWriteException(methodName, applicationException);
+                    contextChain.postWriteException(applicationException);
                 }
             }
         }

@@ -17,7 +17,7 @@ package com.facebook.swift.service;
 
 import com.facebook.nifty.core.RequestContext;
 
-public class ThriftEventHandler
+public abstract class ThriftEventHandler
 {
     public Object getContext(String methodName, RequestContext requestContext)
     {

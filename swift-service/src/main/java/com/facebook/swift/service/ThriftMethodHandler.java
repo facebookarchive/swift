@@ -147,12 +147,12 @@ public class ThriftMethodHandler
         Object results = null;
 
         // write request
-        contextChain.preWrite(getQualifiedName(), args);
+        contextChain.preWrite(args);
         outputTransport.resetOutputBuffer();
         writeArguments(outputProtocol, sequenceId, args);
         // Don't need to copy the output buffer for sync case
         ChannelBuffer requestBuffer = outputTransport.getOutputBuffer();
-        contextChain.postWrite(getQualifiedName(), args);
+        contextChain.postWrite(args);
 
         if (!this.oneway) {
             ChannelBuffer responseBuffer;
@@ -160,19 +160,19 @@ public class ThriftMethodHandler
             try {
                 responseBuffer = SyncClientHelpers.sendSynchronousTwoWayMessage(channel, requestBuffer);
             } catch (Exception e) {
-                contextChain.preReadException(getQualifiedName(), e);
+                contextChain.preReadException(e);
                 throw e;
             }
 
             // read results
-            contextChain.preRead(getQualifiedName());
+            contextChain.preRead();
             try {
                 inputTransport.setInputBuffer(responseBuffer);
                 waitForResponse(inputProtocol, sequenceId);
                 results = readResponse(inputProtocol);
-                contextChain.postRead(getQualifiedName(), results);
+                contextChain.postRead(results);
             } catch (Exception e) {
-                contextChain.postReadException(getQualifiedName(), e);
+                contextChain.postReadException(e);
                 throw e;
             }
         } else {
@@ -199,11 +199,11 @@ public class ThriftMethodHandler
     {
         final SettableFuture<Object> future = SettableFuture.create();
 
-        contextChain.preWrite(getQualifiedName(), args);
+        contextChain.preWrite(args);
         outputTransport.resetOutputBuffer();
         writeArguments(outputProtocol, sequenceId, args);
         ChannelBuffer requestBuffer = outputTransport.getOutputBuffer().copy();
-        contextChain.postWrite(getQualifiedName(), args);
+        contextChain.postWrite(args);
 
         // send message and setup listener to handle the response
         channel.sendAsynchronousRequest(requestBuffer, false, new NiftyClientChannel.Listener() {
@@ -213,21 +213,21 @@ public class ThriftMethodHandler
             @Override
             public void onResponseReceived(ChannelBuffer message) {
                 try {
-                    contextChain.preRead(getQualifiedName());
+                    contextChain.preRead();
                     inputTransport.setInputBuffer(message);
                     waitForResponse(inputProtocol, sequenceId);
                     Object results = readResponse(inputProtocol);
-                    contextChain.postRead(getQualifiedName(), results);
+                    contextChain.postRead(results);
                     future.set(results);
                 } catch (Exception e) {
-                    contextChain.postReadException(getQualifiedName(), e);
+                    contextChain.postReadException(e);
                     future.setException(e);
                 }
             }
 
             @Override
             public void onChannelError(TException e) {
-                contextChain.preReadException(getQualifiedName(), e);
+                contextChain.preReadException(e);
                 future.setException(e);
             }
         });

@@ -15,7 +15,7 @@
  */
 package com.facebook.swift.service;
 
-public class ThriftClientEventHandler
+public abstract class ThriftClientEventHandler
 {
     public Object getContext(String methodName)
     {
