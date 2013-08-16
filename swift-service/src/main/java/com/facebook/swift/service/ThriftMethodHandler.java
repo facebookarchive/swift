@@ -28,8 +28,9 @@ import com.facebook.swift.codec.metadata.ThriftType;
 import com.facebook.swift.service.metadata.ThriftMethodMetadata;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TMessage;
@@ -38,9 +39,11 @@ import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.weakref.jmx.Managed;
 
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
 
 import static org.apache.thrift.TApplicationException.BAD_SEQUENCE_ID;
 import static org.apache.thrift.TApplicationException.INVALID_MESSAGE_TYPE;
@@ -59,6 +62,7 @@ public class ThriftMethodHandler
     private final ThriftCodec<Object> successCodec;
     private final Map<Short, ThriftCodec<Object>> exceptionCodecs;
     private final boolean oneway;
+    private static final Executor SAME_THREAD_EXECUTOR = MoreExecutors.sameThreadExecutor();
 
     private final boolean invokeAsynchronously;
 
@@ -117,10 +121,6 @@ public class ThriftMethodHandler
             final Object... args)
             throws Exception
     {
-        if (channel.hasError()) {
-            throw new TTransportException(channel.getError());
-        }
-
         if (invokeAsynchronously)
         {
             // This method declares a Future return value: run it asynchronously
@@ -128,8 +128,13 @@ public class ThriftMethodHandler
         }
         else
         {
-            // This method declares an immediate return value: run it synchronously
-            return synchronousInvoke(channel, inputTransport, outputTransport, inputProtocol, outputProtocol, sequenceId, contextChain, args);
+            try {
+                // This method declares an immediate return value: run it synchronously
+                return synchronousInvoke(channel, inputTransport, outputTransport, inputProtocol, outputProtocol, sequenceId, contextChain, args);
+            }
+            finally {
+                contextChain.done();
+            }
         }
     }
 
@@ -197,7 +202,7 @@ public class ThriftMethodHandler
             final Object[] args)
         throws Exception
     {
-        final SettableFuture<Object> future = SettableFuture.create();
+        final AsyncMethodCallFuture<Object> future = AsyncMethodCallFuture.create(contextChain);
 
         contextChain.preWrite(args);
         outputTransport.resetOutputBuffer();
@@ -219,7 +224,8 @@ public class ThriftMethodHandler
                     Object results = readResponse(inputProtocol);
                     contextChain.postRead(results);
                     future.set(results);
-                } catch (Exception e) {
+                }
+                catch (Exception e) {
                     contextChain.postReadException(e);
                     future.setException(e);
                 }
@@ -345,6 +351,42 @@ public class ThriftMethodHandler
         public ThriftCodec<Object> getCodec()
         {
             return codec;
+        }
+    }
+
+    private static final class AsyncMethodCallFuture<T> extends AbstractFuture<T>
+    {
+        private final ClientContextChain contextChain;
+
+        public static <T> AsyncMethodCallFuture<T> create(ClientContextChain contextChain)
+        {
+            return new AsyncMethodCallFuture<>(contextChain);
+        }
+
+        private AsyncMethodCallFuture(ClientContextChain contextChain) {
+            this.contextChain = contextChain;
+        }
+
+        @Override
+        public boolean set(@Nullable T value)
+        {
+            contextChain.done();
+            return super.set(value);
+        }
+
+        @Override
+        public boolean setException(Throwable throwable)
+        {
+            contextChain.done();
+            return super.setException(throwable);
+        }
+
+        @Override
+        public boolean cancel(boolean mayInterruptIfRunning)
+        {
+            // Async call futures represent requests running on some other service,
+            // there is no way to cancel the request once it has been sent.
+            return false;
         }
     }
 }
