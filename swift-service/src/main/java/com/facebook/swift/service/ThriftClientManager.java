@@ -376,11 +376,12 @@ public class ThriftClientManager implements Closeable
 
             ThriftMethodHandler methodHandler = methods.get(method);
 
+            String methodName = methodHandler.getQualifiedName();
             try {
                 if (methodHandler == null) {
                     throw new TApplicationException(UNKNOWN_METHOD, "Unknown method : '" + method + "'");
                 }
-                ClientContextChain context = new ClientContextChain(eventHandlers, methodHandler.getQualifiedName());
+                ClientContextChain context = new ClientContextChain(eventHandlers, methodName);
                 try {
                     return methodHandler.invoke(channel,
                                                 inputTransport,
@@ -390,8 +391,9 @@ public class ThriftClientManager implements Closeable
                                                 sequenceId.getAndIncrement(),
                                                 context,
                                                 args);
-                } finally {
-                    context.done(methodHandler.getQualifiedName());
+                }
+                finally {
+                    context.done();
                 }
             }
             catch (TException e) {

@@ -125,8 +125,9 @@ public class ThriftServiceProcessor implements NiftyProcessor
             ContextChain context = new ContextChain(eventHandlers, qualifiedMethodName, requestContext);
             try {
                 method.process(in, out, sequenceId, context);
-            } finally {
-                context.done(qualifiedMethodName);
+            }
+            finally {
+                context.done();
             }
 
             return true;

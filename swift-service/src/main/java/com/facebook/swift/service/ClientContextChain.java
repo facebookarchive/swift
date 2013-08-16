@@ -23,60 +23,62 @@ import java.util.List;
 public class ClientContextChain
 {
     private final List<? extends ThriftClientEventHandler> handlers;
+    private final String methodName;
     private final List<Object> contexts;
 
     ClientContextChain(List<? extends ThriftClientEventHandler> handlers, String methodName)
     {
         this.handlers = handlers;
+        this.methodName = methodName;
         this.contexts = new ArrayList<>();
         for (ThriftClientEventHandler h: this.handlers) {
             this.contexts.add(h.getContext(methodName));
         }
     }
 
-    public void preWrite(String methodName, Object[] args)
+    public void preWrite(Object[] args)
     {
         for (int i = 0; i < handlers.size(); i++) {
             handlers.get(i).preWrite(contexts.get(i), methodName, args);
         }
     }
 
-    public void postWrite(String methodName, Object[] args)
+    public void postWrite(Object[] args)
     {
         for (int i = 0; i < handlers.size(); i++) {
             handlers.get(i).postWrite(contexts.get(i), methodName, args);
         }
     }
 
-    public void preRead(String methodName)
+    public void preRead()
     {
         for (int i = 0; i < handlers.size(); i++) {
             handlers.get(i).preRead(contexts.get(i), methodName);
         }
     }
 
-    public void preReadException(String methodName, Exception e)
+    public void preReadException(Exception e)
     {
         for (int i = 0; i < handlers.size(); i++) {
             handlers.get(i).preReadException(contexts.get(i), methodName, e);
         }
     }
 
-    public void postRead(String methodName, Object result)
+    public void postRead(Object result)
     {
         for (int i = 0; i < handlers.size(); i++) {
             handlers.get(i).postRead(contexts.get(i), methodName, result);
         }
     }
 
-    public void postReadException(String methodName, Exception e)
+    public void postReadException(Exception e)
     {
         for (int i = 0; i < handlers.size(); i++) {
             handlers.get(i).postReadException(contexts.get(i), methodName, e);
         }
     }
 
-    public void done(String methodName)
+    public void done()
     {
         for (int i = 0; i < handlers.size(); i++) {
             handlers.get(i).done(contexts.get(i), methodName);

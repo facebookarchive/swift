@@ -47,17 +47,20 @@ public class ThriftClientStatsHandler extends ThriftClientEventHandler
         return stats;
     }
 
+    @Override
     public Object getContext(String methodName)
     {
         stats.putIfAbsent(methodName, new ThriftMethodStats());
         return new PerCallMethodStats();
     }
 
+    @Override
     public void preWrite(Object context, String methodName, Object[] args)
     {
         ((PerCallMethodStats)context).preWriteTime = nanoTime();
     }
 
+    @Override
     public void postWrite(Object context, String methodName, Object[] args)
     {
         long now = nanoTime();
@@ -66,6 +69,7 @@ public class ThriftClientStatsHandler extends ThriftClientEventHandler
         stats.get(methodName).addWriteTime(nanosBetween(ctx.preWriteTime, now));
     }
 
+    @Override
     public void preRead(Object context, String methodName)
     {
         long now = nanoTime();
@@ -74,23 +78,27 @@ public class ThriftClientStatsHandler extends ThriftClientEventHandler
         stats.get(methodName).addInvokeTime(nanosBetween(ctx.postWriteTime, now));
     }
 
+    @Override
     public void preReadException(Object context, String methodName, Exception e)
     {
         preRead(context, methodName);
         ((PerCallMethodStats)context).success = false;
     }
 
+    @Override
     public void postRead(Object context, String methodName, Object result)
     {
         stats.get(methodName).addReadTime(nanosSince(((PerCallMethodStats) context).preReadTime));
     }
 
+    @Override
     public void postReadException(Object context, String methodName, Exception e)
     {
         postRead(context, methodName, null);
         ((PerCallMethodStats)context).success = false;
     }
 
+    @Override
     public void done(Object context, String methodName)
     {
         PerCallMethodStats ctx = (PerCallMethodStats)context;
