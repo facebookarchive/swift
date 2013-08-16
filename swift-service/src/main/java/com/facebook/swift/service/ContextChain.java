@@ -57,10 +57,10 @@ public class ContextChain
         }
     }
 
-    public void preWriteException(Exception e)
+    public void preWriteException(Throwable t)
     {
         for (int i = 0; i < handlers.size(); i++) {
-            handlers.get(i).preWriteException(contexts.get(i), methodName, e);
+            handlers.get(i).preWriteException(contexts.get(i), methodName, t);
         }
     }
 
@@ -71,10 +71,10 @@ public class ContextChain
         }
     }
 
-    public void postWriteException(Exception e)
+    public void postWriteException(Throwable t)
     {
         for (int i = 0; i < handlers.size(); i++) {
-            handlers.get(i).postWriteException(contexts.get(i), methodName, e);
+            handlers.get(i).postWriteException(contexts.get(i), methodName, t);
         }
     }
 

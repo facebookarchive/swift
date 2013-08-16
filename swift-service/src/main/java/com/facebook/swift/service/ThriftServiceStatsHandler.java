@@ -80,7 +80,7 @@ public class ThriftServiceStatsHandler extends ThriftEventHandler
     }
 
     @Override
-    public void preWriteException(Object context, String methodName, Exception e)
+    public void preWriteException(Object context, String methodName, Throwable t)
     {
         preWrite(context, methodName, null);
         ((PerCallMethodStats)context).success = false;
@@ -93,7 +93,7 @@ public class ThriftServiceStatsHandler extends ThriftEventHandler
     }
 
     @Override
-    public void postWriteException(Object context, String methodName, Exception e)
+    public void postWriteException(Object context, String methodName, Throwable t)
     {
         postWrite(context, methodName, null);
     }

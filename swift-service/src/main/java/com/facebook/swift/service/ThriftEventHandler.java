@@ -27,8 +27,8 @@ public abstract class ThriftEventHandler
     public void preRead(Object context, String methodName) {}
     public void postRead(Object context, String methodName, Object[] args) {}
     public void preWrite(Object context, String methodName, Object result) {}
-    public void preWriteException(Object context, String methodName, Exception e) {}
+    public void preWriteException(Object context, String methodName, Throwable t) {}
     public void postWrite(Object context, String methodName, Object result) {}
-    public void postWriteException(Object context, String methodName, Exception e) {}
+    public void postWriteException(Object context, String methodName, Throwable t) {}
     public void done(Object context, String methodName) {}
 }
