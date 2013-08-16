@@ -376,25 +376,24 @@ public class ThriftClientManager implements Closeable
 
             ThriftMethodHandler methodHandler = methods.get(method);
 
-            String methodName = methodHandler.getQualifiedName();
             try {
                 if (methodHandler == null) {
                     throw new TApplicationException(UNKNOWN_METHOD, "Unknown method : '" + method + "'");
                 }
-                ClientContextChain context = new ClientContextChain(eventHandlers, methodName);
-                try {
-                    return methodHandler.invoke(channel,
-                                                inputTransport,
-                                                outputTransport,
-                                                inputProtocol,
-                                                outputProtocol,
-                                                sequenceId.getAndIncrement(),
-                                                context,
-                                                args);
+
+                if (channel.hasError()) {
+                    throw new TTransportException(channel.getError());
                 }
-                finally {
-                    context.done();
-                }
+
+                ClientContextChain context = new ClientContextChain(eventHandlers, methodHandler.getQualifiedName());
+                return methodHandler.invoke(channel,
+                                            inputTransport,
+                                            outputTransport,
+                                            inputProtocol,
+                                            outputProtocol,
+                                            sequenceId.getAndIncrement(),
+                                            context,
+                                            args);
             }
             catch (TException e) {
                 Class<? extends TException> thrownType = e.getClass();
