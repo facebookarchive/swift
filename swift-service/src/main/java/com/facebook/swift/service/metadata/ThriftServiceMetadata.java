@@ -18,16 +18,14 @@ package com.facebook.swift.service.metadata;
 import com.facebook.swift.codec.metadata.ThriftCatalog;
 import com.facebook.swift.service.ThriftMethod;
 import com.facebook.swift.service.ThriftService;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
+import com.google.common.collect.*;
 
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import java.lang.reflect.Method;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import static com.facebook.swift.codec.metadata.ReflectionHelper.findAnnotatedMethods;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getEffectiveClassAnnotations;
@@ -56,18 +54,32 @@ public class ThriftServiceMetadata
         documentation = ThriftCatalog.getThriftDocumentation(serviceClass);
 
         ImmutableMap.Builder<String, ThriftMethodMetadata> builder = ImmutableMap.builder();
-        ImmutableMap.Builder<String, ThriftMethodMetadata> declaredBuilder = ImmutableMap.builder();
+
+        Function<ThriftMethodMetadata, String> methodMetadataNamer = new Function<ThriftMethodMetadata, String>() {
+            @Nullable
+            @Override
+            public String apply(@Nullable ThriftMethodMetadata methodMetadata)
+            {
+                return methodMetadata.getName();
+            }
+        };
+        // A multimap from order to method name. Sorted by key (order), with nulls (i.e. no order) last.
+        // Within each key, values (ThriftMethodMetadata) are sorted by method name.
+        TreeMultimap<Integer, ThriftMethodMetadata> declaredMethods = TreeMultimap.create(
+                Ordering.natural().nullsLast(),
+                Ordering.natural().onResultOf(methodMetadataNamer));
         for (Method method : findAnnotatedMethods(serviceClass, ThriftMethod.class)) {
             if (method.isAnnotationPresent(ThriftMethod.class)) {
                 ThriftMethodMetadata methodMetadata = new ThriftMethodMetadata(name, method, catalog);
                 builder.put(methodMetadata.getName(), methodMetadata);
                 if (method.getDeclaringClass().equals(serviceClass)) {
-                    declaredBuilder.put(methodMetadata.getName(), methodMetadata);
+                    declaredMethods.put(ThriftCatalog.getMethodOrder(method), methodMetadata);
                 }
             }
         }
         methods = builder.build();
-        declaredMethods = declaredBuilder.build();
+        // create a name->metadata map keeping the order
+        this.declaredMethods = Maps.uniqueIndex(declaredMethods.values(), methodMetadataNamer);
 
         ThriftServiceMetadata parentService = null;
         for (Class<?> parent : serviceClass.getInterfaces()) {

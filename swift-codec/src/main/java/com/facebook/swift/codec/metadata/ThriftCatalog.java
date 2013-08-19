@@ -16,6 +16,7 @@
 package com.facebook.swift.codec.metadata;
 
 import com.facebook.swift.codec.ThriftDocumentation;
+import com.facebook.swift.codec.ThriftOrder;
 import com.facebook.swift.codec.ThriftStruct;
 import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
 import com.facebook.swift.codec.internal.coercion.FromThrift;
@@ -437,6 +438,25 @@ public class ThriftCatalog
             // ignore
         }
         return ImmutableList.<String>of();
+    }
+
+    @SuppressWarnings("PMD.EmptyCatchBlock")
+    public static Integer getMethodOrder(Method method)
+    {
+        ThriftOrder order = method.getAnnotation(ThriftOrder.class);
+
+        if (order == null) {
+            try {
+                Class<?> swiftDocsClass = getSwiftMetaClassOf(method.getDeclaringClass());
+
+                order = swiftDocsClass.getDeclaredMethod(method.getName()).getAnnotation(ThriftOrder.class);
+            }
+            catch (ReflectiveOperationException e) {
+                // ignored
+            }
+        }
+
+        return order == null ? null : order.value();
     }
 
     private <T> ThriftStructMetadata<T> extractThriftStructMetadata(Class<T> structClass)

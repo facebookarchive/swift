@@ -122,13 +122,21 @@ public class JavaDocProcessor extends AbstractProcessor
         List<String> serviceDocumentation = getComment(typeElement);
         Map<String, FieldOrMethodDoc> documentation = new LinkedHashMap<>();
 
+        // offset auto-generated order numbers so they don't collide with hand-written ones
+        int orderCounter = 10000;
+        Map<String, Integer> orderMap = new LinkedHashMap<>();
         for (Element member : elementUtils.getAllMembers(typeElement)) {
-            if (member instanceof ExecutableElement &&
-                (isAnnotatedWith(member, "com.facebook.swift.service.ThriftMethod") ||
-                 isAnnotatedWith(member, "com.facebook.swift.codec.ThriftField"))) {
+            if (member instanceof ExecutableElement) {
+                boolean isMethod = isAnnotatedWith(member, "com.facebook.swift.service.ThriftMethod");
+                boolean isField = isAnnotatedWith(member, "com.facebook.swift.codec.ThriftField");
+                if (isMethod || isField) {
                     // service method or method accessor for a struct field
                     String methodName = member.getSimpleName().toString();
-                documentation.put(methodName, new FieldOrMethodDoc(FieldOrMethodDoc.FieldOrMethod.METHOD, getComment(member)));
+                    documentation.put(methodName, new FieldOrMethodDoc(FieldOrMethodDoc.FieldOrMethod.METHOD, getComment(member)));
+                    if (isMethod) {
+                        orderMap.put(methodName, orderCounter++);
+                    }
+                }
             } else if ((member instanceof VariableElement &&
                         isAnnotatedWith(member, "com.facebook.swift.codec.ThriftField")) ||
                        member.getKind() == ElementKind.ENUM_CONSTANT) {
@@ -146,6 +154,7 @@ public class JavaDocProcessor extends AbstractProcessor
             out.printf("package %s;%n", elementUtils.getPackageOf(typeElement).getQualifiedName());
             out.println();
             out.println("import com.facebook.swift.codec.ThriftDocumentation;");
+            out.println("import com.facebook.swift.codec.ThriftOrder;");
             out.println();
 
             printDoc(out, serviceDocumentation, 0);
@@ -159,6 +168,10 @@ public class JavaDocProcessor extends AbstractProcessor
 
                 printDoc(out, docs.getDoc(), 1);
                 if (docs.getFieldOrMethod() == FieldOrMethodDoc.FieldOrMethod.METHOD) {
+                    Integer order = orderMap.get(name);
+                    if (order != null) {
+                        out.printf("    @ThriftOrder(%d)%n", order);
+                    }
                     out.printf("    private void %s() {}%n", name);
                 } else if (docs.getFieldOrMethod() == FieldOrMethodDoc.FieldOrMethod.FIELD) {
                     out.printf("    private int %s;%n", name);
