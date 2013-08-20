@@ -42,12 +42,22 @@ public class Main
                 mapBuilder.put(key, value);
             }
         }
+        ImmutableMap.Builder<String, String> namespaceMapBuilder = ImmutableMap.builder();
+        if (cliConfig.namespaceMap != null) {
+            Iterator<String> iter = cliConfig.namespaceMap.iterator();
+            while (iter.hasNext()) {
+                String key = iter.next();
+                String value = iter.next();
+                namespaceMapBuilder.put(key, value);
+            }
+        }
 
         Swift2ThriftGeneratorConfig.Builder configBuilder = Swift2ThriftGeneratorConfig.builder()
                 .outputFile(cliConfig.outputFile)
                 .includeMap(mapBuilder.build())
                 .verbose(cliConfig.verbose)
-                .defaultPackage(cliConfig.defaultPackage);
+                .defaultPackage(cliConfig.defaultPackage)
+                .namespaceMap(namespaceMapBuilder.build());
 
         new Swift2ThriftGenerator(configBuilder.build()).parse(cliConfig.inputFiles);
     }

@@ -8,6 +8,8 @@ thriftfile(context) ::= <<
 <! ================================================================================== !>
 namespace java.swift <context.namespace>
 
+<context.customNamespaces : {key | namespace <key> <context.customNamespaces.(key)>}; separator="\n">
+
 <context.includes : {inc | include "<inc>"}; separator="\n">
 
 <context.enums : {e | <_enum(e)>}; separator="\n">

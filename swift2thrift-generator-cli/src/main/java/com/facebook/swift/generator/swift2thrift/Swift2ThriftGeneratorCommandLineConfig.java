@@ -35,4 +35,7 @@ public class Swift2ThriftGeneratorCommandLineConfig {
 
     @Parameter(names = {"-package", "-default_package"}, description = "Default package for unqualified classes")
     public String defaultPackage = "";
+
+    @Parameter(names = "-namespace", arity = 2, description = "Namespace for a particular language to include")
+    public List<String> namespaceMap;
 }

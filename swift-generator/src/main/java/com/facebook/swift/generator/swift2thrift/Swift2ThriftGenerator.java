@@ -62,6 +62,7 @@ public class Swift2ThriftGenerator {
             new ThriftType(ThriftType.I64, Long.class), new ThriftType(ThriftType.DOUBLE, Double.class),
             new ThriftType(ThriftType.STRING, String.class), new ThriftType(ThriftType.STRING, byte[].class));
     private Set<ThriftServiceMetadata> knownServices = Sets.newHashSet();
+    private Map<String, String> namespaceMap;
 
     Swift2ThriftGenerator(final Swift2ThriftGeneratorConfig config) throws FileNotFoundException
     {
@@ -87,6 +88,7 @@ public class Swift2ThriftGenerator {
                 this.includeMap.put(result, entry.getValue());
             }
         }
+        this.namespaceMap = config.getNamespaceMap();
     }
 
     public void parse(Iterable<String> inputs) throws IOException {
@@ -372,7 +374,7 @@ public class Swift2ThriftGenerator {
         ThriftServiceMetadataRenderer serviceRenderer = new ThriftServiceMetadataRenderer(serviceMap.build());
         TemplateLoader tl = new TemplateLoader(ImmutableList.of("thrift/common.st"),
                 ImmutableMap.of(ThriftType.class, thriftTypeRenderer, ThriftServiceMetadata.class, serviceRenderer));
-        ThriftContext ctx = new ThriftContext(packageName, ImmutableList.copyOf(includes.build()), thriftTypes, thriftServices);
+        ThriftContext ctx = new ThriftContext(packageName, ImmutableList.copyOf(includes.build()), thriftTypes, thriftServices, namespaceMap);
         ST template = tl.load("thriftfile");
         template.add("context", ctx);
         template.write(new AutoIndentWriter(outputStreamWriter));
