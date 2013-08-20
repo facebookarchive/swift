@@ -39,6 +39,8 @@ import org.jboss.netty.handler.timeout.WriteTimeoutException;
 import org.jboss.netty.util.Timeout;
 import org.jboss.netty.util.Timer;
 import org.jboss.netty.util.TimerTask;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.ArrayList;
@@ -50,10 +52,12 @@ import java.util.concurrent.TimeUnit;
 @NotThreadSafe
 public abstract class AbstractClientChannel extends SimpleChannelHandler implements
         NiftyClientChannel {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractClientChannel.class);
+
     private final Channel nettyChannel;
     private Duration sendTimeout = null;
     private Duration requestTimeout = null;
-    private final Map<Integer, Request> requestMap = new HashMap<Integer, Request>();
+    private final Map<Integer, Request> requestMap = new HashMap<>();
     private volatile TException channelError;
     private final Timer timer;
     private final TDuplexProtocolFactory protocolFactory;
@@ -161,35 +165,61 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
             @Override
             public void run()
             {
-                ChannelFuture sendFuture = writeRequest(message);
-                final Request request = makeRequest(sequenceId, listener);
-                queueSendTimeout(request);
+                try {
+                    final Request request = makeRequest(sequenceId, listener);
 
-                sendFuture.addListener(new ChannelFutureListener()
-                {
-                    @Override
-                    public void operationComplete(ChannelFuture future)
-                            throws Exception
-                    {
-                        if (future.isSuccess()) {
-                            cancelRequestTimeouts(request);
-                            listener.onRequestSent();
-                            if (oneway) {
-                                retireRequest(request);
-                            } else {
-                                queueReceiveTimeout(request);
-                            }
-                        } else {
-                            TTransportException transportException =
-                                    new TTransportException("Sending request failed",
-                                                            future.getCause());
-                            listener.onChannelError(transportException);
-                            onError(transportException);
-                        }
+                    if (!nettyChannel.isConnected()) {
+                        onError(new TTransportException("Channel closed"));
+                        return;
                     }
-                });
+
+                    ChannelFuture sendFuture = writeRequest(message);
+                    queueSendTimeout(request);
+
+                    sendFuture.addListener(new ChannelFutureListener()
+                    {
+                        @Override
+                        public void operationComplete(ChannelFuture future) throws Exception
+                        {
+                            messageSent(future, request, oneway);
+                        }
+                    });
+                }
+                catch (Throwable t) {
+                    // onError calls all registered listeners in the requestMap, but this request
+                    // may not be registered yet. So we try to remove it (to make sure we don't call
+                    // the callback twice) and then manually make the callback for this request
+                    // listener.
+                    requestMap.remove(sequenceId);
+                    fireChannelErrorCallback(listener, t);
+
+                    onError(t);
+                }
             }
         });
+    }
+
+    private void messageSent(ChannelFuture future, Request request, boolean oneway)
+    {
+        try {
+            if (future.isSuccess()) {
+                cancelRequestTimeouts(request);
+                fireRequestSentCallback(request.getListener());
+                if (oneway) {
+                    retireRequest(request);
+                } else {
+                    queueReceiveTimeout(request);
+                }
+            } else {
+                TTransportException transportException =
+                        new TTransportException("Sending request failed",
+                                                future.getCause());
+                onError(transportException);
+            }
+        }
+        catch (Throwable t) {
+            onError(t);
+        }
     }
 
     @Override
@@ -259,7 +289,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
             onError(new TTransportException("Bad sequence id in response: " + sequenceId));
         } else {
             retireRequest(request);
-            request.getListener().onResponseReceived(response);
+            fireResponseReceivedCallback(request.getListener(), response);
         }
     }
 
@@ -279,11 +309,11 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
 
         cancelAllTimeouts();
 
-        Collection<Request> requests = new ArrayList<Request>();
+        Collection<Request> requests = new ArrayList<>();
         requests.addAll(requestMap.values());
         requestMap.clear();
         for (Request request : requests) {
-            request.getListener().onChannelError(wrappedException);
+            fireChannelErrorCallback(request.getListener(), wrappedException);
         }
     }
 
@@ -292,8 +322,43 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
         if (t instanceof TException) {
             return (TException) t;
         } else {
-            return new TException(t);
+            return new TTransportException(t);
         }
+    }
+
+    private void fireRequestSentCallback(Listener listener)
+    {
+        try {
+            listener.onRequestSent();
+        }
+        catch (Throwable t) {
+            LOGGER.warn("Request sent listener callback triggered an exception: {}", t);
+        }
+    }
+
+    private void fireResponseReceivedCallback(Listener listener, ChannelBuffer response)
+    {
+        try {
+            listener.onResponseReceived(response);
+        }
+        catch (Throwable t) {
+            LOGGER.warn("Response received listener callback triggered an exception: {}", t);
+        }
+    }
+
+    private void fireChannelErrorCallback(Listener listener, TException exception)
+    {
+        try {
+            listener.onChannelError(exception);
+        }
+        catch (Throwable t) {
+            LOGGER.warn("Channel error listener callback triggered an exception: {}", t);
+        }
+    }
+
+    private void fireChannelErrorCallback(Listener listener, Throwable throwable)
+    {
+        fireChannelErrorCallback(listener, wrapException(throwable));
     }
 
     private void onSendTimeoutExpired(Request request)
@@ -306,7 +371,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
                     new WriteTimeoutException(
                             "Timed out waiting " + getSendTimeout() + " to send request");
 
-            request.getListener().onChannelError(new TTransportException(timeoutException));
+            fireChannelErrorCallback(request.getListener(), timeoutException);
         }
     }
 
@@ -321,11 +386,11 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
                     new ReadTimeoutException(
                             "Timed out waiting " + getReceiveTimeout() + " to receive response");
 
-            request.getListener().onChannelError(new TTransportException(timeoutException));
+            fireChannelErrorCallback(request.getListener(), timeoutException);
         }
     }
 
-    private void queueSendTimeout(final Request request)
+    private void queueSendTimeout(final Request request) throws TTransportException
     {
         if (this.sendTimeout != null) {
             long sendTimeoutMs = this.sendTimeout.toMillis();
@@ -337,13 +402,19 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
                     }
                 });
 
-                Timeout sendTimeout = timer.newTimeout(sendTimeoutTask, sendTimeoutMs, TimeUnit.MILLISECONDS);
+                Timeout sendTimeout;
+                try {
+                    sendTimeout = timer.newTimeout(sendTimeoutTask, sendTimeoutMs, TimeUnit.MILLISECONDS);
+                }
+                catch (IllegalStateException e) {
+                    throw new TTransportException("Unable to schedule send timeout");
+                }
                 request.setSendTimeout(sendTimeout);
             }
         }
     }
 
-    private void queueReceiveTimeout(final Request request)
+    private void queueReceiveTimeout(final Request request) throws TTransportException
     {
         if (this.requestTimeout != null) {
             long requestTimeoutMs = this.requestTimeout.toMillis();
@@ -355,7 +426,13 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
                     }
                 });
 
-                Timeout timeout = timer.newTimeout(receiveTimeoutTask, requestTimeoutMs, TimeUnit.MILLISECONDS);
+                Timeout timeout;
+                try {
+                    timeout = timer.newTimeout(receiveTimeoutTask, requestTimeoutMs, TimeUnit.MILLISECONDS);
+                }
+                catch (IllegalStateException e) {
+                    throw new TTransportException("Unable to schedule receive timeout");
+                }
                 request.setReceiveTimeout(timeout);
             }
         }
