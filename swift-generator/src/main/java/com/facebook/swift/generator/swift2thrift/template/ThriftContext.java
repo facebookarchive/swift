@@ -22,6 +22,7 @@ import com.facebook.swift.codec.metadata.ThriftType;
 import com.facebook.swift.service.metadata.ThriftServiceMetadata;
 
 import java.util.List;
+import java.util.Map;
 
 public class ThriftContext
 {
@@ -30,8 +31,9 @@ public class ThriftContext
     private final List<ThriftStructMetadata> thriftStructs = Lists.newArrayList();
     private final List<ThriftEnumMetadata> thriftEnums = Lists.newArrayList();
     private final List<ThriftServiceMetadata> thriftServices;
+    private final Map<String, String> customNamespaces;
 
-    public ThriftContext(String namespace, List<String> includes, List<ThriftType> thriftTypes, List<ThriftServiceMetadata> thriftServices)
+    public ThriftContext(String namespace, List<String> includes, List<ThriftType> thriftTypes, List<ThriftServiceMetadata> thriftServices, Map<String, String> namespaceMap)
     {
         this.namespace = namespace;
         this.includes = includes;
@@ -48,6 +50,7 @@ public class ThriftContext
             }
         }
         this.thriftServices = thriftServices;
+        customNamespaces = namespaceMap;
     }
 
     public List<ThriftStructMetadata> getStructs()
@@ -63,6 +66,11 @@ public class ThriftContext
     public String getNamespace()
     {
         return namespace;
+    }
+
+    public Map<String, String> getCustomNamespaces()
+    {
+        return customNamespaces;
     }
 
     public List<ThriftServiceMetadata> getServices()

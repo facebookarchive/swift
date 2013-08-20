@@ -25,14 +25,16 @@ public class Swift2ThriftGeneratorConfig {
     private final Map<String, String> includeMap;
     private final boolean verbose;
     private final String defaultPackage;
+    private final Map<String, String> namespaceMap;
 
     private Swift2ThriftGeneratorConfig(final File outputFile, final Map<String, String> includeMap,
-                                        boolean verbose, String defaultPackage)
+                                        boolean verbose, String defaultPackage, final Map<String, String> namespaceMap)
     {
         this.outputFile = outputFile;
         this.includeMap = includeMap;
         this.verbose = verbose;
         this.defaultPackage = defaultPackage;
+        this.namespaceMap = namespaceMap;
     }
 
     public static Builder builder()
@@ -63,12 +65,18 @@ public class Swift2ThriftGeneratorConfig {
         return defaultPackage;
     }
 
+    public Map<String, String> getNamespaceMap()
+    {
+        return namespaceMap;
+    }
+
     public static class Builder
     {
         private File outputFile = null;
         private Map<String, String> includeMap;
         private boolean verbose;
         private String defaultPackage;
+        private Map<String, String> namespaceMap;
 
         private Builder()
         {
@@ -76,7 +84,8 @@ public class Swift2ThriftGeneratorConfig {
 
         public Swift2ThriftGeneratorConfig build()
         {
-            return new Swift2ThriftGeneratorConfig(outputFile, includeMap, verbose, defaultPackage);
+            return new Swift2ThriftGeneratorConfig(outputFile, includeMap, verbose, defaultPackage,
+                    namespaceMap);
         }
 
         public Builder outputFile(final File outputFile)
@@ -100,6 +109,12 @@ public class Swift2ThriftGeneratorConfig {
         public Builder defaultPackage(String defaultPackage)
         {
             this.defaultPackage = defaultPackage;
+            return this;
+        }
+
+        public Builder namespaceMap(Map<String, String> namespaceMap)
+        {
+            this.namespaceMap = namespaceMap;
             return this;
         }
     }
