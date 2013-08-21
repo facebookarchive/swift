@@ -62,9 +62,9 @@ services to be exported with Thrift.   For example:
 
 # Swift Generator
 
-[Swift Generator](swift-generator) is a library that creates Java code usable with the Swift codec from Thrift IDL files.
+[Swift Generator](swift-generator) is a library that creates Java code usable with the Swift codec from Thrift IDL files and vice versa.
 
-[Swift Generator CLI](swift-generator-cli) is a command-line front-end to this generator.
+[Swift Generator CLI](swift-generator-cli) and [Swift2Thrift Generator CLI](swift2thrift-generator-cli) are command-line front-ends to this generator.
 
 # Swift Maven plugin
 

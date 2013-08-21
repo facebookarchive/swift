@@ -21,7 +21,7 @@ import java.io.File;
 import java.util.List;
 
 public class Swift2ThriftGeneratorCommandLineConfig {
-    @Parameter(description = "Swift Java source files")
+    @Parameter(description = "<Swift-class-name...>")
     public List<String> inputFiles;
 
     @Parameter(names = "-out", description = "Thrift IDL output file, defaults to stdout")
