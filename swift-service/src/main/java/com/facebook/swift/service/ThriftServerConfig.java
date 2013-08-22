@@ -35,6 +35,7 @@ public class ThriftServerConfig
     private static final int DEFAULT_IO_WORKER_THREAD_COUNT = 2 * Runtime.getRuntime().availableProcessors();
     private static final int DEFAULT_WORKER_THREAD_COUNT = 200;
 
+    private String bindAddress = "localhost";
     private int port;
     private int acceptBacklog = 1024;
     private int connectionLimit;
@@ -52,6 +53,18 @@ public class ThriftServerConfig
      * that, it should be a conscious decision (something you must manually configure).
      */
     private DataSize maxFrameSize = new DataSize(64, MEGABYTE);
+
+    public String getBindAddress()
+    {
+        return bindAddress;
+    }
+
+    @Config("thrift.bind-address")
+    public ThriftServerConfig setBindAddress(String bindAddress)
+    {
+        this.bindAddress = bindAddress;
+        return this;
+    }
 
     @Min(0)
     @Max(65535)

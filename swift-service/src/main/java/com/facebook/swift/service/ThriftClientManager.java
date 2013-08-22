@@ -252,7 +252,7 @@ public class ThriftClientManager implements Closeable
             Channel nettyChannel = niftyChannel.getNettyChannel();
             SocketAddress address = nettyChannel.getRemoteAddress();
             InetSocketAddress inetAddress = (InetSocketAddress) address;
-            return HostAndPort.fromParts(inetAddress.getHostName(), inetAddress.getPort());
+            return HostAndPort.fromParts(inetAddress.getHostString(), inetAddress.getPort());
         }
         catch (NullPointerException | ClassCastException e) {
             throw new IllegalArgumentException("Invalid swift client object", e);

@@ -20,6 +20,7 @@ import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.ThriftEventHandler;
 import com.facebook.swift.service.ThriftServer;
+import com.facebook.swift.service.ThriftServerConfig;
 import com.facebook.swift.service.ThriftServiceProcessor;
 import com.google.common.collect.ImmutableList;
 import com.google.common.net.HostAndPort;
@@ -40,12 +41,21 @@ public class SuiteBase<ServiceInterface, ClientInterface> {
     private ClientInterface client;
     private ThriftServer server;
     private ServiceInterface handler;
+    private final ThriftServerConfig serverConfig;
 
     public SuiteBase(
             Class<? extends ServiceInterface> handlerClass,
             Class<? extends ClientInterface> clientClass) {
+        this(handlerClass, clientClass, new ThriftServerConfig());
+    }
+
+    public SuiteBase(
+            Class<? extends ServiceInterface> handlerClass,
+            Class<? extends ClientInterface> clientClass,
+            ThriftServerConfig serverConfig) {
         this.clientClass = clientClass;
         this.handlerClass = handlerClass;
+        this.serverConfig = serverConfig;
     }
 
     @BeforeClass
@@ -81,17 +91,18 @@ public class SuiteBase<ServiceInterface, ClientInterface> {
     private ThriftServer createServer(ServiceInterface handler)
             throws IllegalAccessException, InstantiationException {
         ThriftServiceProcessor processor = new ThriftServiceProcessor(codecManager, ImmutableList.<ThriftEventHandler>of(), handler);
-        return new ThriftServer(processor);
+        return new ThriftServer(processor, serverConfig);
     }
 
     private ListenableFuture<? extends ClientInterface> createClient(ThriftClientManager clientManager)
             throws TTransportException, InterruptedException, ExecutionException
     {
-        HostAndPort address = HostAndPort.fromParts("localhost", server.getPort());
+        HostAndPort address = HostAndPort.fromParts(serverConfig.getBindAddress(), server.getPort());
         return clientManager.createClient(new FramedClientConnector(address), clientClass);
     }
 
-    protected ClientInterface getClient() {
+    protected ClientInterface getClient()
+    {
         return client;
     }
 
@@ -99,4 +110,10 @@ public class SuiteBase<ServiceInterface, ClientInterface> {
     {
         return handler;
     }
+
+    protected ThriftClientManager getClientManager()
+    {
+        return clientManager;
+    }
+
 }
