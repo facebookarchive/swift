@@ -26,6 +26,8 @@ import com.google.inject.Scopes;
 import org.jboss.netty.util.HashedWheelTimer;
 import org.jboss.netty.util.Timer;
 
+import javax.annotation.PreDestroy;
+
 import static com.google.inject.multibindings.Multibinder.newSetBinder;
 import static io.airlift.configuration.ConfigurationModule.bindConfig;
 
@@ -34,7 +36,13 @@ public class ThriftServerModule implements Module
     @Override
     public void configure(Binder binder)
     {
-        binder.bind(Timer.class).annotatedWith(ThriftServerTimer.class).toInstance(new HashedWheelTimer());
+        binder.bind(Timer.class).annotatedWith(ThriftServerTimer.class).toInstance(new HashedWheelTimer() {
+            @PreDestroy
+            public void cleanup()
+            {
+                stop();
+            }
+        });
 
         newSetBinder(binder, ThriftServiceExport.class).permitDuplicates();
         newSetBinder(binder, ThriftEventHandler.class).permitDuplicates();
