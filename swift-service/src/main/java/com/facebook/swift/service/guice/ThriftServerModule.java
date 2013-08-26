@@ -19,6 +19,7 @@ import com.facebook.nifty.processor.NiftyProcessor;
 import com.facebook.swift.service.*;
 import com.facebook.swift.service.guice.ThriftServiceExporter.ThriftServiceExport;
 import com.facebook.swift.service.guice.ThriftServiceExporter.ThriftServiceProcessorProvider;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Binder;
 import com.google.inject.Key;
 import com.google.inject.Module;
@@ -36,13 +37,14 @@ public class ThriftServerModule implements Module
     @Override
     public void configure(Binder binder)
     {
-        binder.bind(Timer.class).annotatedWith(ThriftServerTimer.class).toInstance(new HashedWheelTimer() {
-            @PreDestroy
-            public void cleanup()
-            {
-                stop();
-            }
-        });
+        binder.bind(Timer.class).annotatedWith(ThriftServerTimer.class).toInstance(
+                new HashedWheelTimer(new ThreadFactoryBuilder().setDaemon(true).build()) {
+                    @PreDestroy
+                    public void cleanup()
+                    {
+                        stop();
+                    }
+                });
 
         newSetBinder(binder, ThriftServiceExport.class).permitDuplicates();
         newSetBinder(binder, ThriftEventHandler.class).permitDuplicates();
