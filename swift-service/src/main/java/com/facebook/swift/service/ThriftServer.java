@@ -76,7 +76,7 @@ public class ThriftServer implements Closeable
 
     public ThriftServer(NiftyProcessor processor, ThriftServerConfig config)
     {
-        this(processor, config, new HashedWheelTimer());
+        this(processor, config, new HashedWheelTimer(new ThreadFactoryBuilder().setDaemon(true).build()));
     }
 
     @Inject
