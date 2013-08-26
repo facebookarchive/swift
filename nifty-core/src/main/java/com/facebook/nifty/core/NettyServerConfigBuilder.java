@@ -97,7 +97,7 @@ public class NettyServerConfigBuilder extends NettyConfigBuilderBase<NettyServer
 
     private Timer buildDefaultTimer()
     {
-        return new HashedWheelTimer(renamingThreadFactory(threadNamePattern("-timer-%s")));
+        return new HashedWheelTimer(renamingDaemonThreadFactory(threadNamePattern("-timer-%s")));
     }
 
     private ExecutorService buildDefaultBossExecutor()
@@ -119,5 +119,10 @@ public class NettyServerConfigBuilder extends NettyConfigBuilderBase<NettyServer
     private ThreadFactory renamingThreadFactory(String nameFormat)
     {
         return new ThreadFactoryBuilder().setNameFormat(nameFormat).build();
+    }
+
+    private ThreadFactory renamingDaemonThreadFactory(String nameFormat)
+    {
+        return new ThreadFactoryBuilder().setNameFormat(nameFormat).setDaemon(true).build();
     }
 }
