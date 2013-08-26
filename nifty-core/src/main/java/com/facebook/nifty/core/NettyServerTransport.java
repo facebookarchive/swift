@@ -100,7 +100,7 @@ public class NettyServerTransport implements ExternalResourceReleasable
                 if (def.getClientIdleTimeout() != null) {
                     // Add handlers to detect idle client connections and disconnect them
                     cp.addLast("idleTimeoutHandler", new IdleStateHandler(nettyServerConfig.getTimer(),
-                                                                          Ints.checkedCast(def.getClientIdleTimeout().toMillis()),
+                                                                          def.getClientIdleTimeout().toMillis(),
                                                                           NO_WRITER_IDLE_TIMEOUT,
                                                                           NO_ALL_IDLE_TIMEOUT,
                                                                           TimeUnit.MILLISECONDS));
