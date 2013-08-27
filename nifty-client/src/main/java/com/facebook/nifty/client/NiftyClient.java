@@ -233,19 +233,26 @@ public class NiftyClient implements Closeable
                 public void operationComplete(ChannelFuture future)
                         throws Exception
                 {
-                    if (future.isSuccess()) {
-                        Channel nettyChannel = future.getChannel();
-                        T channel = clientChannelConnector.newThriftClientChannel(nettyChannel,
-                                                                                  timer);
-                        channel.setReceiveTimeout(receiveTimeout);
-                        channel.setSendTimeout(sendTimeout);
-                        set(channel);
+                    try {
+                        if (future.isSuccess()) {
+                            Channel nettyChannel = future.getChannel();
+                            T channel = clientChannelConnector.newThriftClientChannel(nettyChannel,
+                                                                                      timer);
+                            channel.setReceiveTimeout(receiveTimeout);
+                            channel.setSendTimeout(sendTimeout);
+                            set(channel);
+                        }
+                        else if (future.isCancelled()) {
+                            if (!cancel(true)) {
+                                setException(new TTransportException("Unable to cancel client channel connection"));
+                            }
+                        }
+                        else {
+                            throw future.getCause();
+                        }
                     }
-                    else if (future.isCancelled()) {
-                        cancel(true);
-                    }
-                    else {
-                        setException(future.getCause());
+                    catch (Throwable t) {
+                        setException(new TTransportException("Failed to connect client channel", t));
                     }
                 }
             });
