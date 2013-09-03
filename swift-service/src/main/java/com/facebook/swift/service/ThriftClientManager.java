@@ -259,6 +259,30 @@ public class ThriftClientManager implements Closeable
         }
     }
 
+    public TProtocol getOutputProtocol(Object client)
+    {
+        try {
+            InvocationHandler genericHandler = Proxy.getInvocationHandler(client);
+            ThriftInvocationHandler thriftHandler = (ThriftInvocationHandler) genericHandler;
+            return thriftHandler.getOutputProtocol();
+        }
+        catch (IllegalArgumentException | ClassCastException e) {
+            throw new IllegalArgumentException("Invalid swift client object", e);
+        }
+    }
+
+    public TProtocol getInputProtocol(Object client)
+    {
+        try {
+            InvocationHandler genericHandler = Proxy.getInvocationHandler(client);
+            ThriftInvocationHandler thriftHandler = (ThriftInvocationHandler) genericHandler;
+            return thriftHandler.getInputProtocol();
+        }
+        catch (IllegalArgumentException | ClassCastException e) {
+            throw new IllegalArgumentException("Invalid swift client object", e);
+        }
+    }
+
     @Immutable
     public static class ThriftClientMetadata
     {
@@ -346,6 +370,16 @@ public class ThriftClientManager implements Closeable
         public NiftyClientChannel getChannel()
         {
             return channel;
+        }
+
+        public TProtocol getOutputProtocol()
+        {
+            return outputProtocol;
+        }
+
+        public TProtocol getInputProtocol()
+        {
+            return inputProtocol;
         }
 
         @Override
