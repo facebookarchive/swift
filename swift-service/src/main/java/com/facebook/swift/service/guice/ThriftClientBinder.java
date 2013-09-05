@@ -70,7 +70,7 @@ public class ThriftClientBinder
         // need one of these for each clientType+annotationType pair.  Without this, the
         // ThriftClientConfig bindings collapse to a single instance which is shared by all
         // clients.
-        Named thriftClientConfigKey = Names.named(UUID.randomUUID().toString());
+        Named thriftClientConfigKey = Names.named(typeName + "-" + UUID.randomUUID().toString());
         bindConfig(binder).annotatedWith(thriftClientConfigKey).prefixedWith(typeName).to(ThriftClientConfig.class);
 
         // Bind ThriftClient to a provider which knows how to find the ThriftClientConfig using
@@ -104,7 +104,7 @@ public class ThriftClientBinder
 
         // Bind ThriftClientConfig with random @Named annotation
         // see comment on random Named annotation above
-        Named thriftClientConfigKey = Names.named(UUID.randomUUID().toString());
+        Named thriftClientConfigKey = Names.named(typeName + "-" + UUID.randomUUID().toString());
         String prefix = String.format("%s.%s", typeName, name);
         bindConfig(binder).annotatedWith(thriftClientConfigKey).prefixedWith(prefix).to(ThriftClientConfig.class);
 
