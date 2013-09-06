@@ -15,11 +15,15 @@
  */
 package com.facebook.swift.service;
 
+import com.facebook.nifty.codec.DefaultThriftFrameCodecFactory;
+import com.facebook.nifty.codec.ThriftFrameCodecFactory;
+import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.airlift.configuration.Config;
 import io.airlift.units.DataSize;
 import io.airlift.units.Duration;
+import org.apache.thrift.protocol.TBinaryProtocol;
 
 import java.util.concurrent.ExecutorService;
 
@@ -44,7 +48,8 @@ public class ThriftServerConfig
     private Duration idleConnectionTimeout = Duration.valueOf("60s");
     private Optional<Integer> workerThreads = Optional.absent();
     private Optional<ExecutorService> workerExecutor = Optional.absent();
-
+    private String transportName = "framed";
+    private String protocolName = "binary";
     /**
      * The default maximum allowable size for a single incoming thrift request or outgoing thrift
      * response. A server can configure the actual maximum to be much higher (up to 0x7FFFFFFF or
@@ -240,5 +245,29 @@ public class ThriftServerConfig
     private ExecutorService makeDefaultWorkerExecutor()
     {
         return newFixedThreadPool(getWorkerThreads(), new ThreadFactoryBuilder().setNameFormat("thrift-worker-%s").build());
+    }
+
+    @Config("thrift.transport")
+    public ThriftServerConfig setTransportName(String transportName)
+    {
+        this.transportName = transportName;
+        return this;
+    }
+
+    public String getTransportName()
+    {
+        return transportName;
+    }
+
+    @Config("thrift.protocol")
+    public ThriftServerConfig setProtocolName(String protocolName)
+    {
+        this.protocolName = protocolName;
+        return this;
+    }
+
+    public String getProtocolName()
+    {
+        return protocolName;
     }
 }
