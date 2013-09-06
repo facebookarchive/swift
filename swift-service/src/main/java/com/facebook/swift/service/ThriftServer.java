@@ -15,15 +15,20 @@
  */
 package com.facebook.swift.service;
 
+import com.facebook.nifty.codec.DefaultThriftFrameCodecFactory;
+import com.facebook.nifty.codec.ThriftFrameCodecFactory;
 import com.facebook.nifty.core.NettyServerConfig;
 import com.facebook.nifty.core.NettyServerConfigBuilder;
 import com.facebook.nifty.core.NettyServerTransport;
 import com.facebook.nifty.core.ThriftServerDef;
+import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.facebook.nifty.processor.NiftyProcessor;
 import com.facebook.nifty.processor.NiftyProcessorFactory;
-import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
+import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.TTransport;
 import org.jboss.netty.channel.ServerChannelFactory;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
@@ -35,6 +40,7 @@ import org.weakref.jmx.Managed;
 import java.io.Closeable;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -44,11 +50,22 @@ import javax.annotation.PreDestroy;
 
 import static com.facebook.nifty.core.ShutdownUtil.shutdownChannelFactory;
 import static com.facebook.nifty.core.ShutdownUtil.shutdownExecutor;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static java.util.concurrent.Executors.newCachedThreadPool;
-import static java.util.concurrent.Executors.newFixedThreadPool;
 
 public class ThriftServer implements Closeable
 {
+
+    public static final ImmutableMap<String,TDuplexProtocolFactory> DEFAULT_PROTOCOL_FACTORIES = ImmutableMap.of(
+            "binary", TDuplexProtocolFactory.fromSingleFactory(new TBinaryProtocol.Factory()),
+            "compact", TDuplexProtocolFactory.fromSingleFactory(new TCompactProtocol.Factory())
+    );
+    public static final ImmutableMap<String,ThriftFrameCodecFactory> DEFAULT_FRAME_CODEC_FACTORIES = ImmutableMap.<String, ThriftFrameCodecFactory>of(
+            "buffered", new DefaultThriftFrameCodecFactory(),
+            "framed", new DefaultThriftFrameCodecFactory()
+    );
+
     private enum State {
         NOT_STARTED,
         RUNNING,
@@ -79,9 +96,22 @@ public class ThriftServer implements Closeable
         this(processor, config, new HashedWheelTimer(new ThreadFactoryBuilder().setDaemon(true).build()));
     }
 
-    @Inject
-    public ThriftServer(final NiftyProcessor processor, ThriftServerConfig config, @ThriftServerTimer Timer timer)
+    public ThriftServer(NiftyProcessor processor, ThriftServerConfig config, Timer timer)
     {
+        this(processor, config, timer, DEFAULT_FRAME_CODEC_FACTORIES, DEFAULT_PROTOCOL_FACTORIES);
+    }
+
+    @Inject
+    public ThriftServer(
+            final NiftyProcessor processor,
+            ThriftServerConfig config,
+            @ThriftServerTimer Timer timer,
+            Map<String, ThriftFrameCodecFactory> availableFrameCodecFactories,
+            Map<String, TDuplexProtocolFactory> availableProtocolFactories)
+    {
+        checkNotNull(availableFrameCodecFactories, "availableFrameCodecFactories cannot be null");
+        checkNotNull(availableProtocolFactories, "availableProtocolFactories cannot be null");
+
         NiftyProcessorFactory processorFactory = new NiftyProcessorFactory()
         {
             @Override
@@ -90,6 +120,12 @@ public class ThriftServer implements Closeable
                 return processor;
             }
         };
+
+        String transportName = config.getTransportName();
+        String protocolName = config.getProtocolName();
+
+        checkState(availableFrameCodecFactories.containsKey(transportName), "No available server transport named " + transportName);
+        checkState(availableProtocolFactories.containsKey(protocolName), "No available server protocol named " + protocolName);
 
         configuredPort = config.getPort();
 
@@ -109,6 +145,8 @@ public class ThriftServer implements Closeable
                                                          .clientIdleTimeout(config.getIdleConnectionTimeout())
                                                          .withProcessorFactory(processorFactory)
                                                          .limitConnectionsTo(config.getConnectionLimit())
+                                                         .thriftFrameCodecFactory(availableFrameCodecFactories.get(transportName))
+                                                         .speaks(availableProtocolFactories.get(protocolName))
                                                          .using(workerExecutor).build();
 
         NettyServerConfigBuilder nettyServerConfigBuilder = NettyServerConfig.newBuilder();
@@ -194,7 +232,7 @@ public class ThriftServer implements Closeable
     @PostConstruct
     public synchronized ThriftServer start()
     {
-        Preconditions.checkState(state != State.CLOSED, "Thrift server is closed");
+        checkState(state != State.CLOSED, "Thrift server is closed");
         if (state == State.NOT_STARTED) {
             transport.start(serverChannelFactory);
             state = State.RUNNING;
