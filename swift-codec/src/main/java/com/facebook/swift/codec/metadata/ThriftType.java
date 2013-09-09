@@ -47,7 +47,7 @@ public class ThriftType
     public static final ThriftType STRING = new ThriftType(ThriftProtocolType.STRING, ByteBuffer.class);
     public static final ThriftType VOID = new ThriftType(ThriftProtocolType.STRUCT, void.class);
 
-    public static ThriftType struct(ThriftStructMetadata<?> structMetadata)
+    public static ThriftType struct(ThriftStructMetadata structMetadata)
     {
         return new ThriftType(structMetadata);
     }
@@ -97,7 +97,7 @@ public class ThriftType
     private final Type javaType;
     private final ThriftType keyType;
     private final ThriftType valueType;
-    private final ThriftStructMetadata<?> structMetadata;
+    private final ThriftStructMetadata structMetadata;
     private final ThriftEnumMetadata<?> enumMetadata;
     private final ThriftType uncoercedType;
 
@@ -130,7 +130,7 @@ public class ThriftType
         this.uncoercedType = null;
     }
 
-    private ThriftType(ThriftStructMetadata<?> structMetadata)
+    private ThriftType(ThriftStructMetadata structMetadata)
     {
         Preconditions.checkNotNull(structMetadata, "structMetadata is null");
 
@@ -190,7 +190,7 @@ public class ThriftType
         return valueType;
     }
 
-    public ThriftStructMetadata<?> getStructMetadata()
+    public ThriftStructMetadata getStructMetadata()
     {
         checkState(structMetadata != null, "%s does not have struct metadata", protocolType);
         return structMetadata;

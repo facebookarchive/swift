@@ -29,7 +29,7 @@ import javax.annotation.concurrent.Immutable;
 public class ReflectionThriftCodecFactory implements ThriftCodecFactory
 {
     @Override
-    public <T> ThriftCodec<T> generateThriftTypeCodec(ThriftCodecManager codecManager, ThriftStructMetadata<T> metadata)
+    public ThriftCodec<?> generateThriftTypeCodec(ThriftCodecManager codecManager, ThriftStructMetadata metadata)
     {
         return new ReflectionThriftCodec<>(codecManager, metadata);
     }

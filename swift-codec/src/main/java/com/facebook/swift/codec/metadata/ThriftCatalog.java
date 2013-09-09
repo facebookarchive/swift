@@ -76,7 +76,7 @@ import static java.lang.reflect.Modifier.isStatic;
 public class ThriftCatalog
 {
     private final MetadataErrors.Monitor monitor;
-    private final ConcurrentMap<Class<?>, ThriftStructMetadata<?>> structs = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Class<?>, ThriftStructMetadata> structs = new ConcurrentHashMap<>();
     private final ConcurrentMap<Class<?>, ThriftEnumMetadata<?>> enums = new ConcurrentHashMap<>();
     private final ConcurrentMap<Type, TypeCoercion> coercions = new ConcurrentHashMap<>();
     private final ConcurrentMap<Class<?>, ThriftType> manualTypes = new ConcurrentHashMap<>();
@@ -254,7 +254,7 @@ public class ThriftCatalog
             return VOID;
         }
         if (rawType.isAnnotationPresent(ThriftStruct.class)) {
-            ThriftStructMetadata<?> structMetadata = getThriftStructMetadata(rawType);
+            ThriftStructMetadata structMetadata = getThriftStructMetadata(javaType, rawType);
             return struct(structMetadata);
         }
 
@@ -348,18 +348,23 @@ public class ThriftCatalog
      * Gets the ThriftStructMetadata for the specified struct class.  The struct class must be
      * annotated with @ThriftStruct.
      */
-    public <T> ThriftStructMetadata<T> getThriftStructMetadata(Class<T> structClass)
+    public ThriftStructMetadata getThriftStructMetadata(Type structType, Class<?> structClass)
     {
-        ThriftStructMetadata<?> structMetadata = structs.get(structClass);
+        ThriftStructMetadata structMetadata = structs.get(structClass);
         if (structMetadata == null) {
-            structMetadata = extractThriftStructMetadata(structClass);
+            structMetadata = extractThriftStructMetadata(structType, structClass);
 
-            ThriftStructMetadata<?> current = structs.putIfAbsent(structClass, structMetadata);
+            ThriftStructMetadata current = structs.putIfAbsent(structClass, structMetadata);
             if (current != null) {
                 structMetadata = current;
             }
         }
-        return (ThriftStructMetadata<T>) structMetadata;
+        return structMetadata;
+    }
+
+    public ThriftStructMetadata getThriftStructMetadata(Class<?> structClass)
+    {
+        return getThriftStructMetadata(TypeToken.of(structClass).getType(), structClass);
     }
 
     private static Class<?> getSwiftMetaClassOf(Class<?> cls) throws ClassNotFoundException
@@ -459,7 +464,7 @@ public class ThriftCatalog
         return order == null ? null : order.value();
     }
 
-    private <T> ThriftStructMetadata<T> extractThriftStructMetadata(Class<T> structClass)
+    private ThriftStructMetadata extractThriftStructMetadata(Type structType, Class<?> structClass)
     {
         Preconditions.checkNotNull(structClass, "structClass is null");
 
@@ -478,8 +483,8 @@ public class ThriftCatalog
 
         stack.push(structClass);
         try {
-            ThriftStructMetadataBuilder<T> builder = new ThriftStructMetadataBuilder<>(this, structClass);
-            ThriftStructMetadata<T> structMetadata = builder.build();
+            ThriftStructMetadataBuilder builder = new ThriftStructMetadataBuilder(this, structType);
+            ThriftStructMetadata structMetadata = builder.build();
             return structMetadata;
         }
         finally {

@@ -18,7 +18,9 @@ package com.facebook.swift.codec.metadata;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedMap;
+import com.google.common.reflect.TypeToken;
 
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
 import java.util.SortedMap;
@@ -29,10 +31,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Maps.uniqueIndex;
 
 @Immutable
-public class ThriftStructMetadata<T>
+public class ThriftStructMetadata
 {
     private final String structName;
-    private final Class<T> structClass;
 
     private final Class<?> builderClass;
     private final ThriftMethodInjection builderMethod;
@@ -43,10 +44,11 @@ public class ThriftStructMetadata<T>
 
     private final ThriftConstructorInjection constructor;
     private final List<ThriftMethodInjection> methodInjections;
+    private final Type structType;
 
     public ThriftStructMetadata(
             String structName,
-            Class<T> structClass,
+            Type structType,
             Class<?> builderClass,
             ThriftMethodInjection builderMethod,
             List<String> documentation,
@@ -57,7 +59,7 @@ public class ThriftStructMetadata<T>
         this.builderClass = builderClass;
         this.builderMethod = builderMethod;
         this.structName = checkNotNull(structName, "structName is null");
-        this.structClass = checkNotNull(structClass, "structClass is null");
+        this.structType = checkNotNull(structType, "structType is null");
         this.constructor = checkNotNull(constructor, "constructor is null");
         this.unsortedFields = ImmutableList.copyOf(fields);
         this.documentation = ImmutableList.copyOf(checkNotNull(documentation, "documentation is null"));
@@ -77,9 +79,14 @@ public class ThriftStructMetadata<T>
         return structName;
     }
 
-    public Class<T> getStructClass()
+    public Class<?> getStructClass()
     {
-        return structClass;
+        return TypeToken.of(structType).getRawType();
+    }
+
+    public Type getStructType()
+    {
+        return structType;
     }
 
     public Class<?> getBuilderClass()
@@ -124,7 +131,7 @@ public class ThriftStructMetadata<T>
 
     public boolean isException()
     {
-        return Exception.class.isAssignableFrom(structClass);
+        return Exception.class.isAssignableFrom(getStructClass());
     }
 
     @Override
@@ -133,7 +140,7 @@ public class ThriftStructMetadata<T>
         final StringBuilder sb = new StringBuilder();
         sb.append("ThriftStructMetadata");
         sb.append("{structName='").append(structName).append('\'');
-        sb.append(", structClass=").append(structClass);
+        sb.append(", structType=").append(structType);
         sb.append(", builderClass=").append(builderClass);
         sb.append(", builderMethod=").append(builderMethod);
         sb.append(", fields=").append(fields);

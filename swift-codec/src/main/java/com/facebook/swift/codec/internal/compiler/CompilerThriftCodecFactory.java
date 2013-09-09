@@ -51,9 +51,9 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory
     }
 
     @Override
-    public <T> ThriftCodec<T> generateThriftTypeCodec(ThriftCodecManager codecManager, ThriftStructMetadata<T> metadata)
+    public ThriftCodec<?> generateThriftTypeCodec(ThriftCodecManager codecManager, ThriftStructMetadata metadata)
     {
-        ThriftCodecByteCodeGenerator<T> generator = new ThriftCodecByteCodeGenerator<>(
+        ThriftCodecByteCodeGenerator<?> generator = new ThriftCodecByteCodeGenerator<>(
                 codecManager,
                 metadata,
                 classLoader,

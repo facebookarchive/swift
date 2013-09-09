@@ -59,7 +59,7 @@ public class TestThriftCodecManager
         codecManager = new ThriftCodecManager(new ThriftCodecFactory()
         {
             @Override
-            public <T> ThriftCodec<T> generateThriftTypeCodec(ThriftCodecManager codecManager, ThriftStructMetadata<T> metadata)
+            public ThriftCodec<?> generateThriftTypeCodec(ThriftCodecManager codecManager, ThriftStructMetadata metadata)
             {
                 throw new UnsupportedOperationException();
             }
