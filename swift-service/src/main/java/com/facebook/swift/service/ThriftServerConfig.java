@@ -15,15 +15,11 @@
  */
 package com.facebook.swift.service;
 
-import com.facebook.nifty.codec.DefaultThriftFrameCodecFactory;
-import com.facebook.nifty.codec.ThriftFrameCodecFactory;
-import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.airlift.configuration.Config;
 import io.airlift.units.DataSize;
 import io.airlift.units.Duration;
-import org.apache.thrift.protocol.TBinaryProtocol;
 
 import java.util.concurrent.ExecutorService;
 
