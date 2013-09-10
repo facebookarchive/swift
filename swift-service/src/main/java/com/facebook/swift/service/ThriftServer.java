@@ -50,6 +50,7 @@ import javax.annotation.PreDestroy;
 
 import static com.facebook.nifty.core.ShutdownUtil.shutdownChannelFactory;
 import static com.facebook.nifty.core.ShutdownUtil.shutdownExecutor;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.concurrent.Executors.newCachedThreadPool;
 
@@ -108,6 +109,9 @@ public class ThriftServer implements Closeable
             Map<String, ThriftFrameCodecFactory> availableFrameCodecFactories,
             Map<String, TDuplexProtocolFactory> availableProtocolFactories)
     {
+        checkNotNull(availableFrameCodecFactories, "availableFrameCodecFactories cannot be null");
+        checkNotNull(availableProtocolFactories, "availableProtocolFactories cannot be null");
+
         NiftyProcessorFactory processorFactory = new NiftyProcessorFactory()
         {
             @Override

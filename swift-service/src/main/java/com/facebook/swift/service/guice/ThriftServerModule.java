@@ -56,8 +56,9 @@ public class ThriftServerModule implements Module
         // Setup binder for message frame codecs...
         newMapBinder(binder, String.class, ThriftFrameCodecFactory.class).permitDuplicates();
 
-        // ...and bind buffered and framed codecs by default. The default frame codec factory from
-        // Nifty handles both equally well.
+        // ...and bind unframed (aka buffered) and framed codecs by default. The default frame codec
+        // factory from Nifty handles both equally well.
+        bindFrameCodecFactory(binder, "unframed", DefaultThriftFrameCodecFactory.class);
         bindFrameCodecFactory(binder, "buffered", DefaultThriftFrameCodecFactory.class);
         bindFrameCodecFactory(binder, "framed", DefaultThriftFrameCodecFactory.class);
 

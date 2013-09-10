@@ -29,6 +29,7 @@ import java.util.concurrent.ExecutorService;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 import static io.airlift.units.DataSize.Unit.MEGABYTE;
 import static java.util.concurrent.Executors.newFixedThreadPool;
@@ -247,6 +248,14 @@ public class ThriftServerConfig
         return newFixedThreadPool(getWorkerThreads(), new ThreadFactoryBuilder().setNameFormat("thrift-worker-%s").build());
     }
 
+    /**
+     * Sets the name of the transport (frame codec) that this server will handle. The available
+     * options by default are 'unframed', 'buffered', and 'framed'. Additional modules may install
+     * other options. Server startup will fail if you specify an unavailable transport here.
+     *
+     * @param transportName The name of the transport
+     * @return This {@link ThriftServerConfig} instance
+     */
     @Config("thrift.transport")
     public ThriftServerConfig setTransportName(String transportName)
     {
@@ -254,11 +263,20 @@ public class ThriftServerConfig
         return this;
     }
 
+    @NotNull
     public String getTransportName()
     {
         return transportName;
     }
 
+    /**
+     * Sets the name of the protocol that this server will speak. The available options by default
+     * are 'binary' and 'compact'. Additional modules may install other options. Server startup will
+     * fail if you specify an unavailable protocol here.
+     *
+     * @param protocolName The name of the protocol
+     * @return This {@link ThriftServerConfig} instance
+     */
     @Config("thrift.protocol")
     public ThriftServerConfig setProtocolName(String protocolName)
     {
@@ -266,6 +284,7 @@ public class ThriftServerConfig
         return this;
     }
 
+    @NotNull
     public String getProtocolName()
     {
         return protocolName;
