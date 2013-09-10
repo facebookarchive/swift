@@ -115,7 +115,7 @@ public class TestClientProtocols
             ThriftServerDef def = ThriftServerDef.newBuilder()
                                                  .listen(0)
                                                  .withProcessor(processor)
-                                                 .speaks(protocolFactory).build();
+                                                 .protocol(protocolFactory).build();
 
             server = new NettyServerTransport(def, NettyServerConfig.newBuilder().build(), new DefaultChannelGroup());
             server.start();
