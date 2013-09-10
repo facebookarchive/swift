@@ -115,13 +115,13 @@ public class ThriftServerDefBuilder
     /**
      * Specify protocolFactory for both input and output
      */
-    public ThriftServerDefBuilder speaks(TDuplexProtocolFactory tProtocolFactory)
+    public ThriftServerDefBuilder protocol(TDuplexProtocolFactory tProtocolFactory)
     {
         this.duplexProtocolFactory = tProtocolFactory;
         return this;
     }
 
-    public ThriftServerDefBuilder speaks(TProtocolFactory tProtocolFactory)
+    public ThriftServerDefBuilder protocol(TProtocolFactory tProtocolFactory)
     {
         this.duplexProtocolFactory = TDuplexProtocolFactory.fromSingleFactory(tProtocolFactory);
         return this;
