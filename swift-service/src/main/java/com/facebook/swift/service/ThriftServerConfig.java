@@ -215,7 +215,7 @@ public class ThriftServerConfig
      * @param connectionLimit The maximum number of concurrent connections
      * @return This {@link ThriftServerConfig} instance
      */
-    @Config("thrift.server")
+    @Config("thrift.connection-limit")
     public ThriftServerConfig setConnectionLimit(int connectionLimit)
     {
         this.connectionLimit = connectionLimit;
