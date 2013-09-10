@@ -15,6 +15,9 @@
  */
 package com.facebook.swift.service.guice;
 
+import com.facebook.nifty.codec.DefaultThriftFrameCodecFactory;
+import com.facebook.nifty.codec.ThriftFrameCodecFactory;
+import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.facebook.nifty.processor.NiftyProcessor;
 import com.facebook.swift.service.*;
 import com.facebook.swift.service.guice.ThriftServiceExporter.ThriftServiceExport;
@@ -24,11 +27,15 @@ import com.google.inject.Binder;
 import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
+import com.google.inject.binder.ScopedBindingBuilder;
+import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TCompactProtocol;
 import org.jboss.netty.util.HashedWheelTimer;
 import org.jboss.netty.util.Timer;
 
 import javax.annotation.PreDestroy;
 
+import static com.google.inject.multibindings.MapBinder.newMapBinder;
 import static com.google.inject.multibindings.Multibinder.newSetBinder;
 import static io.airlift.configuration.ConfigurationModule.bindConfig;
 
@@ -46,6 +53,22 @@ public class ThriftServerModule implements Module
                     }
                 });
 
+        // Setup binder for message frame codecs...
+        newMapBinder(binder, String.class, ThriftFrameCodecFactory.class).permitDuplicates();
+
+        // ...and bind unframed (aka buffered) and framed codecs by default. The default frame codec
+        // factory from Nifty handles both equally well.
+        bindFrameCodecFactory(binder, "unframed", DefaultThriftFrameCodecFactory.class);
+        bindFrameCodecFactory(binder, "buffered", DefaultThriftFrameCodecFactory.class);
+        bindFrameCodecFactory(binder, "framed", DefaultThriftFrameCodecFactory.class);
+
+        // Setup binder for protocols...
+        newMapBinder(binder, String.class, TDuplexProtocolFactory.class).permitDuplicates();
+
+        // ...and bind binary and compact protocols by default
+        bindProtocolFactory(binder, "binary", TDuplexProtocolFactory.fromSingleFactory(new TBinaryProtocol.Factory()));
+        bindProtocolFactory(binder, "compact", TDuplexProtocolFactory.fromSingleFactory(new TCompactProtocol.Factory()));
+
         newSetBinder(binder, ThriftServiceExport.class).permitDuplicates();
         newSetBinder(binder, ThriftEventHandler.class).permitDuplicates();
         binder.bind(ThriftServiceProcessor.class).toProvider(ThriftServiceProcessorProvider.class).in(Scopes.SINGLETON);
@@ -53,5 +76,25 @@ public class ThriftServerModule implements Module
 
         bindConfig(binder).to(ThriftServerConfig.class);
         binder.bind(ThriftServer.class).in(Scopes.SINGLETON);
+    }
+
+    public static ScopedBindingBuilder bindFrameCodecFactory(Binder binder, String key, Class<? extends ThriftFrameCodecFactory> frameCodecFactoryClass)
+    {
+        return newMapBinder(binder, String.class, ThriftFrameCodecFactory.class).addBinding(key).to(frameCodecFactoryClass);
+    }
+
+    public static void bindFrameCodecFactory(Binder binder, String key, ThriftFrameCodecFactory frameCodecFactory)
+    {
+        newMapBinder(binder, String.class, ThriftFrameCodecFactory.class).addBinding(key).toInstance(frameCodecFactory);
+    }
+
+    public static ScopedBindingBuilder bindProtocolFactory(Binder binder, String key, Class<? extends TDuplexProtocolFactory> protocolFactoryClass)
+    {
+        return newMapBinder(binder, String.class, TDuplexProtocolFactory.class).addBinding(key).to(protocolFactoryClass);
+    }
+
+    public static void bindProtocolFactory(Binder binder, String key, TDuplexProtocolFactory protocolFactory)
+    {
+        newMapBinder(binder, String.class, TDuplexProtocolFactory.class).addBinding(key).toInstance(protocolFactory);
     }
 }

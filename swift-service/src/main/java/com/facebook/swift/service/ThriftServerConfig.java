@@ -25,6 +25,7 @@ import java.util.concurrent.ExecutorService;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 import static io.airlift.units.DataSize.Unit.MEGABYTE;
 import static java.util.concurrent.Executors.newFixedThreadPool;
@@ -44,7 +45,8 @@ public class ThriftServerConfig
     private Duration idleConnectionTimeout = Duration.valueOf("60s");
     private Optional<Integer> workerThreads = Optional.absent();
     private Optional<ExecutorService> workerExecutor = Optional.absent();
-
+    private String transportName = "framed";
+    private String protocolName = "binary";
     /**
      * The default maximum allowable size for a single incoming thrift request or outgoing thrift
      * response. A server can configure the actual maximum to be much higher (up to 0x7FFFFFFF or
@@ -209,7 +211,7 @@ public class ThriftServerConfig
      * @param connectionLimit The maximum number of concurrent connections
      * @return This {@link ThriftServerConfig} instance
      */
-    @Config("thrift.server")
+    @Config("thrift.connection-limit")
     public ThriftServerConfig setConnectionLimit(int connectionLimit)
     {
         this.connectionLimit = connectionLimit;
@@ -240,5 +242,47 @@ public class ThriftServerConfig
     private ExecutorService makeDefaultWorkerExecutor()
     {
         return newFixedThreadPool(getWorkerThreads(), new ThreadFactoryBuilder().setNameFormat("thrift-worker-%s").build());
+    }
+
+    /**
+     * Sets the name of the transport (frame codec) that this server will handle. The available
+     * options by default are 'unframed', 'buffered', and 'framed'. Additional modules may install
+     * other options. Server startup will fail if you specify an unavailable transport here.
+     *
+     * @param transportName The name of the transport
+     * @return This {@link ThriftServerConfig} instance
+     */
+    @Config("thrift.transport")
+    public ThriftServerConfig setTransportName(String transportName)
+    {
+        this.transportName = transportName;
+        return this;
+    }
+
+    @NotNull
+    public String getTransportName()
+    {
+        return transportName;
+    }
+
+    /**
+     * Sets the name of the protocol that this server will speak. The available options by default
+     * are 'binary' and 'compact'. Additional modules may install other options. Server startup will
+     * fail if you specify an unavailable protocol here.
+     *
+     * @param protocolName The name of the protocol
+     * @return This {@link ThriftServerConfig} instance
+     */
+    @Config("thrift.protocol")
+    public ThriftServerConfig setProtocolName(String protocolName)
+    {
+        this.protocolName = protocolName;
+        return this;
+    }
+
+    @NotNull
+    public String getProtocolName()
+    {
+        return protocolName;
     }
 }
