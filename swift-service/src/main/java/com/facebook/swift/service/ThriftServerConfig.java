@@ -16,6 +16,7 @@
 package com.facebook.swift.service;
 
 import com.google.common.base.Optional;
+import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.airlift.configuration.Config;
 import io.airlift.units.DataSize;
@@ -36,7 +37,7 @@ public class ThriftServerConfig
     private static final int DEFAULT_IO_WORKER_THREAD_COUNT = 2 * Runtime.getRuntime().availableProcessors();
     private static final int DEFAULT_WORKER_THREAD_COUNT = 200;
 
-    private String bindAddress = "localhost";
+    private String bindAddress;
     private int port;
     private int acceptBacklog = 1024;
     private int connectionLimit;

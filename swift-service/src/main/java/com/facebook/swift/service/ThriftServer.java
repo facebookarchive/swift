@@ -146,7 +146,7 @@ public class ThriftServer implements Closeable
                                                          .withProcessorFactory(processorFactory)
                                                          .limitConnectionsTo(config.getConnectionLimit())
                                                          .thriftFrameCodecFactory(availableFrameCodecFactories.get(transportName))
-                                                         .speaks(availableProtocolFactories.get(protocolName))
+                                                         .protocol(availableProtocolFactories.get(protocolName))
                                                          .using(workerExecutor).build();
 
         NettyServerConfigBuilder nettyServerConfigBuilder = NettyServerConfig.newBuilder();
