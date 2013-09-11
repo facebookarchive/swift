@@ -20,6 +20,7 @@ import com.facebook.nifty.codec.ThriftFrameCodecFactory;
 import com.facebook.nifty.core.NettyServerConfig;
 import com.facebook.nifty.core.NettyServerConfigBuilder;
 import com.facebook.nifty.core.NettyServerTransport;
+import com.facebook.nifty.core.NiftyTimer;
 import com.facebook.nifty.core.ThriftServerDef;
 import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.facebook.nifty.processor.NiftyProcessor;
@@ -27,15 +28,21 @@ import com.facebook.nifty.processor.NiftyProcessorFactory;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
+
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.TTransport;
 import org.jboss.netty.channel.ServerChannelFactory;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
+import org.jboss.netty.channel.socket.nio.NioServerBossPool;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
-import org.jboss.netty.util.HashedWheelTimer;
+import org.jboss.netty.channel.socket.nio.NioWorkerPool;
+import org.jboss.netty.util.ThreadNameDeterminer;
 import org.jboss.netty.util.Timer;
 import org.weakref.jmx.Managed;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 
 import java.io.Closeable;
 import java.net.InetSocketAddress;
@@ -45,13 +52,11 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-
 import static com.facebook.nifty.core.ShutdownUtil.shutdownChannelFactory;
 import static com.facebook.nifty.core.ShutdownUtil.shutdownExecutor;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+
 import static java.util.concurrent.Executors.newCachedThreadPool;
 
 public class ThriftServer implements Closeable
@@ -93,7 +98,7 @@ public class ThriftServer implements Closeable
 
     public ThriftServer(NiftyProcessor processor, ThriftServerConfig config)
     {
-        this(processor, config, new HashedWheelTimer(new ThreadFactoryBuilder().setDaemon(true).build()));
+        this(processor, config, new NiftyTimer("thrift"));
     }
 
     public ThriftServer(NiftyProcessor processor, ThriftServerConfig config, Timer timer)
@@ -136,7 +141,8 @@ public class ThriftServer implements Closeable
         ioExecutor = newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("thrift-io-%s").build());
         ioThreads = config.getIoThreadCount();
 
-        serverChannelFactory = new NioServerSocketChannelFactory(acceptorExecutor, acceptorThreads, ioExecutor, ioThreads);
+        serverChannelFactory = new NioServerSocketChannelFactory(new NioServerBossPool(acceptorExecutor, acceptorThreads, ThreadNameDeterminer.CURRENT),
+                                                                 new NioWorkerPool(ioExecutor, ioThreads, ThreadNameDeterminer.CURRENT));
 
         ThriftServerDef thriftServerDef = ThriftServerDef.newBuilder()
                                                          .name("thrift")
@@ -172,7 +178,8 @@ public class ThriftServer implements Closeable
         acceptorThreads = nettyServerConfig.getBossThreadCount();
         ioExecutor = nettyServerConfig.getWorkerExecutor();
         ioThreads = nettyServerConfig.getWorkerThreadCount();
-        serverChannelFactory = new NioServerSocketChannelFactory(acceptorExecutor, acceptorThreads, ioExecutor, ioThreads);
+        serverChannelFactory = new NioServerSocketChannelFactory(new NioServerBossPool(acceptorExecutor, acceptorThreads, ThreadNameDeterminer.CURRENT),
+                                                                 new NioWorkerPool(ioExecutor, ioThreads, ThreadNameDeterminer.CURRENT));
         transport = new NettyServerTransport(thriftServerDef, nettyServerConfig, allChannels);
     }
 

@@ -17,26 +17,31 @@ package com.facebook.swift.service.guice;
 
 import com.facebook.nifty.codec.DefaultThriftFrameCodecFactory;
 import com.facebook.nifty.codec.ThriftFrameCodecFactory;
+import com.facebook.nifty.core.NiftyTimer;
 import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.facebook.nifty.processor.NiftyProcessor;
-import com.facebook.swift.service.*;
+import com.facebook.swift.service.ThriftEventHandler;
+import com.facebook.swift.service.ThriftServer;
+import com.facebook.swift.service.ThriftServerConfig;
+import com.facebook.swift.service.ThriftServerTimer;
+import com.facebook.swift.service.ThriftServiceProcessor;
 import com.facebook.swift.service.guice.ThriftServiceExporter.ThriftServiceExport;
 import com.facebook.swift.service.guice.ThriftServiceExporter.ThriftServiceProcessorProvider;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Binder;
 import com.google.inject.Key;
 import com.google.inject.Module;
+import com.google.inject.Provides;
 import com.google.inject.Scopes;
+import com.google.inject.Singleton;
 import com.google.inject.binder.ScopedBindingBuilder;
+
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
-import org.jboss.netty.util.HashedWheelTimer;
 import org.jboss.netty.util.Timer;
-
-import javax.annotation.PreDestroy;
 
 import static com.google.inject.multibindings.MapBinder.newMapBinder;
 import static com.google.inject.multibindings.Multibinder.newSetBinder;
+
 import static io.airlift.configuration.ConfigurationModule.bindConfig;
 
 public class ThriftServerModule implements Module
@@ -44,15 +49,6 @@ public class ThriftServerModule implements Module
     @Override
     public void configure(Binder binder)
     {
-        binder.bind(Timer.class).annotatedWith(ThriftServerTimer.class).toInstance(
-                new HashedWheelTimer(new ThreadFactoryBuilder().setDaemon(true).build()) {
-                    @PreDestroy
-                    public void cleanup()
-                    {
-                        stop();
-                    }
-                });
-
         // Setup binder for message frame codecs...
         newMapBinder(binder, String.class, ThriftFrameCodecFactory.class).permitDuplicates();
 
@@ -96,5 +92,13 @@ public class ThriftServerModule implements Module
     public static void bindProtocolFactory(Binder binder, String key, TDuplexProtocolFactory protocolFactory)
     {
         newMapBinder(binder, String.class, TDuplexProtocolFactory.class).addBinding(key).toInstance(protocolFactory);
+    }
+
+    @Provides
+    @ThriftServerTimer
+    @Singleton
+    public Timer getThriftServerTimer()
+    {
+        return new NiftyTimer("thrift");
     }
 }
