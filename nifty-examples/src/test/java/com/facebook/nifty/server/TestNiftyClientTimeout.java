@@ -124,7 +124,7 @@ public class TestNiftyClientTimeout
     private boolean isTimeoutException(Throwable throwable) {
         Throwable rootCause = Throwables.getRootCause(throwable);
         // Look for a java.net.ConnectException, with the message "connection timed out"
-        return (rootCause instanceof ConnectException &&
-                rootCause.getMessage().compareTo("connection timed out") == 0);
+        return rootCause instanceof ConnectException &&
+                rootCause.getMessage().startsWith("connection timed out");
     }
 }
