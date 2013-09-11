@@ -15,8 +15,6 @@
  */
 package com.facebook.nifty.core;
 
-import com.google.common.primitives.Ints;
-
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
@@ -31,11 +29,14 @@ import org.jboss.netty.channel.ServerChannelFactory;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
+import org.jboss.netty.channel.socket.nio.NioServerBossPool;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import org.jboss.netty.channel.socket.nio.NioWorkerPool;
 import org.jboss.netty.handler.timeout.IdleStateHandler;
 import org.jboss.netty.logging.InternalLoggerFactory;
 import org.jboss.netty.logging.Slf4JLoggerFactory;
 import org.jboss.netty.util.ExternalResourceReleasable;
+import org.jboss.netty.util.ThreadNameDeterminer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -123,10 +124,8 @@ public class NettyServerTransport implements ExternalResourceReleasable
         ioWorkerExecutor = nettyServerConfig.getWorkerExecutor();
         int ioWorkerThreadCount = nettyServerConfig.getWorkerThreadCount();
 
-        channelFactory = new NioServerSocketChannelFactory(bossExecutor,
-                                                           bossThreadCount,
-                                                           ioWorkerExecutor,
-                                                           ioWorkerThreadCount);
+        channelFactory = new NioServerSocketChannelFactory(new NioServerBossPool(bossExecutor, bossThreadCount, ThreadNameDeterminer.CURRENT),
+                                                           new NioWorkerPool(ioWorkerExecutor, ioWorkerThreadCount, ThreadNameDeterminer.CURRENT));
         start(channelFactory);
     }
 

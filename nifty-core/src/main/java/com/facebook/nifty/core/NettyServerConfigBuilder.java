@@ -18,9 +18,9 @@ package com.facebook.nifty.core;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
+
 import org.jboss.netty.channel.socket.ServerSocketChannelConfig;
 import org.jboss.netty.channel.socket.nio.NioSocketChannelConfig;
-import org.jboss.netty.util.HashedWheelTimer;
 import org.jboss.netty.util.Timer;
 
 import java.lang.reflect.Proxy;
@@ -87,17 +87,12 @@ public class NettyServerConfigBuilder extends NettyConfigBuilderBase<NettyServer
 
         return new NettyServerConfig(
                 getBootstrapOptions(),
-                timer != null ? timer : buildDefaultTimer(),
+                timer != null ? timer : new NiftyTimer(threadNamePattern("")),
                 bossExecutor != null ? bossExecutor : buildDefaultBossExecutor(),
                 bossThreadCount,
                 workerExecutor != null ? workerExecutor : buildDefaultWorkerExecutor(),
                 workerThreadCount
         );
-    }
-
-    private Timer buildDefaultTimer()
-    {
-        return new HashedWheelTimer(renamingDaemonThreadFactory(threadNamePattern("-timer-%s")));
     }
 
     private ExecutorService buildDefaultBossExecutor()
@@ -119,10 +114,5 @@ public class NettyServerConfigBuilder extends NettyConfigBuilderBase<NettyServer
     private ThreadFactory renamingThreadFactory(String nameFormat)
     {
         return new ThreadFactoryBuilder().setNameFormat(nameFormat).build();
-    }
-
-    private ThreadFactory renamingDaemonThreadFactory(String nameFormat)
-    {
-        return new ThreadFactoryBuilder().setNameFormat(nameFormat).setDaemon(true).build();
     }
 }

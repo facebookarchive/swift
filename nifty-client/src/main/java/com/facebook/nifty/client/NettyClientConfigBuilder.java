@@ -16,17 +16,21 @@
 package com.facebook.nifty.client;
 
 import com.facebook.nifty.core.NettyConfigBuilderBase;
+import com.facebook.nifty.core.NiftyTimer;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
+
 import org.jboss.netty.channel.socket.nio.NioSocketChannelConfig;
 import org.jboss.netty.util.HashedWheelTimer;
+import org.jboss.netty.util.ThreadNameDeterminer;
 import org.jboss.netty.util.Timer;
 
 import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.Executors.newCachedThreadPool;
 
@@ -88,17 +92,12 @@ public class NettyClientConfigBuilder extends NettyConfigBuilderBase<NettyClient
         return new NettyClientConfig(
                 getBootstrapOptions(),
                 defaultSocksProxyAddress,
-                timer != null ? timer : buildDefaultTimer(),
+                timer != null ? timer : new NiftyTimer(threadNamePattern("")),
                 bossExecutor != null ? bossExecutor : buildDefaultBossExecutor(),
                 bossThreadCount,
                 workerExecutor != null ? workerExecutor : buildDefaultWorkerExecutor(),
                 workerThreadCount
         );
-    }
-
-    private Timer buildDefaultTimer()
-    {
-        return new HashedWheelTimer(renamingDaemonThreadFactory(threadNamePattern("-timer-%s")));
     }
 
     private ExecutorService buildDefaultBossExecutor()
