@@ -19,10 +19,10 @@ import com.beust.jcommander.JCommander;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 
+import javax.annotation.Nonnull;
+
 import java.io.File;
 import java.net.URI;
-
-import javax.annotation.Nonnull;
 
 public class Main
 {
@@ -56,11 +56,14 @@ public class Main
                 .overridePackage(cliConfig.overridePackage)
                 .defaultPackage(cliConfig.defaultPackage)
                 .generateIncludedCode(cliConfig.generateIncludedCode)
-                .codeFlavor(cliConfig.generateBeans ? "java-regular" : "java-immutable")
-                .usePlainJavaNamespace(cliConfig.usePlainJavaNamespace);
+                .codeFlavor(cliConfig.generateBeans ? "java-regular" : "java-immutable");
 
         for (SwiftGeneratorTweak tweak : cliConfig.tweaks) {
             configBuilder.addTweak(tweak);
+        }
+
+        if (cliConfig.usePlainJavaNamespace) {
+            configBuilder.addTweak(SwiftGeneratorTweak.USE_PLAIN_JAVA_NAMESPACE);
         }
 
         Iterable<URI> inputs = Iterables.transform(cliConfig.inputFiles, FILE_TO_URI_TRANSFORM);

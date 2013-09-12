@@ -31,7 +31,6 @@ public class SwiftGeneratorConfig
     private final Set<SwiftGeneratorTweak> generatorTweaks;
     private final boolean generateIncludedCode;
     private final String codeFlavor;
-    private boolean usePlainJavaNamespace;
 
     private SwiftGeneratorConfig(
             final URI inputBase,
@@ -40,8 +39,7 @@ public class SwiftGeneratorConfig
             final String defaultPackage,
             final Set<SwiftGeneratorTweak> generatorTweaks,
             final boolean generateIncludedCode,
-            final String codeFlavor,
-            boolean usePlainJavaNamespace)
+            final String codeFlavor)
     {
         this.inputBase = inputBase;
         this.outputFolder = outputFolder;
@@ -50,7 +48,6 @@ public class SwiftGeneratorConfig
         this.generatorTweaks = generatorTweaks;
         this.generateIncludedCode = generateIncludedCode;
         this.codeFlavor = codeFlavor;
-        this.usePlainJavaNamespace = usePlainJavaNamespace;
     }
 
     public static Builder builder()
@@ -115,14 +112,6 @@ public class SwiftGeneratorConfig
         return codeFlavor;
     }
 
-    /**
-     * Use namespace from 'namespace java ...' directive instead of from 'namespace java.swift ...'
-     */
-    public boolean usePlainJavaNamespace()
-    {
-        return usePlainJavaNamespace;
-    }
-
     public static class Builder
     {
         private URI inputBase = null;
@@ -132,7 +121,6 @@ public class SwiftGeneratorConfig
         private Set<SwiftGeneratorTweak> generatorTweaks = EnumSet.noneOf(SwiftGeneratorTweak.class);
         private boolean generateIncludedCode = false;
         private String codeFlavor = null;
-        private boolean usePlainJavaNamespace = false;
 
         private Builder()
         {
@@ -152,8 +140,7 @@ public class SwiftGeneratorConfig
                 defaultPackage,
                 generatorTweaks,
                 generateIncludedCode,
-                codeFlavor,
-                usePlainJavaNamespace);
+                codeFlavor);
         }
 
         public Builder inputBase(final URI inputBase)
@@ -195,12 +182,6 @@ public class SwiftGeneratorConfig
         public Builder codeFlavor(final String codeFlavor)
         {
             this.codeFlavor = codeFlavor;
-            return this;
-        }
-
-        public Builder usePlainJavaNamespace(final boolean usePlainJavaNamespace)
-        {
-            this.usePlainJavaNamespace = usePlainJavaNamespace;
             return this;
         }
     }

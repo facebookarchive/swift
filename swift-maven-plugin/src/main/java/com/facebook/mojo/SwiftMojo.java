@@ -15,15 +15,15 @@
  */
 package com.facebook.mojo;
 
-import com.facebook.swift.generator.SwiftGeneratorTweak;
-
 import com.facebook.swift.generator.SwiftGenerator;
 import com.facebook.swift.generator.SwiftGeneratorConfig;
+import com.facebook.swift.generator.SwiftGeneratorTweak;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
 import com.pyx4j.log4j.MavenLogAppender;
+
 import org.apache.log4j.Logger;
 import org.apache.maven.model.FileSet;
 import org.apache.maven.plugin.AbstractMojo;
@@ -32,6 +32,7 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
 
+import java.io.Closeable;
 import java.io.File;
 import java.net.URI;
 import java.util.List;
@@ -170,8 +171,11 @@ public class SwiftMojo extends AbstractMojo
                     .overridePackage(overridePackage)
                     .defaultPackage(defaultPackage)
                     .generateIncludedCode(generateIncludedCode)
-                    .codeFlavor(codeFlavor)
-                    .usePlainJavaNamespace(usePlainJavaNamespace);
+                    .codeFlavor(codeFlavor);
+
+                if (usePlainJavaNamespace) {
+                    configBuilder.addTweak(SwiftGeneratorTweak.USE_PLAIN_JAVA_NAMESPACE);
+                }
 
                 if (addThriftExceptions) {
                     configBuilder.addTweak(SwiftGeneratorTweak.ADD_THRIFT_EXCEPTION);
