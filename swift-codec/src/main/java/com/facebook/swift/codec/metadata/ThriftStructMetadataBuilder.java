@@ -29,6 +29,8 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.reflect.TypeToken;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -41,17 +43,14 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import javax.annotation.Nullable;
-import javax.annotation.concurrent.NotThreadSafe;
-
+import static com.facebook.swift.codec.metadata.FieldMetadata.extractThriftFieldName;
+import static com.facebook.swift.codec.metadata.FieldMetadata.getOrExtractThriftFieldName;
+import static com.facebook.swift.codec.metadata.FieldMetadata.getThriftFieldId;
+import static com.facebook.swift.codec.metadata.FieldMetadata.getThriftFieldName;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.extractParameterNames;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.findAnnotatedMethods;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getAllDeclaredFields;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getAllDeclaredMethods;
-import static com.facebook.swift.codec.metadata.ThriftStructMetadataBuilder.FieldMetadata.extractThriftFieldName;
-import static com.facebook.swift.codec.metadata.ThriftStructMetadataBuilder.FieldMetadata.getOrExtractThriftFieldName;
-import static com.facebook.swift.codec.metadata.ThriftStructMetadataBuilder.FieldMetadata.getThriftFieldId;
-import static com.facebook.swift.codec.metadata.ThriftStructMetadataBuilder.FieldMetadata.getThriftFieldName;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.notNull;
@@ -60,6 +59,7 @@ import static com.google.common.collect.Iterables.transform;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Lists.newArrayListWithCapacity;
 import static com.google.common.collect.Sets.newTreeSet;
+
 import static java.util.Arrays.asList;
 
 @NotThreadSafe
@@ -377,7 +377,7 @@ public class ThriftStructMetadataBuilder<T>
                     }
                 }
                 else {
-                    parameters = ImmutableList.of(new ParameterInjection(0, annotation, extractFieldName(method), method.getGenericParameterTypes()[0]));
+                    parameters = ImmutableList.of(new ParameterInjection(0, annotation, ReflectionHelper.extractFieldName(method), method.getGenericParameterTypes()[0]));
                 }
                 fields.addAll(parameters);
                 methodInjections.add(new MethodInjection(method, parameters));
@@ -401,28 +401,6 @@ public class ThriftStructMetadataBuilder<T>
             }
         }
         return false;
-    }
-
-    private static String extractFieldName(Method method)
-    {
-        checkNotNull(method, "method is null");
-        return extractFieldName(method.getName());
-    }
-
-    public static String extractFieldName(String methodName)
-    {
-        checkNotNull(methodName, "methodName is null");
-        if ((methodName.startsWith("get") || methodName.startsWith("set")) && methodName.length() > 3) {
-            String name = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);
-            return name;
-        }
-        else if (methodName.startsWith("is") && methodName.length() > 2) {
-            String name = Character.toLowerCase(methodName.charAt(2)) + methodName.substring(3);
-            return name;
-        }
-        else {
-            return methodName;
-        }
     }
 
     private boolean isValidateGetter(Method method)
@@ -744,367 +722,5 @@ public class ThriftStructMetadataBuilder<T>
                 );
             }
         });
-    }
-
-    static abstract class FieldMetadata
-    {
-        private Short id;
-        private String name;
-
-        private FieldMetadata(ThriftField annotation)
-        {
-            if (annotation != null) {
-                if (annotation.value() != Short.MIN_VALUE) {
-                    id = annotation.value();
-                }
-                if (!annotation.name().isEmpty()) {
-                    name = annotation.name();
-                }
-            }
-        }
-
-        public Short getId()
-        {
-            return id;
-        }
-
-        public void setId(short id)
-        {
-            this.id = id;
-        }
-
-        public String getName()
-        {
-            return name;
-        }
-
-        public void setName(String name)
-        {
-            this.name = name;
-        }
-
-        public abstract Type getJavaType();
-
-        public abstract String extractName();
-
-        static <T extends FieldMetadata> Function<T, Optional<Short>> getThriftFieldId()
-        {
-            return new Function<T, Optional<Short>>()
-            {
-                @Override
-                public Optional<Short> apply(@Nullable T input)
-                {
-                    if (input == null) {
-                        return Optional.absent();
-                    }
-                    Short value = input.getId();
-                    return Optional.fromNullable(value);
-                }
-            };
-        }
-
-        static <T extends FieldMetadata> Function<T, String> getThriftFieldName()
-        {
-            return new Function<T, String>()
-            {
-                @Override
-                public String apply(@Nullable T input)
-                {
-                    if (input == null) {
-                        return null;
-                    }
-                    return input.getName();
-                }
-            };
-        }
-
-        static <T extends FieldMetadata> Function<T, String> getOrExtractThriftFieldName()
-        {
-            return new Function<T, String>()
-            {
-                @Override
-                public String apply(@Nullable T input)
-                {
-                    if (input == null) {
-                        return null;
-                    }
-                    String name = input.getName();
-                    if (name == null) {
-                        name = input.extractName();
-                    }
-                    if (name == null) {
-                        throw new NullPointerException(String.valueOf("name is null"));
-                    }
-                    return name;
-                }
-            };
-        }
-
-        static <T extends FieldMetadata> Function<T, String> extractThriftFieldName()
-        {
-            return new Function<T, String>()
-            {
-                @Override
-                public String apply(@Nullable T input)
-                {
-                    if (input == null) {
-                        return null;
-                    }
-                    return input.extractName();
-                }
-            };
-        }
-    }
-
-    private static abstract class Extractor extends FieldMetadata
-    {
-        protected Extractor(ThriftField annotation)
-        {
-            super(annotation);
-        }
-    }
-
-    private static class FieldExtractor extends Extractor
-    {
-        private final Field field;
-
-        private FieldExtractor(Field field, ThriftField annotation)
-        {
-            super(annotation);
-            this.field = field;
-        }
-
-        public Field getField()
-        {
-            return field;
-        }
-
-        @Override
-        public String extractName()
-        {
-            return field.getName();
-        }
-
-        @Override
-        public Type getJavaType()
-        {
-            return field.getGenericType();
-        }
-
-        @Override
-        public String toString()
-        {
-            final StringBuilder sb = new StringBuilder();
-            sb.append("FieldExtractor");
-            sb.append("{field=").append(field);
-            sb.append('}');
-            return sb.toString();
-        }
-    }
-
-    public static class MethodExtractor extends Extractor
-    {
-        private final Method method;
-
-        public MethodExtractor(Method method, ThriftField annotation)
-        {
-            super(annotation);
-            this.method = method;
-        }
-
-        public Method getMethod()
-        {
-            return method;
-        }
-
-        @Override
-        public String extractName()
-        {
-            return extractFieldName(method);
-        }
-
-        @Override
-        public Type getJavaType()
-        {
-            return method.getGenericReturnType();
-        }
-
-        @Override
-        public String toString()
-        {
-            final StringBuilder sb = new StringBuilder();
-            sb.append("MethodExtractor");
-            sb.append("{method=").append(method);
-            sb.append('}');
-            return sb.toString();
-        }
-    }
-
-    private static abstract class Injection extends FieldMetadata
-    {
-        protected Injection(ThriftField annotation)
-        {
-            super(annotation);
-        }
-    }
-
-    private static class FieldInjection extends Injection
-    {
-        private final Field field;
-
-        private FieldInjection(Field field, ThriftField annotation)
-        {
-            super(annotation);
-            this.field = field;
-        }
-
-        public Field getField()
-        {
-            return field;
-        }
-
-        @Override
-        public String extractName()
-        {
-            return field.getName();
-        }
-
-        @Override
-        public Type getJavaType()
-        {
-            return field.getGenericType();
-        }
-
-        @Override
-        public String toString()
-        {
-            final StringBuilder sb = new StringBuilder();
-            sb.append("FieldInjection");
-            sb.append("{field=").append(field);
-            sb.append('}');
-            return sb.toString();
-        }
-    }
-
-    public class ConstructorInjection
-    {
-        private final Constructor<?> constructor;
-        private final List<ParameterInjection> parameters;
-
-        public ConstructorInjection(Constructor<?> constructor, List<ParameterInjection> parameters)
-        {
-            this.constructor = constructor;
-            this.parameters = ImmutableList.copyOf(parameters);
-        }
-
-        public ConstructorInjection(Constructor<?> constructor, ParameterInjection... parameters)
-        {
-            this.constructor = constructor;
-            this.parameters = ImmutableList.copyOf(parameters);
-        }
-
-        public Constructor<?> getConstructor()
-        {
-            return constructor;
-        }
-
-        public List<ParameterInjection> getParameters()
-        {
-            return parameters;
-        }
-
-        @Override
-        public String toString()
-        {
-            final StringBuilder sb = new StringBuilder();
-            sb.append("ConstructorInjection");
-            sb.append("{constructor=").append(constructor);
-            sb.append(", parameters=").append(parameters);
-            sb.append('}');
-            return sb.toString();
-        }
-    }
-
-    public class MethodInjection
-    {
-        private final Method method;
-        private final List<ParameterInjection> parameters;
-
-        public MethodInjection(Method method, List<ParameterInjection> parameters)
-        {
-            this.method = method;
-            this.parameters = ImmutableList.copyOf(parameters);
-        }
-
-        public Method getMethod()
-        {
-            return method;
-        }
-
-        public List<ParameterInjection> getParameters()
-        {
-            return parameters;
-        }
-
-        @Override
-        public String toString()
-        {
-            final StringBuilder sb = new StringBuilder();
-            sb.append("MethodInjection");
-            sb.append("{method=").append(method);
-            sb.append(", parameters=").append(parameters);
-            sb.append('}');
-            return sb.toString();
-        }
-    }
-
-    private static class ParameterInjection extends Injection
-    {
-        private final int parameterIndex;
-        private final String extractedName;
-        private final Type parameterJavaType;
-
-        private ParameterInjection(int parameterIndex, ThriftField annotation, String extractedName, Type parameterJavaType)
-        {
-            super(annotation);
-            checkNotNull(parameterJavaType, "parameterJavaType is null");
-
-            this.parameterIndex = parameterIndex;
-            this.extractedName = extractedName;
-            this.parameterJavaType = parameterJavaType;
-            if (void.class.equals(parameterJavaType)) {
-                throw new AssertionError();
-            }
-            checkArgument(getName() != null || extractedName != null, "Parameter must have an explicit name or an extractedName");
-        }
-
-        public int getParameterIndex()
-        {
-            return parameterIndex;
-        }
-
-        @Override
-        public String extractName()
-        {
-            return extractedName;
-        }
-
-        @Override
-        public Type getJavaType()
-        {
-            return parameterJavaType;
-        }
-
-        @Override
-        public String toString()
-        {
-            final StringBuilder sb = new StringBuilder();
-            sb.append("ParameterInjection");
-            sb.append("{parameterIndex=").append(parameterIndex);
-            sb.append(", extractedName='").append(extractedName).append('\'');
-            sb.append(", parameterJavaType=").append(parameterJavaType);
-            sb.append('}');
-            return sb.toString();
-        }
     }
 }
