@@ -6,7 +6,7 @@ The code generator tool transltes existing .thrift files into Swift interfaces.
 
 If you just want the latest release of the generator tool copied to your /tmp directory, use the following command line:
 
-      mvn org.apache.maven.plugins:maven-dependency-plugin:2.8:get -DremoteRepositories=central::default::http://repo1.maven.apache.org/maven2 -Dartifact=com.facebook.swift:swift-generator-cli:RELEASE:standalone -Ddest=/tmp/
+      mvn org.apache.maven.plugins:maven-dependency-plugin:2.8:get -DremoteRepositories=central::default::http://repo1.maven.apache.org/maven2 -Dartifact=com.facebook.swift:swift-generator-cli:RELEASE:jar:standalone -Ddest=/tmp/
 
 If you want a specific version, you should first determine which version of Swift you will be working with. You can look here at the [available releases](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.facebook.swift%22%20AND%20a%3A%22swift-generator-cli%22), and after you've determined which version you want, and replace RELEASE above with the version you will be using.
 
