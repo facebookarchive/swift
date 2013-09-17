@@ -17,4 +17,27 @@ public void <field.javaSetterName>(final <field.javaType> <field.javaName>) { th
 _constructor(element) ::= <<
 public <element.javaName>() {
 }
+
+_union_setter(field) ::= <<
+@ThriftField
+public void <field.javaSetterName>(final <field.javaType> <field.javaName>) {
+    this.value = <field.javaName>;
+    this.id = <field.id>;
+    this.name = "<field.name>";
+}
+>>
+
+
+_union_body(context) ::= <<
+
+private Object value;
+private int id = -1;
+private String name;
+
+public <context.javaName>() {
+}
+
+<context.fields : { field |<_union_setter(field)>}; separator="\n\n">
+
+<context.fields : { field |<_union_field(field)>}; separator="\n\n">
 >>
