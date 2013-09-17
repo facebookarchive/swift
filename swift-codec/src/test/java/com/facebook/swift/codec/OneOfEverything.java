@@ -127,6 +127,19 @@ public class OneOfEverything
     @ThriftField(50)
     public Map<Letter, String> aCustomEnumKeyMap;
 
+    @ThriftField(60)
+    public UnionField aUnion;
+    @ThriftField(61)
+    public Set<UnionField> aUnionSet;
+    @ThriftField(62)
+    public List<UnionField> aUnionList;
+    @ThriftField(63)
+    public Map<UnionField, String> aUnionKeyMap;
+    @ThriftField(64)
+    public Map<String, UnionField> aUnionValueMap;
+
+
+
     @ThriftField(100)
     public Set<List<Map<String, BonkField>>> aSetOfListsOfMaps;
     @ThriftField(101)
@@ -301,6 +314,22 @@ public class OneOfEverything
             return false;
         }
 
+        if (aUnion != null ? !aUnion.equals(that.aUnion) : that.aUnion != null) {
+            return false;
+        }
+        if (aUnionKeyMap != null ? !aUnionKeyMap.equals(that.aUnionKeyMap) : that.aUnionKeyMap != null) {
+            return false;
+        }
+        if (aUnionList != null ? !aUnionList.equals(that.aUnionList) : that.aUnionList != null) {
+            return false;
+        }
+        if (aUnionSet != null ? !aUnionSet.equals(that.aUnionSet) : that.aUnionSet != null) {
+            return false;
+        }
+        if (aUnionValueMap != null ? !aUnionValueMap.equals(that.aUnionValueMap) : that.aUnionValueMap != null) {
+            return false;
+        }
+
         return true;
     }
 
@@ -362,6 +391,12 @@ public class OneOfEverything
         result = 31 * result + (aCustomEnumKeyMap != null ? aCustomEnumKeyMap.hashCode() : 0);
         result = 31 * result + (aSetOfListsOfMaps != null ? aSetOfListsOfMaps.hashCode() : 0);
         result = 31 * result + (aMapOfListToSet != null ? aMapOfListToSet.hashCode() : 0);
+
+        result = 31 * result + (aUnion != null ? aUnion.hashCode() : 0);
+        result = 31 * result + (aUnionList != null ? aUnionList.hashCode() : 0);
+        result = 31 * result + (aUnionSet != null ? aUnionSet.hashCode() : 0);
+        result = 31 * result + (aUnionKeyMap != null ? aUnionKeyMap.hashCode() : 0);
+        result = 31 * result + (aUnionValueMap != null ? aUnionValueMap.hashCode() : 0);
         return result;
     }
 
@@ -422,6 +457,12 @@ public class OneOfEverything
         sb.append(", aCustomEnumKeyMap=").append(aCustomEnumKeyMap);
         sb.append(", aSetOfListsOfMaps=").append(aSetOfListsOfMaps);
         sb.append(", aMapOfListToSet=").append(aMapOfListToSet);
+        sb.append(", aUnion=").append(aUnion);
+        sb.append(", aUnionSet=").append(aUnionSet);
+        sb.append(", aUnionList=").append(aUnionList);
+        sb.append(", aUnionKeyMap=").append(aUnionKeyMap);
+        sb.append(", aUnionValueMap=").append(aUnionValueMap);
+
         sb.append('}');
         return sb.toString();
     }

@@ -18,11 +18,22 @@ package com.facebook.swift.codec.internal.reflection;
 import com.facebook.swift.codec.AbstractThriftCodecManagerTest;
 import com.facebook.swift.codec.ThriftCodecManager;
 
+import org.testng.annotations.Test;
+
+@Test
 public class TestReflectionThriftCodecFactory extends AbstractThriftCodecManagerTest
 {
+    private final ThriftCodecManager manager = new ThriftCodecManager(new ReflectionThriftCodecFactory());
+
     @Override
-    public ThriftCodecManager createCodecManager()
+    public ThriftCodecManager createReadCodecManager()
     {
-        return new ThriftCodecManager(new ReflectionThriftCodecFactory());
+        return manager;
+    }
+
+    @Override
+    public ThriftCodecManager createWriteCodecManager()
+    {
+        return manager;
     }
 }

@@ -20,6 +20,8 @@ import com.facebook.swift.codec.BonkBuilder;
 import com.facebook.swift.codec.BonkConstructor;
 import com.facebook.swift.codec.BonkField;
 import com.facebook.swift.codec.BonkMethod;
+import com.facebook.swift.codec.metadata.ThriftStructMetadata.MetadataType;
+
 import org.testng.annotations.Test;
 
 import static org.fest.assertions.Assertions.assertThat;
@@ -51,8 +53,9 @@ public class TestThriftStructMetadata
 
     private void verifyFieldExtraction(ThriftStructMetadata<?> metadata, int id, String name)
     {
-        ThriftExtraction extraction = metadata.getField(id).getExtraction();
-        assertThat(extraction).isNotNull().isInstanceOf(ThriftFieldExtractor.class);
+        assertTrue(metadata.getField(id).getExtraction().isPresent());
+        ThriftExtraction extraction = metadata.getField(id).getExtraction().get();
+        assertThat(extraction).isInstanceOf(ThriftFieldExtractor.class);
         ThriftFieldExtractor fieldExtractor = (ThriftFieldExtractor) extraction;
         assertEquals(fieldExtractor.getField().getName(), name);
     }
@@ -79,8 +82,9 @@ public class TestThriftStructMetadata
 
     private void verifyMethodExtraction(ThriftStructMetadata<?> metadata, int id, String name, String methodName)
     {
-        ThriftExtraction extraction = metadata.getField(id).getExtraction();
-        assertThat(extraction).isNotNull().isInstanceOf(ThriftMethodExtractor.class);
+        assertTrue(metadata.getField(id).getExtraction().isPresent());
+        ThriftExtraction extraction = metadata.getField(id).getExtraction().get();
+        assertThat(extraction).isInstanceOf(ThriftMethodExtractor.class);
         ThriftMethodExtractor methodExtractor = (ThriftMethodExtractor) extraction;
         assertEquals(methodExtractor.getMethod().getName(), methodName);
         assertEquals(methodExtractor.getName(), name);
@@ -128,11 +132,15 @@ public class TestThriftStructMetadata
 
         ThriftStructMetadata<T> metadata = builder.build();
         assertNotNull(metadata);
+        assertEquals(MetadataType.STRUCT, metadata.getMetadataType());
 
         verifyField(metadata, 1, "message");
         verifyField(metadata, 2, "type");
 
-        assertEquals(metadata.getConstructor().getParameters().size(), expectedConstructorParameters);
+        ThriftConstructorInjection constructorInjection = metadata.getConstructorInjection().get();
+        assertNotNull(constructorInjection);
+        assertEquals(constructorInjection.getParameters().size(), expectedConstructorParameters);
+
         assertEquals(metadata.getMethodInjections().size(), expectedMethodInjections);
 
         return metadata;
@@ -144,13 +152,11 @@ public class TestThriftStructMetadata
         assertNotNull(messageField, "messageField is null");
         assertEquals(messageField.getId(), id);
         assertEquals(messageField.getName(), name);
-        assertTrue(messageField.isReadable());
-        assertTrue(messageField.isWritable());
         assertFalse(messageField.isReadOnly());
         assertFalse(messageField.isWriteOnly());
 
-        ThriftExtraction extraction = messageField.getExtraction();
-        assertNotNull(extraction);
+        assertTrue(messageField.getExtraction().isPresent());
+        ThriftExtraction extraction = messageField.getExtraction().get();
         assertEquals(extraction.getId(), id);
         assertEquals(extraction.getName(), name);
 
