@@ -13,16 +13,29 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package com.facebook.swift.codec.internal;
+package com.facebook.swift.generics;
 
-import com.facebook.swift.codec.ThriftCodec;
-import com.facebook.swift.codec.ThriftCodecManager;
-import com.facebook.swift.codec.metadata.ThriftStructMetadata;
+import com.facebook.swift.codec.ThriftField;
+import com.facebook.swift.codec.ThriftStruct;
 
-/**
- * Implementations of this interface are expected to be thread safe.
- */
-public interface ThriftCodecFactory
+import java.util.Objects;
+
+@ThriftStruct
+public class GenericStruct<T>
 {
-    ThriftCodec<?> generateThriftTypeCodec(ThriftCodecManager codecManager, ThriftStructMetadata metadata);
+    @ThriftField(1)
+    public T genericField;
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj == null) {
+            return false;
+        }
+        if (obj == this || getClass() != obj.getClass()) {
+            return true;
+        }
+        GenericStruct<?> other = (GenericStruct<?>) obj;
+        return Objects.equals(genericField, other.genericField);
+    }
 }

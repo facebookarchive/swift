@@ -304,7 +304,7 @@ public class Swift2ThriftGenerator {
 
     private boolean verifyStruct(ThriftType t, boolean quiet)
     {
-        ThriftStructMetadata<?> metadata = t.getStructMetadata();
+        ThriftStructMetadata metadata = t.getStructMetadata();
         boolean ok = true;
         for (ThriftFieldMetadata fieldMetadata: metadata.getFields()) {
             boolean fieldOk = verifyField(fieldMetadata.getType());

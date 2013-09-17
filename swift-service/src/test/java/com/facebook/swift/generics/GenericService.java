@@ -13,16 +13,16 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package com.facebook.swift.codec.internal;
+package com.facebook.swift.generics;
 
-import com.facebook.swift.codec.ThriftCodec;
-import com.facebook.swift.codec.ThriftCodecManager;
-import com.facebook.swift.codec.metadata.ThriftStructMetadata;
+import com.facebook.swift.service.ThriftMethod;
 
-/**
- * Implementations of this interface are expected to be thread safe.
- */
-public interface ThriftCodecFactory
+public class GenericService implements GenericInterface
 {
-    ThriftCodec<?> generateThriftTypeCodec(ThriftCodecManager codecManager, ThriftStructMetadata metadata);
+    @Override
+    @ThriftMethod
+    public GenericStruct<String> echo(GenericStruct<String> genericObject)
+    {
+        return genericObject;
+    }
 }

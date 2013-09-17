@@ -45,10 +45,10 @@ import static java.lang.String.format;
 @Immutable
 public class ReflectionThriftCodec<T> implements ThriftCodec<T>
 {
-    private final ThriftStructMetadata<T> metadata;
+    private final ThriftStructMetadata metadata;
     private final SortedMap<Short, ThriftCodec<?>> fields;
 
-    public ReflectionThriftCodec(ThriftCodecManager manager, ThriftStructMetadata<T> metadata)
+    public ReflectionThriftCodec(ThriftCodecManager manager, ThriftStructMetadata metadata)
     {
         this.metadata = metadata;
         ImmutableSortedMap.Builder<Short, ThriftCodec<?>> fields = ImmutableSortedMap.naturalOrder();

@@ -34,7 +34,9 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -60,13 +62,14 @@ import static com.google.common.collect.Iterables.transform;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Lists.newArrayListWithCapacity;
 import static com.google.common.collect.Sets.newTreeSet;
+import static com.google.inject.internal.MoreTypes.ParameterizedTypeImpl;
 import static java.util.Arrays.asList;
 
 @NotThreadSafe
-public class ThriftStructMetadataBuilder<T>
+public class ThriftStructMetadataBuilder
 {
     private final String structName;
-    private final Class<T> structClass;
+    private final Class<?> structClass;
     private final Class<?> builderClass;
 
     private final List<String> documentation;
@@ -83,12 +86,21 @@ public class ThriftStructMetadataBuilder<T>
 
     private final ThriftCatalog catalog;
     private final MetadataErrors metadataErrors;
+    private final Type structType;
+    private final Type builderType;
 
-    public ThriftStructMetadataBuilder(ThriftCatalog catalog, Class<T> structClass)
+    public ThriftStructMetadataBuilder(ThriftCatalog catalog, Class<?> structClass)
+    {
+        this(catalog, TypeToken.of(structClass).getType());
+    }
+
+    public ThriftStructMetadataBuilder(ThriftCatalog catalog, Type structType)
     {
         this.catalog = checkNotNull(catalog, "catalog is null");
-        this.structClass = checkNotNull(structClass, "structClass is null");
+        this.structType = checkNotNull(structType, "structType is null");
         this.metadataErrors = new MetadataErrors(catalog.getMonitor());
+
+        this.structClass = TypeToken.of(this.structType).getRawType();
 
         // verify the class is public and has the correct annotations
         verifyStructClass();
@@ -97,6 +109,7 @@ public class ThriftStructMetadataBuilder<T>
         structName = extractStructName();
         // get the builder class from the annotation or from the Java class
         builderClass = extractBuilderClass();
+        builderType = extractBuilderType();
         // grab any documentation from the annotation or saved JavaDocs
         documentation = ThriftCatalog.getThriftDocumentation(structClass);
         // extract all of the annotated constructor and report an error if
@@ -157,6 +170,29 @@ public class ThriftStructMetadataBuilder<T>
         }
     }
 
+    private Type extractBuilderType()
+    {
+        if (builderClass == null) {
+            return null;
+        }
+
+        if (builderClass.getTypeParameters().length == 0) {
+            return builderClass;
+        }
+
+        if (builderClass.getTypeParameters().length != structClass.getTypeParameters().length) {
+            metadataErrors.addError(
+                    "Generic builder class [%s] must have the same number of type parameters as the type it builds ([%s])",
+                    builderClass.getName(),
+                    structClass.getName());
+            return builderClass;
+        }
+
+        ParameterizedType parameterizedStructType = (ParameterizedType) structType;
+
+        return new ParameterizedTypeImpl(builderClass.getEnclosingClass(), builderClass, ((ParameterizedType) structType).getActualTypeArguments());
+    }
+
     private void extractFromConstructors()
     {
         if (builderClass == null) {
@@ -196,7 +232,7 @@ public class ThriftStructMetadataBuilder<T>
 
             List<ParameterInjection> parameters = getParameterInjections(
                     constructor.getParameterAnnotations(),
-                    constructor.getGenericParameterTypes(),
+                    resolveTypes(structType, constructor.getGenericParameterTypes()),
                     extractParameterNames(constructor));
             if (parameters != null) {
                 fields.addAll(parameters);
@@ -228,7 +264,7 @@ public class ThriftStructMetadataBuilder<T>
         for (Method method : findAnnotatedMethods(builderClass, ThriftConstructor.class)) {
             List<ParameterInjection> parameters = getParameterInjections(
                     method.getParameterAnnotations(),
-                    method.getGenericParameterTypes(),
+                    resolveTypes(builderType, method.getGenericParameterTypes()),
                     extractParameterNames(method));
 
             // parameters are null if the method is misconfigured
@@ -297,12 +333,12 @@ public class ThriftStructMetadataBuilder<T>
 
         ThriftField annotation = fieldField.getAnnotation(ThriftField.class);
         if (allowReaders) {
-            FieldExtractor fieldExtractor = new FieldExtractor(fieldField, annotation);
+            FieldExtractor fieldExtractor = new FieldExtractor(structType, fieldField, annotation);
             fields.add(fieldExtractor);
             extractors.add(fieldExtractor);
         }
         if (allowWriters) {
-            FieldInjection fieldInjection = new FieldInjection(fieldField, annotation);
+            FieldInjection fieldInjection = new FieldInjection(structType, fieldField, annotation);
             fields.add(fieldInjection);
             fieldInjections.add(fieldInjection);
         }
@@ -312,20 +348,20 @@ public class ThriftStructMetadataBuilder<T>
     {
         if (builderClass != null) {
             // builder methods are writable
-            addMethods(builderClass, false, true);
+            addMethods(builderType, builderClass, false, true);
             // struct methods are readable
-            addMethods(structClass, true, false);
+            addMethods(structType, structClass, true, false);
         }
         else {
             // struct methods are readable and writable
-            addMethods(structClass, true, true);
+            addMethods(structType, structClass, true, true);
         }
     }
 
-    private void addMethods(Class<?> clazz, boolean allowReaders, boolean allowWriters)
+    private void addMethods(Type type, Class<?> clazz, boolean allowReaders, boolean allowWriters)
     {
         for (Method fieldMethod : findAnnotatedMethods(clazz, ThriftField.class)) {
-            addMethod(clazz, fieldMethod, allowReaders, allowWriters);
+            addMethod(type, clazz, fieldMethod, allowReaders, allowWriters);
         }
 
         // find invalid methods not skipped by findAnnotatedMethods()
@@ -341,7 +377,7 @@ public class ThriftStructMetadataBuilder<T>
         }
     }
 
-    private void addMethod(Class<?> clazz, Method method, boolean allowReaders, boolean allowWriters)
+    private void addMethod(Type type, Class<?> clazz, Method method, boolean allowReaders, boolean allowWriters)
     {
         checkArgument(method.isAnnotationPresent(ThriftField.class));
 
@@ -350,7 +386,7 @@ public class ThriftStructMetadataBuilder<T>
         // verify parameters
         if (isValidateGetter(method)) {
             if (allowReaders) {
-                MethodExtractor methodExtractor = new MethodExtractor(method, annotation);
+                MethodExtractor methodExtractor = new MethodExtractor(structType, method, annotation);
                 fields.add(methodExtractor);
                 extractors.add(methodExtractor);
             }
@@ -362,10 +398,7 @@ public class ThriftStructMetadataBuilder<T>
             if (allowWriters) {
                 List<ParameterInjection> parameters;
                 if (method.getParameterTypes().length > 1 || Iterables.any(asList(method.getParameterAnnotations()[0]), Predicates.instanceOf(ThriftField.class))) {
-                    parameters = getParameterInjections(
-                            method.getParameterAnnotations(),
-                            method.getGenericParameterTypes(),
-                            extractParameterNames(method));
+                    parameters = getParameterInjections(method.getParameterAnnotations(), resolveTypes(type, method.getGenericParameterTypes()), extractParameterNames(method));
                     if (annotation.value() != Short.MIN_VALUE) {
                         metadataErrors.addError("A method with annotated parameters can not have a field id specified: %s.%s ", clazz.getName(), method.getName());
                     }
@@ -377,7 +410,8 @@ public class ThriftStructMetadataBuilder<T>
                     }
                 }
                 else {
-                    parameters = ImmutableList.of(new ParameterInjection(0, annotation, extractFieldName(method), method.getGenericParameterTypes()[0]));
+                    Type parameterType = resolveTypes(type, method.getGenericParameterTypes())[0];
+                    parameters = ImmutableList.of(new ParameterInjection(type, 0, annotation, extractFieldName(method), parameterType));
                 }
                 fields.addAll(parameters);
                 methodInjections.add(new MethodInjection(method, parameters));
@@ -450,6 +484,7 @@ public class ThriftStructMetadataBuilder<T>
             }
 
             ParameterInjection parameterInjection = new ParameterInjection(
+                    structClass,
                     parameterIndex,
                     thriftField,
                     parameterNames[parameterIndex],
@@ -604,7 +639,7 @@ public class ThriftStructMetadataBuilder<T>
     // Build final metadata
     //
 
-    public ThriftStructMetadata<T> build()
+    public ThriftStructMetadata build()
     {
         // this code assumes that metadata is clean
         metadataErrors.throwIfHasErrors();
@@ -621,9 +656,9 @@ public class ThriftStructMetadataBuilder<T>
         // methods injections
         List<ThriftMethodInjection> methodInjections = buildMethodInjections();
 
-        return new ThriftStructMetadata<>(
+        return new ThriftStructMetadata(
                 structName,
-                structClass,
+                structType,
                 builderClass,
                 builderMethodInjection,
                 ImmutableList.copyOf(documentation),
@@ -692,11 +727,11 @@ public class ThriftStructMetadataBuilder<T>
             }
             else if (fieldMetadata instanceof FieldExtractor) {
                 FieldExtractor fieldExtractor = (FieldExtractor) fieldMetadata;
-                extraction = new ThriftFieldExtractor(fieldExtractor.getId(), fieldExtractor.getName(), fieldExtractor.getField());
+                extraction = new ThriftFieldExtractor(fieldExtractor.getId(), fieldExtractor.getName(), fieldExtractor.getField(), fieldExtractor.getJavaType());
             }
             else if (fieldMetadata instanceof MethodExtractor) {
                 MethodExtractor methodExtractor = (MethodExtractor) fieldMetadata;
-                extraction = new ThriftMethodExtractor(methodExtractor.getId(), methodExtractor.getName(), methodExtractor.getMethod());
+                extraction = new ThriftMethodExtractor(methodExtractor.getId(), methodExtractor.getName(), methodExtractor.getMethod(), methodExtractor.getJavaType());
             }
         }
 
@@ -744,6 +779,24 @@ public class ThriftStructMetadataBuilder<T>
                 );
             }
         });
+    }
+
+    private static Type resolveType(Type type, Type genericType)
+    {
+        return TypeToken.of(type).resolveType(genericType).getType();
+    }
+
+    private static Type[] resolveTypes(final Type type, Type[] genericTypes)
+    {
+        return Lists.transform(Arrays.asList(genericTypes), new Function<Type, Type>()
+        {
+            @Nullable
+            @Override
+            public Type apply(@Nullable Type input)
+            {
+                return resolveType(type, input);
+            }
+        }).toArray(new Type[0]);
     }
 
     static abstract class FieldMetadata
@@ -867,10 +920,12 @@ public class ThriftStructMetadataBuilder<T>
     private static class FieldExtractor extends Extractor
     {
         private final Field field;
+        private final Type thriftStructType;
 
-        private FieldExtractor(Field field, ThriftField annotation)
+        private FieldExtractor(Type thriftStructType, Field field, ThriftField annotation)
         {
             super(annotation);
+            this.thriftStructType = thriftStructType;
             this.field = field;
         }
 
@@ -888,7 +943,7 @@ public class ThriftStructMetadataBuilder<T>
         @Override
         public Type getJavaType()
         {
-            return field.getGenericType();
+            return resolveType(thriftStructType, field.getGenericType());
         }
 
         @Override
@@ -904,11 +959,13 @@ public class ThriftStructMetadataBuilder<T>
 
     public static class MethodExtractor extends Extractor
     {
+        private final Type thriftStructType;
         private final Method method;
 
-        public MethodExtractor(Method method, ThriftField annotation)
+        public MethodExtractor(Type thriftStructType, Method method, ThriftField annotation)
         {
             super(annotation);
+            this.thriftStructType = thriftStructType;
             this.method = method;
         }
 
@@ -926,7 +983,7 @@ public class ThriftStructMetadataBuilder<T>
         @Override
         public Type getJavaType()
         {
-            return method.getGenericReturnType();
+            return resolveType(thriftStructType, method.getGenericReturnType());
         }
 
         @Override
@@ -950,11 +1007,13 @@ public class ThriftStructMetadataBuilder<T>
 
     private static class FieldInjection extends Injection
     {
+        private final Type thriftStructType;
         private final Field field;
 
-        private FieldInjection(Field field, ThriftField annotation)
+        private FieldInjection(Type thriftStructType, Field field, ThriftField annotation)
         {
             super(annotation);
+            this.thriftStructType = thriftStructType;
             this.field = field;
         }
 
@@ -972,7 +1031,7 @@ public class ThriftStructMetadataBuilder<T>
         @Override
         public Type getJavaType()
         {
-            return field.getGenericType();
+            return resolveType(thriftStructType, field.getGenericType());
         }
 
         @Override
@@ -1063,10 +1122,17 @@ public class ThriftStructMetadataBuilder<T>
         private final int parameterIndex;
         private final String extractedName;
         private final Type parameterJavaType;
+        private Type thriftStructType;
 
-        private ParameterInjection(int parameterIndex, ThriftField annotation, String extractedName, Type parameterJavaType)
+        private ParameterInjection(
+                Type thriftStructType,
+                int parameterIndex,
+                ThriftField annotation,
+                String extractedName,
+                Type parameterJavaType)
         {
             super(annotation);
+            this.thriftStructType = thriftStructType;
             checkNotNull(parameterJavaType, "parameterJavaType is null");
 
             this.parameterIndex = parameterIndex;
@@ -1092,7 +1158,7 @@ public class ThriftStructMetadataBuilder<T>
         @Override
         public Type getJavaType()
         {
-            return parameterJavaType;
+            return resolveType(thriftStructType, parameterJavaType);
         }
 
         @Override

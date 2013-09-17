@@ -29,7 +29,7 @@ public class TestThriftStructMetadataBuilder
     public void testNoId()
             throws Exception
     {
-        ThriftStructMetadataBuilder<NoId> builder = new ThriftStructMetadataBuilder<>(new ThriftCatalog(), NoId.class);
+        ThriftStructMetadataBuilder builder = new ThriftStructMetadataBuilder(new ThriftCatalog(), NoId.class);
 
         MetadataErrors metadataErrors = builder.getMetadataErrors();
 
@@ -65,7 +65,7 @@ public class TestThriftStructMetadataBuilder
     public void testMultipleIds()
             throws Exception
     {
-        ThriftStructMetadataBuilder<MultipleIds> builder = new ThriftStructMetadataBuilder<>(new ThriftCatalog(), MultipleIds.class);
+        ThriftStructMetadataBuilder builder = new ThriftStructMetadataBuilder(new ThriftCatalog(), MultipleIds.class);
 
         MetadataErrors metadataErrors = builder.getMetadataErrors();
 
@@ -112,7 +112,7 @@ public class TestThriftStructMetadataBuilder
     public void testMultipleNames()
             throws Exception
     {
-        ThriftStructMetadataBuilder<MultipleNames> builder = new ThriftStructMetadataBuilder<>(new ThriftCatalog(), MultipleNames.class);
+        ThriftStructMetadataBuilder builder = new ThriftStructMetadataBuilder(new ThriftCatalog(), MultipleNames.class);
 
         MetadataErrors metadataErrors = builder.getMetadataErrors();
 
@@ -148,7 +148,7 @@ public class TestThriftStructMetadataBuilder
     public void testUnsupportedType()
             throws Exception
     {
-        ThriftStructMetadataBuilder<UnsupportedJavaType> builder = new ThriftStructMetadataBuilder<>(new ThriftCatalog(), UnsupportedJavaType.class);
+        ThriftStructMetadataBuilder builder = new ThriftStructMetadataBuilder(new ThriftCatalog(), UnsupportedJavaType.class);
 
         MetadataErrors metadataErrors = builder.getMetadataErrors();
 
@@ -176,7 +176,7 @@ public class TestThriftStructMetadataBuilder
     public void testMultipleTypes()
             throws Exception
     {
-        ThriftStructMetadataBuilder<MultipleTypes> builder = new ThriftStructMetadataBuilder<>(new ThriftCatalog(), MultipleTypes.class);
+        ThriftStructMetadataBuilder builder = new ThriftStructMetadataBuilder(new ThriftCatalog(), MultipleTypes.class);
 
         MetadataErrors metadataErrors = builder.getMetadataErrors();
 

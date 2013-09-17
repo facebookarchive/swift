@@ -93,7 +93,7 @@ public class ThriftCodecByteCodeGenerator<T>
     private static final Map<ThriftProtocolType, Method> WRITE_METHODS;
 
     private final ThriftCodecManager codecManager;
-    private final ThriftStructMetadata<T> metadata;
+    private final ThriftStructMetadata metadata;
     private final ParameterizedType structType;
     private final ParameterizedType codecType;
 
@@ -109,7 +109,7 @@ public class ThriftCodecByteCodeGenerator<T>
     @SuppressFBWarnings("DM_DEFAULT_ENCODING")
     public ThriftCodecByteCodeGenerator(
             ThriftCodecManager codecManager,
-            ThriftStructMetadata<T> metadata,
+            ThriftStructMetadata metadata,
             DynamicClassLoader classLoader,
             boolean debug
     )
@@ -628,10 +628,16 @@ public class ThriftCodecByteCodeGenerator<T>
         if (extraction instanceof ThriftFieldExtractor) {
             ThriftFieldExtractor fieldExtractor = (ThriftFieldExtractor) extraction;
             write.getField(fieldExtractor.getField());
+            if (fieldExtractor.isGeneric()) {
+                write.checkCast(type(fieldExtractor.getType()));
+            }
         }
         else if (extraction instanceof ThriftMethodExtractor) {
             ThriftMethodExtractor methodExtractor = (ThriftMethodExtractor) extraction;
             write.invokeVirtual(methodExtractor.getMethod());
+            if (methodExtractor.isGeneric()) {
+                write.checkCast(type(methodExtractor.getType()));
+            }
         }
     }
 
@@ -723,7 +729,7 @@ public class ThriftCodecByteCodeGenerator<T>
                 protocolType == MAP;
     }
 
-    private ParameterizedType toCodecType(ThriftStructMetadata<?> metadata)
+    private ParameterizedType toCodecType(ThriftStructMetadata metadata)
     {
         return type(PACKAGE + "/" + type(metadata.getStructClass()).getClassName() + "Codec");
     }

@@ -16,9 +16,11 @@
 package com.facebook.swift.codec.metadata;
 
 import com.google.common.base.Preconditions;
+import com.google.common.reflect.TypeToken;
 
 import javax.annotation.concurrent.Immutable;
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 
 @Immutable
 public class ThriftFieldExtractor implements ThriftExtraction
@@ -26,16 +28,19 @@ public class ThriftFieldExtractor implements ThriftExtraction
     private final short id;
     private final String name;
     private final Field field;
+    private final Class<?> type;
 
-    public ThriftFieldExtractor(short id, String name, Field field)
+    public ThriftFieldExtractor(short id, String name, Field field, Type type)
     {
         Preconditions.checkArgument(id >= 0, "fieldId is negative");
         Preconditions.checkNotNull(name, "name is null");
         Preconditions.checkNotNull(field, "field is null");
+        Preconditions.checkNotNull(type, "type is null");
 
         this.id = id;
         this.name = name;
         this.field = field;
+        this.type = TypeToken.of(type).getRawType();
     }
 
     @Override
@@ -55,6 +60,16 @@ public class ThriftFieldExtractor implements ThriftExtraction
         return field;
     }
 
+    public Class<?> getType()
+    {
+        return type;
+    }
+
+    public boolean isGeneric()
+    {
+        return field.getType() != field.getGenericType();
+    }
+
     @Override
     public String toString()
     {
@@ -63,6 +78,7 @@ public class ThriftFieldExtractor implements ThriftExtraction
         sb.append("{id=").append(id);
         sb.append(", name=").append(name);
         sb.append(", field=").append(field.getDeclaringClass().getSimpleName()).append(".").append(field.getName());
+        sb.append(", type=").append(type);
         sb.append('}');
         return sb.toString();
     }

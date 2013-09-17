@@ -15,8 +15,11 @@
  */
 package com.facebook.swift.codec.metadata;
 
+import com.google.common.reflect.TypeToken;
+
 import javax.annotation.concurrent.Immutable;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -27,8 +30,9 @@ public class ThriftMethodExtractor implements ThriftExtraction
     private final short id;
     private final String name;
     private final Method method;
+    private final Class<?> type;
 
-    public ThriftMethodExtractor(short id, String name, Method method)
+    public ThriftMethodExtractor(short id, String name, Method method, Type type)
     {
         checkArgument(id >= 0, "fieldId is negative");
         checkNotNull(name, "name is null");
@@ -37,6 +41,7 @@ public class ThriftMethodExtractor implements ThriftExtraction
         this.id = id;
         this.name = name;
         this.method = method;
+        this.type = TypeToken.of(type).getRawType();
     }
 
     @Override
@@ -56,6 +61,16 @@ public class ThriftMethodExtractor implements ThriftExtraction
         return method;
     }
 
+    public Class<?> getType()
+    {
+        return type;
+    }
+
+    public boolean isGeneric()
+    {
+        return getMethod().getReturnType() != getMethod().getGenericReturnType();
+    }
+
     @Override
     public String toString()
     {
@@ -64,6 +79,7 @@ public class ThriftMethodExtractor implements ThriftExtraction
         sb.append("{id=").append(id);
         sb.append(", name='").append(name).append('\'');
         sb.append(", method=").append(method);
+        sb.append(", type=").append(type);
         sb.append('}');
         return sb.toString();
     }
