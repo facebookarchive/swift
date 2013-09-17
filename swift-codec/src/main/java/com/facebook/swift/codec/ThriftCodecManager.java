@@ -118,12 +118,12 @@ public class ThriftCodecManager
             }
         });
 
-        addBuiltinCodec(new BooleanThriftCodec());
-        addBuiltinCodec(new ByteThriftCodec());
-        addBuiltinCodec(new ShortThriftCodec());
-        addBuiltinCodec(new IntegerThriftCodec());
-        addBuiltinCodec(new LongThriftCodec());
-        addBuiltinCodec(new DoubleThriftCodec());
+        addBuiltinCodec(new BooleanThriftCodec(), ThriftType.BOOL_OBJ);
+        addBuiltinCodec(new ByteThriftCodec(), ThriftType.BYTE_OBJ);
+        addBuiltinCodec(new ShortThriftCodec(), ThriftType.I16_OBJ);
+        addBuiltinCodec(new IntegerThriftCodec(), ThriftType.I32_OBJ);
+        addBuiltinCodec(new LongThriftCodec(), ThriftType.I64_OBJ);
+        addBuiltinCodec(new DoubleThriftCodec(), ThriftType.DOUBLE_OBJ);
         addBuiltinCodec(new ByteBufferThriftCodec());
         addBuiltinCodec(new VoidThriftCodec());
 
@@ -176,9 +176,12 @@ public class ThriftCodecManager
      * Adds a ThriftCodec to the codec map, but does not register it with the catalog since builtins
      * should already be registered
      */
-    private void addBuiltinCodec(ThriftCodec<?> codec)
+    private void addBuiltinCodec(ThriftCodec<?> codec, ThriftType ... additionalThriftTypes)
     {
         typeCodecs.put(codec.getType(), codec);
+        for (ThriftType thriftType : additionalThriftTypes) {
+            typeCodecs.put(thriftType, codec);
+        }
     }
 
     public ThriftCatalog getCatalog()
