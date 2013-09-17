@@ -15,9 +15,13 @@
  */
 package com.facebook.swift.codec.metadata;
 
+import com.google.common.base.Function;
+import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 
 import javax.annotation.concurrent.Immutable;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -32,41 +36,65 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class ThriftFieldMetadata
 {
     private final short id;
-    private final ThriftType type;
+    private final ThriftType thriftType;
     private final String name;
+    private final FieldType fieldType;
     private final List<ThriftInjection> injections;
-    private final ThriftExtraction extraction;
-    private final TypeCoercion coercion;
+    private final Optional<ThriftConstructorInjection> constructorInjection;
+    private final Optional<ThriftMethodInjection> methodInjection;
+    private final Optional<ThriftExtraction> extraction;
+    private final Optional<TypeCoercion> coercion;
     private final ImmutableList<String> documentation;
 
     public ThriftFieldMetadata(
             short id,
-            ThriftType type,
+            ThriftType thriftType,
             String name,
+            FieldType fieldType,
             List<ThriftInjection> injections,
-            ThriftExtraction extraction,
-            TypeCoercion coercion
+            Optional<ThriftConstructorInjection> constructorInjection,
+            Optional<ThriftMethodInjection> methodInjection,
+            Optional<ThriftExtraction> extraction,
+            Optional<TypeCoercion> coercion
     )
     {
-        checkArgument(id >= 0, "id is negative");
-        checkNotNull(type, "type is null");
-        checkNotNull(name, "name is null");
-        checkNotNull(injections, "injections is null");
-        checkArgument(!injections.isEmpty() || extraction != null, "A thrift field must have an injection or extraction point");
+        this.thriftType= checkNotNull(thriftType, "thriftType is null");
+        this.fieldType = checkNotNull(fieldType, "type is null");
+        this.name = checkNotNull(name, "name is null");
+        this.injections = ImmutableList.copyOf(checkNotNull(injections, "injections is null"));
+        this.constructorInjection = checkNotNull(constructorInjection, "constructorInjection is null");
+        this.methodInjection = checkNotNull(methodInjection, "methodInjection is null");
+
+        this.extraction = checkNotNull(extraction, "extraction is null");
+        this.coercion = checkNotNull(coercion, "coercion is null");
+
+        switch (fieldType) {
+            case THRIFT_FIELD:
+                checkArgument(id >= 0, "id is negative");
+                break;
+            case THRIFT_UNION_ID:
+                checkArgument(id == Short.MIN_VALUE, "thrift union id must be Short.MIN_VALUE");
+                break;
+        }
+
+        checkArgument(!injections.isEmpty()
+                      || extraction.isPresent()
+                      || constructorInjection.isPresent()
+                      || methodInjection.isPresent(), "A thrift field must have an injection or extraction point");
 
         this.id = id;
-        this.type = type;
-        this.name = name;
-        this.injections = ImmutableList.copyOf(injections);
-        this.extraction = extraction;
-        this.coercion = coercion;
 
-        if (extraction instanceof ThriftFieldExtractor) {
-            ThriftFieldExtractor e = (ThriftFieldExtractor)extraction;
-            this.documentation = ThriftCatalog.getThriftDocumentation(e.getField());
-        } else if (extraction instanceof ThriftMethodExtractor) {
-            ThriftMethodExtractor e = (ThriftMethodExtractor)extraction;
-            this.documentation = ThriftCatalog.getThriftDocumentation(e.getMethod());
+        if (extraction.isPresent()) {
+            if (extraction.get() instanceof ThriftFieldExtractor) {
+                ThriftFieldExtractor e = (ThriftFieldExtractor)extraction.get();
+                this.documentation = ThriftCatalog.getThriftDocumentation(e.getField());
+            } else if (extraction.get() instanceof ThriftMethodExtractor) {
+                ThriftMethodExtractor e = (ThriftMethodExtractor)extraction.get();
+                this.documentation = ThriftCatalog.getThriftDocumentation(e.getMethod());
+            }
+            else {
+                this.documentation = ImmutableList.of();
+            }
         } else {
             // no extraction = no documentation
             this.documentation = ImmutableList.of();
@@ -78,9 +106,9 @@ public class ThriftFieldMetadata
         return id;
     }
 
-    public ThriftType getType()
+    public ThriftType getThriftType()
     {
-        return type;
+        return thriftType;
     }
 
     public String getName()
@@ -88,24 +116,19 @@ public class ThriftFieldMetadata
         return name;
     }
 
-    public boolean isReadable()
+    public FieldType getType()
     {
-        return extraction != null;
-    }
-
-    public boolean isWritable()
-    {
-        return !injections.isEmpty();
+        return fieldType;
     }
 
     public boolean isReadOnly()
     {
-        return injections.isEmpty();
+        return injections.isEmpty() && !constructorInjection.isPresent() && !methodInjection.isPresent();
     }
 
     public boolean isWriteOnly()
     {
-        return extraction == null;
+        return !extraction.isPresent();
     }
 
     public List<ThriftInjection> getInjections()
@@ -113,12 +136,22 @@ public class ThriftFieldMetadata
         return injections;
     }
 
-    public ThriftExtraction getExtraction()
+    public Optional<ThriftConstructorInjection> getConstructorInjection()
+    {
+        return constructorInjection;
+    }
+
+    public Optional<ThriftMethodInjection> getMethodInjection()
+    {
+        return methodInjection;
+    }
+
+    public Optional<ThriftExtraction> getExtraction()
     {
         return extraction;
     }
 
-    public TypeCoercion getCoercion()
+    public Optional<TypeCoercion> getCoercion()
     {
         return coercion;
     }
@@ -134,9 +167,12 @@ public class ThriftFieldMetadata
         final StringBuilder sb = new StringBuilder();
         sb.append("ThriftFieldMetadata");
         sb.append("{id=").append(id);
-        sb.append(", type=").append(type);
+        sb.append(", thriftType=").append(thriftType);
         sb.append(", name='").append(name).append('\'');
+        sb.append(", fieldType=").append(fieldType);
         sb.append(", injections=").append(injections);
+        sb.append(", constructorInjection=").append(constructorInjection);
+        sb.append(", methodInjection=").append(methodInjection);
         sb.append(", extraction=").append(extraction);
         sb.append(", coercion=").append(coercion);
         sb.append('}');
@@ -146,7 +182,7 @@ public class ThriftFieldMetadata
     @Override
     public int hashCode()
     {
-        return Objects.hash(id, type, name);
+        return Objects.hash(id, thriftType, name);
     }
 
     @Override
@@ -159,6 +195,28 @@ public class ThriftFieldMetadata
             return false;
         }
         final ThriftFieldMetadata other = (ThriftFieldMetadata) obj;
-        return Objects.equals(this.id, other.id) && Objects.equals(this.type, other.type) && Objects.equals(this.name, other.name);
+        return Objects.equals(this.id, other.id) && Objects.equals(this.thriftType, other.thriftType) && Objects.equals(this.name, other.name);
+    }
+
+    public static Function<ThriftFieldMetadata, Short> getIdGetter()
+    {
+        return new Function<ThriftFieldMetadata, Short>() {
+            @Override
+            public Short apply(ThriftFieldMetadata metadata)
+            {
+                return metadata.getId();
+            }
+        };
+    }
+
+    public static Predicate<ThriftFieldMetadata> isTypePredicate(final FieldType type)
+    {
+        return new Predicate<ThriftFieldMetadata>() {
+            @Override
+            public boolean apply(ThriftFieldMetadata fieldMetadata)
+            {
+                return fieldMetadata.getType() == type;
+            }
+        };
     }
 }

@@ -15,10 +15,12 @@
  */
 package com.facebook.swift.codec.metadata;
 
-import com.google.common.base.Preconditions;
-
 import javax.annotation.concurrent.Immutable;
+
 import java.lang.reflect.Field;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 @Immutable
 public class ThriftFieldExtractor implements ThriftExtraction
@@ -26,16 +28,30 @@ public class ThriftFieldExtractor implements ThriftExtraction
     private final short id;
     private final String name;
     private final Field field;
+    private final FieldType fieldType;
 
-    public ThriftFieldExtractor(short id, String name, Field field)
+    public ThriftFieldExtractor(short id, String name, Field field, FieldType fieldType)
     {
-        Preconditions.checkArgument(id >= 0, "fieldId is negative");
-        Preconditions.checkNotNull(name, "name is null");
-        Preconditions.checkNotNull(field, "field is null");
+        this.name = checkNotNull(name, "name is null");
+        this.field = checkNotNull(field, "field is null");
+        this.fieldType = checkNotNull(fieldType, "type is null");
+
+        switch (fieldType) {
+            case THRIFT_FIELD:
+                checkArgument(id >= 0, "fieldId is negative");
+                break;
+            case THRIFT_UNION_ID:
+                checkArgument (id == Short.MIN_VALUE, "fieldId must be Short.MIN_VALUE for thrift_union_id");
+                break;
+        }
 
         this.id = id;
-        this.name = name;
-        this.field = field;
+    }
+
+    @Override
+    public FieldType getType()
+    {
+        return fieldType;
     }
 
     @Override
@@ -62,6 +78,7 @@ public class ThriftFieldExtractor implements ThriftExtraction
         sb.append("ThriftFieldExtractor");
         sb.append("{id=").append(id);
         sb.append(", name=").append(name);
+        sb.append(", fieldType=").append(fieldType);
         sb.append(", field=").append(field.getDeclaringClass().getSimpleName()).append(".").append(field.getName());
         sb.append('}');
         return sb.toString();

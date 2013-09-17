@@ -20,6 +20,8 @@ import com.google.common.base.Preconditions;
 
 import java.lang.reflect.Type;
 
+import static com.facebook.swift.codec.metadata.FieldType.THRIFT_FIELD;
+
 class ParameterInjection extends Injection
 {
     private final int parameterIndex;
@@ -28,7 +30,7 @@ class ParameterInjection extends Injection
 
     ParameterInjection(int parameterIndex, ThriftField annotation, String extractedName, Type parameterJavaType)
     {
-        super(annotation);
+        super(annotation, THRIFT_FIELD);
         Preconditions.checkNotNull(parameterJavaType, "parameterJavaType is null");
 
         this.parameterIndex = parameterIndex;

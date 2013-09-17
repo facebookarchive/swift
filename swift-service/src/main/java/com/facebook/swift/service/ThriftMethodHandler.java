@@ -82,7 +82,7 @@ public class ThriftMethodHandler
             ParameterHandler handler = new ParameterHandler(
                     fieldMetadata.getId(),
                     fieldMetadata.getName(),
-                    (ThriftCodec<Object>) codecManager.getCodec(fieldMetadata.getType()));
+                    (ThriftCodec<Object>) codecManager.getCodec(fieldMetadata.getThriftType()));
 
             parameters[parameter.getParameterIndex()] = handler;
         }

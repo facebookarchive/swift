@@ -19,8 +19,8 @@ import com.facebook.swift.codec.ThriftField;
 
 abstract class Extractor extends FieldMetadata
 {
-    protected Extractor(ThriftField annotation)
+    protected Extractor(ThriftField annotation, FieldType fieldType)
     {
-        super(annotation);
+        super(annotation, fieldType);
     }
 }

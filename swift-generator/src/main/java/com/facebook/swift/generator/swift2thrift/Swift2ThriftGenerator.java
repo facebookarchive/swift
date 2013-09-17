@@ -246,11 +246,11 @@ public class Swift2ThriftGenerator {
         }
         for (Map.Entry<String, ThriftMethodMetadata> method : service.getDeclaredMethods().entrySet()) {
             for (ThriftFieldMetadata f : method.getValue().getParameters()) {
-                if (!verifyField(f.getType())) {
+                if (!verifyField(f.getThriftType())) {
                     ok = false;
                     if (!quiet) {
                         LOG.error("Unknown argument type {} in {}.{}",
-                                thriftTypeRenderer.toString(f.getType()),
+                                thriftTypeRenderer.toString(f.getThriftType()),
                                 service.getName(),
                                 method.getKey());
                     }
@@ -306,13 +306,13 @@ public class Swift2ThriftGenerator {
     {
         ThriftStructMetadata<?> metadata = t.getStructMetadata();
         boolean ok = true;
-        for (ThriftFieldMetadata fieldMetadata: metadata.getFields()) {
-            boolean fieldOk = verifyField(fieldMetadata.getType());
+        for (ThriftFieldMetadata fieldMetadata: metadata.getFields(FieldType.THRIFT_FIELD)) {
+            boolean fieldOk = verifyField(fieldMetadata.getThriftType());
             if (!fieldOk) {
                 ok = false;
                 if (!quiet) {
                     LOG.error("Unknown type {} in {}.{}",
-                              thriftTypeRenderer.toString(fieldMetadata.getType()),
+                              thriftTypeRenderer.toString(fieldMetadata.getThriftType()),
                               metadata.getStructName(),
                               fieldMetadata.getName());
                 }

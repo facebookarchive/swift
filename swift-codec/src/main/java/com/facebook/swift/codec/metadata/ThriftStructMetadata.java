@@ -16,49 +16,59 @@
 package com.facebook.swift.codec.metadata;
 
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedMap;
+
+import javax.annotation.concurrent.Immutable;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.SortedMap;
 
-import javax.annotation.concurrent.Immutable;
-
+import static com.facebook.swift.codec.metadata.ThriftFieldMetadata.isTypePredicate;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Maps.uniqueIndex;
 
 @Immutable
 public class ThriftStructMetadata<T>
 {
+    public static enum MetadataType {
+        STRUCT, UNION;
+    }
+
     private final String structName;
     private final Class<T> structClass;
 
     private final Class<?> builderClass;
-    private final ThriftMethodInjection builderMethod;
+    private final MetadataType metadataType;
+    private final Optional<ThriftMethodInjection> builderMethod;
 
     private final ImmutableList<String> documentation;
     private final SortedMap<Short, ThriftFieldMetadata> fields;
     private final List<ThriftFieldMetadata> unsortedFields;
 
-    private final ThriftConstructorInjection constructor;
+    private final Optional<ThriftConstructorInjection> constructorInjection;
     private final List<ThriftMethodInjection> methodInjections;
 
     public ThriftStructMetadata(
             String structName,
             Class<T> structClass,
             Class<?> builderClass,
-            ThriftMethodInjection builderMethod,
+            MetadataType metadataType,
+            Optional<ThriftMethodInjection> builderMethod,
             List<String> documentation,
             List<ThriftFieldMetadata> fields,
-            ThriftConstructorInjection constructor,
+            Optional<ThriftConstructorInjection> constructorInjection,
             List<ThriftMethodInjection> methodInjections)
     {
         this.builderClass = builderClass;
-        this.builderMethod = builderMethod;
+        this.builderMethod = checkNotNull(builderMethod, "builderMethod is null");
         this.structName = checkNotNull(structName, "structName is null");
+        this.metadataType = checkNotNull(metadataType, "metadataType is null");
         this.structClass = checkNotNull(structClass, "structClass is null");
-        this.constructor = checkNotNull(constructor, "constructor is null");
+        this.constructorInjection = checkNotNull(constructorInjection, "constructorInjection is null");
         this.unsortedFields = ImmutableList.copyOf(fields);
         this.documentation = ImmutableList.copyOf(checkNotNull(documentation, "documentation is null"));
         this.fields = ImmutableSortedMap.copyOf(uniqueIndex(checkNotNull(fields, "fields is null"), new Function<ThriftFieldMetadata, Short>()
@@ -87,7 +97,12 @@ public class ThriftStructMetadata<T>
         return builderClass;
     }
 
-    public ThriftMethodInjection getBuilderMethod()
+    public MetadataType getMetadataType()
+    {
+        return metadataType;
+    }
+
+    public Optional<ThriftMethodInjection> getBuilderMethod()
     {
         return builderMethod;
     }
@@ -102,6 +117,11 @@ public class ThriftStructMetadata<T>
         return documentation;
     }
 
+    public Collection<ThriftFieldMetadata> getFields(FieldType type)
+    {
+        return Collections2.filter(getFields(), isTypePredicate(type));
+    }
+
     public Collection<ThriftFieldMetadata> getFields()
     {
         return fields.values();
@@ -112,9 +132,9 @@ public class ThriftStructMetadata<T>
         return unsortedFields;
     }
 
-    public ThriftConstructorInjection getConstructor()
+    public Optional<ThriftConstructorInjection> getConstructorInjection()
     {
-        return constructor;
+        return constructorInjection;
     }
 
     public List<ThriftMethodInjection> getMethodInjections()
@@ -137,7 +157,7 @@ public class ThriftStructMetadata<T>
         sb.append(", builderClass=").append(builderClass);
         sb.append(", builderMethod=").append(builderMethod);
         sb.append(", fields=").append(fields);
-        sb.append(", constructor=").append(constructor);
+        sb.append(", constructorInjection=").append(constructorInjection);
         sb.append(", methodInjections=").append(methodInjections);
         sb.append('}');
         return sb.toString();

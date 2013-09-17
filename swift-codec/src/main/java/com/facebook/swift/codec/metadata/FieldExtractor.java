@@ -24,9 +24,9 @@ class FieldExtractor extends Extractor
 {
     private final Field field;
 
-    FieldExtractor(Field field, ThriftField annotation)
+    FieldExtractor(Field field, ThriftField annotation, FieldType fieldType)
     {
-        super(annotation);
+        super(annotation, fieldType);
         this.field = field;
     }
 

@@ -13,19 +13,22 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package com.facebook.swift.codec.metadata;
+package com.facebook.swift.codec;
 
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * ThriftExtraction contains information an extraction point for a single thrift field.
- * <p/>
- * Implementations of this interface are expected to be thread safe.
+ * Marks a field or method as the field containing the state of an union.
  */
-public interface ThriftExtraction
+@Documented
+@Retention(RUNTIME)
+@Target({METHOD, FIELD})
+public @interface ThriftUnionId
 {
-    short getId();
-
-    String getName();
-
-    FieldType getType();
 }

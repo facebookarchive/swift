@@ -26,9 +26,9 @@ class MethodExtractor extends Extractor
 {
     private final Method method;
 
-    public MethodExtractor(Method method, ThriftField annotation)
+    public MethodExtractor(Method method, ThriftField annotation, FieldType fieldType)
     {
-        super(annotation);
+        super(annotation, fieldType);
         this.method = method;
     }
 

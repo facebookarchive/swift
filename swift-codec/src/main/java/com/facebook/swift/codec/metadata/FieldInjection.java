@@ -24,9 +24,9 @@ class FieldInjection extends Injection
 {
     private final Field field;
 
-    FieldInjection(Field field, ThriftField annotation)
+    FieldInjection(Field field, ThriftField annotation, FieldType fieldType)
     {
-        super(annotation);
+        super(annotation, fieldType);
         this.field = field;
     }
 

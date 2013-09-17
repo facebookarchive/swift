@@ -91,7 +91,7 @@ public class ThriftMethodProcessor
 
         ImmutableMap.Builder<Short, ThriftCodec<?>> builder = ImmutableMap.builder();
         for (ThriftFieldMetadata fieldMetadata : methodMetadata.getParameters()) {
-            builder.put(fieldMetadata.getId(), codecManager.getCodec(fieldMetadata.getType()));
+            builder.put(fieldMetadata.getId(), codecManager.getCodec(fieldMetadata.getThriftType()));
         }
         parameterCodecs = builder.build();
 
@@ -283,7 +283,7 @@ public class ThriftMethodProcessor
             int argumentPosition = 0;
             for (ThriftFieldMetadata argument : parameters) {
                 if (args[argumentPosition] == null) {
-                    Type argumentType = argument.getType().getJavaType();
+                    Type argumentType = argument.getThriftType().getJavaType();
 
                     if (argumentType instanceof Class) {
                         Class<?> argumentClass = (Class<?>) argumentType;

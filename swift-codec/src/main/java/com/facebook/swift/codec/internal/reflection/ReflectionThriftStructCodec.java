@@ -19,49 +19,34 @@ import com.facebook.swift.codec.ThriftCodec;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.codec.internal.TProtocolReader;
 import com.facebook.swift.codec.internal.TProtocolWriter;
+import com.facebook.swift.codec.metadata.FieldType;
 import com.facebook.swift.codec.metadata.ThriftConstructorInjection;
-import com.facebook.swift.codec.metadata.ThriftExtraction;
-import com.facebook.swift.codec.metadata.ThriftFieldExtractor;
 import com.facebook.swift.codec.metadata.ThriftFieldInjection;
 import com.facebook.swift.codec.metadata.ThriftFieldMetadata;
 import com.facebook.swift.codec.metadata.ThriftInjection;
-import com.facebook.swift.codec.metadata.ThriftMethodExtractor;
 import com.facebook.swift.codec.metadata.ThriftMethodInjection;
 import com.facebook.swift.codec.metadata.ThriftParameterInjection;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
-import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableSortedMap;
+
 import org.apache.thrift.protocol.TProtocol;
 
 import javax.annotation.concurrent.Immutable;
+
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.SortedMap;
+
+import static com.facebook.swift.codec.metadata.FieldType.THRIFT_FIELD;
 
 import static java.lang.String.format;
 
 @Immutable
-public class ReflectionThriftCodec<T> implements ThriftCodec<T>
+public class ReflectionThriftStructCodec<T> extends AbstractReflectionThriftCodec<T>
 {
-    private final ThriftStructMetadata<T> metadata;
-    private final SortedMap<Short, ThriftCodec<?>> fields;
-
-    public ReflectionThriftCodec(ThriftCodecManager manager, ThriftStructMetadata<T> metadata)
+    public ReflectionThriftStructCodec(ThriftCodecManager manager, ThriftStructMetadata<T> metadata)
     {
-        this.metadata = metadata;
-        ImmutableSortedMap.Builder<Short, ThriftCodec<?>> fields = ImmutableSortedMap.naturalOrder();
-        for (ThriftFieldMetadata fieldMetadata : metadata.getFields()) {
-            fields.put(fieldMetadata.getId(), manager.getCodec(fieldMetadata.getType()));
-        }
-        this.fields = fields.build();
-    }
-
-    @Override
-    public ThriftType getType()
-    {
-        return ThriftType.struct(metadata);
+        super(manager, metadata);
     }
 
     @Override
@@ -84,7 +69,7 @@ public class ReflectionThriftCodec<T> implements ThriftCodec<T>
 
             // is this field readable
             ThriftFieldMetadata field = metadata.getField(fieldId);
-            if (field.isWriteOnly()) {
+            if (field.isReadOnly() || field.getType() != THRIFT_FIELD) {
                 reader.skipFieldData();
                 continue;
             }
@@ -110,9 +95,9 @@ public class ReflectionThriftCodec<T> implements ThriftCodec<T>
         TProtocolWriter writer = new TProtocolWriter(protocol);
         writer.writeStructBegin(metadata.getStructName());
 
-        for (ThriftFieldMetadata fieldMetadata : metadata.getFields()) {
-            // is the field writable?
-            if (fieldMetadata.isReadOnly()) {
+        for (ThriftFieldMetadata fieldMetadata : metadata.getFields(THRIFT_FIELD)) {
+            // is the field readable?
+            if (fieldMetadata.isWriteOnly()) {
                 continue;
             }
 
@@ -121,6 +106,7 @@ public class ReflectionThriftCodec<T> implements ThriftCodec<T>
 
             // write the field
             if (fieldValue != null) {
+                @SuppressWarnings("unchecked")
                 ThriftCodec<Object> codec = (ThriftCodec<Object>) fields.get(fieldMetadata.getId());
                 writer.writeField(fieldMetadata.getName(), fieldMetadata.getId(), codec, fieldValue);
             }
@@ -128,13 +114,14 @@ public class ReflectionThriftCodec<T> implements ThriftCodec<T>
         writer.writeStructEnd();
     }
 
+    @SuppressWarnings("unchecked")
     private T constructStruct(Map<Short, Object> data)
             throws Exception
     {
         // construct instance
         Object instance;
         {
-            ThriftConstructorInjection constructor = metadata.getConstructor();
+            ThriftConstructorInjection constructor = metadata.getConstructorInjection().get();
             Object[] parametersValues = new Object[constructor.getParameters().size()];
             for (ThriftParameterInjection parameter : constructor.getParameters()) {
                 Object value = data.get(parameter.getId());
@@ -153,7 +140,7 @@ public class ReflectionThriftCodec<T> implements ThriftCodec<T>
         }
 
         // inject fields
-        for (ThriftFieldMetadata fieldMetadata : metadata.getFields()) {
+        for (ThriftFieldMetadata fieldMetadata : metadata.getFields(THRIFT_FIELD)) {
             for (ThriftInjection injection : fieldMetadata.getInjections()) {
                 if (injection instanceof ThriftFieldInjection) {
                     ThriftFieldInjection fieldInjection = (ThriftFieldInjection) injection;
@@ -191,8 +178,8 @@ public class ReflectionThriftCodec<T> implements ThriftCodec<T>
         }
 
         // builder method
-        if (metadata.getBuilderMethod() != null) {
-            ThriftMethodInjection builderMethod = metadata.getBuilderMethod();
+        if (metadata.getBuilderMethod().isPresent()) {
+            ThriftMethodInjection builderMethod = metadata.getBuilderMethod().get();
             Object[] parametersValues = new Object[builderMethod.getParameters().size()];
             for (ThriftParameterInjection parameter : builderMethod.getParameters()) {
                 Object value = data.get(parameter.getId());
@@ -220,33 +207,5 @@ public class ReflectionThriftCodec<T> implements ThriftCodec<T>
         }
 
         return (T) instance;
-    }
-
-    private Object getFieldValue(Object instance, ThriftFieldMetadata field)
-            throws Exception
-    {
-        try {
-            ThriftExtraction extraction = field.getExtraction();
-            Object value;
-            if (extraction instanceof ThriftFieldExtractor) {
-                ThriftFieldExtractor thriftFieldExtractor = (ThriftFieldExtractor) extraction;
-                value = thriftFieldExtractor.getField().get(instance);
-            }
-            else if (extraction instanceof ThriftMethodExtractor) {
-                ThriftMethodExtractor thriftMethodExtractor = (ThriftMethodExtractor) extraction;
-                value = thriftMethodExtractor.getMethod().invoke(instance);
-            }
-            else {
-                throw new IllegalAccessException("Unsupported field extractor type " + extraction.getClass().getName());
-            }
-
-            return value;
-        }
-        catch (InvocationTargetException e) {
-            if (e.getTargetException() != null) {
-                Throwables.propagateIfInstanceOf(e.getTargetException(), Exception.class);
-            }
-            throw e;
-        }
     }
 }

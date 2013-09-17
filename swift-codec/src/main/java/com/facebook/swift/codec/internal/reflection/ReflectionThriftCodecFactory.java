@@ -22,6 +22,8 @@ import com.facebook.swift.codec.metadata.ThriftStructMetadata;
 
 import javax.annotation.concurrent.Immutable;
 
+import static java.lang.String.format;
+
 /**
  * Creates reflection based thrift codecs.
  */
@@ -31,6 +33,13 @@ public class ReflectionThriftCodecFactory implements ThriftCodecFactory
     @Override
     public <T> ThriftCodec<T> generateThriftTypeCodec(ThriftCodecManager codecManager, ThriftStructMetadata<T> metadata)
     {
-        return new ReflectionThriftCodec<>(codecManager, metadata);
+        switch (metadata.getMetadataType()) {
+            case STRUCT:
+                return new ReflectionThriftStructCodec<>(codecManager, metadata);
+            case UNION:
+                return new ReflectionThriftUnionCodec<>(codecManager, metadata);
+            default:
+                throw new IllegalStateException(format("encountered type %s", metadata.getMetadataType()));
+        }
     }
 }

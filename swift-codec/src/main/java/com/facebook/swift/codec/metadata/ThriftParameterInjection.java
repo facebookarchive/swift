@@ -16,6 +16,7 @@
 package com.facebook.swift.codec.metadata;
 
 import javax.annotation.concurrent.Immutable;
+
 import java.lang.reflect.Type;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -35,13 +36,14 @@ public class ThriftParameterInjection implements ThriftInjection
             int parameterIndex,
             Type javaType)
     {
-        this.javaType = javaType;
+
         checkArgument(id >= 0, "fieldId is negative");
-        checkNotNull(name, "name is null");
         checkArgument(parameterIndex >= 0, "parameterIndex is negative");
 
+        this.javaType = checkNotNull(javaType, "javaType is null");
+        this.name = checkNotNull(name, "name is null");
+
         this.id = id;
-        this.name = name;
         this.parameterIndex = parameterIndex;
     }
 
@@ -55,6 +57,12 @@ public class ThriftParameterInjection implements ThriftInjection
     public String getName()
     {
         return name;
+    }
+
+    @Override
+    public FieldType getType()
+    {
+        return FieldType.THRIFT_FIELD;
     }
 
     public int getParameterIndex()

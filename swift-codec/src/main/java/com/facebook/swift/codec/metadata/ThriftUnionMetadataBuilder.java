@@ -17,7 +17,8 @@ package com.facebook.swift.codec.metadata;
 
 import com.facebook.swift.codec.ThriftConstructor;
 import com.facebook.swift.codec.ThriftField;
-import com.facebook.swift.codec.ThriftStruct;
+import com.facebook.swift.codec.ThriftUnion;
+import com.facebook.swift.codec.ThriftUnionId;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata.MetadataType;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
@@ -49,6 +50,7 @@ import static com.facebook.swift.codec.metadata.FieldMetadata.getOrExtractThrift
 import static com.facebook.swift.codec.metadata.FieldMetadata.getThriftFieldId;
 import static com.facebook.swift.codec.metadata.FieldMetadata.getThriftFieldName;
 import static com.facebook.swift.codec.metadata.FieldType.THRIFT_FIELD;
+import static com.facebook.swift.codec.metadata.FieldType.THRIFT_UNION_ID;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.extractParameterNames;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.findAnnotatedMethods;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getAllDeclaredFields;
@@ -65,7 +67,7 @@ import static com.google.common.collect.Sets.newTreeSet;
 import static java.util.Arrays.asList;
 
 @NotThreadSafe
-public class ThriftStructMetadataBuilder<T>
+public class ThriftUnionMetadataBuilder<T>
 {
     private final String structName;
     private final Class<T> structClass;
@@ -86,7 +88,7 @@ public class ThriftStructMetadataBuilder<T>
     private final ThriftCatalog catalog;
     private final MetadataErrors metadataErrors;
 
-    public ThriftStructMetadataBuilder(ThriftCatalog catalog, Class<T> structClass)
+    public ThriftUnionMetadataBuilder(ThriftCatalog catalog, Class<T> structClass)
     {
         this.catalog = checkNotNull(catalog, "catalog is null");
         this.structClass = checkNotNull(structClass, "structClass is null");
@@ -110,6 +112,9 @@ public class ThriftStructMetadataBuilder<T>
         // extract thrift fields from the annotated methods (and parameters) and verify
         extractFromMethods();
 
+        // extract the @ThriftUnionId fields
+        extractThriftUnionId();
+
         // finally normalize the field metadata using things like
         normalizeThriftFields(catalog);
     }
@@ -129,14 +134,14 @@ public class ThriftStructMetadataBuilder<T>
             metadataErrors.addError("Struct class [%s] is not public", structClass.getName());
         }
 
-        if (!structClass.isAnnotationPresent(ThriftStruct.class)) {
-            metadataErrors.addError("Struct class [%s] does not have a @ThriftStruct annotation", structClass.getName());
+        if (!structClass.isAnnotationPresent(ThriftUnion.class)) {
+            metadataErrors.addError("Struct class [%s] does not have a @ThriftUnion annotation", structClass.getName());
         }
     }
 
     private String extractStructName()
     {
-        ThriftStruct annotation = structClass.getAnnotation(ThriftStruct.class);
+        ThriftUnion annotation = structClass.getAnnotation(ThriftUnion.class);
         if (annotation == null) {
             return structClass.getSimpleName();
         }
@@ -150,7 +155,7 @@ public class ThriftStructMetadataBuilder<T>
 
     private Class<?> extractBuilderClass()
     {
-        ThriftStruct annotation = structClass.getAnnotation(ThriftStruct.class);
+        ThriftUnion annotation = structClass.getAnnotation(ThriftUnion.class);
         if (annotation != null && !annotation.builder().equals(void.class)) {
             return annotation.builder();
         }
@@ -181,6 +186,55 @@ public class ThriftStructMetadataBuilder<T>
         }
     }
 
+    private void extractThriftUnionId()
+    {
+        Collection<Field> idFields = ReflectionHelper.findAnnotatedFields(structClass, ThriftUnionId.class);
+        Collection<Method> idMethods = findAnnotatedMethods(structClass, ThriftUnionId.class);
+
+        if (idFields.size() + idMethods.size() != 1) {
+            if (idFields.size() + idMethods.size() == 0) {
+                metadataErrors.addError("Neither a field nor a method is annotated with @ThriftUnionId");
+            }
+            else  if (idFields.size() > 1) {
+                metadataErrors.addError("More than one @ThriftUnionId field present");
+            }
+            else if (idMethods.size() > 1) {
+                metadataErrors.addError("More than one @ThriftUnionId method present");
+            }
+            else {
+                metadataErrors.addError("Both fields and methods annotated with @ThriftUnionId");
+            }
+            return;
+        }
+
+        for (Field idField : idFields) {
+            FieldExtractor fieldExtractor = new FieldExtractor(idField, null, THRIFT_UNION_ID);
+            fields.add(fieldExtractor);
+            extractors.add(fieldExtractor);
+
+            FieldInjection fieldInjection = new FieldInjection(idField, null, THRIFT_UNION_ID);
+            fields.add(fieldInjection);
+            fieldInjections.add(fieldInjection);
+        }
+
+        for (Method idMethod: idMethods) {
+            if (!Modifier.isPublic(idMethod.getModifiers())) {
+                metadataErrors.addError("@ThriftUnionId method [%s] is not public", idMethod.toGenericString());
+                continue;
+            }
+            if (Modifier.isStatic(idMethod.getModifiers())) {
+                metadataErrors.addError("@ThriftUnionId method [%s] is static", idMethod.toGenericString());
+                continue;
+            }
+
+            if (isValidateGetter(idMethod)) {
+                MethodExtractor methodExtractor = new MethodExtractor(idMethod, null, THRIFT_UNION_ID);
+                fields.add(methodExtractor);
+                extractors.add(methodExtractor);
+            }
+        }
+    }
+
     private void addConstructors(Class<?> clazz)
     {
         for (Constructor<?> constructor : clazz.getConstructors()) {
@@ -201,8 +255,14 @@ public class ThriftStructMetadataBuilder<T>
                     constructor.getGenericParameterTypes(),
                     extractParameterNames(constructor));
             if (parameters != null) {
-                fields.addAll(parameters);
-                constructorInjections.add(new ConstructorInjection(constructor, parameters));
+                if (parameters.size() < 2) {
+                    fields.addAll(parameters);
+                    constructorInjections.add(new ConstructorInjection(constructor, parameters));
+                }
+                else {
+                    metadataErrors.addError("@ThriftConstructor [%s] takes %d arguments, this is illegal for an union", constructor.toGenericString(), parameters.size());
+                    continue;
+                }
             }
         }
 
@@ -218,10 +278,6 @@ public class ThriftStructMetadataBuilder<T>
             catch (NoSuchMethodException e) {
                 metadataErrors.addError("Struct class [%s] does not have a public no-arg constructor", clazz.getName());
             }
-        }
-
-        if (constructorInjections.size() > 1) {
-            metadataErrors.addError("Multiple constructors are annotated with @ThriftConstructor ", constructorInjections);
         }
     }
 
@@ -412,7 +468,8 @@ public class ThriftStructMetadataBuilder<T>
 
     private boolean isValidateSetter(Method method)
     {
-        return method.getParameterTypes().length >= 1;
+        // Unions only allow setters with exactly one parameters
+        return method.getParameterTypes().length == 1;
     }
 
     private List<ParameterInjection> getParameterInjections(Annotation[][] parameterAnnotations, Type[] parameterTypes, String[] parameterNames)
@@ -457,7 +514,7 @@ public class ThriftStructMetadataBuilder<T>
                 for (String fieldName : newTreeSet(transform(fields, getOrExtractThriftFieldName()))) {
                     // only report errors for fields that don't have conflicting ids
                     if (!fieldsWithConflictingIds.contains(fieldName)) {
-                        metadataErrors.addError("ThriftStruct %s fields %s do not have an id", structName, newTreeSet(transform(fields, getOrExtractThriftFieldName())));
+                        metadataErrors.addError("ThriftUnion %s fields %s do not have an id", structName, newTreeSet(transform(fields, getOrExtractThriftFieldName())));
                     }
                 }
                 continue;
@@ -516,7 +573,7 @@ public class ThriftStructMetadataBuilder<T>
             if (ids.size() > 1) {
                 String fieldName = entry.getKey();
                 if (!fieldsWithConflictingIds.contains(fieldName)) {
-                    metadataErrors.addError("ThriftStruct '%s' field '%s' has multiple ids: %s", structName, fieldName, ids);
+                    metadataErrors.addError("ThriftUnion '%s' field '%s' has multiple ids: %s", structName, fieldName, ids);
                     fieldsWithConflictingIds.add(fieldName);
                 }
                 continue;
@@ -541,7 +598,7 @@ public class ThriftStructMetadataBuilder<T>
         String name;
         if (!names.isEmpty()) {
             if (names.size() > 1) {
-                metadataErrors.addWarning("ThriftStruct %s field %s has multiple names %s", structName, id, names);
+                metadataErrors.addWarning("ThriftUnion %s field %s has multiple names %s", structName, id, names);
             }
             name = names.iterator().next();
         }
@@ -561,7 +618,7 @@ public class ThriftStructMetadataBuilder<T>
         boolean isSupportedType = true;
         for (FieldMetadata field : fields) {
             if (!catalog.isSupportedStructFieldType(field.getJavaType())) {
-                metadataErrors.addError("ThriftStruct %s field %s(%s) type %s is not a supported Java type", structName, name, id, TypeToken.of(field.getJavaType()));
+                metadataErrors.addError("ThriftUnion %s field %s(%s) type %s is not a supported Java type", structName, name, id, TypeToken.of(field.getJavaType()));
                 isSupportedType = false;
                 // only report the error once
                 break;
@@ -575,7 +632,7 @@ public class ThriftStructMetadataBuilder<T>
                 types.add(catalog.getThriftType(field.getJavaType()));
             }
             if (types.size() > 1) {
-                metadataErrors.addWarning("ThriftStruct %s field %s(%s) has multiple types %s", structName, name, id, types);
+                metadataErrors.addWarning("ThriftUnion %s field %s(%s) has multiple types %s", structName, name, id, types);
             }
         }
     }
@@ -593,7 +650,7 @@ public class ThriftStructMetadataBuilder<T>
         ThriftMethodInjection builderMethodInjection = buildBuilderConstructorInjections();
 
         // constructor injection (or factory method for builder)
-        ThriftConstructorInjection constructorInjections = buildConstructorInjection();
+        ThriftConstructorInjection constructorInjection = buildConstructorInjection();
 
         // fields injections
         Iterable<ThriftFieldMetadata> fieldsMetadata = buildFieldInjections();
@@ -605,11 +662,11 @@ public class ThriftStructMetadataBuilder<T>
                 structName,
                 structClass,
                 builderClass,
-                MetadataType.STRUCT,
+                MetadataType.UNION,
                 Optional.fromNullable(builderMethodInjection),
                 ImmutableList.copyOf(documentation),
                 ImmutableList.copyOf(fieldsMetadata),
-                Optional.of(constructorInjections),
+                Optional.fromNullable(constructorInjection),
                 methodInjections
         );
     }
@@ -626,14 +683,14 @@ public class ThriftStructMetadataBuilder<T>
 
     private ThriftConstructorInjection buildConstructorInjection()
     {
-        return Iterables.getOnlyElement(Lists.transform(constructorInjections, new Function<ConstructorInjection, ThriftConstructorInjection>()
-        {
-            @Override
-            public ThriftConstructorInjection apply(ConstructorInjection injection)
-            {
-                return new ThriftConstructorInjection(injection.getConstructor(), buildParameterInjections(injection.getParameters()));
+        for (ConstructorInjection constructorInjection : constructorInjections) {
+            if (constructorInjection.getParameters().size() == 0) {
+                return new ThriftConstructorInjection(constructorInjection.getConstructor(), buildParameterInjections(constructorInjection.getParameters()));
             }
-        }));
+        }
+
+        // This is acutally legal for a ThriftUnion, all c'tors available take arguments and are associated with the FieldMetadata...
+        return null;
     }
 
     private Iterable<ThriftFieldMetadata> buildFieldInjections()
@@ -654,7 +711,10 @@ public class ThriftStructMetadataBuilder<T>
     {
         short id = -1;
         String name = null;
-        ThriftType type = null;
+        FieldType fieldType = FieldType.THRIFT_FIELD;
+        ThriftType thriftType = null;
+        ThriftConstructorInjection thriftConstructorInjection = null;
+        ThriftMethodInjection thriftMethodInjection = null;
 
         // process field injections and extractions
         ImmutableList.Builder<ThriftInjection> injections = ImmutableList.builder();
@@ -662,7 +722,8 @@ public class ThriftStructMetadataBuilder<T>
         for (FieldMetadata fieldMetadata : input) {
             id = fieldMetadata.getId();
             name = fieldMetadata.getName();
-            type = catalog.getThriftType(fieldMetadata.getJavaType());
+            fieldType = fieldMetadata.getType();
+            thriftType = catalog.getThriftType(fieldMetadata.getJavaType());
 
             if (fieldMetadata instanceof FieldInjection) {
                 FieldInjection fieldInjection = (FieldInjection) fieldMetadata;
@@ -670,12 +731,26 @@ public class ThriftStructMetadataBuilder<T>
             }
             else if (fieldMetadata instanceof ParameterInjection) {
                 ParameterInjection parameterInjection = (ParameterInjection) fieldMetadata;
-                injections.add(new ThriftParameterInjection(
+                ThriftParameterInjection thriftParameterInjection =  new ThriftParameterInjection(
                         parameterInjection.getId(),
                         parameterInjection.getName(),
                         parameterInjection.getParameterIndex(),
                         fieldMetadata.getJavaType()
-                ));
+                );
+                injections.add(thriftParameterInjection);
+
+                for (ConstructorInjection constructorInjection : constructorInjections) {
+                    if (constructorInjection.getParameters().size() == 1 && constructorInjection.getParameters().get(0).equals(parameterInjection)) {
+                        thriftConstructorInjection = new ThriftConstructorInjection(constructorInjection.getConstructor(), thriftParameterInjection);
+                        break;
+                    }
+                }
+
+                for (MethodInjection methodInjection : methodInjections) {
+                    if (methodInjection.getParameters().size() == 1 && methodInjection.getParameters().get(0).equals(parameterInjection)) {
+                        thriftMethodInjection = new ThriftMethodInjection(methodInjection.getMethod(), thriftParameterInjection);
+                    }
+                }
             }
             else if (fieldMetadata instanceof FieldExtractor) {
                 FieldExtractor fieldExtractor = (FieldExtractor) fieldMetadata;
@@ -689,18 +764,18 @@ public class ThriftStructMetadataBuilder<T>
 
         // add type coercion
         TypeCoercion coercion = null;
-        if (type.isCoerced()) {
-            coercion = catalog.getDefaultCoercion(type.getJavaType());
+        if (thriftType.isCoerced()) {
+            coercion = catalog.getDefaultCoercion(thriftType.getJavaType());
         }
 
         ThriftFieldMetadata thriftFieldMetadata = new ThriftFieldMetadata(
                 id,
-                type,
+                thriftType,
                 name,
-                THRIFT_FIELD,
+                fieldType,
                 injections.build(),
-                Optional.<ThriftConstructorInjection>absent(),
-                Optional.<ThriftMethodInjection>absent(),
+                Optional.fromNullable(thriftConstructorInjection),
+                Optional.fromNullable(thriftMethodInjection),
                 Optional.fromNullable(extraction),
                 Optional.fromNullable(coercion)
         );

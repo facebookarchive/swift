@@ -206,7 +206,7 @@ public final class ReflectionHelper
     {
         List<Field> result = new ArrayList<>();
 
-        // gather all publicly available methods
+        // gather all publicly available fields
         // this returns everything, even if it's declared in a parent
         for (Field field : type.getFields()) {
             if (field.isSynthetic() || isStatic(field.getModifiers())) {

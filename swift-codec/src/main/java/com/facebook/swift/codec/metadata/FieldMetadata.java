@@ -18,6 +18,7 @@ package com.facebook.swift.codec.metadata;
 import com.facebook.swift.codec.ThriftField;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
 
 import javax.annotation.Nullable;
 
@@ -27,16 +28,29 @@ abstract class FieldMetadata
 {
     private Short id;
     private String name;
+    private final FieldType type;
 
-    protected FieldMetadata(ThriftField annotation)
+    protected FieldMetadata(ThriftField annotation, FieldType type)
     {
-        if (annotation != null) {
-            if (annotation.value() != Short.MIN_VALUE) {
-                id = annotation.value();
-            }
-            if (!annotation.name().isEmpty()) {
-                name = annotation.name();
-            }
+        this.type = type;
+
+        switch (type) {
+            case THRIFT_FIELD:
+                if (annotation != null) {
+                    if (annotation.value() != Short.MIN_VALUE) {
+                        id = annotation.value();
+                    }
+                    if (!annotation.name().isEmpty()) {
+                        name = annotation.name();
+                    }
+                }
+                break;
+            case THRIFT_UNION_ID:
+                id = Short.MIN_VALUE;
+                name = "_union_id";
+                break;
+            default:
+                throw new IllegalArgumentException("Encountered field metadata type " + type);
         }
     }
 
@@ -58,6 +72,11 @@ abstract class FieldMetadata
     public void setName(String name)
     {
         this.name = name;
+    }
+
+    public FieldType getType()
+    {
+        return type;
     }
 
     public abstract Type getJavaType();
@@ -128,6 +147,17 @@ abstract class FieldMetadata
                     return null;
                 }
                 return input.extractName();
+            }
+        };
+    }
+
+    public static Predicate<FieldMetadata> isType(final FieldType type)
+    {
+        return new Predicate<FieldMetadata>() {
+            @Override
+            public boolean apply(FieldMetadata fieldMetadata)
+            {
+                return fieldMetadata.getType() == type;
             }
         };
     }
