@@ -86,7 +86,7 @@ public class SwiftDocumentContext
     public String getJavaPackage()
     {
         String effectiveJavaNamespace = "java.swift";
-        if (generatorConfig.usePlainJavaNamespace()) {
+        if (generatorConfig.containsTweak(SwiftGeneratorTweak.USE_PLAIN_JAVA_NAMESPACE)) {
             effectiveJavaNamespace = "java";
         }
 

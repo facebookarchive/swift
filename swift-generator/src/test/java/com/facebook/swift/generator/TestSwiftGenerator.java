@@ -25,7 +25,7 @@ import java.io.File;
  */
 public class TestSwiftGenerator
 {
-    private static final String OUTPUT_FOLDER = System.getProperty("java.io.tmpdir") + "demo";
+    private static final String OUTPUT_FOLDER = new File(System.getProperty("java.io.tmpdir"), "demo").getAbsolutePath();
 
     public static void main(final String ... args) throws Exception
     {
@@ -37,6 +37,7 @@ public class TestSwiftGenerator
                         .addTweak(SwiftGeneratorTweak.ADD_CLOSEABLE_INTERFACE)
                         .addTweak(SwiftGeneratorTweak.EXTEND_RUNTIME_EXCEPTION)
                         .addTweak(SwiftGeneratorTweak.ADD_THRIFT_EXCEPTION)
+                        .addTweak(SwiftGeneratorTweak.USE_PLAIN_JAVA_NAMESPACE)
                         .build();
 
         final SwiftGenerator generator = new SwiftGenerator(config);
