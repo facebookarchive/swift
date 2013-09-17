@@ -28,7 +28,6 @@ this.<field.javaName> = <field.javaName>;
 >>
 
 _union_setter(field) ::= <<
-@ThriftField
 public void <field.javaSetterName>(final <field.javaType> <field.javaName>) {
     this.value = <field.javaName>;
     this.id = <field.id>;
