@@ -59,7 +59,8 @@ public class SwiftGenerator
     private static final Map<String, ImmutableList<String>> TEMPLATES =
             ImmutableMap.of(
                     "java-regular", ImmutableList.of("java/common.st", "java/regular.st"),
-                    "java-immutable", ImmutableList.of("java/common.st", "java/immutable.st")
+                    "java-immutable", ImmutableList.of("java/common.st", "java/immutable.st"),
+                    "java-ctor", ImmutableList.of("java/common.st", "java/ctor.st")
             );
 
     private final File outputFolder;
