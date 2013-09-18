@@ -15,6 +15,8 @@
  */
 package com.facebook.swift.service;
 
+import io.airlift.stats.CounterStat;
+import io.airlift.stats.DistributionStat;
 import io.airlift.stats.TimedStat;
 import io.airlift.units.Duration;
 import org.weakref.jmx.Managed;
@@ -27,6 +29,10 @@ public class ThriftMethodStats
     private final TimedStat invoke = new TimedStat();
     private final TimedStat write = new TimedStat();
     private final TimedStat error = new TimedStat();
+    private final DistributionStat readSize = new DistributionStat();
+    private final DistributionStat writeSize = new DistributionStat();
+    private final CounterStat readSizeTotal = new CounterStat();
+    private final CounterStat writeSizeTotal = new CounterStat();
 
     @Managed
     @Nested
@@ -63,6 +69,34 @@ public class ThriftMethodStats
         return error;
     }
 
+    @Managed
+    @Nested
+    public DistributionStat getReadSize()
+    {
+        return readSize;
+    }
+
+    @Managed
+    @Nested
+    public DistributionStat getWriteSize()
+    {
+        return writeSize;
+    }
+
+    @Managed
+    @Nested
+    public CounterStat getReadSizeTotal()
+    {
+        return readSizeTotal;
+    }
+
+    @Managed
+    @Nested
+    public CounterStat getWriteSizeTotal()
+    {
+        return writeSizeTotal;
+    }
+
     public void addReadTime(Duration duration)
     {
         read.addValue(duration);
@@ -86,5 +120,17 @@ public class ThriftMethodStats
     public void addErrorTime(Duration duration)
     {
         error.addValue(duration);
+    }
+
+    public void addReadByteCount(int readByteCount)
+    {
+        readSizeTotal.update(readByteCount);
+        readSize.add(readByteCount);
+    }
+
+    public void addWriteByteCount(int writeByteCount)
+    {
+        writeSizeTotal.update(writeByteCount);
+        writeSize.add(writeByteCount);
     }
 }

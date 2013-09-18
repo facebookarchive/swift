@@ -15,6 +15,7 @@
  */
 package com.facebook.swift.service;
 
+import com.facebook.nifty.core.NiftyRequestContext;
 import com.facebook.nifty.core.RequestContext;
 import io.airlift.units.Duration;
 
@@ -31,11 +32,17 @@ public class ThriftServiceStatsHandler extends ThriftEventHandler
 
     private static class PerCallMethodStats
     {
+        public final RequestContext requestContext;
         public boolean success = true;
         public long startTime = nanoTime();
         public long preReadTime;
         public long postReadTime;
         public long preWriteTime;
+
+        public PerCallMethodStats(RequestContext requestContext)
+        {
+            this.requestContext = requestContext;
+        }
     }
 
     private static Duration nanosBetween(long start, long end)
@@ -52,7 +59,7 @@ public class ThriftServiceStatsHandler extends ThriftEventHandler
     public Object getContext(String methodName, RequestContext requestContext)
     {
         stats.putIfAbsent(methodName, new ThriftMethodStats());
-        return new PerCallMethodStats();
+        return new PerCallMethodStats(requestContext);
     }
 
     @Override
@@ -68,6 +75,7 @@ public class ThriftServiceStatsHandler extends ThriftEventHandler
         PerCallMethodStats ctx = (PerCallMethodStats)context;
         ctx.postReadTime = now;
         stats.get(methodName).addReadTime(nanosBetween(ctx.preReadTime, now));
+        stats.get(methodName).addReadByteCount(getBytesRead(ctx));
     }
 
     @Override
@@ -89,7 +97,9 @@ public class ThriftServiceStatsHandler extends ThriftEventHandler
     @Override
     public void postWrite(Object context, String methodName, Object result)
     {
-        stats.get(methodName).addWriteTime(nanosSince(((PerCallMethodStats) context).preWriteTime));
+        PerCallMethodStats ctx = (PerCallMethodStats) context;
+        stats.get(methodName).addWriteTime(nanosSince(ctx.preWriteTime));
+        stats.get(methodName).addWriteByteCount(getBytesWritten(ctx));
     }
 
     @Override
@@ -108,5 +118,27 @@ public class ThriftServiceStatsHandler extends ThriftEventHandler
         } else {
             stats.get(methodName).addErrorTime(duration);
         }
+    }
+
+    private int getBytesRead(PerCallMethodStats ctx)
+    {
+        if (!(ctx.requestContext instanceof NiftyRequestContext)) {
+            return 0;
+        }
+
+        NiftyRequestContext requestContext = (NiftyRequestContext) ctx.requestContext;
+        return requestContext.getNiftyTransport().getReadByteCount();
+    }
+
+    private int getBytesWritten(PerCallMethodStats ctx)
+    {
+        if (!(ctx.requestContext instanceof NiftyRequestContext)) {
+            // Standard TTransport interface doesn't give us a way to determine how many bytes
+            // were read
+            return 0;
+        }
+
+        NiftyRequestContext requestContext = (NiftyRequestContext) ctx.requestContext;
+        return requestContext.getNiftyTransport().getWrittenByteCount();
     }
 }

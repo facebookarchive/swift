@@ -31,6 +31,8 @@ import org.apache.thrift.TProcessor;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -40,6 +42,8 @@ import static org.testng.Assert.assertEquals;
 
 public class UnframedTest
 {
+    private static final Logger LOG = LoggerFactory.getLogger(UnframedTest.class);
+
     @Test
     public void testUnframedSyncMethod()
             throws Exception
@@ -128,6 +132,8 @@ public class UnframedTest
 
         TThreadPoolServer.Args args = new TThreadPoolServer.Args(serverSocket).processor(processor);
         final TServer thriftServer = info.server = new TThreadPoolServer(args);
+
+        LOG.info("Server running on port {}", serverSocket.getServerSocket().getLocalPort());
 
         new Thread() {
             @Override
