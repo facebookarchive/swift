@@ -106,7 +106,8 @@ public class TemplateContextGenerator
                                 typeConverter.convertType(field.getType()),
                                 mangleJavamethodName(field.getName()),
                                 getterName(field),
-                                setterName(field));
+                                setterName(field),
+                                testPresenceName(field));
     }
 
     public ExceptionContext exceptionFromThrift(final ThriftField field)
@@ -206,4 +207,10 @@ public class TemplateContextGenerator
     {
         return "set" + mangleJavatypeName(field.getName());
     }
+
+    private String testPresenceName(final ThriftField field)
+    {
+        return "isSet" + mangleJavatypeName(field.getName());
+    }
+
 }

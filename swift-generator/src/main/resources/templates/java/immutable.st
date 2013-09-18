@@ -37,6 +37,4 @@ private final int id;
 private final String name;
 
 <context.fields : { field |<_union_ctor(context, field)>}; separator="\n\n">
-
-<context.fields : { field |<_union_field(field)>}; separator="\n\n">
 >>

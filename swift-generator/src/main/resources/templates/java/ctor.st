@@ -56,6 +56,4 @@ public <context.javaName>() {
 <context.fields : { field |<_union_ctor(context, field)>}; separator="\n\n">
 
 <context.fields : { field |<_union_setter(field)>}; separator="\n\n">
-
-<context.fields : { field |<_union_field(field)>}; separator="\n\n">
 >>

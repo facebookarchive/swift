@@ -64,6 +64,8 @@ public class <context.javaName>
 {
     <_union_body(context)>
 
+    <context.fields : { field |<_union_field(field)>}; separator="\n\n">
+
     @ThriftUnionId
     public int getThriftId()
     {
@@ -74,6 +76,7 @@ public class <context.javaName>
     {
         return this.name;
     }
+
 
     <_union_toString(context)>
 }<\n>
@@ -209,6 +212,10 @@ public <field.javaType> <field.javaGetterName>() {
         throw new IllegalStateException("Not a <field.name> element!");
     }
     return (<field.javaType>) value;
+}
+
+public boolean <field.javaTestPresenceName>() {
+    return this.id == <field.id>;
 }
 >>
 
