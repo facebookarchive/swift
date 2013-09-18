@@ -15,8 +15,10 @@
  */
 package com.facebook.swift.codec;
 
+import com.facebook.swift.codec.internal.EnumThriftCodec;
 import com.facebook.swift.codec.internal.ThriftCodecFactory;
 import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
+import com.facebook.swift.codec.metadata.ThriftCatalog;
 import com.facebook.swift.codec.metadata.ThriftEnumMetadata;
 import com.facebook.swift.codec.metadata.ThriftEnumMetadataBuilder;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
@@ -24,6 +26,7 @@ import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.TMemoryBuffer;
 import org.testng.annotations.BeforeMethod;
@@ -43,14 +46,15 @@ import static com.facebook.swift.codec.metadata.ThriftType.list;
 import static com.facebook.swift.codec.metadata.ThriftType.map;
 import static com.facebook.swift.codec.metadata.ThriftType.set;
 import static com.google.common.base.Charsets.UTF_8;
+
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.fail;
 
 public class TestThriftCodecManager
 {
-
     private ThriftCodecManager codecManager;
+    private ThriftType fruitType;
 
     @BeforeMethod
     protected void setUp()
@@ -64,7 +68,10 @@ public class TestThriftCodecManager
                 throw new UnsupportedOperationException();
             }
         });
-        codecManager.getCatalog().addDefaultCoercions(DefaultJavaCoercions.class);
+        ThriftCatalog catalog = codecManager.getCatalog();
+        catalog.addDefaultCoercions(DefaultJavaCoercions.class);
+        fruitType = catalog.getThriftType(Fruit.class);
+        codecManager.addCodec(new EnumThriftCodec<>(fruitType));
     }
 
     @Test
@@ -128,7 +135,7 @@ public class TestThriftCodecManager
     }
 
     @Test
-    public void testAddCodec()
+    public void testAddStructCodec()
             throws Exception
     {
         BonkField bonk = new BonkField("message", 42);
@@ -147,6 +154,42 @@ public class TestThriftCodecManager
 
         // try again
         testRoundTripSerialize(bonk);
+    }
+
+    @Test
+    public void testAddUnionCodec()
+            throws Exception
+    {
+        UnionField union = new UnionField();
+        union._id= 1;
+        union.stringValue = "Hello, World";
+
+        // no codec for UnionField so this will fail
+        try {
+            testRoundTripSerialize(union);
+            fail("Expected exception");
+        }
+        catch (Exception ignored) {
+        }
+
+        // add the codec
+        ThriftType type = codecManager.getCatalog().getThriftType(UnionField.class);
+        codecManager.addCodec(new UnionFieldThriftCodec(type, codecManager.getCodec(Fruit.class)));
+
+        // try again
+        testRoundTripSerialize(union);
+
+        union = new UnionField();
+        union._id = 2;
+        union.longValue = 4815162342L;
+
+        testRoundTripSerialize(union);
+
+        union = new UnionField();
+        union._id = 3;
+        union.fruitValue = Fruit.BANANA;
+
+        testRoundTripSerialize(union);
     }
 
     private <T> void testRoundTripSerialize(T value)

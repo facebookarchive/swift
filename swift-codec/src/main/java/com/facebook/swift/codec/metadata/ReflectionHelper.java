@@ -40,6 +40,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import static java.lang.reflect.Modifier.isStatic;
 
 public final class ReflectionHelper
@@ -204,7 +206,7 @@ public final class ReflectionHelper
     {
         List<Field> result = new ArrayList<>();
 
-        // gather all publicly available methods
+        // gather all publicly available fields
         // this returns everything, even if it's declared in a parent
         for (Field field : type.getFields()) {
             if (field.isSynthetic() || isStatic(field.getModifiers())) {
@@ -279,6 +281,28 @@ public final class ReflectionHelper
         public String[] lookupParameterNames(AccessibleObject methodOrConstructor, boolean throwExceptionIfMissing)
         {
             return lookupParameterNames(methodOrConstructor);
+        }
+    }
+
+    public static String extractFieldName(Method method)
+    {
+        checkNotNull(method, "method is null");
+        return extractFieldName(method.getName());
+    }
+
+    public static String extractFieldName(String methodName)
+    {
+        checkNotNull(methodName, "methodName is null");
+        if ((methodName.startsWith("get") || methodName.startsWith("set")) && methodName.length() > 3) {
+            String name = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);
+            return name;
+        }
+        else if (methodName.startsWith("is") && methodName.length() > 2) {
+            String name = Character.toLowerCase(methodName.charAt(2)) + methodName.substring(3);
+            return name;
+        }
+        else {
+            return methodName;
         }
     }
 }

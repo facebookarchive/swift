@@ -15,34 +15,21 @@
  */
 package com.facebook.swift.codec.metadata;
 
-import com.google.common.base.Joiner;
-
-import javax.annotation.concurrent.Immutable;
+import com.facebook.swift.codec.ThriftField;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.List;
+import java.lang.reflect.Type;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.facebook.swift.codec.metadata.ReflectionHelper.extractFieldName;
 
-@Immutable
-public class ThriftMethodInjection
+class MethodExtractor extends Extractor
 {
     private final Method method;
-    private final List<ThriftParameterInjection> parameters;
 
-    public ThriftMethodInjection(Method method, ThriftParameterInjection ... parameters)
+    public MethodExtractor(Method method, ThriftField annotation, FieldType fieldType)
     {
-        this(method, Arrays.asList(parameters));
-    }
-
-    public ThriftMethodInjection(Method method, List<ThriftParameterInjection> parameters)
-    {
-        checkNotNull(method, "method is null");
-        checkNotNull(parameters, "parameters is null");
-
+        super(annotation, fieldType);
         this.method = method;
-        this.parameters = parameters;
     }
 
     public Method getMethod()
@@ -50,19 +37,25 @@ public class ThriftMethodInjection
         return method;
     }
 
-    public List<ThriftParameterInjection> getParameters()
+    @Override
+    public String extractName()
     {
-        return parameters;
+        return extractFieldName(method.getName());
+    }
+
+    @Override
+    public Type getJavaType()
+    {
+        return method.getGenericReturnType();
     }
 
     @Override
     public String toString()
     {
         final StringBuilder sb = new StringBuilder();
-        sb.append(method.getName());
-        sb.append('(');
-        Joiner.on(", ").appendTo(sb, parameters);
-        sb.append(')');
+        sb.append("MethodExtractor");
+        sb.append("{method=").append(method);
+        sb.append('}');
         return sb.toString();
     }
 }

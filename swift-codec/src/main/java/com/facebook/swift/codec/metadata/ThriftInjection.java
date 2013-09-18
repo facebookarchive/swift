@@ -15,6 +15,7 @@
  */
 package com.facebook.swift.codec.metadata;
 
+
 /**
  * ThriftInjection contains information an injection point for a single thrift field.
  * <p/>
@@ -25,4 +26,6 @@ public interface ThriftInjection
     short getId();
 
     String getName();
+
+    FieldType getType();
 }

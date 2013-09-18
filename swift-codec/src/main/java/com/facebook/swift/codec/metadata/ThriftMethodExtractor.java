@@ -16,6 +16,7 @@
 package com.facebook.swift.codec.metadata;
 
 import javax.annotation.concurrent.Immutable;
+
 import java.lang.reflect.Method;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -27,16 +28,30 @@ public class ThriftMethodExtractor implements ThriftExtraction
     private final short id;
     private final String name;
     private final Method method;
+    private final FieldType fieldType;
 
-    public ThriftMethodExtractor(short id, String name, Method method)
+    public ThriftMethodExtractor(short id, String name, Method method, FieldType fieldType)
     {
-        checkArgument(id >= 0, "fieldId is negative");
-        checkNotNull(name, "name is null");
-        checkNotNull(method, "method is null");
+        this.name = checkNotNull(name, "name is null");
+        this.method = checkNotNull(method, "method is null");
+        this.fieldType = checkNotNull(fieldType, "fieldType is null");
+
+        switch (fieldType) {
+            case THRIFT_FIELD:
+                checkArgument(id >= 0, "fieldId is negative");
+                break;
+            case THRIFT_UNION_ID:
+                checkArgument (id == Short.MIN_VALUE, "fieldId must be Short.MIN_VALUE for thrift_union_id");
+                break;
+        }
 
         this.id = id;
-        this.name = name;
-        this.method = method;
+    }
+
+    @Override
+    public FieldType getType()
+    {
+        return fieldType;
     }
 
     @Override
@@ -63,6 +78,7 @@ public class ThriftMethodExtractor implements ThriftExtraction
         sb.append("ThriftMethodExtractor");
         sb.append("{id=").append(id);
         sb.append(", name='").append(name).append('\'');
+        sb.append(", fieldType=").append(fieldType);
         sb.append(", method=").append(method);
         sb.append('}');
         return sb.toString();

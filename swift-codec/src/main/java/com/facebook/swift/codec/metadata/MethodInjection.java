@@ -15,34 +15,20 @@
  */
 package com.facebook.swift.codec.metadata;
 
-import com.google.common.base.Joiner;
-
-import javax.annotation.concurrent.Immutable;
+import com.google.common.collect.ImmutableList;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-@Immutable
-public class ThriftMethodInjection
+class MethodInjection
 {
     private final Method method;
-    private final List<ThriftParameterInjection> parameters;
+    private final List<ParameterInjection> parameters;
 
-    public ThriftMethodInjection(Method method, ThriftParameterInjection ... parameters)
+    public MethodInjection(Method method, List<ParameterInjection> parameters)
     {
-        this(method, Arrays.asList(parameters));
-    }
-
-    public ThriftMethodInjection(Method method, List<ThriftParameterInjection> parameters)
-    {
-        checkNotNull(method, "method is null");
-        checkNotNull(parameters, "parameters is null");
-
         this.method = method;
-        this.parameters = parameters;
+        this.parameters = ImmutableList.copyOf(parameters);
     }
 
     public Method getMethod()
@@ -50,7 +36,7 @@ public class ThriftMethodInjection
         return method;
     }
 
-    public List<ThriftParameterInjection> getParameters()
+    public List<ParameterInjection> getParameters()
     {
         return parameters;
     }
@@ -59,10 +45,10 @@ public class ThriftMethodInjection
     public String toString()
     {
         final StringBuilder sb = new StringBuilder();
-        sb.append(method.getName());
-        sb.append('(');
-        Joiner.on(", ").appendTo(sb, parameters);
-        sb.append(')');
+        sb.append("MethodInjection");
+        sb.append("{method=").append(method);
+        sb.append(", parameters=").append(parameters);
+        sb.append('}');
         return sb.toString();
     }
 }

@@ -23,13 +23,15 @@ public class FieldContext
     private final String javaName;
     private final String javaGetterName;
     private final String javaSetterName;
+    private final String javaTestPresenceName;
 
-    FieldContext(String name,
-                 short id,
-                 String javaType,
-                 String javaName,
-                 String javaGetterName,
-                 String javaSetterName)
+    FieldContext(final String name,
+                 final short id,
+                 final String javaType,
+                 final String javaName,
+                 final String javaGetterName,
+                 final String javaSetterName,
+                 final String javaTestPresenceName)
     {
         this.name = name;
         this.id = id;
@@ -37,6 +39,7 @@ public class FieldContext
         this.javaName = javaName;
         this.javaGetterName = javaGetterName;
         this.javaSetterName = javaSetterName;
+        this.javaTestPresenceName = javaTestPresenceName;
     }
 
     public String getName()
@@ -69,6 +72,11 @@ public class FieldContext
         return javaSetterName;
     }
 
+    public String getJavaTestPresenceName()
+    {
+        return javaTestPresenceName;
+    }
+
     @Override
     public int hashCode()
     {
@@ -78,13 +86,14 @@ public class FieldContext
         result = prime * result + ((javaGetterName == null) ? 0 : javaGetterName.hashCode());
         result = prime * result + ((javaName == null) ? 0 : javaName.hashCode());
         result = prime * result + ((javaSetterName == null) ? 0 : javaSetterName.hashCode());
+        result = prime * result + ((javaTestPresenceName == null) ? 0 : javaTestPresenceName.hashCode());
         result = prime * result + ((javaType == null) ? 0 : javaType.hashCode());
         result = prime * result + ((name == null) ? 0 : name.hashCode());
         return result;
     }
 
     @Override
-    public boolean equals(Object obj)
+    public boolean equals(final Object obj)
     {
         if (this == obj) {
             return true;
@@ -95,7 +104,7 @@ public class FieldContext
         if (getClass() != obj.getClass()) {
             return false;
         }
-        FieldContext other = (FieldContext) obj;
+        final FieldContext other = (FieldContext) obj;
         if (id != other.id) {
             return false;
         }
@@ -123,6 +132,14 @@ public class FieldContext
         else if (!javaSetterName.equals(other.javaSetterName)) {
             return false;
         }
+        if (javaTestPresenceName == null) {
+            if (other.javaTestPresenceName != null) {
+                return false;
+            }
+        }
+        else if (!javaTestPresenceName.equals(other.javaTestPresenceName)) {
+            return false;
+        }
         if (javaType == null) {
             if (other.javaType != null) {
                 return false;
@@ -145,6 +162,6 @@ public class FieldContext
     @Override
     public String toString()
     {
-        return "FieldContext [name=" + name + ", id=" + id + ", javaType=" + javaType + ", javaName=" + javaName + ", javaGetterName=" + javaGetterName + ", javaSetterName=" + javaSetterName + "]";
+        return "FieldContext [name=" + name + ", id=" + id + ", javaType=" + javaType + ", javaName=" + javaName + ", javaGetterName=" + javaGetterName + ", javaSetterName=" + javaSetterName + ", javaTestPresenceName=" + javaTestPresenceName + "]";
     }
 }

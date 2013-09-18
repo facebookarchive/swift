@@ -18,26 +18,38 @@ package com.facebook.swift.service.metadata;
 import com.facebook.swift.codec.ThriftField;
 import com.facebook.swift.codec.ThriftStruct;
 import com.facebook.swift.codec.metadata.ThriftCatalog;
+import com.facebook.swift.codec.metadata.ThriftConstructorInjection;
+import com.facebook.swift.codec.metadata.ThriftExtraction;
 import com.facebook.swift.codec.metadata.ThriftFieldMetadata;
 import com.facebook.swift.codec.metadata.ThriftInjection;
+import com.facebook.swift.codec.metadata.ThriftMethodInjection;
 import com.facebook.swift.codec.metadata.ThriftParameterInjection;
 import com.facebook.swift.codec.metadata.ThriftType;
+import com.facebook.swift.codec.metadata.TypeCoercion;
 import com.facebook.swift.service.ThriftException;
 import com.facebook.swift.service.ThriftMethod;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ListenableFuture;
+
 import org.apache.thrift.TException;
 
 import javax.annotation.concurrent.Immutable;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
+import static com.facebook.swift.codec.metadata.FieldType.THRIFT_FIELD;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.extractParameterNames;
 import static com.google.common.base.Preconditions.checkState;
 
@@ -108,13 +120,17 @@ public class ThriftMethodMetadata
 
             ThriftType thriftType = catalog.getThriftType(parameterType);
 
+            ThriftInjection parameterInjection = new ThriftParameterInjection(parameterId, parameterName, index, parameterType);
             ThriftFieldMetadata fieldMetadata = new ThriftFieldMetadata(
                     parameterId,
                     thriftType,
                     parameterName,
-                    ImmutableList.<ThriftInjection>of(new ThriftParameterInjection(parameterId, parameterName, index, parameterType)),
-                    null,
-                    null
+                    THRIFT_FIELD,
+                    ImmutableList.of(parameterInjection),
+                    Optional.<ThriftConstructorInjection>absent(),
+                    Optional.<ThriftMethodInjection>absent(),
+                    Optional.<ThriftExtraction>absent(),
+                    Optional.<TypeCoercion>absent()
             );
             builder.add(fieldMetadata);
         }

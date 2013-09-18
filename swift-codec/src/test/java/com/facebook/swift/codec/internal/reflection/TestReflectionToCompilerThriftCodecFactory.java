@@ -13,24 +13,26 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package com.facebook.swift.codec.internal.compiler;
+package com.facebook.swift.codec.internal.reflection;
 
 import com.facebook.swift.codec.AbstractThriftCodecManagerTest;
 import com.facebook.swift.codec.ThriftCodecManager;
+import com.facebook.swift.codec.internal.compiler.CompilerThriftCodecFactory;
 
-public class TestCompilerThriftCodecFactory extends AbstractThriftCodecManagerTest
+import org.testng.annotations.Test;
+
+@Test
+public class TestReflectionToCompilerThriftCodecFactory extends AbstractThriftCodecManagerTest
 {
-    private final ThriftCodecManager manager = new ThriftCodecManager(new CompilerThriftCodecFactory(true));
-
     @Override
     public ThriftCodecManager createReadCodecManager()
     {
-        return manager;
+        return new ThriftCodecManager(new CompilerThriftCodecFactory(true));
     }
 
     @Override
     public ThriftCodecManager createWriteCodecManager()
     {
-        return manager;
+        return new ThriftCodecManager(new ReflectionThriftCodecFactory());
     }
 }

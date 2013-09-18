@@ -15,17 +15,12 @@
  */
 package com.facebook.swift.codec.metadata;
 
+import com.facebook.swift.codec.ThriftField;
 
-/**
- * ThriftExtraction contains information an extraction point for a single thrift field.
- * <p/>
- * Implementations of this interface are expected to be thread safe.
- */
-public interface ThriftExtraction
+abstract class Extractor extends FieldMetadata
 {
-    short getId();
-
-    String getName();
-
-    FieldType getType();
+    protected Extractor(ThriftField annotation, FieldType fieldType)
+    {
+        super(annotation, fieldType);
+    }
 }

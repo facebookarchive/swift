@@ -15,8 +15,7 @@
  */
 package com.facebook.swift.codec;
 
-import com.facebook.swift.codec.internal.builtin.BooleanThriftCodec;
-import com.facebook.swift.codec.internal.builtin.SetThriftCodec;
+import com.facebook.swift.codec.internal.EnumThriftCodec;
 import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
 import com.facebook.swift.codec.metadata.ThriftCatalog;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
@@ -25,6 +24,7 @@ import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.TMemoryBuffer;
 import org.testng.annotations.BeforeMethod;
@@ -36,25 +36,114 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.google.common.base.Charsets.UTF_8;
+
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
 public abstract class AbstractThriftCodecManagerTest
 {
-    private ThriftCodecManager codecManager;
+    private ThriftCodecManager readCodecManager;
+    private ThriftCodecManager writeCodecManager;
 
-    public abstract ThriftCodecManager createCodecManager();
+    public abstract ThriftCodecManager createReadCodecManager();
+
+    public abstract ThriftCodecManager createWriteCodecManager();
 
     @BeforeMethod
     protected void setUp()
             throws Exception
     {
-        codecManager = createCodecManager();
-        codecManager.getCatalog().addDefaultCoercions(DefaultJavaCoercions.class);
+        readCodecManager = createReadCodecManager();
+        writeCodecManager = createWriteCodecManager();
+        readCodecManager.getCatalog().addDefaultCoercions(DefaultJavaCoercions.class);
+        writeCodecManager.getCatalog().addDefaultCoercions(DefaultJavaCoercions.class);
     }
 
     @Test
-    public void testFieldsManual()
+    public void testUnionFieldsManual()
+            throws Exception
+    {
+        ThriftCatalog catalog = new ThriftCatalog();
+        ThriftType unionFieldType = catalog.getThriftType(UnionField.class);
+        ThriftType fruitType = catalog.getThriftType(Fruit.class);
+        ThriftCodec<Fruit> fruitCodec = new EnumThriftCodec<Fruit>(fruitType);
+        UnionFieldThriftCodec unionFieldCodec = new UnionFieldThriftCodec(unionFieldType, fruitCodec);
+
+        UnionField unionField = new UnionField();
+        unionField._id = 1;
+        unionField.stringValue = "Hello, World";
+
+        testRoundTripSerialize(unionFieldCodec, unionFieldCodec, unionField);
+
+        unionField = new UnionField();
+        unionField._id = 2;
+        unionField.longValue = 4815162342L;
+
+        testRoundTripSerialize(unionFieldCodec, unionFieldCodec, unionField);
+
+        unionField = new UnionField();
+        unionField._id = 3;
+        unionField.fruitValue = Fruit.APPLE; // The best fruit!
+
+        testRoundTripSerialize(unionFieldCodec, unionFieldCodec, unionField);
+    }
+
+    @Test
+    public void testUnionFields()
+            throws Exception
+    {
+        UnionField unionField = new UnionField();
+        unionField._id = 1;
+        unionField.stringValue = "Hello, World";
+
+        testRoundTripSerialize(unionField);
+
+        unionField = new UnionField();
+        unionField._id = 2;
+        unionField.longValue = 4815162342L;
+
+        testRoundTripSerialize(unionField);
+
+        unionField = new UnionField();
+        unionField._id = 3;
+        unionField.fruitValue = Fruit.APPLE; // The best fruit!
+
+        testRoundTripSerialize(unionField);
+    }
+
+    @Test
+    public void testUnionBean()
+            throws Exception
+    {
+        UnionBean unionBean = new UnionBean();
+        unionBean.setStringValue("Hello, World");
+        testRoundTripSerialize(unionBean);
+
+        unionBean = new UnionBean();
+        unionBean.setLongValue(4815162342L);
+        testRoundTripSerialize(unionBean);
+
+        unionBean = new UnionBean();
+        unionBean.setFruitValue(Fruit.CHERRY);
+        testRoundTripSerialize(unionBean);
+    }
+
+    @Test
+    public void testUnionConstructor()
+            throws Exception
+    {
+        UnionConstructor unionConstructor = new UnionConstructor("Hello, World");
+        testRoundTripSerialize(unionConstructor);
+
+        unionConstructor = new UnionConstructor(4815162342L);
+        testRoundTripSerialize(unionConstructor);
+
+        unionConstructor = new UnionConstructor(Fruit.APPLE);
+        testRoundTripSerialize(unionConstructor);
+    }
+
+    @Test
+    public void testStructFieldsManual()
             throws Exception
     {
         ThriftCatalog catalog = new ThriftCatalog();
@@ -62,11 +151,11 @@ public abstract class AbstractThriftCodecManagerTest
         BonkFieldThriftCodec bonkFieldCodec = new BonkFieldThriftCodec(bonkFieldType);
 
         BonkField bonkField = new BonkField("message", 42);
-        testRoundTripSerialize(bonkFieldCodec, bonkField);
+        testRoundTripSerialize(bonkFieldCodec, bonkFieldCodec, bonkField);
     }
 
     @Test
-    public void testFields()
+    public void testStructFields()
             throws Exception
     {
         BonkField bonkField = new BonkField("message", 42);
@@ -74,7 +163,7 @@ public abstract class AbstractThriftCodecManagerTest
     }
 
     @Test
-    public void testBean()
+    public void testStructBean()
             throws Exception
     {
         BonkBean bonkBean = new BonkBean("message", 42);
@@ -82,7 +171,7 @@ public abstract class AbstractThriftCodecManagerTest
     }
 
     @Test
-    public void testMethod()
+    public void testStructMethod()
             throws Exception
     {
         BonkMethod bonkMethod = new BonkMethod("message", 42);
@@ -90,7 +179,7 @@ public abstract class AbstractThriftCodecManagerTest
     }
 
     @Test
-    public void testConstructor()
+    public void testStructConstructor()
             throws Exception
     {
         BonkConstructor bonkConstructor = new BonkConstructor("message", 42);
@@ -101,7 +190,7 @@ public abstract class AbstractThriftCodecManagerTest
     public void testMatchByJavaNameWithThriftNameOverride()
         throws Exception
     {
-        ThriftCatalog catalog = codecManager.getCatalog();
+        ThriftCatalog catalog = readCodecManager.getCatalog();
         ThriftType thriftType = catalog.getThriftType(BonkConstructorNameOverride.class);
         ThriftStructMetadata<?> structMetadata = thriftType.getStructMetadata();
         assertEquals(structMetadata.getField(1).getName(), "myMessage");
@@ -131,15 +220,22 @@ public abstract class AbstractThriftCodecManagerTest
     public void testOneOfEverythingFieldManual()
             throws Exception
     {
-        ThriftCatalog catalog = codecManager.getCatalog();
+        ThriftCatalog catalog = readCodecManager.getCatalog();
         ThriftType bonkFieldType = catalog.getThriftType(BonkField.class);
+        ThriftType unionFieldType = catalog.getThriftType(UnionField.class);
+        ThriftType fruitType = catalog.getThriftType(Fruit.class);
+
+        ThriftCodec<Fruit> fruitCodec = new EnumThriftCodec<>(fruitType);
         BonkFieldThriftCodec bonkFieldCodec = new BonkFieldThriftCodec(bonkFieldType);
+        UnionFieldThriftCodec unionFieldCodec = new UnionFieldThriftCodec(unionFieldType, fruitCodec);
 
         ThriftType oneOfEverythingType = catalog.getThriftType(OneOfEverything.class);
+
         OneOfEverythingThriftCodec codec = new OneOfEverythingThriftCodec(
                 oneOfEverythingType,
                 bonkFieldCodec,
-                new SetThriftCodec<>(ThriftType.BOOL, new BooleanThriftCodec()));
+                unionFieldCodec,
+                fruitCodec);
 
         // manual codec only support some fields
         OneOfEverything one = new OneOfEverything();
@@ -150,11 +246,10 @@ public abstract class AbstractThriftCodecManagerTest
         one.aLong = 44;
         one.aDouble = 55;
         one.aString = "message";
+        one.aEnum = Fruit.CHERRY;
         one.aStruct = new BonkField("struct", 66);
 
-        one.aBooleanSet = ImmutableSet.of(true, false);
-
-        testRoundTripSerialize(codec, one);
+        testRoundTripSerialize(codec, codec, one);
     }
 
     @Test
@@ -219,25 +314,30 @@ public abstract class AbstractThriftCodecManagerTest
     private <T> T testRoundTripSerialize(T value)
             throws Exception
     {
-        ThriftCodec<T> codec = (ThriftCodec<T>) codecManager.getCodec(value.getClass());
+        ThriftCodec<T> readCodec = (ThriftCodec<T>) readCodecManager.getCodec(value.getClass());
+        ThriftCodec<T> writeCodec = (ThriftCodec<T>) writeCodecManager.getCodec(value.getClass());
 
-        return testRoundTripSerialize(codec, value);
+        return testRoundTripSerialize(readCodec, writeCodec, value);
     }
 
-    private <T> T testRoundTripSerialize(ThriftCodec<T> codec, T structInstance)
+    private <T> T testRoundTripSerialize(ThriftCodec<T> readCodec, ThriftCodec<T> writeCodec, T structInstance)
             throws Exception
     {
         Class<T> structClass = (Class<T>) structInstance.getClass();
 
-        ThriftCatalog catalog = codecManager.getCatalog();
-        ThriftStructMetadata<T> metadata = catalog.getThriftStructMetadata(structClass);
-        assertNotNull(metadata);
+        ThriftCatalog readCatalog = readCodecManager.getCatalog();
+        ThriftStructMetadata<T> readMetadata = readCatalog.getThriftStructMetadata(structClass);
+        assertNotNull(readMetadata);
+
+        ThriftCatalog writeCatalog = writeCodecManager.getCatalog();
+        ThriftStructMetadata<T> writeMetadata = writeCatalog.getThriftStructMetadata(structClass);
+        assertNotNull(writeMetadata);
 
         TMemoryBuffer transport = new TMemoryBuffer(10 * 1024);
         TCompactProtocol protocol = new TCompactProtocol(transport);
-        codec.write(structInstance, protocol);
+        writeCodec.write(structInstance, protocol);
 
-        T copy = codec.read(protocol);
+        T copy = readCodec.read(protocol);
         assertNotNull(copy);
         assertEquals(copy, structInstance);
 
@@ -337,6 +437,20 @@ public abstract class AbstractThriftCodecManagerTest
                         new BonkField("2: other", 11)
                 )
         );
+
+        one.aUnion = new UnionField("Hello, World");
+
+        one.aUnionSet = ImmutableSet.of(new UnionField("Hello, World"), new UnionField(123456L), new UnionField(Fruit.CHERRY));
+        one.aUnionList = ImmutableList.of(new UnionField("Hello, World"), new UnionField(123456L), new UnionField(Fruit.CHERRY));
+
+        one.aUnionKeyMap = ImmutableMap.of(new UnionField("Hello, World"), "Eins",
+                                           new UnionField(123456L), "Zwei",
+                                           new UnionField(Fruit.CHERRY), "Drei");
+
+        one.aUnionValueMap = ImmutableMap.of("Eins", new UnionField("Hello, World"),
+                                             "Zwei", new UnionField(123456L),
+                                             "Drei", new UnionField(Fruit.CHERRY));
+
         return one;
     }
 }

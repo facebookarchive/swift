@@ -15,22 +15,28 @@
  */
 package com.facebook.swift.codec.internal.compiler;
 
-import com.facebook.swift.codec.AbstractThriftCodecManagerTest;
-import com.facebook.swift.codec.ThriftCodecManager;
+import java.lang.reflect.Method;
 
-public class TestCompilerThriftCodecFactory extends AbstractThriftCodecManagerTest
+public final class SwiftBytecodeHelper
 {
-    private final ThriftCodecManager manager = new ThriftCodecManager(new CompilerThriftCodecFactory(true));
+    public static final Method NO_CONSTRUCTOR_FOUND;
 
-    @Override
-    public ThriftCodecManager createReadCodecManager()
-    {
-        return manager;
+    static {
+        try {
+            NO_CONSTRUCTOR_FOUND = SwiftBytecodeHelper.class.getMethod("noConstructorFound", new Class<?>[] {Class.class, short.class});
+        }
+        catch (Throwable t) {
+            throw new ExceptionInInitializerError(t);
+        }
     }
 
-    @Override
-    public ThriftCodecManager createWriteCodecManager()
+
+    private SwiftBytecodeHelper()
     {
-        return manager;
+    }
+
+    public static Throwable noConstructorFound(Class<?> clazz, short fieldId)
+    {
+        return new IllegalStateException(String.format("No constructor for Union %s with field id %s found", clazz.getSimpleName(), fieldId));
     }
 }

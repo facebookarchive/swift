@@ -18,22 +18,26 @@ package com.facebook.swift.codec;
 import com.facebook.swift.codec.internal.TProtocolReader;
 import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftType;
-import org.apache.thrift.protocol.TProtocol;
 
-import java.util.Set;
+import org.apache.thrift.protocol.TProtocol;
 
 public class OneOfEverythingThriftCodec implements ThriftCodec<OneOfEverything>
 {
 
     private final ThriftType type;
     private final ThriftCodec<BonkField> aStructCodec;
-    private final ThriftCodec<Set<Boolean>> aBooleanSetCodec;
+    private final ThriftCodec<UnionField> aUnionCodec;
+    private final ThriftCodec<Fruit> aFruitCodec;
 
-    public OneOfEverythingThriftCodec(ThriftType type, ThriftCodec<BonkField> aStructCodec, ThriftCodec<Set<Boolean>> aBooleanSetCodec)
+    public OneOfEverythingThriftCodec(ThriftType type,
+                                      ThriftCodec<BonkField> aStructCodec,
+                                      ThriftCodec<UnionField> aUnionCodec,
+                                      ThriftCodec<Fruit> aFruitCodec)
     {
         this.type = type;
         this.aStructCodec = aStructCodec;
-        this.aBooleanSetCodec = aBooleanSetCodec;
+        this.aUnionCodec = aUnionCodec;
+        this.aFruitCodec = aFruitCodec;
     }
 
     @Override
@@ -56,7 +60,8 @@ public class OneOfEverythingThriftCodec implements ThriftCodec<OneOfEverything>
         double aDouble = 0;
         String aString = null;
         BonkField aStruct = null;
-        Set<Boolean> aBooleanSet = null;
+        Fruit aEnum = null;
+        UnionField aUnion = null;
 
         reader.readStructBegin();
 
@@ -87,8 +92,10 @@ public class OneOfEverythingThriftCodec implements ThriftCodec<OneOfEverything>
                     aStruct = reader.readStructField(aStructCodec);
                     break;
                 case 9:
-                    aBooleanSet = reader.readSetField(aBooleanSetCodec);
+                    aEnum = reader.readEnumField(aFruitCodec);
                     break;
+                case 60:
+                    aUnion = reader.readStructField(aUnionCodec);
                 default:
                     reader.skipFieldData();
             }
@@ -104,7 +111,8 @@ public class OneOfEverythingThriftCodec implements ThriftCodec<OneOfEverything>
         oneOfEverything.aDouble = aDouble;
         oneOfEverything.aString = aString;
         oneOfEverything.aStruct = aStruct;
-        oneOfEverything.aBooleanSet = aBooleanSet;
+        oneOfEverything.aEnum = aEnum;
+        oneOfEverything.aUnion = aUnion;
 
         return oneOfEverything;
     }
@@ -124,7 +132,8 @@ public class OneOfEverythingThriftCodec implements ThriftCodec<OneOfEverything>
         writer.writeDoubleField("aDouble", (short) 6, oneOfEverything.aDouble);
         writer.writeStringField("aString", (short) 7, oneOfEverything.aString);
         writer.writeStructField("aStruct", (short) 8, aStructCodec, oneOfEverything.aStruct);
-        writer.writeSetField("aBooleanSet", (short) 9, aBooleanSetCodec, oneOfEverything.aBooleanSet);
+        writer.writeEnumField("aEnum", (short) 9, aFruitCodec, oneOfEverything.aEnum);
+        writer.writeStructField("aUnion", (short) 61, aUnionCodec, oneOfEverything.aUnion);
         writer.writeStructEnd();
     }
 }

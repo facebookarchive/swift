@@ -44,6 +44,44 @@ public class <context.javaName>
 }<\n>
 >>
 
+union(context, tweaks) ::= <<
+<! ================================================================================== !>
+<! =                                                                                = !>
+<! = union definition                                                               = !>
+<! =                                                                                = !>
+<! = called from the generator to render a new union java source file.              = !>
+<! =                                                                                = !>
+<! ================================================================================== !>
+package <context.javaPackage>;
+
+import com.facebook.swift.codec.*;
+import java.util.*;
+
+import static com.google.common.base.Objects.toStringHelper;
+
+@ThriftUnion("<context.name>")
+public class <context.javaName>
+{
+    <_union_body(context)>
+
+    <context.fields : { field |<_union_field(field)>}; separator="\n\n">
+
+    @ThriftUnionId
+    public int getThriftId()
+    {
+        return this.id;
+    }
+
+    public String getThriftName()
+    {
+        return this.name;
+    }
+
+
+    <_union_toString(context)>
+}<\n>
+>>
+
 exception(context, tweaks) ::= <<
 <! ================================================================================== !>
 <! =                                                                                = !>
@@ -165,4 +203,31 @@ public String toString()
 
 _toStringField(field) ::= <<
 .add("<field.javaName>", <field.javaName>)
+>>
+
+_union_field(field) ::= <<
+<_annotation(field)> 
+public <field.javaType> <field.javaGetterName>() {
+    if (this.id != <field.id>) {
+        throw new IllegalStateException("Not a <field.name> element!");
+    }
+    return (<field.javaType>) value;
+}
+
+public boolean <field.javaTestPresenceName>() {
+    return this.id == <field.id>;
+}
+>>
+
+_union_toString(context) ::= <<
+@Override
+public String toString()
+{
+    return toStringHelper(this)
+        .add("value", value)
+        .add("id", id)
+        .add("name", name)
+        .add("type", value == null ? "\<null\>" : value.getClass().getSimpleName())
+        .toString();
+}
 >>

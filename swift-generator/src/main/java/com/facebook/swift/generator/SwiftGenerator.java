@@ -22,6 +22,7 @@ import com.facebook.swift.generator.visitors.ServiceVisitor;
 import com.facebook.swift.generator.visitors.StringEnumVisitor;
 import com.facebook.swift.generator.visitors.StructVisitor;
 import com.facebook.swift.generator.visitors.TypeVisitor;
+import com.facebook.swift.generator.visitors.UnionVisitor;
 import com.facebook.swift.parser.model.Document;
 import com.facebook.swift.parser.model.Header;
 import com.facebook.swift.parser.visitor.DocumentVisitor;
@@ -33,8 +34,11 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,8 +48,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
-
-import javax.annotation.Nullable;
 
 import static com.facebook.swift.generator.util.SwiftInternalStringUtils.isBlank;
 
@@ -190,6 +192,7 @@ public class SwiftGenerator
         final List<DocumentVisitor> visitors = Lists.newArrayList();
         visitors.add(new ServiceVisitor(templateLoader, context, swiftGeneratorConfig, outputFolder));
         visitors.add(new StructVisitor(templateLoader, context, swiftGeneratorConfig, outputFolder));
+        visitors.add(new UnionVisitor(templateLoader, context, swiftGeneratorConfig, outputFolder));
         visitors.add(new ExceptionVisitor(templateLoader, context, swiftGeneratorConfig, outputFolder));
         visitors.add(new IntegerEnumVisitor(templateLoader, context, swiftGeneratorConfig, outputFolder));
         visitors.add(new StringEnumVisitor(templateLoader, context, swiftGeneratorConfig, outputFolder));
