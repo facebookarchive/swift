@@ -16,6 +16,7 @@
 package com.facebook.swift.generator;
 
 import com.facebook.swift.generator.util.TemplateLoader;
+import com.facebook.swift.generator.visitors.ConstantsVisitor;
 import com.facebook.swift.generator.visitors.ExceptionVisitor;
 import com.facebook.swift.generator.visitors.IntegerEnumVisitor;
 import com.facebook.swift.generator.visitors.ServiceVisitor;
@@ -141,6 +142,9 @@ public class SwiftGenerator
 
         String javaPackage = context.getJavaPackage();
 
+        // Add a Constants type so that the Constants visitor can render is.
+        typeRegistry.add(new SwiftJavaType(thriftNamespace, "Constants", javaPackage));
+
         // Make a note that this document is a parent of all the documents included, directly or recursively
         parentDocuments.push(thriftUri);
 
@@ -196,9 +200,11 @@ public class SwiftGenerator
         visitors.add(new ExceptionVisitor(templateLoader, context, swiftGeneratorConfig, outputFolder));
         visitors.add(new IntegerEnumVisitor(templateLoader, context, swiftGeneratorConfig, outputFolder));
         visitors.add(new StringEnumVisitor(templateLoader, context, swiftGeneratorConfig, outputFolder));
+        visitors.add(new ConstantsVisitor(templateLoader, context, swiftGeneratorConfig, outputFolder));
 
         for (DocumentVisitor visitor : visitors) {
             context.getDocument().visit(visitor);
+            visitor.finish();
         }
     }
 }

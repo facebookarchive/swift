@@ -19,6 +19,8 @@ public abstract class ConstValue
 {
     public abstract Object value();
 
+    public abstract String render();
+
     @Override
     public abstract String toString();
 }

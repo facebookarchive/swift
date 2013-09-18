@@ -30,6 +30,12 @@ public class ConstString
     }
 
     @Override
+    public String render()
+    {
+        return "\"" + value + "\"";
+    }
+
+    @Override
     public String value()
     {
         return value;

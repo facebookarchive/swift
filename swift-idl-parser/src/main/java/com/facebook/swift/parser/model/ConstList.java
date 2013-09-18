@@ -22,27 +22,40 @@ import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import static java.lang.String.format;
+
 public class ConstList
         extends ConstValue
 {
-    private final List<ConstValue> value;
+    private final List<ConstValue> values;
 
-    public ConstList(List<ConstValue> value)
+    public ConstList(List<ConstValue> values)
     {
-        this.value = ImmutableList.copyOf(checkNotNull(value, "value"));
+        this.values = ImmutableList.copyOf(checkNotNull(values, "values"));
     }
 
     @Override
     public List<ConstValue> value()
     {
-        return value;
+        return values;
     }
+
+    @Override
+    public String render()
+    {
+        StringBuilder sb = new StringBuilder(format("ImmutableList.builder()\n"));
+        for (ConstValue value : values) {
+            sb.append(format("    .add(%s)\n", value.render()));
+        }
+        return sb.append("    .build();\n").toString();
+    }
+
 
     @Override
     public String toString()
     {
         return Objects.toStringHelper(this)
-                .add("value", value)
+                .add("values", values)
                 .toString();
     }
 }

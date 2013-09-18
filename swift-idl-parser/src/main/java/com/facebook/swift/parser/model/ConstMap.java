@@ -22,27 +22,40 @@ import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import static java.lang.String.format;
+
 public class ConstMap
         extends ConstValue
 {
-    private final Map<ConstValue, ConstValue> value;
+    private final Map<ConstValue, ConstValue> values;
 
-    public ConstMap(Map<ConstValue, ConstValue> value)
+    public ConstMap(Map<ConstValue, ConstValue> values)
     {
-        this.value = ImmutableMap.copyOf(checkNotNull(value, "value"));
+        this.values = ImmutableMap.copyOf(checkNotNull(values, "value"));
     }
 
     @Override
     public Map<ConstValue, ConstValue> value()
     {
-        return value;
+        return values;
     }
+
+    @Override
+    public String render()
+    {
+        StringBuilder sb = new StringBuilder(format("ImmutableMap.builder()\n"));
+        for (Map.Entry<ConstValue, ConstValue> entry : values.entrySet()) {
+            sb.append(format("    .put(%s, %s)\n", entry.getKey().render(), entry.getValue().render()));
+        }
+        return sb.append("    .build();\n").toString();
+    }
+
 
     @Override
     public String toString()
     {
         return Objects.toStringHelper(this)
-                .add("value", value)
+                .add("values", values)
                 .toString();
     }
 }
