@@ -35,7 +35,7 @@ public class TestThriftStructMetadata
     @Test
     public void testField()
     {
-        ThriftStructMetadata<?> metadata = testMetadataBuild(BonkField.class, 0, 0);
+        ThriftStructMetadata metadata = testMetadataBuild(BonkField.class, 0, 0);
 
         verifyFieldInjection(metadata, 1, "message");
         verifyFieldExtraction(metadata, 1, "message");
@@ -43,7 +43,7 @@ public class TestThriftStructMetadata
         verifyFieldExtraction(metadata, 2, "type");
     }
 
-    private void verifyFieldInjection(ThriftStructMetadata<?> metadata, int id, String name)
+    private void verifyFieldInjection(ThriftStructMetadata metadata, int id, String name)
     {
         ThriftInjection injection = metadata.getField(id).getInjections().get(0);
         assertThat(injection).isNotNull().isInstanceOf(ThriftFieldInjection.class);
@@ -51,7 +51,7 @@ public class TestThriftStructMetadata
         assertEquals(fieldInjection.getField().getName(), name);
     }
 
-    private void verifyFieldExtraction(ThriftStructMetadata<?> metadata, int id, String name)
+    private void verifyFieldExtraction(ThriftStructMetadata metadata, int id, String name)
     {
         assertTrue(metadata.getField(id).getExtraction().isPresent());
         ThriftExtraction extraction = metadata.getField(id).getExtraction().get();
@@ -63,14 +63,14 @@ public class TestThriftStructMetadata
     @Test
     public void testBean()
     {
-        ThriftStructMetadata<BonkBean> metadata = testMetadataBuild(BonkBean.class, 0, 2);
+        ThriftStructMetadata metadata = testMetadataBuild(BonkBean.class, 0, 2);
         verifyParameterInjection(metadata, 1, "message", 0);
         verifyMethodExtraction(metadata, 1, "message", "getMessage");
         verifyParameterInjection(metadata, 2, "type", 0);
         verifyMethodExtraction(metadata, 2, "type", "getType");
     }
 
-    private void verifyParameterInjection(ThriftStructMetadata<?> metadata, int id, String name, int parameterIndex)
+    private void verifyParameterInjection(ThriftStructMetadata metadata, int id, String name, int parameterIndex)
     {
         ThriftInjection injection = metadata.getField(id).getInjections().get(0);
         assertThat(injection).isNotNull().isInstanceOf(ThriftParameterInjection.class);
@@ -80,7 +80,7 @@ public class TestThriftStructMetadata
         assertEquals(parameterInjection.getParameterIndex(), parameterIndex);
     }
 
-    private void verifyMethodExtraction(ThriftStructMetadata<?> metadata, int id, String name, String methodName)
+    private void verifyMethodExtraction(ThriftStructMetadata metadata, int id, String name, String methodName)
     {
         assertTrue(metadata.getField(id).getExtraction().isPresent());
         ThriftExtraction extraction = metadata.getField(id).getExtraction().get();
@@ -93,7 +93,7 @@ public class TestThriftStructMetadata
     @Test
     public void testConstructor()
     {
-        ThriftStructMetadata<?> metadata = testMetadataBuild(BonkConstructor.class, 2, 0);
+        ThriftStructMetadata metadata = testMetadataBuild(BonkConstructor.class, 2, 0);
         verifyParameterInjection(metadata, 1, "message", 0);
         verifyMethodExtraction(metadata, 1, "message", "getMessage");
         verifyParameterInjection(metadata, 2, "type", 1);
@@ -103,7 +103,7 @@ public class TestThriftStructMetadata
     @Test
     public void testMethod()
     {
-        ThriftStructMetadata<?> metadata = testMetadataBuild(BonkMethod.class, 0, 1);
+        ThriftStructMetadata metadata = testMetadataBuild(BonkMethod.class, 0, 1);
         verifyParameterInjection(metadata, 1, "message", 0);
         verifyMethodExtraction(metadata, 1, "message", "getMessage");
         verifyParameterInjection(metadata, 2, "type", 1);
@@ -113,24 +113,24 @@ public class TestThriftStructMetadata
     @Test
     public void testBuilder()
     {
-        ThriftStructMetadata<?> metadata = testMetadataBuild(BonkBuilder.class, 0, 2);
+        ThriftStructMetadata metadata = testMetadataBuild(BonkBuilder.class, 0, 2);
         verifyParameterInjection(metadata, 1, "message", 0);
         verifyMethodExtraction(metadata, 1, "message", "getMessage");
         verifyParameterInjection(metadata, 2, "type", 0);
         verifyMethodExtraction(metadata, 2, "type", "getType");
     }
 
-    private <T> ThriftStructMetadata<T> testMetadataBuild(Class<T> structClass, int expectedConstructorParameters, int expectedMethodInjections)
+    private ThriftStructMetadata testMetadataBuild(Class<?> structClass, int expectedConstructorParameters, int expectedMethodInjections)
     {
         ThriftCatalog catalog = new ThriftCatalog();
-        ThriftStructMetadataBuilder<T> builder = new ThriftStructMetadataBuilder<>(catalog, structClass);
+        ThriftStructMetadataBuilder builder = new ThriftStructMetadataBuilder(catalog, structClass);
         assertNotNull(builder);
 
         assertNotNull(builder.getMetadataErrors());
         builder.getMetadataErrors().throwIfHasErrors();
         assertEquals(builder.getMetadataErrors().getWarnings().size(), 0);
 
-        ThriftStructMetadata<T> metadata = builder.build();
+        ThriftStructMetadata metadata = builder.build();
         assertNotNull(metadata);
         assertEquals(MetadataType.STRUCT, metadata.getMetadataType());
 
@@ -146,7 +146,7 @@ public class TestThriftStructMetadata
         return metadata;
     }
 
-    private <T> void verifyField(ThriftStructMetadata<T> metadata, int id, String name)
+    private <T> void verifyField(ThriftStructMetadata metadata, int id, String name)
     {
         ThriftFieldMetadata messageField = metadata.getField(id);
         assertNotNull(messageField, "messageField is null");

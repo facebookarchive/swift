@@ -36,7 +36,7 @@ public class TestThriftUnionMetadata
     @Test
     public void testField()
     {
-        ThriftStructMetadata<?> metadata = testMetadataBuild(UnionField.class, 0, 0);
+        ThriftStructMetadata metadata = testMetadataBuild(UnionField.class, 0, 0);
 
         verifyFieldInjection(metadata, 1, "stringValue");
         verifyFieldExtraction(metadata, 1, "stringValue");
@@ -49,7 +49,7 @@ public class TestThriftUnionMetadata
     @Test
     public void testBean()
     {
-        ThriftStructMetadata<UnionBean> metadata = testMetadataBuild(UnionBean.class, 0, 3);
+        ThriftStructMetadata metadata = testMetadataBuild(UnionBean.class, 0, 3);
         verifyParameterInjection(metadata, 1, "stringValue", 0);
         verifyMethodExtraction(metadata, 1, "stringValue", "getStringValue");
         verifyParameterInjection(metadata, 2, "longValue", 0);
@@ -61,7 +61,7 @@ public class TestThriftUnionMetadata
     @Test
     public void testConstructor()
     {
-        ThriftStructMetadata<?> metadata = testMetadataBuild(UnionConstructor.class, 1, 0);
+        ThriftStructMetadata metadata = testMetadataBuild(UnionConstructor.class, 1, 0);
         verifyParameterInjection(metadata, 1, "stringValue", 0);
         verifyMethodExtraction(metadata, 1, "stringValue", "getStringValue");
         verifyParameterInjection(metadata, 2, "longValue", 0);
@@ -87,7 +87,7 @@ public class TestThriftUnionMetadata
     @Test
     public void testBuilder()
     {
-        ThriftStructMetadata<?> metadata = testMetadataBuild(UnionBuilder.class, 0, 3);
+        ThriftStructMetadata metadata = testMetadataBuild(UnionBuilder.class, 0, 3);
         verifyParameterInjection(metadata, 1, "stringValue", 0);
         verifyMethodExtraction(metadata, 1, "stringValue", "getStringValue");
         verifyParameterInjection(metadata, 2, "longValue", 0);
@@ -96,7 +96,7 @@ public class TestThriftUnionMetadata
         verifyMethodExtraction(metadata, 3, "fruitValue", "getFruitValue");
     }
 
-    private void verifyFieldInjection(ThriftStructMetadata<?> metadata, int id, String name)
+    private void verifyFieldInjection(ThriftStructMetadata metadata, int id, String name)
     {
         ThriftInjection injection = metadata.getField(id).getInjections().get(0);
         assertThat(injection).isNotNull().isInstanceOf(ThriftFieldInjection.class);
@@ -104,7 +104,7 @@ public class TestThriftUnionMetadata
         assertEquals(fieldInjection.getField().getName(), name);
     }
 
-    private void verifyFieldExtraction(ThriftStructMetadata<?> metadata, int id, String name)
+    private void verifyFieldExtraction(ThriftStructMetadata metadata, int id, String name)
     {
         assertTrue(metadata.getField(id).getExtraction().isPresent());
         ThriftExtraction extraction = metadata.getField(id).getExtraction().get();
@@ -113,7 +113,7 @@ public class TestThriftUnionMetadata
         assertEquals(fieldExtractor.getField().getName(), name);
     }
 
-    private void verifyParameterInjection(ThriftStructMetadata<?> metadata, int id, String name, int parameterIndex)
+    private void verifyParameterInjection(ThriftStructMetadata metadata, int id, String name, int parameterIndex)
     {
         ThriftInjection injection = metadata.getField(id).getInjections().get(0);
         assertThat(injection).isNotNull().isInstanceOf(ThriftParameterInjection.class);
@@ -123,7 +123,7 @@ public class TestThriftUnionMetadata
         assertEquals(parameterInjection.getParameterIndex(), parameterIndex);
     }
 
-    private void verifyMethodExtraction(ThriftStructMetadata<?> metadata, int id, String name, String methodName)
+    private void verifyMethodExtraction(ThriftStructMetadata metadata, int id, String name, String methodName)
     {
         assertTrue(metadata.getField(id).getExtraction().isPresent());
         ThriftExtraction extraction = metadata.getField(id).getExtraction().get();
@@ -133,17 +133,17 @@ public class TestThriftUnionMetadata
         assertEquals(methodExtractor.getName(), name);
     }
 
-    private <T> ThriftStructMetadata<T> testMetadataBuild(Class<T> structClass, int expectedConstructorParameters, int expectedMethodInjections)
+    private ThriftStructMetadata testMetadataBuild(Class<?> structClass, int expectedConstructorParameters, int expectedMethodInjections)
     {
         ThriftCatalog catalog = new ThriftCatalog();
-        ThriftUnionMetadataBuilder<T> builder = new ThriftUnionMetadataBuilder<>(catalog, structClass);
+        ThriftUnionMetadataBuilder builder = new ThriftUnionMetadataBuilder(catalog, structClass);
         assertNotNull(builder);
 
         assertNotNull(builder.getMetadataErrors());
         builder.getMetadataErrors().throwIfHasErrors();
         assertEquals(builder.getMetadataErrors().getWarnings().size(), 0);
 
-        ThriftStructMetadata<T> metadata = builder.build();
+        ThriftStructMetadata metadata = builder.build();
         assertNotNull(metadata);
         assertEquals(MetadataType.UNION, metadata.getMetadataType());
 
@@ -168,7 +168,7 @@ public class TestThriftUnionMetadata
         return metadata;
     }
 
-    private <T> void verifyField(ThriftStructMetadata<T> metadata, int id, String name)
+    private <T> void verifyField(ThriftStructMetadata metadata, int id, String name)
     {
         ThriftFieldMetadata metadataField = metadata.getField(id);
         assertNotNull(metadataField, "metadataField is null");

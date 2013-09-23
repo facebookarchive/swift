@@ -15,10 +15,13 @@
  */
 package com.facebook.swift.codec.metadata;
 
+import com.facebook.swift.codec.ThriftConstructor;
 import com.facebook.swift.codec.ThriftField;
 import com.facebook.swift.codec.ThriftStruct;
+import com.google.common.reflect.TypeToken;
 import org.testng.annotations.Test;
 
+import java.lang.reflect.Type;
 import java.util.concurrent.locks.Lock;
 
 import static org.fest.assertions.Assertions.assertThat;
@@ -29,7 +32,7 @@ public class TestThriftStructMetadataBuilder
     public void testNoId()
             throws Exception
     {
-        ThriftStructMetadataBuilder<NoId> builder = new ThriftStructMetadataBuilder<>(new ThriftCatalog(), NoId.class);
+        ThriftStructMetadataBuilder builder = new ThriftStructMetadataBuilder(new ThriftCatalog(), NoId.class);
 
         MetadataErrors metadataErrors = builder.getMetadataErrors();
 
@@ -65,7 +68,7 @@ public class TestThriftStructMetadataBuilder
     public void testMultipleIds()
             throws Exception
     {
-        ThriftStructMetadataBuilder<MultipleIds> builder = new ThriftStructMetadataBuilder<>(new ThriftCatalog(), MultipleIds.class);
+        ThriftStructMetadataBuilder builder = new ThriftStructMetadataBuilder(new ThriftCatalog(), MultipleIds.class);
 
         MetadataErrors metadataErrors = builder.getMetadataErrors();
 
@@ -112,7 +115,7 @@ public class TestThriftStructMetadataBuilder
     public void testMultipleNames()
             throws Exception
     {
-        ThriftStructMetadataBuilder<MultipleNames> builder = new ThriftStructMetadataBuilder<>(new ThriftCatalog(), MultipleNames.class);
+        ThriftStructMetadataBuilder builder = new ThriftStructMetadataBuilder(new ThriftCatalog(), MultipleNames.class);
 
         MetadataErrors metadataErrors = builder.getMetadataErrors();
 
@@ -148,7 +151,7 @@ public class TestThriftStructMetadataBuilder
     public void testUnsupportedType()
             throws Exception
     {
-        ThriftStructMetadataBuilder<UnsupportedJavaType> builder = new ThriftStructMetadataBuilder<>(new ThriftCatalog(), UnsupportedJavaType.class);
+        ThriftStructMetadataBuilder builder = new ThriftStructMetadataBuilder(new ThriftCatalog(), UnsupportedJavaType.class);
 
         MetadataErrors metadataErrors = builder.getMetadataErrors();
 
@@ -176,7 +179,7 @@ public class TestThriftStructMetadataBuilder
     public void testMultipleTypes()
             throws Exception
     {
-        ThriftStructMetadataBuilder<MultipleTypes> builder = new ThriftStructMetadataBuilder<>(new ThriftCatalog(), MultipleTypes.class);
+        ThriftStructMetadataBuilder builder = new ThriftStructMetadataBuilder(new ThriftCatalog(), MultipleTypes.class);
 
         MetadataErrors metadataErrors = builder.getMetadataErrors();
 
@@ -205,6 +208,74 @@ public class TestThriftStructMetadataBuilder
         @ThriftField
         public void setFoo(short value)
         {
+        }
+    }
+
+    @Test
+    public void testGenericBuilder()
+    {
+        Type structType = new TypeToken<GenericStruct<String>>() {}.getType();
+        ThriftStructMetadataBuilder builder = new ThriftStructMetadataBuilder(new ThriftCatalog(), structType);
+        builder.build();
+    }
+
+    @ThriftStruct(builder = GenericStruct.GenericBuilder.class)
+    public static class GenericStruct<T>
+    {
+        private T fieldValue;
+
+        private GenericStruct(T fieldValue)
+        {
+            this.fieldValue = fieldValue;
+        }
+
+        @ThriftField(1)
+        public T getFieldValue()
+        {
+            return fieldValue;
+        }
+
+        public static class GenericBuilder<T>
+        {
+            private T fieldValue;
+
+            @ThriftField(1)
+            public GenericBuilder<T> setFieldValue(T fieldValue)
+            {
+                this.fieldValue = fieldValue;
+                return this;
+            }
+
+            @ThriftConstructor
+            public GenericStruct<T> build()
+            {
+                return new GenericStruct<>(fieldValue);
+            }
+        }
+    }
+
+    @Test(expectedExceptions = { MetadataErrorException.class })
+    public void testGenericBuilderForNonGenericStruct()
+    {
+        Type structType = new TypeToken<NonGenericStruct>() {}.getType();
+        ThriftStructMetadataBuilder builder = new ThriftStructMetadataBuilder(new ThriftCatalog(), structType);
+        builder.build();
+    }
+
+    @ThriftStruct(builder = NonGenericStruct.GenericBuilder.class)
+    public static class NonGenericStruct
+    {
+        private NonGenericStruct()
+        {
+        }
+
+        public static class GenericBuilder<T>
+        {
+            @ThriftConstructor
+            public NonGenericStruct build()
+            {
+                return new NonGenericStruct();
+            }
         }
     }
 }
