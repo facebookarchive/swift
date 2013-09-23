@@ -19,7 +19,7 @@ import com.facebook.swift.codec.ThriftCodec;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.codec.internal.TProtocolReader;
 import com.facebook.swift.codec.internal.TProtocolWriter;
-import com.facebook.swift.codec.metadata.FieldType;
+import com.facebook.swift.codec.metadata.FieldKind;
 import com.facebook.swift.codec.metadata.ThriftConstructorInjection;
 import com.facebook.swift.codec.metadata.ThriftFieldInjection;
 import com.facebook.swift.codec.metadata.ThriftFieldMetadata;
@@ -36,7 +36,7 @@ import javax.annotation.concurrent.Immutable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
-import static com.facebook.swift.codec.metadata.FieldType.THRIFT_FIELD;
+import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_FIELD;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
@@ -49,11 +49,11 @@ public class ReflectionThriftUnionCodec<T> extends AbstractReflectionThriftCodec
     private final Map<Short, ThriftFieldMetadata> metadataMap;
     private final Map.Entry<ThriftFieldMetadata, ThriftCodec<?>> idField;
 
-    public ReflectionThriftUnionCodec(ThriftCodecManager manager, ThriftStructMetadata<T> metadata)
+    public ReflectionThriftUnionCodec(ThriftCodecManager manager, ThriftStructMetadata metadata)
     {
         super(manager, metadata);
 
-        ThriftFieldMetadata idField = getOnlyElement(metadata.getFields(FieldType.THRIFT_UNION_ID));
+        ThriftFieldMetadata idField = getOnlyElement(metadata.getFields(FieldKind.THRIFT_UNION_ID));
 
         this.idField = Maps.<ThriftFieldMetadata, ThriftCodec<?>>immutableEntry(idField, manager.getCodec(idField.getThriftType()));
         checkNotNull(this.idField.getValue(), "No codec for id field %s found", idField);

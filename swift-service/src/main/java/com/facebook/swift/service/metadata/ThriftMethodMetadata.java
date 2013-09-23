@@ -49,7 +49,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import static com.facebook.swift.codec.metadata.FieldType.THRIFT_FIELD;
+import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_FIELD;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.extractParameterNames;
 import static com.google.common.base.Preconditions.checkState;
 

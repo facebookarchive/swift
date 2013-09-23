@@ -60,9 +60,9 @@ public class ThriftParameterInjection implements ThriftInjection
     }
 
     @Override
-    public FieldType getType()
+    public FieldKind getFieldKind()
     {
-        return FieldType.THRIFT_FIELD;
+        return FieldKind.THRIFT_FIELD;
     }
 
     public int getParameterIndex()

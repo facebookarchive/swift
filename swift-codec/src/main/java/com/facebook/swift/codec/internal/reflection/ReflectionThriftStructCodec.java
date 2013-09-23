@@ -36,14 +36,14 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.facebook.swift.codec.metadata.FieldType.THRIFT_FIELD;
+import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_FIELD;
 
 import static java.lang.String.format;
 
 @Immutable
 public class ReflectionThriftStructCodec<T> extends AbstractReflectionThriftCodec<T>
 {
-    public ReflectionThriftStructCodec(ThriftCodecManager manager, ThriftStructMetadata<T> metadata)
+    public ReflectionThriftStructCodec(ThriftCodecManager manager, ThriftStructMetadata metadata)
     {
         super(manager, metadata);
     }

@@ -31,7 +31,7 @@ import static java.lang.String.format;
 public class ReflectionThriftCodecFactory implements ThriftCodecFactory
 {
     @Override
-    public <T> ThriftCodec<T> generateThriftTypeCodec(ThriftCodecManager codecManager, ThriftStructMetadata<T> metadata)
+    public ThriftCodec<?> generateThriftTypeCodec(ThriftCodecManager codecManager, ThriftStructMetadata metadata)
     {
         switch (metadata.getMetadataType()) {
             case STRUCT:

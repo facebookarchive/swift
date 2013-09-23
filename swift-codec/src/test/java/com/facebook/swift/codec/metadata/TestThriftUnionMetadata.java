@@ -157,7 +157,7 @@ public class TestThriftUnionMetadata
             assertEquals(constructorInjection.getParameters().size(), 0);
         }
         else {
-            for (ThriftFieldMetadata fieldMetadata : metadata.getFields(FieldType.THRIFT_FIELD)) {
+            for (ThriftFieldMetadata fieldMetadata : metadata.getFields(FieldKind.THRIFT_FIELD)) {
                 assertTrue(fieldMetadata.getConstructorInjection().isPresent());
                 assertEquals(fieldMetadata.getConstructorInjection().get().getParameters().size(), expectedConstructorParameters);
             }

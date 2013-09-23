@@ -28,9 +28,9 @@ abstract class FieldMetadata
 {
     private Short id;
     private String name;
-    private final FieldType type;
+    private final FieldKind type;
 
-    protected FieldMetadata(ThriftField annotation, FieldType type)
+    protected FieldMetadata(ThriftField annotation, FieldKind type)
     {
         this.type = type;
 
@@ -74,7 +74,7 @@ abstract class FieldMetadata
         this.name = name;
     }
 
-    public FieldType getType()
+    public FieldKind getType()
     {
         return type;
     }
@@ -151,7 +151,7 @@ abstract class FieldMetadata
         };
     }
 
-    public static Predicate<FieldMetadata> isType(final FieldType type)
+    public static Predicate<FieldMetadata> isType(final FieldKind type)
     {
         return new Predicate<FieldMetadata>() {
             @Override

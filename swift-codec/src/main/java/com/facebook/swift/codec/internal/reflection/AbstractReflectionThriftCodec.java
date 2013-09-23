@@ -29,14 +29,14 @@ import com.google.common.collect.ImmutableSortedMap;
 import java.lang.reflect.InvocationTargetException;
 import java.util.SortedMap;
 
-import static com.facebook.swift.codec.metadata.FieldType.THRIFT_FIELD;
+import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_FIELD;
 
 public abstract class AbstractReflectionThriftCodec<T> implements ThriftCodec<T>
 {
-    protected final ThriftStructMetadata<T> metadata;
+    protected final ThriftStructMetadata metadata;
     protected final SortedMap<Short, ThriftCodec<?>> fields;
 
-    protected AbstractReflectionThriftCodec(ThriftCodecManager manager, ThriftStructMetadata<T> metadata)
+    protected AbstractReflectionThriftCodec(ThriftCodecManager manager, ThriftStructMetadata metadata)
     {
         this.metadata = metadata;
 

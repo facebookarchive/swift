@@ -20,9 +20,11 @@ import com.google.common.base.Optional;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedMap;
+import com.google.common.reflect.TypeToken;
 
 import javax.annotation.concurrent.Immutable;
 
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
 import java.util.SortedMap;
@@ -32,29 +34,30 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Maps.uniqueIndex;
 
 @Immutable
-public class ThriftStructMetadata<T>
+public class ThriftStructMetadata
 {
     public static enum MetadataType {
         STRUCT, UNION;
     }
 
     private final String structName;
-    private final Class<T> structClass;
 
-    private final Class<?> builderClass;
     private final MetadataType metadataType;
     private final Optional<ThriftMethodInjection> builderMethod;
-
     private final ImmutableList<String> documentation;
+
     private final SortedMap<Short, ThriftFieldMetadata> fields;
 
     private final Optional<ThriftConstructorInjection> constructorInjection;
+
     private final List<ThriftMethodInjection> methodInjections;
+    private final Type structType;
+    private final Type builderType;
 
     public ThriftStructMetadata(
             String structName,
-            Class<T> structClass,
-            Class<?> builderClass,
+            Type structType,
+            Type builderType,
             MetadataType metadataType,
             Optional<ThriftMethodInjection> builderMethod,
             List<String> documentation,
@@ -62,11 +65,11 @@ public class ThriftStructMetadata<T>
             Optional<ThriftConstructorInjection> constructorInjection,
             List<ThriftMethodInjection> methodInjections)
     {
-        this.builderClass = builderClass;
+        this.builderType = builderType;
         this.builderMethod = checkNotNull(builderMethod, "builderMethod is null");
         this.structName = checkNotNull(structName, "structName is null");
         this.metadataType = checkNotNull(metadataType, "metadataType is null");
-        this.structClass = checkNotNull(structClass, "structClass is null");
+        this.structType = checkNotNull(structType, "structType is null");
         this.constructorInjection = checkNotNull(constructorInjection, "constructorInjection is null");
         this.documentation = ImmutableList.copyOf(checkNotNull(documentation, "documentation is null"));
         this.fields = ImmutableSortedMap.copyOf(uniqueIndex(checkNotNull(fields, "fields is null"), new Function<ThriftFieldMetadata, Short>()
@@ -85,14 +88,24 @@ public class ThriftStructMetadata<T>
         return structName;
     }
 
-    public Class<T> getStructClass()
+    public Type getStructType()
     {
-        return structClass;
+        return structType;
+    }
+
+    public Class<?> getStructClass()
+    {
+        return TypeToken.of(structType).getRawType();
+    }
+
+    public Type getBuilderType()
+    {
+        return builderType;
     }
 
     public Class<?> getBuilderClass()
     {
-        return builderClass;
+        return builderType == null ? null : TypeToken.of(builderType).getRawType();
     }
 
     public MetadataType getMetadataType()
@@ -115,7 +128,7 @@ public class ThriftStructMetadata<T>
         return documentation;
     }
 
-    public Collection<ThriftFieldMetadata> getFields(FieldType type)
+    public Collection<ThriftFieldMetadata> getFields(FieldKind type)
     {
         return Collections2.filter(getFields(), isTypePredicate(type));
     }
@@ -137,7 +150,7 @@ public class ThriftStructMetadata<T>
 
     public boolean isException()
     {
-        return Exception.class.isAssignableFrom(structClass);
+        return Exception.class.isAssignableFrom(getStructClass());
     }
 
     public boolean isUnion()
@@ -156,8 +169,8 @@ public class ThriftStructMetadata<T>
         final StringBuilder sb = new StringBuilder();
         sb.append("ThriftStructMetadata");
         sb.append("{structName='").append(structName).append('\'');
-        sb.append(", structClass=").append(structClass);
-        sb.append(", builderClass=").append(builderClass);
+        sb.append(", structType=").append(structType);
+        sb.append(", builderType=").append(builderType);
         sb.append(", builderMethod=").append(builderMethod);
         sb.append(", fields=").append(fields);
         sb.append(", constructorInjection=").append(constructorInjection);

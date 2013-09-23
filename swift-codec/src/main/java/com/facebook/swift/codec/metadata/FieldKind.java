@@ -15,7 +15,7 @@
  */
 package com.facebook.swift.codec.metadata;
 
-public enum FieldType
+public enum FieldKind
 {
     THRIFT_FIELD,
     THRIFT_UNION_ID;
