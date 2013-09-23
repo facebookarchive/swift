@@ -30,6 +30,13 @@ public class ConstIdentifier
     }
 
     @Override
+    public String render()
+    {
+        return value;
+    }
+
+
+    @Override
     public String value()
     {
         return value;

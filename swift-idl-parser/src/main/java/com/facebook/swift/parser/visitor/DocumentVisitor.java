@@ -26,4 +26,6 @@ public interface DocumentVisitor
     boolean accept(Visitable visitable);
 
     void visit(Visitable visitable) throws IOException;
+
+    void finish() throws IOException;
 }

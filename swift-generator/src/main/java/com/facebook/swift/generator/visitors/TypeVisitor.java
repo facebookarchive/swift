@@ -68,4 +68,9 @@ public class TypeVisitor implements DocumentVisitor
         LOG.debug("Registering type '{}'", swiftJavaType);
         documentContext.getTypeRegistry().add(swiftJavaType);
     }
+
+    @Override
+    public void finish()
+    {
+    }
 }

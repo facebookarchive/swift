@@ -21,6 +21,7 @@ import com.facebook.swift.generator.SwiftJavaType;
 import com.facebook.swift.generator.TypeRegistry;
 import com.facebook.swift.generator.TypeToJavaConverter;
 import com.facebook.swift.parser.model.AbstractStruct;
+import com.facebook.swift.parser.model.Const;
 import com.facebook.swift.parser.model.IntegerEnum;
 import com.facebook.swift.parser.model.IntegerEnumField;
 import com.facebook.swift.parser.model.Service;
@@ -30,6 +31,7 @@ import com.facebook.swift.parser.model.ThriftMethod;
 import com.google.common.base.Preconditions;
 
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 import static com.facebook.swift.generator.util.SwiftInternalStringUtils.isBlank;
@@ -108,6 +110,24 @@ public class TemplateContextGenerator
                                 getterName(field),
                                 setterName(field),
                                 testPresenceName(field));
+    }
+
+    public ConstantsContext constantsFromThrift()
+    {
+        final String name = mangleJavatypeName("Constants");
+        final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, name);
+
+        return new ConstantsContext(name,
+                                    javaType.getPackage(),
+                                    javaType.getSimpleName());
+    }
+
+    public ConstantContext constantFromThrift(final Const constant)
+    {
+        return new ConstantContext(constant.getName(),
+                                   typeConverter.convertType(constant.getType()),
+                                   constant.getName(),
+                                   constant.getValue().render());
     }
 
     public ExceptionContext exceptionFromThrift(final ThriftField field)

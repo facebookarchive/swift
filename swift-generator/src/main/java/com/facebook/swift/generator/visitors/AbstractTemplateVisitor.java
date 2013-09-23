@@ -24,6 +24,7 @@ import com.facebook.swift.generator.util.TemplateLoader;
 import com.facebook.swift.parser.visitor.DocumentVisitor;
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
+
 import org.stringtemplate.v4.AutoIndentWriter;
 import org.stringtemplate.v4.ST;
 
@@ -33,6 +34,8 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkState;
 
 public abstract class AbstractTemplateVisitor implements DocumentVisitor
 {
@@ -56,6 +59,7 @@ public abstract class AbstractTemplateVisitor implements DocumentVisitor
         throws IOException
     {
         final ST template = templateLoader.load(templateName);
+        checkState(template != null, "No template for '%s' found!", templateName);
         template.add("context", context);
 
         final Map<String, Boolean> tweakMap = new HashMap<>();
@@ -79,6 +83,11 @@ public abstract class AbstractTemplateVisitor implements DocumentVisitor
             template.write(new AutoIndentWriter(osw));
             osw.flush();
         }
+    }
+
+    @Override
+    public void finish() throws IOException
+    {
     }
 }
 

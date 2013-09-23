@@ -104,6 +104,31 @@ public class <context.javaName> extends <if(tweaks.EXTEND_RUNTIME_EXCEPTION)>Run
 }<\n>
 >>
 
+constants(context, tweaks) ::= <<
+<! ================================================================================== !>
+<! =                                                                                = !>
+<! = constants definition                                                           = !>
+<! =                                                                                = !>
+<! = called from the generator to render a new constants java source file.          = !>
+<! =                                                                                = !>
+<! ================================================================================== !>
+package <context.javaPackage>;
+
+import com.facebook.swift.codec.*;
+import com.google.common.collect.*;
+import java.util.*;
+
+public final class <context.javaName>
+{
+    private <context.javaName>() {
+    }
+
+    <context.constants : { constant|<_constantElement(constant)>}; separator="\n\n">
+}<\n>
+>>
+
+
+
 stringEnum(context, tweaks) ::= <<
 <! ================================================================================== !>
 <! =                                                                                = !>
@@ -189,6 +214,10 @@ _param(param) ::= <<
 
 _exceptionElement(exception) ::= <<
 @ThriftException(type=<exception.type>.class, id=<exception.id>)
+>>
+
+_constantElement(constant) ::= <<
+public static final <constant.javaType> <constant.javaName> = <constant.javaValue>;
 >>
 
 _toString(context) ::= <<
