@@ -16,9 +16,11 @@
 package com.facebook.swift.codec.metadata;
 
 import com.facebook.swift.codec.ThriftField;
+import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.thoughtworks.paranamer.AdaptiveParanamer;
 import com.thoughtworks.paranamer.AnnotationParanamer;
@@ -33,12 +35,15 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
+
+import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -304,5 +309,23 @@ public final class ReflectionHelper
         else {
             return methodName;
         }
+    }
+
+    public static Type resolveFieldType(Type structType, Type genericType)
+    {
+        return TypeToken.of(structType).resolveType(genericType).getType();
+    }
+
+    public static Type[] resolveFieldTypes(final Type structType, Type[] genericTypes)
+    {
+        return Lists.transform(Arrays.asList(genericTypes), new Function<Type, Type>()
+        {
+            @Nullable
+            @Override
+            public Type apply(@Nullable Type input)
+            {
+                return resolveFieldType(structType, input);
+            }
+        }).toArray(new Type[0]);
     }
 }

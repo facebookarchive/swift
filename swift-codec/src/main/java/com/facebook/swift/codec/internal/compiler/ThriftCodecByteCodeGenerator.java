@@ -27,7 +27,7 @@ import com.facebook.swift.codec.internal.compiler.byteCode.LocalVariableDefiniti
 import com.facebook.swift.codec.internal.compiler.byteCode.MethodDefinition;
 import com.facebook.swift.codec.internal.compiler.byteCode.NamedParameterDefinition;
 import com.facebook.swift.codec.internal.compiler.byteCode.ParameterizedType;
-import com.facebook.swift.codec.metadata.FieldType;
+import com.facebook.swift.codec.metadata.FieldKind;
 import com.facebook.swift.codec.metadata.ThriftConstructorInjection;
 import com.facebook.swift.codec.metadata.ThriftExtraction;
 import com.facebook.swift.codec.metadata.ThriftFieldExtractor;
@@ -86,8 +86,8 @@ import static com.facebook.swift.codec.internal.compiler.byteCode.Access.a;
 import static com.facebook.swift.codec.internal.compiler.byteCode.CaseStatement.caseStatement;
 import static com.facebook.swift.codec.internal.compiler.byteCode.NamedParameterDefinition.arg;
 import static com.facebook.swift.codec.internal.compiler.byteCode.ParameterizedType.type;
-import static com.facebook.swift.codec.metadata.FieldType.THRIFT_FIELD;
-import static com.facebook.swift.codec.metadata.FieldType.THRIFT_UNION_ID;
+import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_FIELD;
+import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_UNION_ID;
 import static com.google.common.collect.Iterables.getOnlyElement;
 
 import static java.lang.String.format;
@@ -101,7 +101,7 @@ public class ThriftCodecByteCodeGenerator<T>
     private static final Map<ThriftProtocolType, Method> WRITE_METHODS;
 
     private final ThriftCodecManager codecManager;
-    private final ThriftStructMetadata<T> metadata;
+    private final ThriftStructMetadata metadata;
     private final ParameterizedType structType;
     private final ParameterizedType codecType;
 
@@ -118,7 +118,7 @@ public class ThriftCodecByteCodeGenerator<T>
     @SuppressFBWarnings("DM_DEFAULT_ENCODING")
     public ThriftCodecByteCodeGenerator(
             ThriftCodecManager codecManager,
-            ThriftStructMetadata<T> metadata,
+            ThriftStructMetadata metadata,
             DynamicClassLoader classLoader,
             boolean debug
     )
@@ -312,7 +312,7 @@ public class ThriftCodecByteCodeGenerator<T>
 
         // declare and init local variables here
         Map<Short, LocalVariableDefinition> structData = new TreeMap<>();
-        for (ThriftFieldMetadata field : metadata.getFields(FieldType.THRIFT_FIELD)) {
+        for (ThriftFieldMetadata field : metadata.getFields(FieldKind.THRIFT_FIELD)) {
             LocalVariableDefinition variable = read.addInitializedLocalVariable(
                     toParameterizedType(field.getThriftType()),
                     "f_" + field.getName()
@@ -981,10 +981,16 @@ public class ThriftCodecByteCodeGenerator<T>
             if (extraction instanceof ThriftFieldExtractor) {
                 ThriftFieldExtractor fieldExtractor = (ThriftFieldExtractor) extraction;
                 write.getField(fieldExtractor.getField());
+                if (fieldExtractor.isGeneric()) {
+                  write.checkCast(type(fieldExtractor.getType()));
+                }
             }
             else if (extraction instanceof ThriftMethodExtractor) {
                 ThriftMethodExtractor methodExtractor = (ThriftMethodExtractor) extraction;
                 write.invokeVirtual(methodExtractor.getMethod());
+                if (methodExtractor.isGeneric()) {
+                  write.checkCast(type(methodExtractor.getType()));
+                }
             }
         }
     }
@@ -1077,7 +1083,7 @@ public class ThriftCodecByteCodeGenerator<T>
                 protocolType == MAP;
     }
 
-    private ParameterizedType toCodecType(ThriftStructMetadata<?> metadata)
+    private ParameterizedType toCodecType(ThriftStructMetadata metadata)
     {
         return type(PACKAGE + "/" + type(metadata.getStructClass()).getClassName() + "Codec");
     }

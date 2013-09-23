@@ -78,15 +78,15 @@ import static java.lang.reflect.Modifier.isStatic;
 public class ThriftCatalog
 {
     private final MetadataErrors.Monitor monitor;
-    private final ConcurrentMap<Class<?>, ThriftStructMetadata<?>> structs = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Type, ThriftStructMetadata> structs = new ConcurrentHashMap<>();
     private final ConcurrentMap<Class<?>, ThriftEnumMetadata<?>> enums = new ConcurrentHashMap<>();
     private final ConcurrentMap<Type, TypeCoercion> coercions = new ConcurrentHashMap<>();
     private final ConcurrentMap<Class<?>, ThriftType> manualTypes = new ConcurrentHashMap<>();
 
-    private final ThreadLocal<Deque<Class<?>>> stack = new ThreadLocal<Deque<Class<?>>>()
+    private final ThreadLocal<Deque<Type>> stack = new ThreadLocal<Deque<Type>>()
     {
         @Override
-        protected Deque<Class<?>> initialValue()
+        protected Deque<Type> initialValue()
         {
             return new ArrayDeque<>();
         }
@@ -256,11 +256,11 @@ public class ThriftCatalog
             return VOID;
         }
         if (rawType.isAnnotationPresent(ThriftStruct.class)) {
-            ThriftStructMetadata<?> structMetadata = getThriftStructMetadata(rawType);
+            ThriftStructMetadata structMetadata = getThriftStructMetadata(javaType);
             return struct(structMetadata);
         }
         if (rawType.isAnnotationPresent(ThriftUnion.class)) {
-            ThriftStructMetadata<?> structMetadata = getThriftStructMetadata(rawType);
+            ThriftStructMetadata structMetadata = getThriftStructMetadata(javaType);
             // An union looks like a struct with a single field.
             return struct(structMetadata);
         }
@@ -358,26 +358,27 @@ public class ThriftCatalog
      * Gets the ThriftStructMetadata for the specified struct class.  The struct class must be
      * annotated with @ThriftStruct or @ThriftUnion.
      */
-    public <T> ThriftStructMetadata<T> getThriftStructMetadata(Class<T> structClass)
+    public <T> ThriftStructMetadata getThriftStructMetadata(Type structType)
     {
-        ThriftStructMetadata<?> structMetadata = structs.get(structClass);
+        ThriftStructMetadata structMetadata = structs.get(structType);
+        Class<?> structClass = TypeToken.of(structType).getRawType();
         if (structMetadata == null) {
             if (structClass.isAnnotationPresent(ThriftStruct.class)) {
-                structMetadata = extractThriftStructMetadata(structClass);
+                structMetadata = extractThriftStructMetadata(structType);
             }
             else if (structClass.isAnnotationPresent(ThriftUnion.class)) {
-                structMetadata = extractThriftUnionMetadata(structClass);
+                structMetadata = extractThriftUnionMetadata(structType);
             }
             else {
                 throw new IllegalStateException("getThriftStructMetadata called on a class that has no @ThriftStruct or @ThriftUnion annotation");
             }
 
-            ThriftStructMetadata<?> current = structs.putIfAbsent(structClass, structMetadata);
+            ThriftStructMetadata current = structs.putIfAbsent(structType, structMetadata);
             if (current != null) {
                 structMetadata = current;
             }
         }
-        return (ThriftStructMetadata<T>) structMetadata;
+        return structMetadata;
     }
 
 
@@ -478,66 +479,66 @@ public class ThriftCatalog
         return order == null ? null : order.value();
     }
 
-    private <T> ThriftStructMetadata<T> extractThriftStructMetadata(Class<T> structClass)
+    private ThriftStructMetadata extractThriftStructMetadata(Type structType)
     {
-        Preconditions.checkNotNull(structClass, "structClass is null");
+        Preconditions.checkNotNull(structType, "structType is null");
 
-        Deque<Class<?>> stack = this.stack.get();
-        if (stack.contains(structClass)) {
-            String path = Joiner.on("->").join(transform(concat(stack, ImmutableList.of(structClass)), new Function<Class<?>, Object>()
+        Deque<Type> stack = this.stack.get();
+        if (stack.contains(structType)) {
+            String path = Joiner.on("->").join(transform(concat(stack, ImmutableList.of(structType)), new Function<Type, Object>()
             {
                 @Override
-                public Object apply(Class<?> input)
+                public Object apply(Type input)
                 {
-                    return input.getName();
+                    return TypeToken.of(input).getRawType().getName();
                 }
             }));
             throw new IllegalArgumentException("Circular references are not allowed: " + path);
         }
 
-        stack.push(structClass);
+        stack.push(structType);
         try {
-            ThriftStructMetadataBuilder<T> builder = new ThriftStructMetadataBuilder<>(this, structClass);
-            ThriftStructMetadata<T> structMetadata = builder.build();
+            ThriftStructMetadataBuilder builder = new ThriftStructMetadataBuilder(this, structType);
+            ThriftStructMetadata structMetadata = builder.build();
             return structMetadata;
         }
         finally {
-            Class<?> top = stack.pop();
-            checkState(structClass.equals(top),
+            Type top = stack.pop();
+            checkState(structType.equals(top),
                     "ThriftCatalog circularity detection stack is corrupt: expected %s, but got %s",
-                    structClass,
+                    structType,
                     top);
         }
     }
 
-    private <T> ThriftStructMetadata<T> extractThriftUnionMetadata(Class<T> unionClass)
+    private ThriftStructMetadata extractThriftUnionMetadata(Type unionType)
     {
-        Preconditions.checkNotNull(unionClass, "structClass is null");
+        Preconditions.checkNotNull(unionType, "unionType is null");
 
-        Deque<Class<?>> stack = this.stack.get();
-        if (stack.contains(unionClass)) {
-            String path = Joiner.on("->").join(transform(concat(stack, ImmutableList.of(unionClass)), new Function<Class<?>, Object>()
+        Deque<Type> stack = this.stack.get();
+        if (stack.contains(unionType)) {
+            String path = Joiner.on("->").join(transform(concat(stack, ImmutableList.of(unionType)), new Function<Type, Object>()
             {
                 @Override
-                public Object apply(Class<?> input)
+                public Object apply(Type input)
                 {
-                    return input.getName();
+                    return TypeToken.of(input).getRawType().getName();
                 }
             }));
             throw new IllegalArgumentException("Circular references are not allowed: " + path);
         }
 
-        stack.push(unionClass);
+        stack.push(unionType);
         try {
-            ThriftUnionMetadataBuilder<T> builder = new ThriftUnionMetadataBuilder<>(this, unionClass);
-            ThriftStructMetadata<T> unionMetadata = builder.build();
+            ThriftUnionMetadataBuilder builder = new ThriftUnionMetadataBuilder(this, unionType);
+            ThriftStructMetadata unionMetadata = builder.build();
             return unionMetadata;
         }
         finally {
-            Class<?> top = stack.pop();
-            checkState(unionClass.equals(top),
+            Type top = stack.pop();
+            checkState(unionType.equals(top),
                     "ThriftCatalog circularity detection stack is corrupt: expected %s, but got %s",
-                    unionClass,
+                    unionType,
                     top);
         }
     }

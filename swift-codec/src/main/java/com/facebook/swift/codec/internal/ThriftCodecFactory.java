@@ -24,5 +24,5 @@ import com.facebook.swift.codec.metadata.ThriftStructMetadata;
  */
 public interface ThriftCodecFactory
 {
-    <T> ThriftCodec<T> generateThriftTypeCodec(ThriftCodecManager codecManager, ThriftStructMetadata<T> metadata);
+    ThriftCodec<?> generateThriftTypeCodec(ThriftCodecManager codecManager, ThriftStructMetadata metadata);
 }

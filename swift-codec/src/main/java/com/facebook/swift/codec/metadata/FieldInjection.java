@@ -20,13 +20,17 @@ import com.facebook.swift.codec.ThriftField;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 
+import static com.facebook.swift.codec.metadata.ReflectionHelper.resolveFieldType;
+
 class FieldInjection extends Injection
 {
+    private final Type thriftStructType;
     private final Field field;
 
-    FieldInjection(Field field, ThriftField annotation, FieldType fieldType)
+    FieldInjection(Type thriftStructType, Field field, ThriftField annotation, FieldKind fieldKind)
     {
-        super(annotation, fieldType);
+        super(annotation, fieldKind);
+        this.thriftStructType = thriftStructType;
         this.field = field;
     }
 
@@ -44,7 +48,7 @@ class FieldInjection extends Injection
     @Override
     public Type getJavaType()
     {
-        return field.getGenericType();
+        return resolveFieldType(thriftStructType, field.getGenericType());
     }
 
     @Override

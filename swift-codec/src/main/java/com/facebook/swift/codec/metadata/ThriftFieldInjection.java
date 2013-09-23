@@ -28,15 +28,15 @@ public class ThriftFieldInjection implements ThriftInjection
     private final short id;
     private final String name;
     private final Field field;
-    private final FieldType fieldType;
+    private final FieldKind fieldKind;
 
-    public ThriftFieldInjection(short id, String name, Field field, FieldType fieldType)
+    public ThriftFieldInjection(short id, String name, Field field, FieldKind fieldKind)
     {
         this.name = checkNotNull(name, "name is null");
         this.field = checkNotNull(field, "field is null");
-        this.fieldType = checkNotNull(fieldType, "fieldType is null");
+        this.fieldKind = checkNotNull(fieldKind, "fieldKind is null");
 
-        switch (fieldType) {
+        switch (fieldKind) {
             case THRIFT_FIELD:
                 checkArgument(id >= 0, "fieldId is negative");
                 break;
@@ -49,9 +49,9 @@ public class ThriftFieldInjection implements ThriftInjection
     }
 
     @Override
-    public FieldType getType()
+    public FieldKind getFieldKind()
     {
-        return fieldType;
+        return fieldKind;
     }
 
     @Override
@@ -78,7 +78,7 @@ public class ThriftFieldInjection implements ThriftInjection
         sb.append("ThriftFieldInjection");
         sb.append("{fieldId=").append(id);
         sb.append(", name=").append(name);
-        sb.append(", fieldType=").append(fieldType);
+        sb.append(", fieldKind=").append(fieldKind);
         sb.append(", field=").append(field.getDeclaringClass().getSimpleName()).append(".").append(field.getName());
         sb.append('}');
         return sb.toString();

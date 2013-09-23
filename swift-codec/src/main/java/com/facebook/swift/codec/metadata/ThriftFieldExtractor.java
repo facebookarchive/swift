@@ -18,6 +18,9 @@ package com.facebook.swift.codec.metadata;
 import javax.annotation.concurrent.Immutable;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
+
+import com.google.common.reflect.TypeToken;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -28,30 +31,33 @@ public class ThriftFieldExtractor implements ThriftExtraction
     private final short id;
     private final String name;
     private final Field field;
-    private final FieldType fieldType;
+    private final FieldKind fieldKind;
+    private final Class<?> type;
 
-    public ThriftFieldExtractor(short id, String name, Field field, FieldType fieldType)
+    public ThriftFieldExtractor(
+            short fieldId, String fieldName, FieldKind fieldKind, Field field, Type fieldType)
     {
-        this.name = checkNotNull(name, "name is null");
+        this.name = checkNotNull(fieldName, "name is null");
         this.field = checkNotNull(field, "field is null");
-        this.fieldType = checkNotNull(fieldType, "type is null");
+        this.fieldKind = checkNotNull(fieldKind, "type is null");
+        this.type = TypeToken.of(checkNotNull(fieldType, "structType is null")).getRawType();
 
-        switch (fieldType) {
+        switch (fieldKind) {
             case THRIFT_FIELD:
-                checkArgument(id >= 0, "fieldId is negative");
+                checkArgument(fieldId >= 0, "fieldId is negative");
                 break;
             case THRIFT_UNION_ID:
-                checkArgument (id == Short.MIN_VALUE, "fieldId must be Short.MIN_VALUE for thrift_union_id");
+                checkArgument (fieldId == Short.MIN_VALUE, "fieldId must be Short.MIN_VALUE for thrift_union_id");
                 break;
         }
 
-        this.id = id;
+        this.id = fieldId;
     }
 
     @Override
-    public FieldType getType()
+    public FieldKind getFieldKind()
     {
-        return fieldType;
+        return fieldKind;
     }
 
     @Override
@@ -71,6 +77,16 @@ public class ThriftFieldExtractor implements ThriftExtraction
         return field;
     }
 
+    public Class<?> getType()
+    {
+        return type;
+    }
+
+    public boolean isGeneric()
+    {
+        return field.getType() != field.getGenericType();
+    }
+
     @Override
     public String toString()
     {
@@ -78,8 +94,9 @@ public class ThriftFieldExtractor implements ThriftExtraction
         sb.append("ThriftFieldExtractor");
         sb.append("{id=").append(id);
         sb.append(", name=").append(name);
-        sb.append(", fieldType=").append(fieldType);
+        sb.append(", fieldKind=").append(fieldKind);
         sb.append(", field=").append(field.getDeclaringClass().getSimpleName()).append(".").append(field.getName());
+        sb.append(", type=").append(type);
         sb.append('}');
         return sb.toString();
     }

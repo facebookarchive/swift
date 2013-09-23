@@ -20,17 +20,20 @@ import com.google.common.base.Preconditions;
 
 import java.lang.reflect.Type;
 
-import static com.facebook.swift.codec.metadata.FieldType.THRIFT_FIELD;
+import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_FIELD;
+import static com.facebook.swift.codec.metadata.ReflectionHelper.resolveFieldType;
 
 class ParameterInjection extends Injection
 {
     private final int parameterIndex;
     private final String extractedName;
     private final Type parameterJavaType;
+    private final Type thriftStructType;
 
-    ParameterInjection(int parameterIndex, ThriftField annotation, String extractedName, Type parameterJavaType)
+    ParameterInjection(Type thriftStructType, int parameterIndex, ThriftField annotation, String extractedName, Type parameterJavaType)
     {
         super(annotation, THRIFT_FIELD);
+        this.thriftStructType = thriftStructType;
         Preconditions.checkNotNull(parameterJavaType, "parameterJavaType is null");
 
         this.parameterIndex = parameterIndex;
@@ -56,7 +59,7 @@ class ParameterInjection extends Injection
     @Override
     public Type getJavaType()
     {
-        return parameterJavaType;
+        return resolveFieldType(thriftStructType, parameterJavaType);
     }
 
     @Override

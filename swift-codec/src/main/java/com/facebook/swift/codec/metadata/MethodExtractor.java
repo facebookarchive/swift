@@ -21,14 +21,17 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
 import static com.facebook.swift.codec.metadata.ReflectionHelper.extractFieldName;
+import static com.facebook.swift.codec.metadata.ReflectionHelper.resolveFieldType;
 
 class MethodExtractor extends Extractor
 {
+    private final Type thriftStructType;
     private final Method method;
 
-    public MethodExtractor(Method method, ThriftField annotation, FieldType fieldType)
+    public MethodExtractor(Type thriftStructType, Method method, ThriftField annotation, FieldKind fieldKind)
     {
-        super(annotation, fieldType);
+        super(annotation, fieldKind);
+        this.thriftStructType = thriftStructType;
         this.method = method;
     }
 
@@ -46,7 +49,7 @@ class MethodExtractor extends Extractor
     @Override
     public Type getJavaType()
     {
-        return method.getGenericReturnType();
+        return resolveFieldType(thriftStructType, method.getGenericReturnType());
     }
 
     @Override

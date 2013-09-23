@@ -38,7 +38,7 @@ public class ThriftFieldMetadata
     private final short id;
     private final ThriftType thriftType;
     private final String name;
-    private final FieldType fieldType;
+    private final FieldKind fieldKind;
     private final List<ThriftInjection> injections;
     private final Optional<ThriftConstructorInjection> constructorInjection;
     private final Optional<ThriftMethodInjection> methodInjection;
@@ -50,7 +50,7 @@ public class ThriftFieldMetadata
             short id,
             ThriftType thriftType,
             String name,
-            FieldType fieldType,
+            FieldKind fieldKind,
             List<ThriftInjection> injections,
             Optional<ThriftConstructorInjection> constructorInjection,
             Optional<ThriftMethodInjection> methodInjection,
@@ -59,7 +59,7 @@ public class ThriftFieldMetadata
     )
     {
         this.thriftType= checkNotNull(thriftType, "thriftType is null");
-        this.fieldType = checkNotNull(fieldType, "type is null");
+        this.fieldKind = checkNotNull(fieldKind, "type is null");
         this.name = checkNotNull(name, "name is null");
         this.injections = ImmutableList.copyOf(checkNotNull(injections, "injections is null"));
         this.constructorInjection = checkNotNull(constructorInjection, "constructorInjection is null");
@@ -68,7 +68,7 @@ public class ThriftFieldMetadata
         this.extraction = checkNotNull(extraction, "extraction is null");
         this.coercion = checkNotNull(coercion, "coercion is null");
 
-        switch (fieldType) {
+        switch (fieldKind) {
             case THRIFT_FIELD:
                 checkArgument(id >= 0, "id is negative");
                 break;
@@ -116,9 +116,9 @@ public class ThriftFieldMetadata
         return name;
     }
 
-    public FieldType getType()
+    public FieldKind getType()
     {
-        return fieldType;
+        return fieldKind;
     }
 
     public boolean isInternal()
@@ -183,7 +183,7 @@ public class ThriftFieldMetadata
         sb.append("{id=").append(id);
         sb.append(", thriftType=").append(thriftType);
         sb.append(", name='").append(name).append('\'');
-        sb.append(", fieldType=").append(fieldType);
+        sb.append(", fieldKind=").append(fieldKind);
         sb.append(", injections=").append(injections);
         sb.append(", constructorInjection=").append(constructorInjection);
         sb.append(", methodInjection=").append(methodInjection);
@@ -223,7 +223,7 @@ public class ThriftFieldMetadata
         };
     }
 
-    public static Predicate<ThriftFieldMetadata> isTypePredicate(final FieldType type)
+    public static Predicate<ThriftFieldMetadata> isTypePredicate(final FieldKind type)
     {
         return new Predicate<ThriftFieldMetadata>() {
             @Override

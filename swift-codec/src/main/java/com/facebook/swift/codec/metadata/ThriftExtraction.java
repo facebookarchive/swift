@@ -27,5 +27,5 @@ public interface ThriftExtraction
 
     String getName();
 
-    FieldType getType();
+    FieldKind getFieldKind();
 }

@@ -27,5 +27,5 @@ public interface ThriftInjection
 
     String getName();
 
-    FieldType getType();
+    FieldKind getFieldKind();
 }

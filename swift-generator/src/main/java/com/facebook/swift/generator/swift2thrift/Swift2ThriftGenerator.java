@@ -17,7 +17,7 @@ package com.facebook.swift.generator.swift2thrift;
 
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.codec.ThriftProtocolType;
-import com.facebook.swift.codec.metadata.FieldType;
+import com.facebook.swift.codec.metadata.FieldKind;
 import com.facebook.swift.codec.metadata.ReflectionHelper;
 import com.facebook.swift.codec.metadata.ThriftFieldMetadata;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
@@ -354,9 +354,9 @@ public class Swift2ThriftGenerator
 
     private boolean verifyStruct(ThriftType t, boolean quiet)
     {
-        ThriftStructMetadata<?> metadata = t.getStructMetadata();
+        ThriftStructMetadata metadata = t.getStructMetadata();
         boolean ok = true;
-        for (ThriftFieldMetadata fieldMetadata: metadata.getFields(FieldType.THRIFT_FIELD)) {
+        for (ThriftFieldMetadata fieldMetadata: metadata.getFields(FieldKind.THRIFT_FIELD)) {
             boolean fieldOk = verifyField(fieldMetadata.getThriftType());
             if (!fieldOk) {
                 ok = false;

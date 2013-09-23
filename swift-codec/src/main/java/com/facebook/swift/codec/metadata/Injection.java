@@ -19,8 +19,8 @@ import com.facebook.swift.codec.ThriftField;
 
 abstract class Injection extends FieldMetadata
 {
-    protected Injection(ThriftField annotation, FieldType fieldType)
+    protected Injection(ThriftField annotation, FieldKind fieldKind)
     {
-        super(annotation, fieldType);
+        super(annotation, fieldKind);
     }
 }
