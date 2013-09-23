@@ -16,6 +16,13 @@
 package com.facebook.swift.codec;
 
 import com.facebook.swift.codec.internal.EnumThriftCodec;
+import com.facebook.swift.codec.generics.ConcreteDerivedFromGeneric;
+import com.facebook.swift.codec.generics.ConcreteDerivedFromGenericBean;
+import com.facebook.swift.codec.generics.ConcreteThriftStructDerivedFromGenericField;
+import com.facebook.swift.codec.generics.GenericThriftStructBase;
+import com.facebook.swift.codec.generics.GenericThriftStructBaseFromBuilder;
+import com.facebook.swift.codec.generics.GenericThriftStructBeanBase;
+import com.facebook.swift.codec.generics.GenericThriftStructFieldBase;
 import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
 import com.facebook.swift.codec.metadata.ThriftCatalog;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
@@ -25,11 +32,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
+import com.google.common.reflect.TypeToken;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.TMemoryBuffer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -192,7 +201,7 @@ public abstract class AbstractThriftCodecManagerTest
     {
         ThriftCatalog catalog = readCodecManager.getCatalog();
         ThriftType thriftType = catalog.getThriftType(BonkConstructorNameOverride.class);
-        ThriftStructMetadata<?> structMetadata = thriftType.getStructMetadata();
+        ThriftStructMetadata structMetadata = thriftType.getStructMetadata();
         assertEquals(structMetadata.getField(1).getName(), "myMessage");
         assertEquals(structMetadata.getField(2).getName(), "myType");
 
@@ -295,6 +304,83 @@ public abstract class AbstractThriftCodecManagerTest
         assertAllFieldsSet(empty, false);
     }
 
+    @Test
+    public void testBeanGeneric()
+            throws Exception
+    {
+        GenericThriftStructBeanBase<String> bean = new GenericThriftStructBeanBase<>();
+        bean.setGenericProperty("genericValue");
+
+        testRoundTripSerialize(new TypeToken<GenericThriftStructBeanBase<String>>() {}, bean);
+    }
+
+    @Test
+    public void testBeanDerivedFromGeneric()
+            throws Exception
+    {
+        ConcreteDerivedFromGenericBean bean = new ConcreteDerivedFromGenericBean();
+        bean.setGenericProperty("generic");
+        bean.setConcreteField("concrete");
+
+        testRoundTripSerialize(bean);
+    }
+
+    @Test
+    public void testImmutableGeneric()
+            throws Exception
+    {
+        GenericThriftStructBase<Double> immutable = new GenericThriftStructBase<>(Math.PI);
+
+        testRoundTripSerialize(new TypeToken<GenericThriftStructBase<Double>>() {}, immutable);
+    }
+
+    @Test
+    public void testImmutableDerivedFromGeneric()
+            throws Exception
+    {
+        ConcreteDerivedFromGeneric immutable = new ConcreteDerivedFromGeneric(Math.E, Math.PI);
+
+        testRoundTripSerialize(immutable);
+    }
+
+    @Test
+    public void testGenericFromBuilder()
+            throws Exception
+    {
+        GenericThriftStructBaseFromBuilder<Integer, Double> builderObject =
+                new GenericThriftStructBaseFromBuilder.Builder<Integer, Double>()
+                        .setFirstGenericProperty(12345)
+                        .setSecondGenericProperty(1.2345)
+                        .build();
+
+        testRoundTripSerialize(
+                new TypeToken<GenericThriftStructBaseFromBuilder<Integer, Double>>() {},
+                builderObject);
+    }
+
+    @Test
+    public void testFieldGeneric()
+            throws Exception
+    {
+        GenericThriftStructFieldBase<Integer> fieldObject = new GenericThriftStructFieldBase<>();
+        fieldObject.genericField = 5757;
+
+        testRoundTripSerialize(
+                new TypeToken<GenericThriftStructFieldBase<Integer>>() {},
+                fieldObject);
+    }
+
+    @Test
+    public void testFieldDerivedFromGeneric()
+            throws Exception
+    {
+        ConcreteThriftStructDerivedFromGenericField fieldObject = new ConcreteThriftStructDerivedFromGenericField();
+        fieldObject.genericField = "genericValue";
+        fieldObject.concreteField = "concreteValue";
+
+        testRoundTripSerialize(fieldObject);
+    }
+
     private void assertAllFieldsSet(IsSetBean isSetBean, boolean expected)
     {
         assertEquals(isSetBean.isBooleanSet(), expected);
@@ -320,17 +406,31 @@ public abstract class AbstractThriftCodecManagerTest
         return testRoundTripSerialize(readCodec, writeCodec, value);
     }
 
+    private <T> T testRoundTripSerialize(TypeToken<T> typeToken, T value)
+            throws Exception
+    {
+        ThriftCodec<T> readCodec = (ThriftCodec<T>) readCodecManager.getCodec(typeToken.getType());
+        ThriftCodec<T> writeCodec = (ThriftCodec<T>) writeCodecManager.getCodec(typeToken.getType());
+
+        return testRoundTripSerialize(readCodec, writeCodec, typeToken.getType(), value);
+    }
+
     private <T> T testRoundTripSerialize(ThriftCodec<T> readCodec, ThriftCodec<T> writeCodec, T structInstance)
             throws Exception
     {
         Class<T> structClass = (Class<T>) structInstance.getClass();
+        return testRoundTripSerialize(readCodec, writeCodec, structClass, structInstance);
+    }
 
+    private <T> T testRoundTripSerialize(ThriftCodec<T> readCodec, ThriftCodec<T> writeCodec, Type structType, T structInstance)
+            throws Exception
+    {
         ThriftCatalog readCatalog = readCodecManager.getCatalog();
-        ThriftStructMetadata<T> readMetadata = readCatalog.getThriftStructMetadata(structClass);
+        ThriftStructMetadata readMetadata = readCatalog.getThriftStructMetadata(structType);
         assertNotNull(readMetadata);
 
         ThriftCatalog writeCatalog = writeCodecManager.getCatalog();
-        ThriftStructMetadata<T> writeMetadata = writeCatalog.getThriftStructMetadata(structClass);
+        ThriftStructMetadata writeMetadata = writeCatalog.getThriftStructMetadata(structType);
         assertNotNull(writeMetadata);
 
         TMemoryBuffer transport = new TMemoryBuffer(10 * 1024);

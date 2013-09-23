@@ -31,7 +31,7 @@ public class TestThriftUnionMetadataBuilder
     public void testNoId()
             throws Exception
     {
-        ThriftUnionMetadataBuilder<NoId> builder = new ThriftUnionMetadataBuilder<>(new ThriftCatalog(), NoId.class);
+        ThriftUnionMetadataBuilder builder = new ThriftUnionMetadataBuilder(new ThriftCatalog(), NoId.class);
 
         MetadataErrors metadataErrors = builder.getMetadataErrors();
 
@@ -70,7 +70,7 @@ public class TestThriftUnionMetadataBuilder
     public void testMultipleIds()
             throws Exception
     {
-        ThriftUnionMetadataBuilder<MultipleIds> builder = new ThriftUnionMetadataBuilder<>(new ThriftCatalog(), MultipleIds.class);
+        ThriftUnionMetadataBuilder builder = new ThriftUnionMetadataBuilder(new ThriftCatalog(), MultipleIds.class);
 
         MetadataErrors metadataErrors = builder.getMetadataErrors();
 
@@ -122,7 +122,7 @@ public class TestThriftUnionMetadataBuilder
     public void testMultipleNames()
             throws Exception
     {
-        ThriftUnionMetadataBuilder<MultipleNames> builder = new ThriftUnionMetadataBuilder<>(new ThriftCatalog(), MultipleNames.class);
+        ThriftUnionMetadataBuilder builder = new ThriftUnionMetadataBuilder(new ThriftCatalog(), MultipleNames.class);
 
         MetadataErrors metadataErrors = builder.getMetadataErrors();
 
@@ -163,7 +163,7 @@ public class TestThriftUnionMetadataBuilder
     public void testUnsupportedType()
             throws Exception
     {
-        ThriftUnionMetadataBuilder<UnsupportedJavaType> builder = new ThriftUnionMetadataBuilder<>(new ThriftCatalog(), UnsupportedJavaType.class);
+        ThriftUnionMetadataBuilder builder = new ThriftUnionMetadataBuilder(new ThriftCatalog(), UnsupportedJavaType.class);
 
         MetadataErrors metadataErrors = builder.getMetadataErrors();
 
@@ -196,7 +196,7 @@ public class TestThriftUnionMetadataBuilder
     public void testMultipleTypes()
             throws Exception
     {
-        ThriftUnionMetadataBuilder<MultipleTypes> builder = new ThriftUnionMetadataBuilder<>(new ThriftCatalog(), MultipleTypes.class);
+        ThriftUnionMetadataBuilder builder = new ThriftUnionMetadataBuilder(new ThriftCatalog(), MultipleTypes.class);
 
         MetadataErrors metadataErrors = builder.getMetadataErrors();
 

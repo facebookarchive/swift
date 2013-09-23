@@ -54,7 +54,6 @@ import static org.testng.Assert.fail;
 public class TestThriftCodecManager
 {
     private ThriftCodecManager codecManager;
-    private ThriftType fruitType;
 
     @BeforeMethod
     protected void setUp()
@@ -63,15 +62,15 @@ public class TestThriftCodecManager
         codecManager = new ThriftCodecManager(new ThriftCodecFactory()
         {
             @Override
-            public <T> ThriftCodec<T> generateThriftTypeCodec(ThriftCodecManager codecManager, ThriftStructMetadata<T> metadata)
+            public ThriftCodec<?> generateThriftTypeCodec(ThriftCodecManager codecManager, ThriftStructMetadata metadata)
             {
                 throw new UnsupportedOperationException();
             }
         });
         ThriftCatalog catalog = codecManager.getCatalog();
         catalog.addDefaultCoercions(DefaultJavaCoercions.class);
-        fruitType = catalog.getThriftType(Fruit.class);
-        codecManager.addCodec(new EnumThriftCodec<>(fruitType));
+        ThriftType fruitType = catalog.getThriftType(Fruit.class);
+        codecManager.addCodec(new EnumThriftCodec<Fruit>(fruitType));
     }
 
     @Test
