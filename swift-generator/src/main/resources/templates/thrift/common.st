@@ -40,7 +40,7 @@ _struct(struct) ::= <<
 
 _field(field) ::= <<
 <_doc(field.documentation)><\\\>
-<field.id>: <field.type> <field.name>
+<field.id>: <field.thriftType> <field.name>
 >>
 
 _service(service) ::= <<
