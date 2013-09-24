@@ -15,13 +15,13 @@
  */
 package com.facebook.nifty.core;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.ArrayList;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
@@ -32,7 +32,7 @@ public class NiftyBootstrap
 {
     private final ChannelGroup allChannels;
     private final NettyServerConfig nettyServerConfig;
-    private ArrayList<NettyServerTransport> transports;
+    private final Map<ThriftServerDef, NettyServerTransport> transports;
     private ExecutorService bossExecutor;
     private ExecutorService workerExecutor;
     private NioServerSocketChannelFactory serverChannelFactory;
@@ -47,14 +47,14 @@ public class NiftyBootstrap
             ChannelGroup allChannels)
     {
         this.allChannels = allChannels;
-        this.transports = new ArrayList<>();
+        ImmutableMap.Builder<ThriftServerDef, NettyServerTransport> builder = new ImmutableMap.Builder<>();
         this.nettyServerConfig = nettyServerConfig;
         for (ThriftServerDef thriftServerDef : thriftServerDefs) {
-            transports.add(new NettyServerTransport(thriftServerDef,
-                                                    nettyServerConfig,
-                                                    allChannels));
+            builder.put(thriftServerDef, new NettyServerTransport(thriftServerDef,
+                    nettyServerConfig,
+                    allChannels));
         }
-
+        transports = builder.build();
     }
 
     @PostConstruct
@@ -63,7 +63,7 @@ public class NiftyBootstrap
         bossExecutor = nettyServerConfig.getBossExecutor();
         workerExecutor = nettyServerConfig.getWorkerExecutor();
         serverChannelFactory = new NioServerSocketChannelFactory(bossExecutor, workerExecutor);
-        for (NettyServerTransport transport : transports) {
+        for (NettyServerTransport transport : transports.values()) {
             transport.start(serverChannelFactory);
         }
     }
@@ -71,7 +71,7 @@ public class NiftyBootstrap
     @PreDestroy
     public void stop()
     {
-        for (NettyServerTransport transport : transports) {
+        for (NettyServerTransport transport : transports.values()) {
             try {
                 transport.stop();
             }
@@ -81,5 +81,14 @@ public class NiftyBootstrap
         }
 
         ShutdownUtil.shutdownChannelFactory(serverChannelFactory, bossExecutor, workerExecutor, allChannels);
+    }
+
+    public Map<ThriftServerDef, NiftyMetrics> getNiftyMetrics()
+    {
+        ImmutableMap.Builder<ThriftServerDef, NiftyMetrics> builder = new ImmutableMap.Builder<>();
+        for (Map.Entry<ThriftServerDef, NettyServerTransport> entry : transports.entrySet()) {
+            builder.put(entry.getKey(), entry.getValue().getMetrics());
+        }
+        return builder.build();
     }
 }

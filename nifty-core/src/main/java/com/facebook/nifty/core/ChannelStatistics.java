@@ -20,21 +20,18 @@ import org.jboss.netty.channel.ChannelEvent;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.DownstreamMessageEvent;
-import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.channel.UpstreamMessageEvent;
 import org.jboss.netty.channel.group.ChannelGroup;
-
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Counters for number of channels open, generic traffic stats and maybe cleanup logic here.
  */
-public class ChannelStatistics extends SimpleChannelHandler
+public class ChannelStatistics extends SimpleChannelHandler implements NiftyMetrics
 {
-    // TODO : expose these stats somewhere
-    private static final AtomicInteger channelCount = new AtomicInteger(0);
+    private final AtomicInteger channelCount = new AtomicInteger(0);
     private final AtomicLong bytesRead = new AtomicLong(0);
     private final AtomicLong bytesWritten = new AtomicLong(0);
     private final ChannelGroup allChannels;
@@ -97,7 +94,7 @@ public class ChannelStatistics extends SimpleChannelHandler
         ctx.sendDownstream(e);
     }
 
-    public static int getChannelCount()
+    public int getChannelCount()
     {
         return channelCount.get();
     }

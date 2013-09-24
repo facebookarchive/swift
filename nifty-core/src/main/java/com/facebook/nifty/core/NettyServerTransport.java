@@ -69,6 +69,7 @@ public class NettyServerTransport implements ExternalResourceReleasable
     private Channel serverChannel;
     private final ThriftServerDef def;
     private final NettyServerConfig nettyServerConfig;
+    private final ChannelStatistics channelStatistics;
 
     public NettyServerTransport(final ThriftServerDef def)
     {
@@ -88,6 +89,8 @@ public class NettyServerTransport implements ExternalResourceReleasable
         // connectionLimiter must be instantiated exactly once (and thus outside the pipeline factory)
         final ConnectionLimiter connectionLimiter = new ConnectionLimiter(def.getMaxConnections());
 
+        this.channelStatistics = new ChannelStatistics(allChannels);
+
         this.pipelineFactory = new ChannelPipelineFactory()
         {
             @Override
@@ -97,7 +100,7 @@ public class NettyServerTransport implements ExternalResourceReleasable
                 ChannelPipeline cp = Channels.pipeline();
                 TProtocolFactory inputProtocolFactory = def.getDuplexProtocolFactory().getInputProtocolFactory();
                 cp.addLast("connectionLimiter", connectionLimiter);
-                cp.addLast(ChannelStatistics.NAME, new ChannelStatistics(allChannels));
+                cp.addLast(ChannelStatistics.NAME, channelStatistics);
                 cp.addLast("frameCodec", def.getThriftFrameCodecFactory().create(def.getMaxFrameSize(),
                                                                                  inputProtocolFactory));
                 if (def.getClientIdleTimeout() != null) {
@@ -235,5 +238,10 @@ public class NettyServerTransport implements ExternalResourceReleasable
             }
             super.channelClosed(ctx, e);
         }
+    }
+
+    public NiftyMetrics getMetrics()
+    {
+        return channelStatistics;
     }
 }
