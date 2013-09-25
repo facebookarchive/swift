@@ -33,6 +33,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -232,7 +233,34 @@ public class AsyncClientTest extends AsyncTestBase
             // Because of the sleep above, the latch should already be open
             // (because the callback is added on this thread and the default callback
             // executor runs callbacks on the same thread, this shouldn't even be a race).
-            latch.await(0, TimeUnit.MILLISECONDS);
+            assertTrue(latch.await(0, TimeUnit.MILLISECONDS));
+        }
+    }
+
+    @Test
+    public void testAsyncOneWay()
+            throws InterruptedException, ExecutionException, TTransportException, IOException
+    {
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        try (DelayedMap.AsyncClient client = createClient(DelayedMap.AsyncClient.class, syncServer).get()) {
+            ListenableFuture<Void> onewayFuture = client.onewayPut("testKey", "testValue");
+
+            Futures.addCallback(onewayFuture, new FutureCallback<Void>()
+            {
+                @Override
+                public void onSuccess(Void result)
+                {
+                    latch.countDown();
+                }
+
+                @Override
+                public void onFailure(Throwable t)
+                {
+                }
+            });
+
+            assertTrue(latch.await(500, TimeUnit.MILLISECONDS));
         }
     }
 
