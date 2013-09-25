@@ -15,8 +15,6 @@
  */
 package com.facebook.swift.service;
 
-import com.facebook.nifty.core.RequestContext;
-
 import java.util.ArrayList;
 import java.util.List;
 

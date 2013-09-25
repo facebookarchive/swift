@@ -21,7 +21,6 @@ import com.facebook.nifty.client.NiftyClientChannel;
 import com.facebook.nifty.client.NiftyClientConnector;
 import com.facebook.nifty.client.UnframedClientConnector;
 import com.facebook.swift.codec.guice.ThriftCodecModule;
-import com.facebook.swift.service.ThriftClientEventHandler;
 import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.guice.ThriftClientModule;
 import com.facebook.swift.service.guice.ThriftClientStatsModule;

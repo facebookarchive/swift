@@ -17,7 +17,6 @@ package com.facebook.swift.perf.loadgenerator;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.facebook.swift.service.ThriftClientManager;
 import com.google.common.net.HostAndPort;
 
 import java.nio.ByteBuffer;

@@ -15,16 +15,12 @@
  */
 package com.facebook.swift.perf.loadgenerator;
 
-import com.facebook.nifty.client.NiftyClient;
 import com.facebook.nifty.client.NiftyClientChannel;
 import com.facebook.nifty.client.NiftyClientConnector;
 import com.facebook.swift.service.RuntimeTException;
 import com.facebook.swift.service.ThriftClient;
-import com.facebook.swift.service.ThriftClientConfig;
-import com.facebook.swift.service.ThriftClientManager;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Inject;
-import io.airlift.units.Duration;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;

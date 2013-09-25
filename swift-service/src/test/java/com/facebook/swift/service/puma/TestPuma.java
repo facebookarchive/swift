@@ -30,7 +30,6 @@ import com.facebook.swift.service.puma.swift.ReadSemanticException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
-import org.apache.thrift.TProcessor;
 import org.testng.annotations.Test;
 
 import java.util.List;

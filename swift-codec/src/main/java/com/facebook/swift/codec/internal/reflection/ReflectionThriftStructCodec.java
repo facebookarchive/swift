@@ -19,7 +19,6 @@ import com.facebook.swift.codec.ThriftCodec;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.codec.internal.TProtocolReader;
 import com.facebook.swift.codec.internal.TProtocolWriter;
-import com.facebook.swift.codec.metadata.FieldType;
 import com.facebook.swift.codec.metadata.ThriftConstructorInjection;
 import com.facebook.swift.codec.metadata.ThriftFieldInjection;
 import com.facebook.swift.codec.metadata.ThriftFieldMetadata;

@@ -16,7 +16,6 @@
 package com.facebook.swift.codec.metadata;
 
 import com.facebook.swift.codec.ThriftEnum;
-import com.facebook.swift.codec.ThriftStruct;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
