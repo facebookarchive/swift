@@ -41,6 +41,9 @@ public class DelayedMap
         @ThriftMethod
         public List<String> getMultipleValues(long timeout, TimeUnit unit, List<String> keys)
                 throws TException;
+
+        @ThriftMethod(oneway = true)
+        public void onewayPutValueSlowly(long timeout, TimeUnit unit, String key, String value);
     }
 
     @ThriftService("DelayedMap")
@@ -54,6 +57,9 @@ public class DelayedMap
 
         @ThriftMethod
         public ListenableFuture<List<String>> getMultipleValues(long timeout, TimeUnit unit, List<String> keys);
+
+        @ThriftMethod(oneway = true)
+        public ListenableFuture<Void> onewayPutValueSlowly(long timeout, TimeUnit unit, String key, String value);
     }
 
 
@@ -71,6 +77,9 @@ public class DelayedMap
         @ThriftMethod
         public List<String> getMultipleValues(long timeout, TimeUnit unit, List<String> keys)
                 throws TException;
+
+        @ThriftMethod(oneway = true)
+        public void onewayPutValueSlowly(long timeout, TimeUnit unit, String key, String value);
     }
 
     @ThriftService("DelayedMap")
@@ -84,5 +93,8 @@ public class DelayedMap
 
         @ThriftMethod
         public ListenableFuture<List<String>> getMultipleValues(long timeout, TimeUnit unit, List<String> keys);
+
+        @ThriftMethod(oneway = true)
+        public ListenableFuture<Void> onewayPutValueSlowly(long timeout, TimeUnit unit, String key, String value);
     }
 }

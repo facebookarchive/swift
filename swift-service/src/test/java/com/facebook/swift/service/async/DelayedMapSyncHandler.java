@@ -68,6 +68,15 @@ public class DelayedMapSyncHandler implements DelayedMap.Service
         return result;
     }
 
+    @Override
+    public void onewayPutValueSlowly(long timeout, TimeUnit unit, String key, String value)
+    {
+        LOGGER.info("oneway put started");
+        checkedSleep(timeout, unit);
+        store.put(key, value);
+        LOGGER.info("oneway put finished");
+    }
+
     private void checkedSleep(long timeout, TimeUnit unit)
     {
         try {

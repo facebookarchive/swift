@@ -213,7 +213,16 @@ public class ThriftMethodHandler
         // send message and setup listener to handle the response
         channel.sendAsynchronousRequest(requestBuffer, false, new NiftyClientChannel.Listener() {
             @Override
-            public void onRequestSent() {}
+            public void onRequestSent() {
+                if (oneway) {
+                    try {
+                        future.set(null);
+                    }
+                    catch (Exception e) {
+                        future.setException(e);
+                    }
+                }
+            }
 
             @Override
             public void onResponseReceived(ChannelBuffer message) {

@@ -56,4 +56,10 @@ public class DelayedMapAsyncProxyHandler implements DelayedMap.AsyncService
     {
         return asyncClient.getMultipleValues(timeout, unit, keys);
     }
+
+    @Override
+    public ListenableFuture<Void> onewayPutValueSlowly(long timeout, TimeUnit unit, String key, String value)
+    {
+        return asyncClient.onewayPutValueSlowly(timeout, unit, key, value);
+    }
 }
