@@ -42,7 +42,7 @@ import java.util.*;
 import static com.google.common.base.Objects.toStringHelper;
 
 @ThriftStruct("<context.name>")
-public class <context.javaName>
+public final class <context.javaName>
 {
     <_structbody(context)>
 
@@ -66,7 +66,7 @@ import java.util.*;
 import static com.google.common.base.Objects.toStringHelper;
 
 @ThriftUnion("<context.name>")
-public class <context.javaName>
+public final class <context.javaName>
 {
     <_union_body(context)>
 
@@ -82,7 +82,6 @@ public class <context.javaName>
     {
         return this.name;
     }
-
 
     <_union_toString(context)>
 }<\n>
@@ -102,7 +101,7 @@ import com.facebook.swift.codec.*;
 import java.util.*;
 
 @ThriftStruct("<context.name>")
-public class <context.javaName> extends <if(tweaks.EXTEND_RUNTIME_EXCEPTION)>RuntimeException<else>Exception<endif>
+public final class <context.javaName> extends <if(tweaks.EXTEND_RUNTIME_EXCEPTION)>RuntimeException<else>Exception<endif>
 {
     private static final long serialVersionUID = 1L;
 
@@ -249,7 +248,7 @@ _toStringField(field) ::= <<
 >>
 
 _union_field(field) ::= <<
-<_annotation(field)> 
+<_annotation(field)>
 public <field.javaType> <field.javaGetterName>() {
     if (this.id != <field.id>) {
         throw new IllegalStateException("Not a <field.name> element!");

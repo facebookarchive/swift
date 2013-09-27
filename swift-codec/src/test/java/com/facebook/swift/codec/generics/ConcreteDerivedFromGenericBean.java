@@ -21,7 +21,7 @@ import com.facebook.swift.codec.ThriftStruct;
 import java.util.Objects;
 
 @ThriftStruct
-public class ConcreteDerivedFromGenericBean extends GenericThriftStructBeanBase<String>
+public final class ConcreteDerivedFromGenericBean extends GenericThriftStructBeanBase<String>
 {
     private String concreteField;
 

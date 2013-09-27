@@ -18,6 +18,6 @@ package com.facebook.swift.service.exceptions;
 import com.facebook.swift.codec.ThriftStruct;
 
 @ThriftStruct
-public class ThriftUncheckedException extends RuntimeException {
+public final class ThriftUncheckedException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 }
