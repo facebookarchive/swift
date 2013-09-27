@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 @ThriftStruct
-public class ReadQueryInfoTimeString
+public final class ReadQueryInfoTimeString
 {
     private final String name;
     private final String startTime;

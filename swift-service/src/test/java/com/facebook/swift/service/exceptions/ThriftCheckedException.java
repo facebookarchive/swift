@@ -18,6 +18,6 @@ package com.facebook.swift.service.exceptions;
 import com.facebook.swift.codec.ThriftStruct;
 
 @ThriftStruct
-public class ThriftCheckedException extends Exception {
+public final class ThriftCheckedException extends Exception {
     private static final long serialVersionUID = 1L;
 }

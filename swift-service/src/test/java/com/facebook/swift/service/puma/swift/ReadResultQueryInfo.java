@@ -23,7 +23,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 @ThriftStruct
-public class ReadResultQueryInfo
+public final class ReadResultQueryInfo
 {
     private final long startTimeResultWindow;
     private final Map<String, String> columnNameValueMap;

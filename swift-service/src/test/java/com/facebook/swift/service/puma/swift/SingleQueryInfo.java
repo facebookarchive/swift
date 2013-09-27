@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 @ThriftStruct
-public class SingleQueryInfo
+public final class SingleQueryInfo
 {
     private final String logicalTableName;
     private final Map<String, String> filter;

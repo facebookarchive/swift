@@ -23,7 +23,7 @@ import com.google.common.collect.ImmutableList;
 import java.util.List;
 
 @ThriftStruct
-public class MergeAggregationQueryInfo
+public final class MergeAggregationQueryInfo
 {
     private final List<SingleQueryInfo> queries;
     private final long startTime;

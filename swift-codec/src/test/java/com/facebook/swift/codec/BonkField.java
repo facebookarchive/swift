@@ -16,7 +16,7 @@
 package com.facebook.swift.codec;
 
 @ThriftStruct("Bonk")
-public class BonkField
+public final class BonkField
 {
     @ThriftField(1)
     public String message;

@@ -18,7 +18,7 @@ package com.facebook.swift.codec;
 import java.util.List;
 
 @ThriftStruct
-public class CoercionBean
+public final class CoercionBean
 {
     private Boolean booleanValue;
     private Byte byteValue;

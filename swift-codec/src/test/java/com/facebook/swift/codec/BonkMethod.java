@@ -16,7 +16,7 @@
 package com.facebook.swift.codec;
 
 @ThriftStruct("Bonk")
-public class BonkMethod
+public final class BonkMethod
 {
     private String message;
     private int type;

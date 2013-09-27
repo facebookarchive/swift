@@ -19,7 +19,7 @@ import com.google.common.base.Objects;
 import com.google.common.base.Objects.ToStringHelper;
 
 @ThriftUnion("Union")
-public class UnionBean
+public final class UnionBean
 {
     private Object value;
     private short type;

@@ -18,7 +18,7 @@ package com.facebook.swift.codec;
 import com.google.common.base.Objects;
 
 @ThriftUnion("Union")
-public class UnionField
+public final class UnionField
 {
     @ThriftField(1)
     public String stringValue;
