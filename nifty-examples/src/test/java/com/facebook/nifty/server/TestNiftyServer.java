@@ -26,7 +26,6 @@ import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.logging.InternalLoggerFactory;
 import org.jboss.netty.logging.Slf4JLoggerFactory;
-import org.jboss.netty.util.HashedWheelTimer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
@@ -82,7 +81,7 @@ public class TestNiftyServer
                     public ResultCode Log(List<LogEntry> messages)
                             throws TException
                     {
-                        RequestContext context = RequestContext.getCurrentContext();
+                        RequestContext context = RequestContexts.getCurrentContext();
 
                         for (LogEntry message : messages) {
                             log.info("[Client: {}] {}: {}",

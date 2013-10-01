@@ -15,59 +15,15 @@
  */
 package com.facebook.nifty.core;
 
+import org.apache.thrift.protocol.TProtocol;
+
 import java.net.SocketAddress;
 
-import static com.google.common.base.Preconditions.checkState;
-
-public class RequestContext
+public interface RequestContext
 {
-    private static ThreadLocal<RequestContext> threadLocalContext = new ThreadLocal<>();
-    private final SocketAddress remoteAddress;
+    SocketAddress getRemoteAddress();
 
-    /**
-     * Gets the thread-local {@link RequestContext} for the Thrift request that is being processed
-     * on the current thread.
-     *
-     * Note that this method will only work properly when called from the thread on which Nifty
-     * invoked your server method. If you transfer work to another thread in the course of
-     * processing a request, this is not tracked by Nifty.
-     *
-     * @return The {@link RequestContext} of the current request
-     * @throws IllegalStateException when not called on the thread on which your server * method
-     * was originally invoked
-     */
-    public static RequestContext getCurrentContext()
-    {
-        RequestContext currentContext = threadLocalContext.get();
-        checkState(currentContext != null,
-                   "Cannot only get a RequestContext when running inside a Thrift handler");
-        return currentContext;
-    }
+    TProtocol getOutputProtocol();
 
-    /**
-     * Gets the remote address of the client that made the request
-     *
-     * @return The client's remote address as a {@link SocketAddress}
-     */
-    public SocketAddress getRemoteAddress()
-    {
-        return remoteAddress;
-    }
-
-    // Contexts are only created, set, and cleared internally by Nifty
-
-    RequestContext(SocketAddress remoteAddress)
-    {
-        this.remoteAddress = remoteAddress;
-    }
-
-    static void setCurrentContext(RequestContext requestContext)
-    {
-        threadLocalContext.set(requestContext);
-    }
-
-    static void clearCurrentContext()
-    {
-        threadLocalContext.remove();
-    }
+    TProtocol getInputProtocol();
 }

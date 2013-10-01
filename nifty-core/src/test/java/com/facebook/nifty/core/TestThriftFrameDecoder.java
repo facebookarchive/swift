@@ -149,6 +149,11 @@ public class TestThriftFrameDecoder
                     protocol.writeString("foo");
                     protocol.writeFieldEnd();
                 }
+                {
+                    protocol.writeFieldBegin(new TField("boolfield", TType.BOOL, (short) 3));
+                    protocol.writeBool(true);
+                    protocol.writeFieldEnd();
+                }
                 protocol.writeFieldStop();
                 protocol.writeStructEnd();
             }

@@ -23,6 +23,7 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.protocol.TProtocolUtil;
 import org.apache.thrift.protocol.TType;
+import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
@@ -137,6 +138,7 @@ public class DefaultThriftFrameDecoder extends ThriftFrameDecoder
         try {
             TNiftyTransport decodeAttemptTransport =
                     new TNiftyTransport(channel, buffer, ThriftTransportType.UNFRAMED);
+            int initialReadBytes = decodeAttemptTransport.getReadByteCount();
             TProtocol inputProtocol =
                     inputProtocolFactory.getProtocol(decodeAttemptTransport);
 
@@ -145,8 +147,8 @@ public class DefaultThriftFrameDecoder extends ThriftFrameDecoder
             TProtocolUtil.skip(inputProtocol, TType.STRUCT);
             inputProtocol.readMessageEnd();
 
-            messageLength = buffer.readerIndex() - messageStartReaderIndex;
-        } catch (IndexOutOfBoundsException e) {
+            messageLength = decodeAttemptTransport.getReadByteCount() - initialReadBytes;
+        } catch (TTransportException | IndexOutOfBoundsException e) {
             // No complete message was decoded: ran out of bytes
             return null;
         } finally {

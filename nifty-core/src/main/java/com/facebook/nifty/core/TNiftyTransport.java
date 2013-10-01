@@ -31,6 +31,7 @@ public class TNiftyTransport extends TTransport
     private final ThriftTransportType thriftTransportType;
     private final ChannelBuffer out;
     private static final int DEFAULT_OUTPUT_BUFFER_SIZE = 1024;
+    private final int initialReaderIndex;
 
     public TNiftyTransport(Channel channel,
                            ChannelBuffer in,
@@ -40,6 +41,7 @@ public class TNiftyTransport extends TTransport
         this.in = in;
         this.thriftTransportType = thriftTransportType;
         this.out = ChannelBuffers.dynamicBuffer(DEFAULT_OUTPUT_BUFFER_SIZE);
+        this.initialReaderIndex = in.readerIndex();
     }
 
     public TNiftyTransport(Channel channel, ThriftMessage message)
@@ -78,7 +80,9 @@ public class TNiftyTransport extends TTransport
 
     @Override
     public int readAll(byte[] bytes, int offset, int length) throws TTransportException {
-        in.readBytes(bytes, offset, length);
+        if (read(bytes, offset, length) < length) {
+            throw new TTransportException("Buffer doesn't have enough bytes to read");
+        }
         return length;
     }
 
@@ -104,5 +108,15 @@ public class TNiftyTransport extends TTransport
     {
         // Flush is a no-op: NiftyDispatcher will write the response to the Channel, in order to
         // guarantee ordering of responses when required.
+    }
+
+    public int getReadByteCount()
+    {
+        return in.readerIndex() - initialReaderIndex;
+    }
+
+    public int getWrittenByteCount()
+    {
+        return getOutputBuffer().writerIndex();
     }
 }

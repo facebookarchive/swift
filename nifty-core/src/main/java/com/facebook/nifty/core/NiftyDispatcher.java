@@ -30,8 +30,6 @@ import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -134,8 +132,8 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
 
                 try {
                     try {
-                        RequestContext requestContext = new RequestContext(ctx.getChannel().getRemoteAddress());
-                        RequestContext.setCurrentContext(requestContext);
+                        RequestContext requestContext = new NiftyRequestContext(ctx.getChannel(), inProtocol, outProtocol, messageTransport);
+                        RequestContexts.setCurrentContext(requestContext);
                         processFuture = processorFactory.getProcessor(messageTransport).process(inProtocol, outProtocol, requestContext);
                     }
                     finally {
@@ -144,7 +142,7 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
                         // next request using this thread before this one is completed. If you need
                         // the context throughout an asynchronous handler, you need to read and store
                         // it before returning a future.
-                        RequestContext.clearCurrentContext();
+                        RequestContexts.clearCurrentContext();
                     }
 
                     Futures.addCallback(

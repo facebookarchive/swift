@@ -18,6 +18,7 @@ package com.facebook.nifty.core;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocolUtil;
 import org.apache.thrift.protocol.TType;
+import org.apache.thrift.transport.TTransport;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
@@ -32,9 +33,7 @@ public class ThriftUnframedDecoder extends FrameDecoder {
 
         try
         {
-            TNiftyTransport transport = new TNiftyTransport(channel,
-                                                            buffer,
-                                                            ThriftTransportType.UNFRAMED);
+            TTransport transport = new TChannelBufferInputTransport(buffer);
             TBinaryProtocol protocol = new TBinaryProtocol(transport);
 
             protocol.readMessageBegin();

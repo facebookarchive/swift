@@ -16,8 +16,6 @@
 package com.facebook.nifty.processor;
 
 import com.facebook.nifty.core.RequestContext;
-import com.google.common.base.Function;
-import com.google.common.util.concurrent.CheckedFuture;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.thrift.TException;
@@ -26,7 +24,6 @@ import org.apache.thrift.TProcessorFactory;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TTransport;
 
-import javax.annotation.Nullable;
 import java.util.concurrent.ExecutionException;
 
 public class NiftyProcessorAdapters
@@ -89,7 +86,7 @@ public class NiftyProcessorAdapters
 
     /**
      * Adapt a {@link NiftyProcessor} to a standard Thrift {@link TProcessor}. The {@link
-     * RequestContext} will always be {@code null}
+     * com.facebook.nifty.core.NiftyRequestContext} will always be {@code null}
      */
     public static TProcessor processorToTProcessor(final NiftyProcessor niftyProcessor)
     {
