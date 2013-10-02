@@ -61,7 +61,7 @@ public class TemplateContextGenerator
     {
         final String name = mangleJavatypeName(service.getName());
         final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, name);
-        final SwiftJavaType parentType = typeRegistry.findType(service.getParent().orNull());
+        final SwiftJavaType parentType = typeRegistry.findType(defaultNamespace, service.getParent().orNull());
 
         final Set<String> javaParents = new HashSet<>();
         if (parentType != null) {
