@@ -47,6 +47,10 @@ public class TypeRegistry implements Iterable<SwiftJavaType>
 
     public SwiftJavaType findType(final String thriftNamespace, final String name)
     {
+        if (name == null) {
+            return null;
+        }
+
         if (name.contains(".")) {
             // If the name contains a '.' it already has a namespace prepended
             return findType(name);
