@@ -175,6 +175,7 @@ public class AsyncClientTest extends AsyncTestBase
                 @Override
                 public void onFailure(Throwable t)
                 {
+                    fail("Async call to getValueSlowly failed", t);
                 }
             });
 
@@ -227,6 +228,7 @@ public class AsyncClientTest extends AsyncTestBase
                 @Override
                 public void onFailure(Throwable t)
                 {
+                    fail("Async call to getValueSlowly failed", t);
                 }
             });
 
@@ -257,6 +259,7 @@ public class AsyncClientTest extends AsyncTestBase
                 @Override
                 public void onFailure(Throwable t)
                 {
+                    fail("Async call to onewayPutValueSlowly failed", t);
                 }
             });
 
