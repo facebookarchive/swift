@@ -23,7 +23,7 @@
   <parent>
     <groupId>com.facebook</groupId>
     <artifactId>facebook-oss-pom</artifactId>
-    <version>7</version>
+    <version>8-SNAPSHOT</version>
   </parent>
 
   <groupId>com.facebook.swift</groupId>
@@ -74,7 +74,7 @@
     <!-- This actually wants to be fixed -->
     <fb.check.fail-findbugs>false</fb.check.fail-findbugs>
 
-    <dep.airlift.version>0.79</dep.airlift.version>
+    <dep.airlift.version>0.83</dep.airlift.version>
     <dep.antlr.version>3.5</dep.antlr.version>
     <dep.maven-api.version>2.2.1</dep.maven-api.version>
     <dep.fb.nifty.version>0.10.0-SNAPSHOT</dep.fb.nifty.version>
@@ -121,7 +121,7 @@
       <dependency>
         <groupId>org.apache.thrift</groupId>
         <artifactId>libthrift</artifactId>
-        <version>0.9.0</version>
+        <version>0.9.1</version>
       </dependency>
 
       <dependency>
