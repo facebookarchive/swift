@@ -22,7 +22,7 @@
     <parent>
         <groupId>com.facebook</groupId>
         <artifactId>facebook-oss-pom</artifactId>
-        <version>7</version>
+        <version>8-SNAPSHOT</version>
     </parent>
 
     <groupId>com.facebook.nifty</groupId>
@@ -42,7 +42,7 @@
         <!-- it dependends on airlift, which is 1.7 only.               -->
         <!-- <project.build.targetJdk>1.6</project.build.targetJdk>     -->
 
-        <dep.airlift.version>0.79</dep.airlift.version>
+        <dep.airlift.version>0.83</dep.airlift.version>
     </properties>
 
     <url>https://facebook.github.com/nifty</url>
@@ -101,7 +101,7 @@
             <dependency>
                 <groupId>org.apache.thrift</groupId>
                 <artifactId>libthrift</artifactId>
-                <version>0.9.0</version>
+                <version>0.9.1</version>
             </dependency>
 
             <dependency>
