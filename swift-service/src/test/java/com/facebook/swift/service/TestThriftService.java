@@ -70,7 +70,7 @@ public class TestThriftService
         assertEquals(scribeService.getMessages(), newArrayList(concat(messages, messages)));
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "duplicate key.*")
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Multiple entries with same key.*")
     public void testConflictingServices()
             throws Exception
     {
