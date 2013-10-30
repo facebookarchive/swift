@@ -34,6 +34,8 @@ import org.apache.thrift.protocol.TMessageType;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolUtil;
 import org.apache.thrift.protocol.TType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -51,6 +53,8 @@ import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
 @ThreadSafe
 public class ThriftServiceProcessor implements NiftyProcessor
 {
+    private static final Logger LOG = LoggerFactory.getLogger(ThriftServiceProcessor.class);
+
     private final Map<String, ThriftMethodProcessor> methods;
     private final List<ThriftEventHandler> eventHandlers;
 
@@ -103,7 +107,8 @@ public class ThriftServiceProcessor implements NiftyProcessor
             ThriftMethodProcessor method = methods.get(methodName);
             if (method == null) {
                 TProtocolUtil.skip(in, TType.STRUCT);
-                throw new TApplicationException(UNKNOWN_METHOD, "Invalid method name: '" + methodName + "'");
+                writeApplicationException(out, methodName, sequenceId, UNKNOWN_METHOD, "Invalid method name: '" + methodName + "'", null);
+                return Futures.immediateFuture(true);
             }
 
             switch (message.type) {
@@ -117,8 +122,9 @@ public class ThriftServiceProcessor implements NiftyProcessor
                     break;
 
                 default:
-                    throw new TApplicationException(INVALID_MESSAGE_TYPE,
-                                                    "Received invalid message type " + message.type + " from client");
+                    TProtocolUtil.skip(in, TType.STRUCT);
+                    writeApplicationException(out, methodName, sequenceId, INVALID_MESSAGE_TYPE, "Received invalid message type " + message.type + " from client", null);
+                    return Futures.immediateFuture(true);
             }
 
             // invoke method
@@ -149,5 +155,31 @@ public class ThriftServiceProcessor implements NiftyProcessor
         catch (Exception e) {
             return Futures.immediateFailedFuture(e);
         }
+    }
+
+    public static TApplicationException writeApplicationException(
+            TProtocol outputProtocol,
+            String methodName,
+            int sequenceId,
+            int errorCode,
+            String errorMessage,
+            Throwable cause)
+            throws TException
+    {
+        // unexpected exception
+        TApplicationException applicationException = new TApplicationException(errorCode, errorMessage);
+        if (cause != null) {
+            applicationException.initCause(cause);
+        }
+
+        LOG.error(errorMessage, applicationException);
+
+        // Application exceptions are sent to client, and the connection can be reused
+        outputProtocol.writeMessageBegin(new TMessage(methodName, TMessageType.EXCEPTION, sequenceId));
+        applicationException.write(outputProtocol);
+        outputProtocol.writeMessageEnd();
+        outputProtocol.getTransport().flush();
+
+        return applicationException;
     }
 }
