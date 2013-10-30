@@ -34,7 +34,7 @@ _maybeEnumValue(enum, enumElem) ::= <<
 _struct(struct) ::= <<
 <_doc(struct.documentation)><\\\>
 <if(struct.exception)>exception<else>struct<endif> <struct.structName> {
-  <struct.unsortedFields : {f | <_field(f)>;}; separator="\n">
+  <struct.fields : {f | <_field(f)>;}; separator="\n">
 }
 >>
 
