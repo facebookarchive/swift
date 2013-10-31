@@ -38,4 +38,11 @@ public class Swift2ThriftGeneratorCommandLineConfig {
 
     @Parameter(names = "-namespace", arity = 2, description = "Namespace for a particular language to include")
     public List<String> namespaceMap;
+
+    @Parameter(names = "-allow_multiple_packages", description =
+        "Allow input classes to reside in different packages. " +
+        "The value of this flag defines the generated java.swift namespace. " +
+        "Note that Swift classes generated from the resultant Thrift file will all reside in one Java package"
+    )
+    public String allowMultiplePackages;
 }

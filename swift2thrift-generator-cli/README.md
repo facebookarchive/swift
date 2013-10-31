@@ -8,6 +8,10 @@ Swift2Thrift generates `.thrift` files from Swift-annotated Java files. The gene
 $ java -jar swift2thrift-generator-cli-0.9.0-SNAPSHOT-standalone.jar
 Usage: Swift2ThriftGenerator [options] <Swift-class-name...>
   Options:
+    -allow_multiple_packages
+       Allow input classes to reside in different packages. The value of this
+       flag defines the generated java.swift namespace. Note that Swift classes
+       generated from the resultant Thrift file will all reside in one Java package
     -package, -default_package
        Default package for unqualified classes
        Default: <empty string>

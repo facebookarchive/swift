@@ -17,7 +17,11 @@ package com.facebook.swift.generator.swift2thrift;
 
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.codec.ThriftProtocolType;
-import com.facebook.swift.codec.metadata.*;
+import com.facebook.swift.codec.metadata.FieldType;
+import com.facebook.swift.codec.metadata.ReflectionHelper;
+import com.facebook.swift.codec.metadata.ThriftFieldMetadata;
+import com.facebook.swift.codec.metadata.ThriftStructMetadata;
+import com.facebook.swift.codec.metadata.ThriftType;
 import com.facebook.swift.generator.swift2thrift.template.ThriftContext;
 import com.facebook.swift.generator.swift2thrift.template.ThriftServiceMetadataRenderer;
 import com.facebook.swift.generator.swift2thrift.template.ThriftTypeRenderer;
@@ -28,18 +32,27 @@ import com.facebook.swift.service.metadata.ThriftServiceMetadata;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
-import com.google.common.collect.*;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.*;
-import java.util.*;
-
 import org.stringtemplate.v4.AutoIndentWriter;
 import org.stringtemplate.v4.ST;
 
 import javax.annotation.Nullable;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class Swift2ThriftGenerator {
     private static final Logger LOG = LoggerFactory.getLogger(Swift2ThriftGenerator.class);
@@ -47,6 +60,7 @@ public class Swift2ThriftGenerator {
     private final boolean verbose;
     private final ThriftCodecManager codecManager = new ThriftCodecManager();
     private final String defaultPackage;
+    private final String allowMultiplePackages;     // null means don't allow
     private ThriftTypeRenderer thriftTypeRenderer;
     private List<ThriftType> thriftTypes = Lists.newArrayList();
     private List<ThriftServiceMetadata> thriftServices = Lists.newArrayList();
@@ -89,10 +103,14 @@ public class Swift2ThriftGenerator {
             }
         }
         this.namespaceMap = config.getNamespaceMap();
+        this.allowMultiplePackages = config.isAllowMultiplePackages();
     }
 
     public void parse(Iterable<String> inputs) throws IOException {
         boolean loadErrors = false;
+        if (allowMultiplePackages != null) {
+            packageName = allowMultiplePackages;
+        }
         for (String className: inputs) {
             Class<?> cls = load(className);
             if (cls == null) {
@@ -102,8 +120,11 @@ public class Swift2ThriftGenerator {
             if (packageName == null) {
                 packageName = cls.getPackage().getName();
             } else if (!packageName.equals(cls.getPackage().getName())) {
-                throw new IllegalStateException(String.format("Class %s is in package %s, previous classes were in package %s",
-                        cls.getName(), cls.getPackage().getName(), packageName));
+                if (allowMultiplePackages == null) {
+                    throw new IllegalStateException(
+                        String.format("Class %s is in package %s, previous classes were in package %s",
+                            cls.getName(), cls.getPackage().getName(), packageName));
+                }
             }
             Object result = convertToThrift(cls);
             if (result instanceof ThriftType) {
