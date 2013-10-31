@@ -57,7 +57,8 @@ public class Main
                 .includeMap(mapBuilder.build())
                 .verbose(cliConfig.verbose)
                 .defaultPackage(cliConfig.defaultPackage)
-                .namespaceMap(namespaceMapBuilder.build());
+                .namespaceMap(namespaceMapBuilder.build())
+                .allowMultiplePackages(cliConfig.allowMultiplePackages);
 
         new Swift2ThriftGenerator(configBuilder.build()).parse(cliConfig.inputFiles);
     }
