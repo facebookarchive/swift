@@ -26,15 +26,18 @@ public class Swift2ThriftGeneratorConfig {
     private final boolean verbose;
     private final String defaultPackage;
     private final Map<String, String> namespaceMap;
+    private final boolean allowMultiplePackages;
 
     private Swift2ThriftGeneratorConfig(final File outputFile, final Map<String, String> includeMap,
-                                        boolean verbose, String defaultPackage, final Map<String, String> namespaceMap)
+                                        boolean verbose, String defaultPackage, final Map<String, String> namespaceMap,
+                                        boolean allowMultiplePackages)
     {
         this.outputFile = outputFile;
         this.includeMap = includeMap;
         this.verbose = verbose;
         this.defaultPackage = defaultPackage;
         this.namespaceMap = namespaceMap;
+        this.allowMultiplePackages = allowMultiplePackages;
     }
 
     public static Builder builder()
@@ -70,6 +73,11 @@ public class Swift2ThriftGeneratorConfig {
         return namespaceMap;
     }
 
+    public boolean isAllowMultiplePackages()
+    {
+        return allowMultiplePackages;
+    }
+
     public static class Builder
     {
         private File outputFile = null;
@@ -77,6 +85,7 @@ public class Swift2ThriftGeneratorConfig {
         private boolean verbose;
         private String defaultPackage;
         private Map<String, String> namespaceMap;
+        private boolean allowMultiplePackages;
 
         private Builder()
         {
@@ -85,7 +94,7 @@ public class Swift2ThriftGeneratorConfig {
         public Swift2ThriftGeneratorConfig build()
         {
             return new Swift2ThriftGeneratorConfig(outputFile, includeMap, verbose, defaultPackage,
-                    namespaceMap);
+                    namespaceMap, allowMultiplePackages);
         }
 
         public Builder outputFile(final File outputFile)
@@ -115,6 +124,12 @@ public class Swift2ThriftGeneratorConfig {
         public Builder namespaceMap(Map<String, String> namespaceMap)
         {
             this.namespaceMap = namespaceMap;
+            return this;
+        }
+
+        public Builder allowMultiplePackages(boolean allowMultiplePackages)
+        {
+            this.allowMultiplePackages = allowMultiplePackages;
             return this;
         }
     }

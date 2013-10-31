@@ -47,6 +47,7 @@ public class Swift2ThriftGenerator {
     private final boolean verbose;
     private final ThriftCodecManager codecManager = new ThriftCodecManager();
     private final String defaultPackage;
+    private final boolean allowMultiplePackages;
     private ThriftTypeRenderer thriftTypeRenderer;
     private List<ThriftType> thriftTypes = Lists.newArrayList();
     private List<ThriftServiceMetadata> thriftServices = Lists.newArrayList();
@@ -89,6 +90,7 @@ public class Swift2ThriftGenerator {
             }
         }
         this.namespaceMap = config.getNamespaceMap();
+        this.allowMultiplePackages = config.isAllowMultiplePackages();
     }
 
     public void parse(Iterable<String> inputs) throws IOException {
@@ -102,8 +104,11 @@ public class Swift2ThriftGenerator {
             if (packageName == null) {
                 packageName = cls.getPackage().getName();
             } else if (!packageName.equals(cls.getPackage().getName())) {
-                throw new IllegalStateException(String.format("Class %s is in package %s, previous classes were in package %s",
-                        cls.getName(), cls.getPackage().getName(), packageName));
+                if (!allowMultiplePackages) {
+                    throw new IllegalStateException(
+                        String.format("Class %s is in package %s, previous classes were in package %s",
+                            cls.getName(), cls.getPackage().getName(), packageName));
+                }
             }
             Object result = convertToThrift(cls);
             if (result instanceof ThriftType) {
