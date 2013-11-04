@@ -99,8 +99,10 @@ public class NettyServerTransport implements ExternalResourceReleasable
             {
                 ChannelPipeline cp = Channels.pipeline();
                 TProtocolFactory inputProtocolFactory = def.getDuplexProtocolFactory().getInputProtocolFactory();
+                NiftySecurityHandlers securityHandlers = def.getSecurityFactory().getSecurityHandlers(def);
                 cp.addLast("connectionLimiter", connectionLimiter);
                 cp.addLast(ChannelStatistics.NAME, channelStatistics);
+                cp.addLast("encryptionHandler", securityHandlers.getEncryptionHandler());
                 cp.addLast("frameCodec", def.getThriftFrameCodecFactory().create(def.getMaxFrameSize(),
                                                                                  inputProtocolFactory));
                 if (def.getClientIdleTimeout() != null) {
@@ -113,6 +115,7 @@ public class NettyServerTransport implements ExternalResourceReleasable
                     cp.addLast("idleDisconnectHandler", new IdleDisconnectHandler());
                 }
 
+                cp.addLast("authHandler", securityHandlers.getAuthenticationHandler());
                 cp.addLast("dispatcher", new NiftyDispatcher(def));
                 cp.addLast("exceptionLogger", new NiftyExceptionLogger());
                 return cp;

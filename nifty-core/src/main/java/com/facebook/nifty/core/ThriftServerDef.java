@@ -39,6 +39,7 @@ public class ThriftServerDef
     private final ThriftFrameCodecFactory thriftFrameCodecFactory;
     private final Executor executor;
     private final String name;
+    private final NiftySecurityFactory securityFactory;
 
     public ThriftServerDef(
             String name,
@@ -50,7 +51,8 @@ public class ThriftServerDef
             TDuplexProtocolFactory duplexProtocolFactory,
             Duration clientIdleTimeout,
             ThriftFrameCodecFactory thriftFrameCodecFactory,
-            Executor executor)
+            Executor executor,
+            NiftySecurityFactory securityFactory)
     {
         this.name = name;
         this.serverPort = serverPort;
@@ -62,6 +64,7 @@ public class ThriftServerDef
         this.clientIdleTimeout = clientIdleTimeout;
         this.thriftFrameCodecFactory = thriftFrameCodecFactory;
         this.executor = executor;
+        this.securityFactory = securityFactory;
     }
 
     public static ThriftServerDefBuilder newBuilder()
@@ -116,5 +119,10 @@ public class ThriftServerDef
     public ThriftFrameCodecFactory getThriftFrameCodecFactory()
     {
         return thriftFrameCodecFactory;
+    }
+
+    public NiftySecurityFactory getSecurityFactory()
+    {
+        return securityFactory;
     }
 }

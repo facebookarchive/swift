@@ -62,6 +62,7 @@ public abstract class ThriftServerDefBuilderBase<T extends ThriftServerDefBuilde
     private Executor executor;
     private String name = "nifty-" + ID.getAndIncrement();
     private Duration clientIdleTimeout;
+    private NiftySecurityFactory securityFactory;
 
     /**
      * The default maximum allowable size for a single incoming thrift request or outgoing thrift
@@ -92,6 +93,7 @@ public abstract class ThriftServerDefBuilderBase<T extends ThriftServerDefBuilde
         };
         this.clientIdleTimeout = null;
         this.thriftFrameCodecFactory = new DefaultThriftFrameCodecFactory();
+        this.securityFactory = new NiftyNoOpSecurityFactory();
     }
 
     /**
@@ -221,6 +223,12 @@ public abstract class ThriftServerDefBuilderBase<T extends ThriftServerDefBuilde
         return (T) this;
     }
 
+    public T withSecurityFactory(NiftySecurityFactory securityFactory)
+    {
+        this.securityFactory = securityFactory;
+        return (T) this;
+    }
+
     /**
      * Build the ThriftServerDef
      */
@@ -247,6 +255,7 @@ public abstract class ThriftServerDefBuilderBase<T extends ThriftServerDefBuilde
                 duplexProtocolFactory,
                 clientIdleTimeout,
                 thriftFrameCodecFactory,
-                executor);
+                executor,
+                securityFactory);
     }
 }
