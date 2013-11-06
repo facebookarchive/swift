@@ -82,11 +82,13 @@ public class Swift2ThriftGenerator {
     {
         this.verbose = config.isVerbose();
         String defaultPackage = config.getDefaultPackage();
+        
         if (defaultPackage.isEmpty()) {
             this.defaultPackage = "";
         } else {
             this.defaultPackage = defaultPackage + ".";
         }
+        
         OutputStream os = config.getOutputFile() != null ? new FileOutputStream(config.getOutputFile()) : System.out;
         this.outputStreamWriter = new OutputStreamWriter(os, Charsets.UTF_8);
         Map<String, String> paramIncludeMap = config.getIncludeMap();
@@ -97,26 +99,32 @@ public class Swift2ThriftGenerator {
             if (cls == null) {
                 continue;
             }
+            
             Object result = convertToThrift(cls);
             if (result != null) {
                 this.includeMap.put(result, entry.getValue());
             }
         }
+        
         this.namespaceMap = config.getNamespaceMap();
         this.allowMultiplePackages = config.isAllowMultiplePackages();
     }
 
-    public void parse(Iterable<String> inputs) throws IOException {
+    public void parse(Iterable<String> inputs) throws IOException 
+    {
         boolean loadErrors = false;
+        
         if (allowMultiplePackages != null) {
             packageName = allowMultiplePackages;
         }
+        
         for (String className: inputs) {
             Class<?> cls = load(className);
             if (cls == null) {
                 loadErrors = true;
                 continue;
             }
+            
             if (packageName == null) {
                 packageName = cls.getPackage().getName();
             } else if (!packageName.equals(cls.getPackage().getName())) {
@@ -126,6 +134,7 @@ public class Swift2ThriftGenerator {
                             cls.getName(), cls.getPackage().getName(), packageName));
                 }
             }
+            
             Object result = convertToThrift(cls);
             if (result instanceof ThriftType) {
                 thriftTypes.add((ThriftType)result);
@@ -139,6 +148,7 @@ public class Swift2ThriftGenerator {
             LOG.error("Couldn't load some classes");
             return;
         }
+        
         if (verify()) {
             gen();
         } else {
@@ -226,6 +236,7 @@ public class Swift2ThriftGenerator {
             this.result = result;
         }
     }
+    
     private <T> SuccessAndResult<T> topologicalSort(List<T> list, Predicate<T> isKnown)
     {
         List<T> remaining = list;
@@ -265,6 +276,7 @@ public class Swift2ThriftGenerator {
                 }
             }
         }
+        
         for (Map.Entry<String, ThriftMethodMetadata> method : service.getDeclaredMethods().entrySet()) {
             for (ThriftFieldMetadata f : method.getValue().getParameters()) {
                 if (!verifyField(f.getThriftType())) {
@@ -277,6 +289,7 @@ public class Swift2ThriftGenerator {
                     }
                 }
             }
+            
             for (ThriftType ex : method.getValue().getExceptions().values()) {
                 if (!verifyField(ex)) {
                     ok = false;
@@ -288,6 +301,7 @@ public class Swift2ThriftGenerator {
                     }
                 }
             }
+            
             if (!method.getValue().getReturnType().equals(ThriftType.VOID) &&
                     !verifyField(method.getValue().getReturnType())) {
                 ok = false;
@@ -299,6 +313,7 @@ public class Swift2ThriftGenerator {
                 }
             }
         }
+        
         knownServices.add(service);
         return ok;
     }
@@ -315,6 +330,7 @@ public class Swift2ThriftGenerator {
             if (knownTypes.contains(t)) {
                 return true;
             }
+            
             if (includeMap.containsKey(t)) {
                 usedIncludedTypes.add(t);
                 return true;
@@ -377,7 +393,8 @@ public class Swift2ThriftGenerator {
         }
     }
 
-    private void gen() throws IOException {
+    private void gen() throws IOException 
+    {
         ImmutableMap.Builder<ThriftType, String> typenameMap = ImmutableMap.builder();
         ImmutableMap.Builder<ThriftServiceMetadata, String> serviceMap = ImmutableMap.builder();
         ImmutableSet.Builder<String> includes = ImmutableSet.builder();
@@ -386,11 +403,13 @@ public class Swift2ThriftGenerator {
             includes.add(filename);
             typenameMap.put(t, Files.getNameWithoutExtension(filename));
         }
+        
         for (ThriftServiceMetadata s: usedIncludedServices) {
             String filename = includeMap.get(s);
             includes.add(filename);
             serviceMap.put(s, Files.getNameWithoutExtension(filename));
         }
+        
         this.thriftTypeRenderer = new ThriftTypeRenderer(typenameMap.build());
         ThriftServiceMetadataRenderer serviceRenderer = new ThriftServiceMetadataRenderer(serviceMap.build());
         TemplateLoader tl = new TemplateLoader(ImmutableList.of("thrift/common.st"),
