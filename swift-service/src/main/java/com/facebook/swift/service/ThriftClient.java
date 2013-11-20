@@ -33,6 +33,7 @@ public class ThriftClient<T>
     private final Class<T> clientType;
     private final String clientName;
     private final Duration connectTimeout;
+    private final Duration receiveTimeout;
     private final Duration readTimeout;
     private final Duration writeTimeout;
 
@@ -72,6 +73,7 @@ public class ThriftClient<T>
         this.clientName = clientName;
         this.eventHandlers = eventHandlers;
         connectTimeout = clientConfig.getConnectTimeout();
+        receiveTimeout = clientConfig.getReceiveTimeout();
         readTimeout = clientConfig.getReadTimeout();
         writeTimeout = clientConfig.getWriteTimeout();
         socksProxy = clientConfig.getSocksProxy();
@@ -94,6 +96,12 @@ public class ThriftClient<T>
     public String getConnectTimeout()
     {
         return connectTimeout.toString();
+    }
+
+    @Managed
+    public String getReceiveTimeout()
+    {
+        return receiveTimeout.toString();
     }
 
     @Managed
@@ -134,6 +142,7 @@ public class ThriftClient<T>
                 connector,
                 clientType,
                 connectTimeout,
+                receiveTimeout,
                 readTimeout,
                 writeTimeout,
                 maxFrameSize,

@@ -262,6 +262,7 @@ public class TestThriftClientAndServerModules
 
         ImmutableMap<String, String> configMap = new ImmutableMap.Builder<String, String>()
                 .put("scribe.thrift.client.connect-timeout", TEST_MEDIUM_TIMEOUT)
+                .put("scribe.thrift.client.receive-timeout", TEST_MEDIUM_TIMEOUT)
                 .put("scribe.thrift.client.read-timeout", TEST_SHORT_TIMEOUT)
                 .put("scribe.thrift.client.max-frame-size", Integer.toString(SIXTEEN_MB_IN_BYTES))
                 .put("PumaReadService.thrift.client.write-timeout", TEST_LONG_TIMEOUT)
@@ -284,6 +285,7 @@ public class TestThriftClientAndServerModules
 
         ThriftClient<Scribe> scribeClient = injector.getInstance(Key.get(new TypeLiteral<ThriftClient<Scribe>>() {}));
         assertEquals(Duration.valueOf(scribeClient.getConnectTimeout()), Duration.valueOf(TEST_MEDIUM_TIMEOUT));
+        assertEquals(Duration.valueOf(scribeClient.getReceiveTimeout()), Duration.valueOf(TEST_MEDIUM_TIMEOUT));
         assertEquals(Duration.valueOf(scribeClient.getReadTimeout()), Duration.valueOf(TEST_SHORT_TIMEOUT));
         assertEquals(Duration.valueOf(scribeClient.getWriteTimeout()), ThriftClientConfig.DEFAULT_WRITE_TIMEOUT);
         assertEquals(scribeClient.getMaxFrameSize(), SIXTEEN_MB_IN_BYTES);
@@ -292,6 +294,7 @@ public class TestThriftClientAndServerModules
         ThriftClient<PumaReadService> pumaClient = injector.getInstance(Key.get(new TypeLiteral<ThriftClient<PumaReadService>>() {}));
         assertEquals(Duration.valueOf(pumaClient.getConnectTimeout()), ThriftClientConfig.DEFAULT_CONNECT_TIMEOUT);
         assertEquals(Duration.valueOf(pumaClient.getReadTimeout()), ThriftClientConfig.DEFAULT_READ_TIMEOUT);
+        assertEquals(Duration.valueOf(pumaClient.getReceiveTimeout()), ThriftClientConfig.DEFAULT_RECEIVE_TIMEOUT);
         assertEquals(Duration.valueOf(pumaClient.getWriteTimeout()), Duration.valueOf(TEST_LONG_TIMEOUT));
         assertEquals(pumaClient.getMaxFrameSize(), ThriftClientConfig.DEFAULT_MAX_FRAME_SIZE);
         assertEquals(HostAndPort.fromString(pumaClient.getSocksProxy()), proxy);

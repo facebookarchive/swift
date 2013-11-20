@@ -27,13 +27,15 @@ import javax.validation.constraints.Min;
 public class ThriftClientConfig
 {
     public static final Duration DEFAULT_CONNECT_TIMEOUT = new Duration(500, TimeUnit.MILLISECONDS);
-    public static final Duration DEFAULT_READ_TIMEOUT = new Duration(1, TimeUnit.MINUTES);
+    public static final Duration DEFAULT_RECEIVE_TIMEOUT = new Duration(1, TimeUnit.MINUTES);
+    public static final Duration DEFAULT_READ_TIMEOUT = new Duration(10, TimeUnit.SECONDS);
     public static final Duration DEFAULT_WRITE_TIMEOUT = new Duration(1, TimeUnit.MINUTES);
     // Default max frame size of 16 MB
     public static final int DEFAULT_MAX_FRAME_SIZE = 16777216;
 
     private int maxFrameSize = DEFAULT_MAX_FRAME_SIZE;
     private Duration connectTimeout = DEFAULT_CONNECT_TIMEOUT;
+    private Duration receiveTimeout = DEFAULT_RECEIVE_TIMEOUT;
     private Duration readTimeout = DEFAULT_READ_TIMEOUT;
     private Duration writeTimeout = DEFAULT_WRITE_TIMEOUT;
     private HostAndPort socksProxy;
@@ -48,6 +50,19 @@ public class ThriftClientConfig
     public ThriftClientConfig setConnectTimeout(Duration connectTimeout)
     {
         this.connectTimeout = connectTimeout;
+        return this;
+    }
+
+    @MinDuration("1ms")
+    public Duration getReceiveTimeout()
+    {
+        return receiveTimeout;
+    }
+
+    @Config("thrift.client.receive-timeout")
+    public ThriftClientConfig setReceiveTimeout(Duration receiveTimeout)
+    {
+        this.receiveTimeout = receiveTimeout;
         return this;
     }
 

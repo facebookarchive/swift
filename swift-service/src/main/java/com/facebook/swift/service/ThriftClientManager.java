@@ -43,8 +43,6 @@ import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolException;
-import org.apache.thrift.transport.TMemoryBuffer;
-import org.apache.thrift.transport.TMemoryInputTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.channel.Channel;
 
@@ -62,12 +60,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import javax.annotation.PreDestroy;
 import javax.annotation.concurrent.Immutable;
+import javax.validation.constraints.NotNull;
 
 import static com.facebook.nifty.duplex.TTransportPair.fromSeparateTransports;
 import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_CONNECT_TIMEOUT;
-import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_READ_TIMEOUT;
-import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_WRITE_TIMEOUT;
 import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_MAX_FRAME_SIZE;
+import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_READ_TIMEOUT;
+import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_RECEIVE_TIMEOUT;
+import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_WRITE_TIMEOUT;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
 
 public class ThriftClientManager implements Closeable
@@ -87,6 +89,7 @@ public class ThriftClientManager implements Closeable
                     return new ThriftClientMetadata(typeAndName.getType(), typeAndName.getName(), codecManager);
                 }
             });
+
     private final Set<ThriftClientEventHandler> globalEventHandlers;
 
     public ThriftClientManager()
@@ -102,9 +105,9 @@ public class ThriftClientManager implements Closeable
     @Inject
     public ThriftClientManager(ThriftCodecManager codecManager, NiftyClient niftyClient, Set<ThriftClientEventHandler> globalEventHandlers)
     {
-        this.codecManager = codecManager;
-        this.niftyClient = niftyClient;
-        this.globalEventHandlers = globalEventHandlers;
+        this.codecManager = checkNotNull(codecManager, "codecManager is null");
+        this.niftyClient = checkNotNull(niftyClient, "niftyClient is null");
+        this.globalEventHandlers = checkNotNull(globalEventHandlers, "globalEventHandlers is null");
     }
 
     public <T, C extends NiftyClientChannel> ListenableFuture<T> createClient(
@@ -115,6 +118,7 @@ public class ThriftClientManager implements Closeable
                 connector,
                 type,
                 DEFAULT_CONNECT_TIMEOUT,
+                DEFAULT_RECEIVE_TIMEOUT,
                 DEFAULT_READ_TIMEOUT,
                 DEFAULT_WRITE_TIMEOUT,
                 DEFAULT_MAX_FRAME_SIZE,
@@ -123,39 +127,72 @@ public class ThriftClientManager implements Closeable
                 null);
     }
 
+    /**
+     * @deprecated Use {@link ThriftClientManager#createClient(NiftyClientConnector, Class, Duration, Duration, Duration, Duration, int, String, List, HostAndPort)}.
+     */
+    @Deprecated
     public <T, C extends NiftyClientChannel> ListenableFuture<T> createClient(
             final NiftyClientConnector<C> connector,
             final Class<T> type,
-            final Duration connectTimeout,
-            final Duration readTimeout,
-            final Duration writeTimeout,
+            @Nullable final Duration connectTimeout,
+            @Nullable final Duration readTimeout,
+            @Nullable final Duration writeTimeout,
             final int maxFrameSize,
-            final String clientName,
+            @Nullable final String clientName,
             final List<? extends ThriftClientEventHandler> eventHandlers,
-            HostAndPort socksProxy)
+            @Nullable HostAndPort socksProxy)
     {
-        InetSocketAddress socksProxyAddress = this.toSocksProxyAddress(socksProxy);
+        return createClient(
+            connector,
+            type,
+            connectTimeout,
+            readTimeout,
+            readTimeout,
+            writeTimeout,
+            maxFrameSize,
+            clientName,
+            eventHandlers,
+            socksProxy);
+    }
+
+    public <T, C extends NiftyClientChannel> ListenableFuture<T> createClient(
+            final NiftyClientConnector<C> connector,
+            final Class<T> type,
+            @Nullable final Duration connectTimeout,
+            @Nullable final Duration receiveTimeout,
+            @Nullable final Duration readTimeout,
+            @Nullable final Duration writeTimeout,
+            final int maxFrameSize,
+            @Nullable final String clientName,
+            final List<? extends ThriftClientEventHandler> eventHandlers,
+            @Nullable HostAndPort socksProxy)
+    {
+        checkNotNull(connector, "connector is null");
+        checkNotNull(type, "type is null");
+        checkNotNull(eventHandlers, "eventHandlers is null");
+
+        InetSocketAddress socksProxyAddress = toSocksProxyAddress(socksProxy);
         final ListenableFuture<C> connectFuture = niftyClient.connectAsync(
                 connector,
                 connectTimeout,
+                receiveTimeout,
                 readTimeout,
                 writeTimeout,
                 maxFrameSize,
                 socksProxyAddress);
+
         ListenableFuture<T> clientFuture = Futures.transform(connectFuture, new Function<C, T>() {
             @Nullable
             @Override
-            public T apply(@Nullable C channel)
+            public T apply(@NotNull C channel)
             {
-                try {
-                    if (readTimeout.toMillis() > 0) {
-                        channel.setReceiveTimeout(readTimeout);
-                    }
-                    if (writeTimeout.toMillis() > 0) {
-                        channel.setSendTimeout(writeTimeout);
-                    }
+                channel.setReceiveTimeout(receiveTimeout);
+                channel.setReadTimeout(readTimeout);
+                channel.setSendTimeout(writeTimeout);
 
-                    String name = Strings.isNullOrEmpty(clientName) ? connector.toString() : clientName;
+                String name = Strings.isNullOrEmpty(clientName) ? connector.toString() : clientName;
+
+                try {
                     return createClient(channel, type, name, eventHandlers);
                 }
                 catch (Throwable t) {
@@ -182,6 +219,11 @@ public class ThriftClientManager implements Closeable
 
     public <T> T createClient(NiftyClientChannel channel, Class<T> type, String name, List<? extends ThriftClientEventHandler> eventHandlers)
     {
+        checkNotNull(channel, "channel is null");
+        checkNotNull(type, "type is null");
+        checkNotNull(name, "name is null");
+        checkNotNull(eventHandlers, "eventHandlers is null");
+
         ThriftClientMetadata clientMetadata = clientMetadataCache.getUnchecked(new TypeAndName(type, name));
 
         String clientDescription = clientMetadata.getName() + " " + channel.toString();
@@ -197,12 +239,7 @@ public class ThriftClientManager implements Closeable
         ));
     }
 
-    private InetSocketAddress toInetSocketAddress(HostAndPort hostAndPort)
-    {
-        return new InetSocketAddress(hostAndPort.getHostText(), hostAndPort.getPort());
-    }
-
-    private InetSocketAddress toSocksProxyAddress(HostAndPort socksProxy)
+    private static InetSocketAddress toSocksProxyAddress(HostAndPort socksProxy)
     {
         if (socksProxy == null) {
             return null;
