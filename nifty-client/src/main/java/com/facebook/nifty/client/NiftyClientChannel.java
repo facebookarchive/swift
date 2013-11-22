@@ -21,6 +21,8 @@ import org.apache.thrift.TException;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
 
+import javax.annotation.Nullable;
+
 public interface NiftyClientChannel {
     /**
      * Sends a single message asynchronously, and notifies the {@link Listener}
@@ -42,7 +44,7 @@ public interface NiftyClientChannel {
      *
      * @param sendTimeout
      */
-    void setSendTimeout(Duration sendTimeout);
+    void setSendTimeout(@Nullable Duration sendTimeout);
 
     /**
      * Returns the timeout most recently set by
@@ -58,7 +60,7 @@ public interface NiftyClientChannel {
      *
      * @param receiveTimeout
      */
-    void setReceiveTimeout(Duration receiveTimeout);
+    void setReceiveTimeout(@Nullable Duration receiveTimeout);
 
     /**
      * Returns the timeout most recently set by
@@ -67,6 +69,21 @@ public interface NiftyClientChannel {
      * @return
      */
     Duration getReceiveTimeout();
+
+    /**
+     * Sets a timeout used to limit the time that the client waits for data to be sent by the server.
+     *
+     * @param readTimeout
+     */
+    void setReadTimeout(@Nullable Duration readTimeout);
+
+    /**
+     * Returns the timeout most recently set by
+     * {@link NiftyClientChannel#setReadTimeout(io.airlift.units.Duration)}
+     *
+     * @return
+     */
+    Duration getReadTimeout();
 
     /**
      * Closes the channel

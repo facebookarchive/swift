@@ -42,6 +42,7 @@ import org.jboss.netty.util.TimerTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -56,7 +57,13 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
 
     private final Channel nettyChannel;
     private Duration sendTimeout = null;
-    private Duration requestTimeout = null;
+
+    // Timeout until the whole request must be received.
+    private Duration receiveTimeout = null;
+
+    // Timeout for not receiving any data from the server
+    private Duration readTimeout = null;
+
     private final Map<Integer, Request> requestMap = new HashMap<>();
     private volatile TException channelError;
     private final Timer timer;
@@ -104,7 +111,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
     }
 
     @Override
-    public void setSendTimeout(Duration sendTimeout)
+    public void setSendTimeout(@Nullable Duration sendTimeout)
     {
         this.sendTimeout = sendTimeout;
     }
@@ -116,15 +123,27 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
     }
 
     @Override
-    public void setReceiveTimeout(Duration receiveTimeout)
+    public void setReceiveTimeout(@Nullable Duration receiveTimeout)
     {
-        this.requestTimeout = receiveTimeout;
+        this.receiveTimeout = receiveTimeout;
     }
 
     @Override
     public Duration getReceiveTimeout()
     {
-        return this.requestTimeout;
+        return receiveTimeout;
+    }
+
+    @Override
+    public void setReadTimeout(@Nullable Duration readTimeout)
+    {
+        this.readTimeout = readTimeout;
+    }
+
+    @Override
+    public Duration getReadTimeout()
+    {
+        return this.readTimeout;
     }
 
     @Override
@@ -144,11 +163,6 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
     {
         NioSocketChannel nioSocketChannel = (NioSocketChannel) getNettyChannel();
         nioSocketChannel.getWorker().executeInIoThread(runnable, true);
-    }
-
-    private boolean hasRequestTimeout()
-    {
-        return requestTimeout != null;
     }
 
     @Override
@@ -208,7 +222,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
                 if (oneway) {
                     retireRequest(request);
                 } else {
-                    queueReceiveTimeout(request);
+                    queueReceiveAndReadTimeout(request);
                 }
             } else {
                 TTransportException transportException =
@@ -252,7 +266,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
 
     private Request makeRequest(int sequenceId, Listener listener)
     {
-        Request request = new Request(sequenceId, listener);
+        Request request = new Request(listener);
         requestMap.put(sequenceId, request);
         return request;
     }
@@ -265,13 +279,18 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
     private void cancelRequestTimeouts(Request request)
     {
         Timeout sendTimeout = request.getSendTimeout();
-        if (sendTimeout != null) {
+        if (sendTimeout != null && !sendTimeout.isCancelled()) {
             sendTimeout.cancel();
         }
 
-        Timeout responseTimeout = request.getReceiveTimeout();
-        if (responseTimeout != null) {
-            responseTimeout.cancel();
+        Timeout receiveTimeout = request.getReceiveTimeout();
+        if (receiveTimeout != null && !receiveTimeout.isCancelled()) {
+            receiveTimeout.cancel();
+        }
+
+        Timeout readTimeout = request.getReadTimeout();
+        if (readTimeout != null && !readTimeout.isCancelled()) {
+            readTimeout.cancel();
         }
     }
 
@@ -361,34 +380,27 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
         fireChannelErrorCallback(listener, wrapException(throwable));
     }
 
-    private void onSendTimeoutExpired(Request request)
+    private void onSendTimeoutFired(Request request)
     {
-        Timeout expiredTimeout = request.getSendTimeout();
-
-        if (!expiredTimeout.isCancelled()) {
-            cancelAllTimeouts();
-            WriteTimeoutException timeoutException =
-                    new WriteTimeoutException(
-                            "Timed out waiting " + getSendTimeout() + " to send request");
-
-            fireChannelErrorCallback(request.getListener(), timeoutException);
-        }
+        cancelAllTimeouts();
+        WriteTimeoutException timeoutException = new WriteTimeoutException("Timed out waiting " + getSendTimeout() + " to send data to server");
+        fireChannelErrorCallback(request.getListener(), timeoutException);
     }
 
-    private void onReceiveTimeoutExpired(Request request)
+    private void onReceiveTimeoutFired(Request request)
     {
-        Timeout expiredTimeout = request.getReceiveTimeout();
-
-        if (!expiredTimeout.isCancelled()) {
-            cancelAllTimeouts();
-
-            ReadTimeoutException timeoutException =
-                    new ReadTimeoutException(
-                            "Timed out waiting " + getReceiveTimeout() + " to receive response");
-
-            fireChannelErrorCallback(request.getListener(), timeoutException);
-        }
+        cancelAllTimeouts();
+        ReadTimeoutException timeoutException = new ReadTimeoutException("Timed out waiting " + getReceiveTimeout() + " to receive response");
+        fireChannelErrorCallback(request.getListener(), timeoutException);
     }
+
+    private void onReadTimeoutFired(Request request)
+    {
+        cancelAllTimeouts();
+        ReadTimeoutException timeoutException = new ReadTimeoutException("Timed out waiting " + getReadTimeout() + " to read data from server");
+        fireChannelErrorCallback(request.getListener(), timeoutException);
+    }
+
 
     private void queueSendTimeout(final Request request) throws TTransportException
     {
@@ -398,7 +410,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
                 TimerTask sendTimeoutTask = new IoThreadBoundTimerTask(this, new TimerTask() {
                     @Override
                     public void run(Timeout timeout) {
-                        onSendTimeoutExpired(request);
+                        onSendTimeoutFired(request);
                     }
                 });
 
@@ -414,29 +426,46 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
         }
     }
 
-    private void queueReceiveTimeout(final Request request) throws TTransportException
+    private void queueReceiveAndReadTimeout(final Request request) throws TTransportException
     {
-        if (this.requestTimeout != null) {
-            long requestTimeoutMs = this.requestTimeout.toMillis();
-            if (requestTimeoutMs > 0) {
+        if (this.receiveTimeout != null) {
+            long receiveTimeoutMs = this.receiveTimeout.toMillis();
+            if (receiveTimeoutMs > 0) {
                 TimerTask receiveTimeoutTask = new IoThreadBoundTimerTask(this, new TimerTask() {
                     @Override
                     public void run(Timeout timeout) {
-                        onReceiveTimeoutExpired(request);
+                        onReceiveTimeoutFired(request);
                     }
                 });
 
                 Timeout timeout;
                 try {
-                    timeout = timer.newTimeout(receiveTimeoutTask, requestTimeoutMs, TimeUnit.MILLISECONDS);
+                    timeout = timer.newTimeout(receiveTimeoutTask, receiveTimeoutMs, TimeUnit.MILLISECONDS);
                 }
                 catch (IllegalStateException e) {
-                    throw new TTransportException("Unable to schedule receive timeout");
+                    throw new TTransportException("Unable to schedule request timeout");
                 }
                 request.setReceiveTimeout(timeout);
             }
         }
+
+        if (this.readTimeout != null) {
+            long readTimeoutNanos = this.readTimeout.roundTo(TimeUnit.NANOSECONDS);
+            if (readTimeoutNanos > 0) {
+                TimerTask readTimeoutTask = new IoThreadBoundTimerTask(this, new ReadTimeoutTask(readTimeoutNanos, request));
+
+                Timeout timeout;
+                try {
+                    timeout = timer.newTimeout(readTimeoutTask, readTimeoutNanos, TimeUnit.NANOSECONDS);
+                }
+                catch (IllegalStateException e) {
+                    throw new TTransportException("Unable to schedule read timeout");
+                }
+                request.setReadTimeout(timeout);
+            }
+        }
     }
+
 
     /**
      * Used to create TimerTasks that will fire
@@ -476,20 +505,15 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
      */
     private static class Request
     {
-        private final int sequenceId;
         private final Listener listener;
         private Timeout sendTimeout;
         private Timeout receiveTimeout;
 
-        public Request(int sequenceId, Listener listener)
-        {
-            this.sequenceId = sequenceId;
-            this.listener = listener;
-        }
+        private volatile Timeout readTimeout;
 
-        public int getSequenceId()
+        public Request(Listener listener)
         {
-            return sequenceId;
+            this.listener = listener;
         }
 
         public Listener getListener()
@@ -507,6 +531,16 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
             this.receiveTimeout = receiveTimeout;
         }
 
+        public Timeout getReadTimeout()
+        {
+            return readTimeout;
+        }
+
+        public void setReadTimeout(Timeout readTimeout)
+        {
+            this.readTimeout = readTimeout;
+        }
+
         public Timeout getSendTimeout()
         {
             return sendTimeout;
@@ -515,6 +549,47 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
         public void setSendTimeout(Timeout sendTimeout)
         {
             this.sendTimeout = sendTimeout;
+        }
+    }
+
+    private final class ReadTimeoutTask implements TimerTask
+    {
+        private final TimeoutHandler timeoutHandler;
+        private final long timeoutNanos;
+        private final Request request;
+
+        ReadTimeoutTask(long timeoutNanos, Request request)
+        {
+            this.timeoutHandler = TimeoutHandler.findTimeoutHandler(getNettyChannel().getPipeline());
+            this.timeoutNanos = timeoutNanos;
+            this.request = request;
+        }
+
+        public void run(Timeout timeout) throws Exception
+        {
+            if (timeoutHandler == null) {
+                return;
+            }
+
+            if (timeout.isCancelled()) {
+                return;
+            }
+
+            if (!getNettyChannel().isOpen()) {
+                return;
+            }
+
+            long currentTimeNanos = System.nanoTime();
+
+            long timePassed = currentTimeNanos - timeoutHandler.getLastMessageReceivedNanos();
+            long nextDelayNanos =  timeoutNanos - timePassed;
+
+            if (nextDelayNanos <= 0) {
+                onReadTimeoutFired(request);
+            }
+            else {
+                request.setReadTimeout(timer.newTimeout(this, nextDelayNanos, TimeUnit.NANOSECONDS));
+            }
         }
     }
 }

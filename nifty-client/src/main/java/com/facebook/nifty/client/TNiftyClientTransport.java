@@ -41,17 +41,17 @@ public class TNiftyClientTransport extends TNiftyAsyncClientTransport
 {
 
     private final ChannelBuffer readBuffer;
-    private final Duration readTimeout;
+    private final Duration receiveTimeout;
     private final Lock lock = new ReentrantLock();
     @GuardedBy("lock")
     private final Condition condition = lock.newCondition();
     private boolean closed;
     private Throwable exception;
 
-    public TNiftyClientTransport(Channel channel, Duration readTimeout)
+    public TNiftyClientTransport(Channel channel, Duration receiveTimeout)
     {
         super(channel);
-        this.readTimeout = readTimeout;
+        this.receiveTimeout = receiveTimeout;
         this.readBuffer = ChannelBuffers.dynamicBuffer(256);
         setListener(new TNiftyClientListener()
         {
@@ -102,7 +102,7 @@ public class TNiftyClientTransport extends TNiftyAsyncClientTransport
             throws TTransportException
     {
         try {
-            return this.read(bytes, offset, length, readTimeout);
+            return this.read(bytes, offset, length, receiveTimeout);
         }
         catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -111,10 +111,10 @@ public class TNiftyClientTransport extends TNiftyAsyncClientTransport
     }
 
     // yeah, mimicking sync with async is just horrible
-    private int read(byte[] bytes, int offset, int length, Duration timeout)
+    private int read(byte[] bytes, int offset, int length, Duration receiveTimeout)
             throws InterruptedException, TTransportException
     {
-        long timeRemaining = timeout.roundTo(TimeUnit.NANOSECONDS);
+        long timeRemaining = receiveTimeout.roundTo(TimeUnit.NANOSECONDS);
         lock.lock();
         try {
             while (!closed) {
@@ -147,6 +147,6 @@ public class TNiftyClientTransport extends TNiftyAsyncClientTransport
         finally {
             lock.unlock();
         }
-        throw new TTransportException(String.format("read timeout, %d ms has elapsed", timeout.toMillis()));
+        throw new TTransportException(String.format("receive timeout, %d ms has elapsed", receiveTimeout.toMillis()));
     }
 }

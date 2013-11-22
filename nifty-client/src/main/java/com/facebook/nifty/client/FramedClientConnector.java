@@ -17,6 +17,7 @@ package com.facebook.nifty.client;
 
 import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.google.common.net.HostAndPort;
+
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
@@ -68,7 +69,9 @@ public class FramedClientConnector extends AbstractClientConnector<FramedClientC
     public FramedClientChannel newThriftClientChannel(Channel nettyChannel, Timer timer)
     {
         FramedClientChannel channel = new FramedClientChannel(nettyChannel, timer, getProtocolFactory());
-        channel.getNettyChannel().getPipeline().addLast("thriftHandler", channel);
+        ChannelPipeline cp = nettyChannel.getPipeline();
+        TimeoutHandler.addToPipeline(cp);
+        cp.addLast("thriftHandler", channel);
         return channel;
     }
 
@@ -80,6 +83,7 @@ public class FramedClientConnector extends AbstractClientConnector<FramedClientC
             public ChannelPipeline getPipeline()
                     throws Exception {
                 ChannelPipeline cp = Channels.pipeline();
+                TimeoutHandler.addToPipeline(cp);
                 cp.addLast("frameEncoder", new LengthFieldPrepender(LENGTH_FIELD_LENGTH));
                 cp.addLast(
                         "frameDecoder",

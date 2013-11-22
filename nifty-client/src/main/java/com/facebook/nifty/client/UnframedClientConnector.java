@@ -51,7 +51,9 @@ public class UnframedClientConnector extends AbstractClientConnector<UnframedCli
     public UnframedClientChannel newThriftClientChannel(Channel nettyChannel, Timer timer)
     {
         UnframedClientChannel channel = new UnframedClientChannel(nettyChannel, timer, getProtocolFactory());
-        channel.getNettyChannel().getPipeline().addLast("thriftHandler", channel);
+        ChannelPipeline cp = nettyChannel.getPipeline();
+        TimeoutHandler.addToPipeline(cp);
+        cp.addLast("thriftHandler", channel);
         return channel;
     }
 
@@ -63,6 +65,7 @@ public class UnframedClientConnector extends AbstractClientConnector<UnframedCli
             public ChannelPipeline getPipeline()
                     throws Exception {
                 ChannelPipeline cp = Channels.pipeline();
+                TimeoutHandler.addToPipeline(cp);
                 cp.addLast("thriftUnframedDecoder", new ThriftUnframedDecoder());
                 return cp;
             }

@@ -39,8 +39,9 @@ import static org.testng.Assert.fail;
 public class TestNiftyClientTimeout
 {
     private static final Duration TEST_CONNECT_TIMEOUT = new Duration(500, TimeUnit.MILLISECONDS);
+    private static final Duration TEST_RECEIVE_TIMEOUT = new Duration(500, TimeUnit.MILLISECONDS);
     private static final Duration TEST_READ_TIMEOUT = new Duration(500, TimeUnit.MILLISECONDS);
-    private static final Duration TEST_WRITE_TIMEOUT = new Duration(500, TimeUnit.MILLISECONDS);
+    private static final Duration TEST_SEND_TIMEOUT = new Duration(500, TimeUnit.MILLISECONDS);
     private static final int TEST_MAX_FRAME_SIZE = 16777216;
 
     @BeforeTest(alwaysRun = true)
@@ -71,7 +72,7 @@ public class TestNiftyClientTimeout
                 client.connectSync(new InetSocketAddress(port),
                                    TEST_CONNECT_TIMEOUT,
                                    TEST_READ_TIMEOUT,
-                                   TEST_WRITE_TIMEOUT,
+                                   TEST_SEND_TIMEOUT,
                                    TEST_MAX_FRAME_SIZE);
         }
         catch (Throwable throwable) {
@@ -100,8 +101,9 @@ public class TestNiftyClientTimeout
             ListenableFuture<FramedClientChannel> future =
                             client.connectAsync(new FramedClientConnector(new InetSocketAddress(port)),
                                                 TEST_CONNECT_TIMEOUT,
+                                                TEST_RECEIVE_TIMEOUT,
                                                 TEST_READ_TIMEOUT,
-                                                TEST_WRITE_TIMEOUT,
+                                                TEST_SEND_TIMEOUT,
                                                 TEST_MAX_FRAME_SIZE);
             // Wait while NiftyClient attempts to connect the channel
             future.get();
