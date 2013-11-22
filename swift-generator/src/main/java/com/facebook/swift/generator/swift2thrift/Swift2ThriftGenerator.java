@@ -111,6 +111,7 @@ public class Swift2ThriftGenerator
         this.allowMultiplePackages = config.isAllowMultiplePackages();
     }
 
+    @SuppressWarnings("PMD.CollapsibleIfStatements")
     public void parse(Iterable<String> inputs) throws IOException
     {
         boolean loadErrors = false;

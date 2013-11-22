@@ -18,9 +18,7 @@ package com.facebook.swift.service.async;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.ThriftServer;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.apache.thrift.TException;
 import org.jboss.netty.logging.InternalLoggerFactory;
 import org.jboss.netty.logging.Slf4JLoggerFactory;
 import org.testng.annotations.AfterMethod;
@@ -29,7 +27,6 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.collect.Lists.newArrayList;

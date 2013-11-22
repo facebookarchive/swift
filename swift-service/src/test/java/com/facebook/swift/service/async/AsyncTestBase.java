@@ -66,6 +66,7 @@ public class AsyncTestBase
     {
         HostAndPort address = HostAndPort.fromParts("localhost", serverPort);
         ThriftClientConfig config = new ThriftClientConfig().setConnectTimeout(new Duration(1, TimeUnit.SECONDS))
+                                                            .setReceiveTimeout(new Duration(10, TimeUnit.SECONDS))
                                                             .setReadTimeout(new Duration(1, TimeUnit.SECONDS))
                                                             .setWriteTimeout(new Duration(1, TimeUnit.SECONDS));
         FramedClientConnector connector = new FramedClientConnector(address) {
@@ -89,6 +90,7 @@ public class AsyncTestBase
             throws TTransportException, InterruptedException, ExecutionException
     {
         ThriftClientConfig config = new ThriftClientConfig().setConnectTimeout(new Duration(1, TimeUnit.SECONDS))
+                                                            .setReceiveTimeout(new Duration(10, TimeUnit.SECONDS))
                                                             .setReadTimeout(new Duration(1, TimeUnit.SECONDS))
                                                             .setWriteTimeout(new Duration(1, TimeUnit.SECONDS));
         HttpClientConnector connector =

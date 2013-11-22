@@ -85,6 +85,7 @@ public class TestClientProtocols
             throws ExecutionException, InterruptedException, TException
     {
         ThriftClientConfig config = new ThriftClientConfig().setConnectTimeout(Duration.valueOf("1s"))
+                                                            .setReceiveTimeout(Duration.valueOf("10s"))
                                                             .setReadTimeout(Duration.valueOf("1s"))
                                                             .setWriteTimeout(Duration.valueOf("1s"));
         ThriftClient<Scribe> thriftClient = new ThriftClient<>(manager, Scribe.class, config, "ScribeClient");

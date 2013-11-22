@@ -39,7 +39,8 @@ public class TestThriftClientConfig
     {
         ConfigAssertions.assertRecordedDefaults(ConfigAssertions.recordDefaults(ThriftClientConfig.class)
                                                 .setConnectTimeout(Duration.valueOf("500ms"))
-                                                .setReadTimeout(Duration.valueOf("1m"))
+                                                .setReceiveTimeout(Duration.valueOf("1m"))
+                                                .setReadTimeout(Duration.valueOf("10s"))
                                                 .setWriteTimeout(Duration.valueOf("1m"))
                                                 .setSocksProxy(null)
                                                 .setMaxFrameSize(16777216));
@@ -50,7 +51,8 @@ public class TestThriftClientConfig
     {
         Map<String, String> properties = new ImmutableMap.Builder<String, String>()
             .put("thrift.client.connect-timeout", "10s")
-            .put("thrift.client.read-timeout", "1s")
+            .put("thrift.client.receive-timeout", "1d")
+            .put("thrift.client.read-timeout", "10h")
             .put("thrift.client.write-timeout", "1s")
             .put("thrift.client.socks-proxy", "localhost:8080")
             .put("thrift.client.max-frame-size", "200")
@@ -58,7 +60,8 @@ public class TestThriftClientConfig
 
         ThriftClientConfig expected = new ThriftClientConfig()
             .setConnectTimeout(Duration.valueOf("10s"))
-            .setReadTimeout(Duration.valueOf("1s"))
+            .setReceiveTimeout(Duration.valueOf("1d"))
+            .setReadTimeout(Duration.valueOf("10h"))
             .setWriteTimeout(Duration.valueOf("1s"))
             .setSocksProxy(HostAndPort.fromParts("localhost", 8080))
             .setMaxFrameSize(200);
