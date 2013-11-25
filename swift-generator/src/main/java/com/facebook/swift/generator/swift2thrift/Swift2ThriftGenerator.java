@@ -248,10 +248,12 @@ public class Swift2ThriftGenerator
             prevSize = remaining.size();
             List<T> bad = Lists.newArrayList();
             for (T t: remaining) {
-                if (isKnown.apply(t))
+                if (isKnown.apply(t)) {
                     newList.add(t);
-                else
+                }
+                else {
                     bad.add(t);
+                }
             }
             remaining = bad;
         }

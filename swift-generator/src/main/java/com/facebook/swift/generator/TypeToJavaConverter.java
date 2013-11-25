@@ -97,12 +97,14 @@ public class TypeToJavaConverter
 
     private static class VoidConverter implements Converter
     {
+        @Override
         public boolean accept(final ThriftType type)
         {
             return type.getClass() == VoidType.class;
         }
 
-        public String convert(final ThriftType type, boolean primitive)
+        @Override
+        public String convert(final ThriftType type, final boolean primitive)
         {
             return primitive ? "void" : "Void";
         }
@@ -137,12 +139,14 @@ public class TypeToJavaConverter
             JAVA_TYPE_MAP = javaTypeMap;
         }
 
+        @Override
         public boolean accept(final ThriftType type)
         {
             return type.getClass() == BaseType.class;
         }
 
-        public String convert(final ThriftType type, boolean primitive)
+        @Override
+        public String convert(final ThriftType type, final boolean primitive)
         {
             final BaseType.Type baseType = ((BaseType) type).getType();
             return primitive ? JAVA_PRIMITIVES_MAP.get(baseType) : JAVA_TYPE_MAP.get(baseType);
@@ -151,11 +155,13 @@ public class TypeToJavaConverter
 
     private class IdentifierConverter implements Converter
     {
+        @Override
         public boolean accept(final ThriftType type)
         {
             return type.getClass() == IdentifierType.class;
         }
 
+        @Override
         public String convert(final ThriftType type, final boolean primitive)
         {
             final String name = ((IdentifierType) type).getName();
@@ -195,11 +201,13 @@ public class TypeToJavaConverter
 
     private class SetConverter implements Converter
     {
+        @Override
         public boolean accept(final ThriftType type)
         {
             return type.getClass() == SetType.class;
         }
 
+        @Override
         public String convert(final ThriftType type, final boolean ignored)
         {
             final SetType setType = SetType.class.cast(type);
@@ -212,11 +220,13 @@ public class TypeToJavaConverter
 
     private class ListConverter implements Converter
     {
+        @Override
         public boolean accept(final ThriftType type)
         {
             return type.getClass() == ListType.class;
         }
 
+        @Override
         public String convert(final ThriftType type, final boolean ignored)
         {
             final ListType listType = ListType.class.cast(type);
@@ -229,11 +239,13 @@ public class TypeToJavaConverter
 
     private class MapConverter implements Converter
     {
+        @Override
         public boolean accept(final ThriftType type)
         {
             return type.getClass() == MapType.class;
         }
 
+        @Override
         public String convert(final ThriftType type, final boolean ignored)
         {
             final MapType mapType = MapType.class.cast(type);

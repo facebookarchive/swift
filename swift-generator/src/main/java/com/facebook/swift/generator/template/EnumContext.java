@@ -66,33 +66,42 @@ public class EnumContext implements JavaContext
     }
 
     @Override
-    public boolean equals(Object obj)
+    public boolean equals(final Object obj)
     {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
-        EnumContext other = (EnumContext) obj;
+        }
+        final EnumContext other = (EnumContext) obj;
         if (fields == null) {
-            if (other.fields != null)
+            if (other.fields != null) {
                 return false;
+            }
         }
-        else if (!fields.equals(other.fields))
+        else if (!fields.equals(other.fields)) {
             return false;
+        }
         if (javaName == null) {
-            if (other.javaName != null)
+            if (other.javaName != null) {
                 return false;
+            }
         }
-        else if (!javaName.equals(other.javaName))
+        else if (!javaName.equals(other.javaName)) {
             return false;
+        }
         if (javaPackage == null) {
-            if (other.javaPackage != null)
+            if (other.javaPackage != null) {
                 return false;
+            }
         }
-        else if (!javaPackage.equals(other.javaPackage))
+        else if (!javaPackage.equals(other.javaPackage)) {
             return false;
+        }
         return true;
     }
 
