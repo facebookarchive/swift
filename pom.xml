@@ -22,7 +22,7 @@
     <parent>
         <groupId>com.facebook</groupId>
         <artifactId>facebook-oss-pom</artifactId>
-        <version>8</version>
+        <version>9</version>
     </parent>
 
     <groupId>com.facebook.nifty</groupId>
@@ -154,7 +154,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-shade-plugin</artifactId>
-                    <version>2.0</version>
+                    <version>2.1</version>
                     <executions>
                         <execution>
                             <phase>package</phase>
