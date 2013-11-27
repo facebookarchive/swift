@@ -64,31 +64,40 @@ public class SwiftJavaType
     @Override
     public boolean equals(Object obj)
     {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
-        SwiftJavaType other = (SwiftJavaType) obj;
+        }
+        final SwiftJavaType other = (SwiftJavaType) obj;
         if (javaPackageName == null) {
-            if (other.javaPackageName != null)
+            if (other.javaPackageName != null) {
                 return false;
+            }
         }
-        else if (!javaPackageName.equals(other.javaPackageName))
+        else if (!javaPackageName.equals(other.javaPackageName)) {
             return false;
+        }
         if (name == null) {
-            if (other.name != null)
+            if (other.name != null) {
                 return false;
+            }
         }
-        else if (!name.equals(other.name))
+        else if (!name.equals(other.name)) {
             return false;
+        }
         if (thriftNamespace == null) {
-            if (other.thriftNamespace != null)
+            if (other.thriftNamespace != null) {
                 return false;
+            }
         }
-        else if (!thriftNamespace.equals(other.thriftNamespace))
+        else if (!thriftNamespace.equals(other.thriftNamespace)) {
             return false;
+        }
         return true;
     }
 
@@ -98,6 +107,3 @@ public class SwiftJavaType
         return "[thrift namespace=" + thriftNamespace + ", name=" + name + ", java package=" + javaPackageName + "]";
     }
 }
-
-
-

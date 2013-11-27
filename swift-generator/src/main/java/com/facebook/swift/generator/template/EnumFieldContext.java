@@ -48,27 +48,34 @@ public class EnumFieldContext
     }
 
     @Override
-    public boolean equals(Object obj)
+    public boolean equals(final Object obj)
     {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
-        EnumFieldContext other = (EnumFieldContext) obj;
+        }
+        final EnumFieldContext other = (EnumFieldContext) obj;
         if (javaName == null) {
-            if (other.javaName != null)
+            if (other.javaName != null) {
                 return false;
+            }
         }
-        else if (!javaName.equals(other.javaName))
+        else if (!javaName.equals(other.javaName)) {
             return false;
+        }
         if (value == null) {
-            if (other.value != null)
+            if (other.value != null) {
                 return false;
+            }
         }
-        else if (!value.equals(other.value))
+        else if (!value.equals(other.value)) {
             return false;
+        }
         return true;
     }
 
