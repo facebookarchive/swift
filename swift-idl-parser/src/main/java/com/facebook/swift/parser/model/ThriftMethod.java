@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.ArrayList;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -47,8 +46,7 @@ public class ThriftMethod implements Visitable
         this.returnType = checkNotNull(returnType, "returnType");
         this.arguments = ImmutableList.copyOf(checkNotNull(arguments, "arguments"));
         this.oneway = oneway;
-        throwsFields = throwsFields == null ? new ArrayList<ThriftField>() : throwsFields;
-        this.throwsFields = ImmutableList.copyOf(checkNotNull(throwsFields, "throwsFields"));
+        this.throwsFields = Objects.firstNonNull(throwsFields, ImmutableList.<ThriftField>of());
         this.annotations = ImmutableList.copyOf(checkNotNull(annotations, "annotations"));
     }
 
