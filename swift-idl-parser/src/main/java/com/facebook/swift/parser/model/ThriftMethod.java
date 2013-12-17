@@ -46,7 +46,8 @@ public class ThriftMethod implements Visitable
         this.returnType = checkNotNull(returnType, "returnType");
         this.arguments = ImmutableList.copyOf(checkNotNull(arguments, "arguments"));
         this.oneway = oneway;
-        this.throwsFields = ImmutableList.copyOf(checkNotNull(throwsFields, "throwsFields"));
+        this.throwsFields = ImmutableList.copyOf(Objects.firstNonNull(throwsFields,
+                 ImmutableList.<ThriftField>of()));
         this.annotations = ImmutableList.copyOf(checkNotNull(annotations, "annotations"));
     }
 
