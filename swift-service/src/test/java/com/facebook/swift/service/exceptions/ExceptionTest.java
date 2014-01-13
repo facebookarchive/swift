@@ -20,7 +20,10 @@ import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
 import org.testng.annotations.Test;
 
-public class ExceptionTest extends SuiteBase<ExceptionService, ExceptionService>
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.fail;
+
+public class ExceptionTest extends SuiteBase<ExceptionService, ExceptionServiceClient>
 {
     public ExceptionTest() {
         super(ExceptionServiceHandler.class, ExceptionServiceClient.class);
@@ -63,5 +66,19 @@ public class ExceptionTest extends SuiteBase<ExceptionService, ExceptionService>
     @Test(expectedExceptions = { TApplicationException.class })
     public void testThrowUnexpectedNonThriftUncheckedException() throws TException {
         getClient().throwUnexpectedNonThriftUncheckedException();
+    }
+
+    @Test
+    public void testMissingMethod() throws TApplicationException {
+        try {
+            getClient().missingMethod();
+            fail("Expected TApplicationException of type UNKNOWN_METHOD");
+        }
+        catch (TApplicationException e) {
+            assertEquals(
+                    e.getType(),
+                    TApplicationException.UNKNOWN_METHOD,
+                    "Expected TApplicationException of type UNKNOWN_METHOD");
+        }
     }
 }

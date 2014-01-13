@@ -23,7 +23,6 @@ import com.facebook.swift.codec.metadata.ThriftFieldMetadata;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.facebook.swift.service.metadata.ThriftMethodMetadata;
 import com.google.common.base.Defaults;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Primitives;
@@ -31,16 +30,12 @@ import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import org.apache.thrift.TApplicationException;
-import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TMessage;
 import org.apache.thrift.protocol.TMessageType;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weakref.jmx.Managed;
 
 import javax.annotation.concurrent.ThreadSafe;
@@ -48,15 +43,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Map;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
 
 import static org.apache.thrift.TApplicationException.INTERNAL_ERROR;
 
 @ThreadSafe
 public class ThriftMethodProcessor
 {
-    private static final Logger LOG = LoggerFactory.getLogger(ThriftMethodProcessor.class);
     private final String name;
     private final String serviceName;
     private final String qualifiedName;
@@ -189,27 +181,25 @@ public class ThriftMethodProcessor
                         ExceptionProcessor exceptionCodec = exceptionCodecs.get(t.getClass());
                         if (exceptionCodec != null) {
                             // write expected exception response
-                            writeResponse(out,
-                                          sequenceId,
-                                          TMessageType.REPLY,
-                                          "exception",
-                                          exceptionCodec.getId(),
-                                          exceptionCodec.getCodec(),
-                                          t);
+                            writeResponse(
+                                    out,
+                                    sequenceId,
+                                    TMessageType.REPLY,
+                                    "exception",
+                                    exceptionCodec.getId(),
+                                    exceptionCodec.getCodec(),
+                                    t);
                             contextChain.postWriteException(t);
                         } else {
                             // unexpected exception
                             TApplicationException applicationException =
-                                    new TApplicationException(INTERNAL_ERROR,
-                                                              "Internal error processing " + method.getName());
-                            applicationException.initCause(t);
-                            LOG.error("Internal error processing {}", method.getName(), t);
-
-                            // Application exceptions are sent to client, and the connection can be reused
-                            out.writeMessageBegin(new TMessage(name, TMessageType.EXCEPTION, sequenceId));
-                            applicationException.write(out);
-                            out.writeMessageEnd();
-                            out.getTransport().flush();
+                                    ThriftServiceProcessor.writeApplicationException(
+                                            out,
+                                            method.getName(),
+                                            sequenceId,
+                                            INTERNAL_ERROR,
+                                            "Internal error processing " + method.getName(),
+                                            t);
 
                             contextChain.postWriteException(applicationException);
                         }

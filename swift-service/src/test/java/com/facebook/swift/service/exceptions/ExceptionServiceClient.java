@@ -15,7 +15,14 @@
  */
 package com.facebook.swift.service.exceptions;
 
+import com.facebook.swift.service.ThriftMethod;
+import org.apache.thrift.TApplicationException;
+
 public interface ExceptionServiceClient extends ExceptionService, AutoCloseable {
+    // Extra method that doesn't exist in the service interface
+    @ThriftMethod
+    public void missingMethod() throws TApplicationException;
+
     @Override
     public void close();
 }
