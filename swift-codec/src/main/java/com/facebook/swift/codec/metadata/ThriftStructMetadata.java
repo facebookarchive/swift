@@ -140,6 +140,16 @@ public class ThriftStructMetadata<T>
         return Exception.class.isAssignableFrom(structClass);
     }
 
+    public boolean isUnion()
+    {
+        return !isException() && getMetadataType() == MetadataType.UNION;
+    }
+
+    public boolean isStruct()
+    {
+        return !isException() && getMetadataType() == MetadataType.STRUCT;
+    }
+
     @Override
     public String toString()
     {
