@@ -33,12 +33,12 @@ _maybeEnumValue(enum, enumElem) ::= <<
 
 _struct(struct) ::= <<
 <_doc(struct.documentation)><\\\>
-<_structtype(struct)> <struct.structName> {
+<_structkind(struct)> <struct.structName> {
   <struct.fields : {f | <_field(f)>;}; separator="\n">
 }
 >>
 
-_structtype(struct) ::= <<
+_structkind(struct) ::= <<
 <if(struct.struct)>struct<endif><if(struct.exception)>exception<endif><if(struct.union)>union<endif>
 >>
 
