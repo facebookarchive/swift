@@ -17,6 +17,7 @@ public void <field.javaSetterName>(final <field.javaType> <field.javaName>) { th
 _constructor(element) ::= <<
 public <element.javaName>() {
 }
+>>
 
 _union_setter(field) ::= <<
 @ThriftField
