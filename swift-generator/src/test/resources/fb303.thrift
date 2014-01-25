@@ -22,6 +22,7 @@
  */
 
 namespace java com.facebook.fb303
+namespace java.swift com.facebook.swift.fb303
 namespace cpp facebook.fb303
 namespace perl Facebook.FB303
 
@@ -35,6 +36,7 @@ enum fb_status {
   STOPPING = 3,
   STOPPED = 4,
   WARNING = 5,
+  TEST_VALUE = 6,
 }
 
 /**

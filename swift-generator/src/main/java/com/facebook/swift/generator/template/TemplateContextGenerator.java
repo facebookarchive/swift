@@ -208,9 +208,13 @@ public class TemplateContextGenerator
                     sb.append(Character.toUpperCase(src.charAt(i)));
                     lowerCase = false;
                 }
-                else {
+                else if (Character.isLowerCase(src.charAt(i))) {
                     sb.append(Character.toUpperCase(src.charAt(i)));
                     lowerCase = true;
+                }
+                else {
+                    // Not a letter (e.g. underscore) just emit it
+                    sb.append(src.charAt(i));
                 }
             }
         }
