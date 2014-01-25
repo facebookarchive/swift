@@ -25,6 +25,7 @@
 include "share/fb303/if/fb303.thrift"
 
 namespace java org.apache.hadoop.hive.metastore.api
+namespace java.swift org.apache.swift.hadoop.hive.metastore.api
 namespace php metastore
 namespace cpp Apache.Hadoop.Hive
 

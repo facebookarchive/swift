@@ -1,6 +1,7 @@
 include "common/fb303/if/fb303.thrift"
 
 namespace java com.facebook.maestro
+namespace java.swift com.facebook.swift.maestro
 namespace py maestro.Maestro
 namespace py.twisted maestro_twisted.Maestro
 
