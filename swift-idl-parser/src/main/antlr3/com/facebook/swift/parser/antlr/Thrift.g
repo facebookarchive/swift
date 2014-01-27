@@ -230,10 +230,13 @@ const_list
     : '[' (const_value list_separator?)* ']' -> ^(LIST const_value*)
     ;
 
-const_map
-    : '{' (k=const_value ':' v=const_value list_separator?)* '}' -> ^(MAP ^(ENTRY $k $v)*)
+const_map_entry
+    : k=const_value ':' v=const_value list_separator? -> ^(ENTRY $k $v)
     ;
 
+const_map
+    : '{' const_map_entry* '}' -> ^(MAP const_map_entry*)
+    ;
 
 list_separator
     : COMMA | ';'

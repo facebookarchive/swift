@@ -32,6 +32,7 @@ options {
     import java.util.HashMap;
     import java.util.List;
     import java.util.Map;
+    import java.util.AbstractMap;
 }
 
 
@@ -137,7 +138,13 @@ const_list returns [List<ConstValue> value = new ArrayList<>()]
     ;
 
 const_map returns [Map<ConstValue, ConstValue> value = new HashMap<>()]
-    : ^(MAP ( ^(ENTRY k=const_value v=const_value) { $value.put($k.value, $v.value); } )*)
+    : ^(MAP ( e=const_map_entry { $value.put($e.value.getKey(), $e.value.getValue()); } )* )
+    ;
+
+const_map_entry returns [Map.Entry<ConstValue, ConstValue> value]
+    : ^(ENTRY k=const_value v=const_value) {
+        $value = new AbstractMap.SimpleImmutableEntry<ConstValue, ConstValue>($k.value, $v.value);
+    }
     ;
 
 enum_fields returns [IntegerEnumFieldList value = new IntegerEnumFieldList()]
