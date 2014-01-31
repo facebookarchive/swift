@@ -50,6 +50,15 @@ public class TypedefRegistry implements Iterable<Map.Entry<String, ThriftType>>
         registry.put(key, thriftType);
     }
 
+    public ThriftType findType(final String defaultNamespace, final String typeName)
+    {
+        String key = typeName;
+        if (!key.contains(".")) {
+            key = defaultNamespace + "." + typeName;
+        }
+        return findType(key);
+    }
+
     public ThriftType findType(final String key)
     {
         return registry.get(key);

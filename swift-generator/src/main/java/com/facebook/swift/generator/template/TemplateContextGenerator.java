@@ -15,6 +15,7 @@
  */
 package com.facebook.swift.generator.template;
 
+import com.facebook.swift.generator.ConstantRenderer;
 import com.facebook.swift.generator.SwiftGeneratorConfig;
 import com.facebook.swift.generator.SwiftGeneratorTweak;
 import com.facebook.swift.generator.SwiftJavaType;
@@ -31,7 +32,6 @@ import com.facebook.swift.parser.model.ThriftMethod;
 import com.google.common.base.Preconditions;
 
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
 
 import static com.facebook.swift.generator.util.SwiftInternalStringUtils.isBlank;
@@ -45,22 +45,26 @@ public class TemplateContextGenerator
     private final TypeRegistry typeRegistry;
     private final TypeToJavaConverter typeConverter;
     private final String defaultNamespace;
+    private final ConstantRenderer constantRenderer;
 
-    public TemplateContextGenerator(final SwiftGeneratorConfig generatorConfig,
-                                    final TypeRegistry typeRegistry,
-                                    final TypeToJavaConverter typeConverter,
-                                    final String defaultNamespace)
+    public TemplateContextGenerator(
+            final SwiftGeneratorConfig generatorConfig,
+            final TypeRegistry typeRegistry,
+            final TypeToJavaConverter typeConverter,
+            final ConstantRenderer constantRenderer,
+            final String defaultNamespace)
     {
         this.generatorConfig = generatorConfig;
         this.typeRegistry = typeRegistry;
         this.defaultNamespace = defaultNamespace;
+        this.constantRenderer = constantRenderer;
         this.typeConverter = typeConverter;
     }
 
     public ServiceContext serviceFromThrift(final Service service)
     {
         final String name = mangleJavatypeName(service.getName());
-        final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, name);
+        final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, service.getName());
         final SwiftJavaType parentType = typeRegistry.findType(defaultNamespace, service.getParent().orNull());
 
         final Set<String> javaParents = new HashSet<>();
@@ -83,10 +87,10 @@ public class TemplateContextGenerator
 
     public StructContext structFromThrift(final AbstractStruct struct)
     {
-        final String name = mangleJavatypeName(struct.getName());
-        final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, name);
+        final String thriftTypeName = struct.getName();
+        final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, thriftTypeName);
 
-        return new StructContext(name,
+        return new StructContext(thriftTypeName,
                                  javaType.getPackage(),
                                  javaType.getSimpleName());
     }
@@ -114,10 +118,10 @@ public class TemplateContextGenerator
 
     public ConstantsContext constantsFromThrift()
     {
-        final String name = mangleJavatypeName("Constants");
-        final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, name);
+        final String thriftTypeName = "Constants";
+        final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, thriftTypeName);
 
-        return new ConstantsContext(name,
+        return new ConstantsContext(thriftTypeName,
                                     javaType.getPackage(),
                                     javaType.getSimpleName());
     }
@@ -127,7 +131,7 @@ public class TemplateContextGenerator
         return new ConstantContext(constant.getName(),
                                    typeConverter.convertType(constant.getType()),
                                    constant.getName(),
-                                   constant.getValue().render());
+                                   constantRenderer.render(constant));
     }
 
     public ExceptionContext exceptionFromThrift(final ThriftField field)
@@ -138,15 +142,15 @@ public class TemplateContextGenerator
 
     public EnumContext enumFromThrift(final IntegerEnum integerEnum)
     {
-        final String name = mangleJavatypeName(integerEnum.getName());
-        final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, name);
+        final String thriftTypeName = integerEnum.getName();
+        final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, thriftTypeName);
         return new EnumContext(javaType.getPackage(), javaType.getSimpleName());
     }
 
     public EnumContext enumFromThrift(final StringEnum stringEnum)
     {
-        final String name = mangleJavatypeName(stringEnum.getName());
-        final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, name);
+        final String thriftTypeName = stringEnum.getName();
+        final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, thriftTypeName);
         return new EnumContext(javaType.getPackage(), javaType.getSimpleName());
     }
 

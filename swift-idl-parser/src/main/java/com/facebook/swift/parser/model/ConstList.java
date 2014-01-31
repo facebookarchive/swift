@@ -41,17 +41,6 @@ public class ConstList
     }
 
     @Override
-    public String render()
-    {
-        StringBuilder sb = new StringBuilder(format("ImmutableList.builder()\n"));
-        for (ConstValue value : values) {
-            sb.append(format("    .add(%s)\n", value.render()));
-        }
-        return sb.append("    .build();\n").toString();
-    }
-
-
-    @Override
     public String toString()
     {
         return Objects.toStringHelper(this)

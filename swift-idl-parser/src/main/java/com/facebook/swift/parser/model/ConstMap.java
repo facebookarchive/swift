@@ -41,17 +41,6 @@ public class ConstMap
     }
 
     @Override
-    public String render()
-    {
-        StringBuilder sb = new StringBuilder(format("ImmutableMap.builder()\n"));
-        for (Map.Entry<ConstValue, ConstValue> entry : values.entrySet()) {
-            sb.append(format("    .put(%s, %s)\n", entry.getKey().render(), entry.getValue().render()));
-        }
-        return sb.append("    .build();\n").toString();
-    }
-
-
-    @Override
     public String toString()
     {
         return Objects.toStringHelper(this)
