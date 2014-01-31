@@ -34,13 +34,6 @@ public class ConstInteger
     }
 
     @Override
-    public String render()
-    {
-        return Long.toString(value) + "L";
-    }
-
-
-    @Override
     public String toString()
     {
         return Objects.toStringHelper(this)

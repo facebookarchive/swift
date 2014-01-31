@@ -33,6 +33,7 @@ public class SwiftDocumentContext
     private final TypeRegistry typeRegistry;
     private final TypedefRegistry typedefRegistry;
     private final TypeToJavaConverter typeConverter;
+    private final ConstantRenderer constantRenderer;
     private final URI thriftUri;
 
     public SwiftDocumentContext(final URI thriftUri,
@@ -51,6 +52,7 @@ public class SwiftDocumentContext
                                                      typedefRegistry,
                                                      namespace,
                                                      getJavaPackage());
+        this.constantRenderer = new ConstantRenderer(typeConverter, namespace, typeRegistry, typedefRegistry);
     }
 
     public String getNamespace()
@@ -78,9 +80,14 @@ public class SwiftDocumentContext
         return typeConverter;
     }
 
+    public ConstantRenderer getConstantRenderer()
+    {
+        return constantRenderer;
+    }
+
     public TemplateContextGenerator getTemplateContextGenerator()
     {
-        return new TemplateContextGenerator(generatorConfig, typeRegistry, typeConverter, namespace);
+        return new TemplateContextGenerator(generatorConfig, typeRegistry, typeConverter, constantRenderer, namespace);
     }
 
     public String getJavaPackage()

@@ -177,10 +177,10 @@ public class TypeToJavaConverter
                 thriftNamespace = names.get(0);
             }
 
-            final String javatypeName = thriftNamespace + "." + TemplateContextGenerator.mangleJavatypeName(thriftName);
-            final ThriftType thriftType = typedefRegistry.findType(javatypeName);
+            final String thriftTypeName = thriftNamespace + "." + thriftName;
+            final ThriftType thriftType = typedefRegistry.findType(thriftTypeName);
             if (thriftType == null) {
-                final SwiftJavaType javaType = typeRegistry.findType(javatypeName);
+                final SwiftJavaType javaType = typeRegistry.findType(thriftTypeName);
                 return (javaType == null) ? null : shortenClassName(javaType.getClassName());
             }
             else {
@@ -212,7 +212,7 @@ public class TypeToJavaConverter
         {
             final SetType setType = SetType.class.cast(type);
 
-            final String actualType = TypeToJavaConverter.this.convert(setType.getType(), false);
+            final String actualType = TypeToJavaConverter.this.convert(setType.getElementType(), false);
 
             return "Set<" + actualType + ">";
         }
@@ -231,7 +231,7 @@ public class TypeToJavaConverter
         {
             final ListType listType = ListType.class.cast(type);
 
-            final String actualType = TypeToJavaConverter.this.convert(listType.getType(), false);
+            final String actualType = TypeToJavaConverter.this.convert(listType.getElementType(), false);
 
             return "List<" + actualType + ">";
         }

@@ -32,7 +32,7 @@ public class ListType
         this.type = checkNotNull(type, "type");
     }
 
-    public ThriftType getType()
+    public ThriftType getElementType()
     {
         return type;
     }
