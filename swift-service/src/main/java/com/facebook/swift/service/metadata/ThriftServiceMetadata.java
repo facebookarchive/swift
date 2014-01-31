@@ -36,7 +36,7 @@ public class ThriftServiceMetadata
     private final String name;
     private final Map<String, ThriftMethodMetadata> methods;
     private final Map<String, ThriftMethodMetadata> declaredMethods;
-    private final ThriftServiceMetadata parentService;
+    private final ImmutableList<ThriftServiceMetadata> parentServices;
     private final ImmutableList<String> documentation;
 
     public ThriftServiceMetadata(Class<?> serviceClass, ThriftCatalog catalog)
@@ -82,13 +82,13 @@ public class ThriftServiceMetadata
         this.declaredMethods = Maps.uniqueIndex(declaredMethods.values(), methodMetadataNamer);
 
         ThriftServiceMetadata parentService = null;
+        ImmutableList.Builder<ThriftServiceMetadata> parentServiceBuilder = ImmutableList.builder();
         for (Class<?> parent : serviceClass.getInterfaces()) {
             if (!getEffectiveClassAnnotations(parent, ThriftService.class).isEmpty()) {
-                Preconditions.checkState(parentService == null, "service " + serviceClass.getSimpleName() + " extends multiple services");
-                parentService = new ThriftServiceMetadata(parent, catalog);
+                parentServiceBuilder.add(new ThriftServiceMetadata(parent, catalog));
             }
         }
-        this.parentService = parentService;
+        this.parentServices = parentServiceBuilder.build();
     }
 
     public ThriftServiceMetadata(String name, ThriftMethodMetadata... methods)
@@ -101,7 +101,7 @@ public class ThriftServiceMetadata
         }
         this.methods = builder.build();
         this.declaredMethods = this.methods;
-        this.parentService = null;
+        this.parentServices = ImmutableList.of();
         this.documentation = ImmutableList.of();
     }
 
@@ -143,15 +143,15 @@ public class ThriftServiceMetadata
         return Iterables.getOnlyElement(serviceAnnotations);
     }
 
-    public ThriftServiceMetadata getParentService()
+    public ImmutableList<ThriftServiceMetadata> getParentServices()
     {
-        return parentService;
+        return parentServices;
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hash(name, methods, parentService);
+        return Objects.hash(name, methods, parentServices);
     }
 
     @Override
@@ -164,6 +164,6 @@ public class ThriftServiceMetadata
             return false;
         }
         final ThriftServiceMetadata other = (ThriftServiceMetadata) obj;
-        return Objects.equals(this.name, other.name) && Objects.equals(this.methods, other.methods) && Objects.equals(this.parentService, other.parentService);
+        return Objects.equals(this.name, other.name) && Objects.equals(this.methods, other.methods) && Objects.equals(this.parentServices, other.parentServices);
     }
 }
