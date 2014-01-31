@@ -267,7 +267,14 @@ public class Swift2ThriftGenerator
     private boolean verifyService(ThriftServiceMetadata service, boolean quiet)
     {
         boolean ok = true;
-        ThriftServiceMetadata parent = service.getParentService();
+        List<ThriftServiceMetadata> parents = service.getParentServices();
+
+        Preconditions.checkState(
+                parents.size() <= 1,
+                "service " + service.getName() + " extends multiple services (thrift IDL does not support multiple inheritance for services)", service.getName());
+
+        ThriftServiceMetadata parent = parents.size() == 0 ? null : parents.get(0);
+
         if (parent != null && !knownServices.contains(parent)) {
             if (includeMap.containsKey(parent)) {
                 usedIncludedServices.add(parent);
