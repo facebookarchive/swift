@@ -143,7 +143,7 @@ public class SwiftGenerator
         String javaPackage = context.getJavaPackage();
 
         // Add a Constants type so that the Constants visitor can render is.
-        typeRegistry.add(new SwiftJavaType(thriftNamespace, "Constants", javaPackage));
+        typeRegistry.add(new SwiftJavaType(thriftNamespace, "Constants", "Constants", javaPackage));
 
         // Make a note that this document is a parent of all the documents included, directly or recursively
         parentDocuments.push(thriftUri);

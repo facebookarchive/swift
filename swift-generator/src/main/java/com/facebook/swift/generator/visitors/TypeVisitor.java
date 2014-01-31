@@ -50,8 +50,11 @@ public class TypeVisitor implements DocumentVisitor
     public void visit(final Visitable visitable)
     {
         final Nameable type = Nameable.class.cast(visitable);
-        final SwiftJavaType swiftJavaType = new SwiftJavaType(documentContext.getNamespace(),
-                                                              TemplateContextGenerator.mangleJavatypeName(type.getName()), javaNamespace);
+        final SwiftJavaType swiftJavaType = new SwiftJavaType(
+                documentContext.getNamespace(),
+                TemplateContextGenerator.mangleJavatypeName(type.getName()),
+                type.getName(),
+                javaNamespace);
         if (visitable instanceof Typedef) {
             // Typedef checks must be done before the type is added to the registry. Otherwise it would be possible
             // to have a typedef point at itself.

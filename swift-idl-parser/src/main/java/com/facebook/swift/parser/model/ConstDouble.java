@@ -28,12 +28,6 @@ public class ConstDouble
     }
 
     @Override
-    public String render()
-    {
-        return Double.toString(value);
-    }
-
-    @Override
     public Double value()
     {
         return value;

@@ -18,15 +18,19 @@ package com.facebook.swift.generator;
 public class SwiftJavaType
 {
     private final String thriftNamespace;
-    private final String name;
+    private final String javaTypeName;
+    private final String thriftTypeName;
     private final String javaPackageName;
 
-    public SwiftJavaType(final String thriftNamespace,
-                         final String name,
-                         final String javaPackageName)
+    public SwiftJavaType(
+            final String thriftNamespace,
+            final String javaTypeName,
+            final String thriftTypeName,
+            final String javaPackageName)
     {
         this.thriftNamespace = thriftNamespace;
-        this.name = name;
+        this.javaTypeName = javaTypeName;
+        this.thriftTypeName = thriftTypeName;
         this.javaPackageName = javaPackageName;
     }
 
@@ -37,17 +41,17 @@ public class SwiftJavaType
 
     public String getSimpleName()
     {
-        return name;
+        return javaTypeName;
     }
 
     public String getClassName()
     {
-        return javaPackageName + "." + name;
+        return javaPackageName + "." + javaTypeName;
     }
 
     public String getKey()
     {
-        return thriftNamespace + "." + name;
+        return thriftNamespace + "." + thriftTypeName;
     }
 
     @Override
@@ -56,7 +60,7 @@ public class SwiftJavaType
         final int prime = 31;
         int result = 1;
         result = prime * result + ((javaPackageName == null) ? 0 : javaPackageName.hashCode());
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result + ((javaTypeName == null) ? 0 : javaTypeName.hashCode());
         result = prime * result + ((thriftNamespace == null) ? 0 : thriftNamespace.hashCode());
         return result;
     }
@@ -82,12 +86,12 @@ public class SwiftJavaType
         else if (!javaPackageName.equals(other.javaPackageName)) {
             return false;
         }
-        if (name == null) {
-            if (other.name != null) {
+        if (javaTypeName == null) {
+            if (other.javaTypeName != null) {
                 return false;
             }
         }
-        else if (!name.equals(other.name)) {
+        else if (!javaTypeName.equals(other.javaTypeName)) {
             return false;
         }
         if (thriftNamespace == null) {
@@ -104,6 +108,9 @@ public class SwiftJavaType
     @Override
     public String toString()
     {
-        return "[thrift namespace=" + thriftNamespace + ", name=" + name + ", java package=" + javaPackageName + "]";
+        return "[thrift namespace=" + thriftNamespace +
+               ", javaTypeName=" + javaTypeName +
+               ", thriftTypeName=" + thriftTypeName +
+               ", java package=" + javaPackageName + "]";
     }
 }
