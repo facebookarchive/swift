@@ -54,6 +54,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class Swift2ThriftGenerator
 {
     private static final Logger LOG = LoggerFactory.getLogger(Swift2ThriftGenerator.class);
@@ -182,7 +184,7 @@ public class Swift2ThriftGenerator
             @Override
             public boolean apply(@Nullable ThriftType t)
             {
-                ThriftProtocolType proto = t.getProtocolType();
+                ThriftProtocolType proto = checkNotNull(t).getProtocolType();
                 if (proto == ThriftProtocolType.ENUM) {
                     knownTypes.add(t);
                     return true;
@@ -258,9 +260,9 @@ public class Swift2ThriftGenerator
             remaining = bad;
         }
         if (prevSize == 0) {
-            return new SuccessAndResult(true, newList);
+            return new SuccessAndResult<>(true, newList);
         } else {
-            return new SuccessAndResult(false, remaining);
+            return new SuccessAndResult<>(false, remaining);
         }
     }
 
@@ -366,8 +368,10 @@ public class Swift2ThriftGenerator
                 }
             }
         }
-        // add t even if it failed verification to avoid spurious errors for types that depend on t
-        knownTypes.add(t);
+
+        if (ok) {
+            knownTypes.add(t);
+        }
         return ok;
     }
 
@@ -375,8 +379,7 @@ public class Swift2ThriftGenerator
     {
         className = getFullClassName(className);
         try {
-            Class<?> cls = getClassLoader().loadClass(className);
-            return cls;
+            return getClassLoader().loadClass(className);
         } catch (ClassNotFoundException e) {
             LOG.warn("Couldn't load class {}", className);
         }
