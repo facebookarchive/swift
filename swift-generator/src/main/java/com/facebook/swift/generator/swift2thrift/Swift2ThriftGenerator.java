@@ -180,7 +180,7 @@ public class Swift2ThriftGenerator
         SuccessAndResult<ThriftType> output = topologicalSort(thriftTypes, new Predicate<ThriftType>()
         {
             @Override
-            public boolean apply(@Nullable ThriftType t)
+            public boolean apply(ThriftType t)
             {
                 ThriftProtocolType proto = t.getProtocolType();
                 if (proto == ThriftProtocolType.ENUM) {
@@ -258,9 +258,9 @@ public class Swift2ThriftGenerator
             remaining = bad;
         }
         if (prevSize == 0) {
-            return new SuccessAndResult(true, newList);
+            return new SuccessAndResult<>(true, newList);
         } else {
-            return new SuccessAndResult(false, remaining);
+            return new SuccessAndResult<>(false, remaining);
         }
     }
 
@@ -366,8 +366,10 @@ public class Swift2ThriftGenerator
                 }
             }
         }
-        // add t even if it failed verification to avoid spurious errors for types that depend on t
-        knownTypes.add(t);
+
+        if (ok) {
+            knownTypes.add(t);
+        }
         return ok;
     }
 
@@ -375,8 +377,7 @@ public class Swift2ThriftGenerator
     {
         className = getFullClassName(className);
         try {
-            Class<?> cls = getClassLoader().loadClass(className);
-            return cls;
+            return getClassLoader().loadClass(className);
         } catch (ClassNotFoundException e) {
             LOG.warn("Couldn't load class {}", className);
         }
