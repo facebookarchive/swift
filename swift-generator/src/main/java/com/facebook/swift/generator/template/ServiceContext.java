@@ -17,6 +17,7 @@ package com.facebook.swift.generator.template;
 
 import com.google.common.collect.Lists;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -27,6 +28,7 @@ public class ServiceContext implements JavaContext
     private final String javaPackage;
     private final String javaName;
     private final Set<String> javaParents;
+    private final Set<String> javaAsyncParents;
 
     private final List<MethodContext> methods = Lists.newArrayList();
 
@@ -36,6 +38,15 @@ public class ServiceContext implements JavaContext
         this.javaPackage = javaPackage;
         this.javaName = javaName;
         this.javaParents = javaParents;
+        Set<String> asyncParents = new HashSet<>();
+        for (String parent: javaParents) {
+            if(parent.equals("Closeable")) {
+                asyncParents.add(parent);
+            } else {
+                asyncParents.add(parent + ".Async");
+            }
+        }
+        this.javaAsyncParents = asyncParents;
     }
 
     public void addMethod(final MethodContext method)
@@ -69,6 +80,8 @@ public class ServiceContext implements JavaContext
     {
         return javaParents;
     }
+
+    public Set<String> getJavaAsyncParents() { return javaAsyncParents; }
 
     @Override
     public int hashCode()
