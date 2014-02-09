@@ -10,12 +10,18 @@ package <context.javaPackage>;
 
 import com.facebook.swift.codec.*;
 import com.facebook.swift.service.*;
+import com.google.common.util.concurrent.ListenableFuture;
 import java.io.*;
 import java.util.*;
 
 @ThriftService("<context.name>")
 public interface <context.javaName><if(context.javaParents)> extends <context.javaParents; separator=", "><endif>
 {
+    @ThriftService("<context.name>")
+    public interface Async<if(context.javaAsyncParents)> extends <context.javaAsyncParents; separator=", "><endif>
+    {
+        <context.methods : { method |<_asyncMethod(method)>}; separator="\n">
+    }
     <context.methods : { method |<_method(method)>}; separator="\n">
 }
 >>
@@ -192,6 +198,14 @@ _method(method) ::= <<
 <endif>
 <method.javaType> <method.javaName><_params(method.parameters)><if(!method.exceptions)>;
 <else> throws <method.exceptions: {exception |<exception.type>}; separator=", ">;<endif>
+>>
+
+_asyncMethod(method) ::= <<
+<if(method.name)>
+@ThriftMethod(value = "<method.name>"<if(method.oneway)>,
+              oneway = true<endif>)
+<endif>
+<if(method.allowAsync)>ListenableFuture\<<method.boxedJavaType>\><else><method.javaType><endif> <method.javaName><_params(method.parameters)>;
 >>
 
 _annotatedExceptions(method) ::= <<

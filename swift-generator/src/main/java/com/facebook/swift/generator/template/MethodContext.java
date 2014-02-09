@@ -35,16 +35,25 @@ public class MethodContext
     private final boolean oneway;
     private final String javaName;
     private final String javaType;
+    private final String boxedJavaType;
+    private final boolean allowAsync;
 
     private final List<FieldContext> parameters = Lists.newArrayList();
     private final List<ExceptionContext> exceptions = Lists.newArrayList();
 
-    MethodContext(@Nullable String name, boolean oneway, String javaName, String javaType)
+    MethodContext(@Nullable String name, boolean oneway, String javaName, String javaType, String boxedJavaType)
+    {
+        this(name, oneway, javaName, javaType, boxedJavaType, true /* allow async */);
+    }
+
+    MethodContext(@Nullable String name, boolean oneway, String javaName, String javaType, String boxedJavaType, boolean allowAsync)
     {
         this.name = name;
         this.oneway = oneway;
         this.javaName = javaName;
         this.javaType = javaType;
+        this.boxedJavaType = boxedJavaType;
+        this.allowAsync = allowAsync;
     }
 
     public void addParameter(final FieldContext parameter)
@@ -99,6 +108,10 @@ public class MethodContext
     {
         return javaType;
     }
+
+    public String getBoxedJavaType() { return boxedJavaType; }
+
+    public boolean getAllowAsync() { return allowAsync; }
 
     @Override
     public int hashCode()

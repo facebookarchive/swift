@@ -39,7 +39,7 @@ import static com.facebook.swift.generator.util.SwiftInternalStringUtils.isBlank
 
 public class TemplateContextGenerator
 {
-    private static final MethodContext CLOSE_METHOD_CONTEXT = new MethodContext(null, true, "close", "void");
+    private static final MethodContext CLOSE_METHOD_CONTEXT = new MethodContext(null, true, "close", "void", "Void", false /* allow async = false */);
 
     private final SwiftGeneratorConfig generatorConfig;
     private final TypeRegistry typeRegistry;
@@ -71,14 +71,16 @@ public class TemplateContextGenerator
         if (parentType != null) {
             javaParents.add(parentType.getClassName());
         }
-
+        final boolean addCloseableInterface = generatorConfig.containsTweak(SwiftGeneratorTweak.ADD_CLOSEABLE_INTERFACE);
+        if (addCloseableInterface) {
+            javaParents.add("Closeable");
+        }
         final ServiceContext serviceContext = new ServiceContext(name,
                                                                  javaType.getPackage(),
                                                                  javaType.getSimpleName(),
                                                                  javaParents);
 
-        if (generatorConfig.containsTweak(SwiftGeneratorTweak.ADD_CLOSEABLE_INTERFACE)) {
-            javaParents.add("Closeable");
+        if (addCloseableInterface) {
             serviceContext.addMethod(CLOSE_METHOD_CONTEXT);
         }
 
@@ -100,7 +102,14 @@ public class TemplateContextGenerator
         return new MethodContext(method.getName(),
                                  method.isOneway(),
                                  mangleJavamethodName(method.getName()),
-                                 typeConverter.convertType(method.getReturnType()));
+                                 typeConverter.convertType(method.getReturnType()),
+                                 typeConverter.convert(
+                                     method.getReturnType(),
+                                     // Use non primitive type if use async client, so it can be used as
+                                     // generic parameter for ListenableFuture
+                                     false
+                                 )
+        );
     }
 
     public FieldContext fieldFromThrift(final ThriftField field)
