@@ -182,7 +182,7 @@ public class Swift2ThriftGenerator
         SuccessAndResult<ThriftType> output = topologicalSort(thriftTypes, new Predicate<ThriftType>()
         {
             @Override
-            public boolean apply(@Nullable ThriftType t)
+            public boolean apply(ThriftType t)
             {
                 ThriftProtocolType proto = checkNotNull(t).getProtocolType();
                 if (proto == ThriftProtocolType.ENUM) {
