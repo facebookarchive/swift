@@ -148,6 +148,18 @@ public class ThriftServiceMetadata
         return parentServices;
     }
 
+    public ThriftServiceMetadata getParentService()
+    {
+        // assert that we have 0 or 1 parent
+        Preconditions.checkState(parentServices.size() <= 1);
+
+        if (parentServices.isEmpty()) {
+            return null;
+        } else {
+            return parentServices.get(0);
+        }
+    }
+
     @Override
     public int hashCode()
     {
