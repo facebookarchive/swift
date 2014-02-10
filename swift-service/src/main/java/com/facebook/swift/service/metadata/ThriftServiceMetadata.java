@@ -148,6 +148,20 @@ public class ThriftServiceMetadata
         return parentServices;
     }
 
+    public ThriftServiceMetadata getParentService()
+    {
+        // Assert that we have 0 or 1 parent.
+        // Having multiple @ThriftService parents is generally supported by swift,
+        // but this is a restriction that applies to swift2thrift generator (because the Thrift IDL doesn't)
+        Preconditions.checkState(parentServices.size() <= 1);
+
+        if (parentServices.isEmpty()) {
+            return null;
+        } else {
+            return parentServices.get(0);
+        }
+    }
+
     @Override
     public int hashCode()
     {
