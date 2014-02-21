@@ -71,6 +71,7 @@ public class ThriftServerModule implements Module
         binder.bind(NiftyProcessor.class).to(Key.get(ThriftServiceProcessor.class)).in(Scopes.SINGLETON);
 
         bindConfig(binder).to(ThriftServerConfig.class);
+        binder.bind(ThriftServer.NiftySecurityFactoryHolder.class);
         binder.bind(ThriftServer.class).in(Scopes.SINGLETON);
     }
 
