@@ -20,6 +20,8 @@ import com.facebook.nifty.codec.ThriftFrameCodecFactory;
 import com.facebook.nifty.core.NettyServerConfig;
 import com.facebook.nifty.core.NettyServerConfigBuilder;
 import com.facebook.nifty.core.NettyServerTransport;
+import com.facebook.nifty.core.NiftyNoOpSecurityFactory;
+import com.facebook.nifty.core.NiftySecurityFactory;
 import com.facebook.nifty.core.NiftyTimer;
 import com.facebook.nifty.core.ThriftServerDef;
 import com.facebook.nifty.duplex.TDuplexProtocolFactory;
@@ -106,13 +108,37 @@ public class ThriftServer implements Closeable
         this(processor, config, timer, DEFAULT_FRAME_CODEC_FACTORIES, DEFAULT_PROTOCOL_FACTORIES);
     }
 
-    @Inject
     public ThriftServer(
             final NiftyProcessor processor,
             ThriftServerConfig config,
             @ThriftServerTimer Timer timer,
             Map<String, ThriftFrameCodecFactory> availableFrameCodecFactories,
             Map<String, TDuplexProtocolFactory> availableProtocolFactories)
+    {
+        this(processor, config, timer, availableFrameCodecFactories, availableProtocolFactories,
+             new NiftySecurityFactoryHolder());
+    }
+
+    public ThriftServer(
+            final NiftyProcessor processor,
+            ThriftServerConfig config,
+            @ThriftServerTimer Timer timer,
+            Map<String, ThriftFrameCodecFactory> availableFrameCodecFactories,
+            Map<String, TDuplexProtocolFactory> availableProtocolFactories,
+            NiftySecurityFactory securityFactory)
+    {
+        this(processor, config, timer, availableFrameCodecFactories, availableProtocolFactories,
+             new NiftySecurityFactoryHolder(securityFactory));
+    }
+
+    @Inject
+    public ThriftServer(
+            final NiftyProcessor processor,
+            ThriftServerConfig config,
+            @ThriftServerTimer Timer timer,
+            Map<String, ThriftFrameCodecFactory> availableFrameCodecFactories,
+            Map<String, TDuplexProtocolFactory> availableProtocolFactories,
+            NiftySecurityFactoryHolder securityFactoryHolder)
     {
         checkNotNull(availableFrameCodecFactories, "availableFrameCodecFactories cannot be null");
         checkNotNull(availableProtocolFactories, "availableProtocolFactories cannot be null");
@@ -153,6 +179,7 @@ public class ThriftServer implements Closeable
                                                          .limitConnectionsTo(config.getConnectionLimit())
                                                          .thriftFrameCodecFactory(availableFrameCodecFactories.get(transportName))
                                                          .protocol(availableProtocolFactories.get(protocolName))
+                                                         .withSecurityFactory(securityFactoryHolder.niftySecurityFactory)
                                                          .using(workerExecutor).build();
 
         NettyServerConfigBuilder nettyServerConfigBuilder = NettyServerConfig.newBuilder();
@@ -277,5 +304,24 @@ public class ThriftServer implements Closeable
         }
 
         state = State.CLOSED;
+    }
+
+    /*
+        Do not use this class. It is only used to workaround Guice not having @Inject(optional=true) for constructor
+        arguments. The class is public only because
+     */
+    public static class NiftySecurityFactoryHolder
+    {
+        @Inject(optional = true) public NiftySecurityFactory niftySecurityFactory = new NiftyNoOpSecurityFactory();
+
+        @Inject
+        public NiftySecurityFactoryHolder()
+        {
+        }
+
+        public NiftySecurityFactoryHolder(NiftySecurityFactory niftySecurityFactory)
+        {
+            this.niftySecurityFactory = niftySecurityFactory;
+        }
     }
 }
