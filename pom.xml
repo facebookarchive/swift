@@ -22,7 +22,7 @@
     <parent>
         <groupId>com.facebook</groupId>
         <artifactId>facebook-oss-pom</artifactId>
-        <version>9</version>
+        <version>10-SNAPSHOT</version>
     </parent>
 
     <groupId>com.facebook.nifty</groupId>
@@ -43,7 +43,6 @@
         <!-- <project.build.targetJdk>1.6</project.build.targetJdk>     -->
 
         <dep.airlift.version>0.83</dep.airlift.version>
-        <dep.guava.version>16.0.1</dep.guava.version>
     </properties>
 
     <url>https://facebook.github.com/nifty</url>
