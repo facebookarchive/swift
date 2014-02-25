@@ -33,6 +33,8 @@ public class LoadTesterNettyConfigProvider implements Provider<NettyServerConfig
     public NettyServerConfig get() {
         NettyServerConfigBuilder configBuilder = new NettyServerConfigBuilder();
         configBuilder.getServerSocketChannelConfig().setBacklog(config.getAcceptBacklog());
+        configBuilder.setBossThreadCount(config.getNumBossThreads());
+        configBuilder.setWorkerThreadCount(config.getNumIoThreads());
         return configBuilder.build();
     }
 }

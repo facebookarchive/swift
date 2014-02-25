@@ -15,6 +15,7 @@
  */
 package com.facebook.nifty.perf;
 
+import com.facebook.nifty.core.NettyConfigBuilderBase;
 import com.facebook.nifty.core.NiftyBootstrap;
 import com.facebook.nifty.core.ThriftServerDef;
 import com.facebook.nifty.core.ThriftServerDefBuilder;
@@ -38,6 +39,8 @@ import org.jboss.netty.logging.Slf4JLoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import java.util.concurrent.Executors;
 
 public class NiftyLoadTester
@@ -117,7 +120,11 @@ public class NiftyLoadTester
         private int numTaskThreads = 8;
         private int queuedResponseLimit = 500;
         private int acceptBacklog = 1024;
+        private int numBossThreads = NettyConfigBuilderBase.DEFAULT_BOSS_THREAD_COUNT;
+        private int numIoThreads = NettyConfigBuilderBase.DEFAULT_WORKER_THREAD_COUNT;
 
+        @Min(0)
+        @Max(65535)
         public int getServerPort()
         {
             return serverPort;
@@ -151,6 +158,7 @@ public class NiftyLoadTester
             this.useTaskQueue = useTaskQueue;
         }
 
+        @Min(1)
         public int getNumTaskThreads()
         {
             return numTaskThreads;
@@ -162,6 +170,7 @@ public class NiftyLoadTester
             this.numTaskThreads = numTaskThreads;
         }
 
+        @Min(1)
         public int getQueuedResponseLimit()
         {
             return queuedResponseLimit;
@@ -182,6 +191,30 @@ public class NiftyLoadTester
         public void setAcceptBacklog(int acceptBacklog)
         {
             this.acceptBacklog = acceptBacklog;
+        }
+
+        @Min(1)
+        public int getNumBossThreads()
+        {
+            return numBossThreads;
+        }
+
+        @Config("numBossThreads")
+        public void setNumBossThreads(int numBossThreads)
+        {
+            this.numBossThreads = numBossThreads;
+        }
+
+        @Min(1)
+        public int getNumIoThreads()
+        {
+            return numIoThreads;
+        }
+
+        @Config("numIoThreads")
+        public void setNumIoThreads(int numIoThreads)
+        {
+            this.numIoThreads = numIoThreads;
         }
     }
 }

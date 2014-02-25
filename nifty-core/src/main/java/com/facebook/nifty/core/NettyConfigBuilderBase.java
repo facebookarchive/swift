@@ -31,8 +31,8 @@ import java.util.concurrent.ExecutorService;
 public abstract class NettyConfigBuilderBase<T extends NettyConfigBuilderBase<T>>
 {
     // These constants come directly from Netty but are private in Netty.
-    private static final int DEFAULT_BOSS_THREAD_COUNT = 1;
-    private static final int DEFAULT_WORKER_THREAD_COUNT = Runtime.getRuntime().availableProcessors() * 2;
+    public static final int DEFAULT_BOSS_THREAD_COUNT = 1;
+    public static final int DEFAULT_WORKER_THREAD_COUNT = Runtime.getRuntime().availableProcessors() * 2;
 
     private final Map<String, Object> options = new HashMap<>();
     private String niftyName;
