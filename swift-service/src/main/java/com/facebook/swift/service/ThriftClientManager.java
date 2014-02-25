@@ -126,7 +126,7 @@ public class ThriftClientManager implements Closeable
                 DEFAULT_MAX_FRAME_SIZE,
                 DEFAULT_NAME,
                 ImmutableList.<ThriftClientEventHandler>of(),
-                null);
+                niftyClient.getDefaultSocksProxyAddress());
     }
 
     /**
