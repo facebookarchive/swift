@@ -112,6 +112,39 @@ public class ThriftClientManager implements Closeable
         this.globalEventHandlers = checkNotNull(globalEventHandlers, "globalEventHandlers is null");
     }
 
+    public <C extends NiftyClientChannel> ListenableFuture<C> createChannel(
+            NiftyClientConnector<C> connector)
+    {
+        return createChannel(connector,
+                             DEFAULT_CONNECT_TIMEOUT,
+                             DEFAULT_RECEIVE_TIMEOUT,
+                             DEFAULT_READ_TIMEOUT,
+                             DEFAULT_WRITE_TIMEOUT,
+                             DEFAULT_MAX_FRAME_SIZE,
+                             getDefaultSocksProxy());
+    }
+
+    public <C extends NiftyClientChannel> ListenableFuture<C> createChannel(
+            final NiftyClientConnector<C> connector,
+            @Nullable final Duration connectTimeout,
+            @Nullable final Duration receiveTimeout,
+            @Nullable final Duration readTimeout,
+            @Nullable final Duration writeTimeout,
+            final int maxFrameSize,
+            @Nullable HostAndPort socksProxy)
+    {
+        final ListenableFuture<C> connectFuture = niftyClient.connectAsync(
+                connector,
+                connectTimeout,
+                receiveTimeout,
+                readTimeout,
+                writeTimeout,
+                maxFrameSize,
+                socksProxy);
+
+        return connectFuture;
+    }
+
     public <T, C extends NiftyClientChannel> ListenableFuture<T> createClient(
             NiftyClientConnector<C> connector,
             Class<T> type)
@@ -173,7 +206,7 @@ public class ThriftClientManager implements Closeable
         checkNotNull(type, "type is null");
         checkNotNull(eventHandlers, "eventHandlers is null");
 
-        final ListenableFuture<C> connectFuture = niftyClient.connectAsync(
+        final ListenableFuture<C> connectFuture = createChannel(
                 connector,
                 connectTimeout,
                 receiveTimeout,
