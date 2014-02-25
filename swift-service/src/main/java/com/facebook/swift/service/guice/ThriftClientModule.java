@@ -15,39 +15,46 @@
  */
 package com.facebook.swift.service.guice;
 
+import com.facebook.nifty.client.NettyClientConfig;
 import com.facebook.nifty.client.NiftyClient;
-import com.facebook.swift.service.ThriftClientEventHandler;
 import com.facebook.swift.service.ThriftClientManager;
-import com.facebook.swift.service.ThriftClientManager.ThriftClientMetadata;
-import com.facebook.swift.service.ThriftMethodHandler;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
+import com.facebook.swift.service.ThriftClientManagerConfig;
 import com.google.inject.*;
-import org.weakref.jmx.guice.ExportBinder;
-import org.weakref.jmx.guice.MapObjectNameFunction;
-
-import javax.inject.Singleton;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-import java.util.Map;
-import java.util.Set;
 
 import static com.facebook.swift.service.guice.ClientEventHandlersBinder.clientEventHandlersBinder;
-import static com.google.inject.multibindings.Multibinder.newSetBinder;
 import static io.airlift.configuration.ConfigurationModule.bindConfig;
-import static java.lang.String.format;
 
 public class ThriftClientModule implements Module
 {
     @Override
     public void configure(Binder binder)
     {
-        binder.bind(NiftyClient.class).in(Scopes.SINGLETON);
+        bindConfig(binder).to(ThriftClientManagerConfig.class);
+
+        binder.bind(NiftyClient.class).toProvider(NiftyClientProvider.class).in(Scopes.SINGLETON);
 
         // Bind single shared ThriftClientManager
         binder.bind(ThriftClientManager.class).in(Scopes.SINGLETON);
 
         // Create a multibinder for global event handlers
         clientEventHandlersBinder(binder);
+    }
+
+    private static class NiftyClientProvider implements Provider<NiftyClient>
+    {
+        private final ThriftClientManagerConfig clientManagerConfig;
+
+        @Inject
+        public NiftyClientProvider(ThriftClientManagerConfig clientManagerConfig)
+        {
+            this.clientManagerConfig = clientManagerConfig;
+        }
+
+        @Override
+        public NiftyClient get()
+        {
+            NettyClientConfig config = NettyClientConfig.newBuilder().setDefaultSocksProxyAddress(clientManagerConfig.getDefaultSocksProxyAddress()).build();
+            return new NiftyClient(config);
+        }
     }
 }

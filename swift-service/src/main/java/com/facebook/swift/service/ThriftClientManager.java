@@ -60,6 +60,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import javax.annotation.PreDestroy;
 import javax.annotation.concurrent.Immutable;
+import javax.annotation.concurrent.ThreadSafe;
 import javax.validation.constraints.NotNull;
 
 import static com.facebook.nifty.duplex.TTransportPair.fromSeparateTransports;
@@ -72,6 +73,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
 
+@ThreadSafe
 public class ThriftClientManager implements Closeable
 {
     public static final String DEFAULT_NAME = "default";
@@ -110,6 +112,39 @@ public class ThriftClientManager implements Closeable
         this.globalEventHandlers = checkNotNull(globalEventHandlers, "globalEventHandlers is null");
     }
 
+    public <C extends NiftyClientChannel> ListenableFuture<C> createChannel(
+            NiftyClientConnector<C> connector)
+    {
+        return createChannel(connector,
+                             DEFAULT_CONNECT_TIMEOUT,
+                             DEFAULT_RECEIVE_TIMEOUT,
+                             DEFAULT_READ_TIMEOUT,
+                             DEFAULT_WRITE_TIMEOUT,
+                             DEFAULT_MAX_FRAME_SIZE,
+                             getDefaultSocksProxy());
+    }
+
+    public <C extends NiftyClientChannel> ListenableFuture<C> createChannel(
+            final NiftyClientConnector<C> connector,
+            @Nullable final Duration connectTimeout,
+            @Nullable final Duration receiveTimeout,
+            @Nullable final Duration readTimeout,
+            @Nullable final Duration writeTimeout,
+            final int maxFrameSize,
+            @Nullable HostAndPort socksProxy)
+    {
+        final ListenableFuture<C> connectFuture = niftyClient.connectAsync(
+                connector,
+                connectTimeout,
+                receiveTimeout,
+                readTimeout,
+                writeTimeout,
+                maxFrameSize,
+                socksProxy);
+
+        return connectFuture;
+    }
+
     public <T, C extends NiftyClientChannel> ListenableFuture<T> createClient(
             NiftyClientConnector<C> connector,
             Class<T> type)
@@ -124,7 +159,7 @@ public class ThriftClientManager implements Closeable
                 DEFAULT_MAX_FRAME_SIZE,
                 DEFAULT_NAME,
                 ImmutableList.<ThriftClientEventHandler>of(),
-                null);
+                getDefaultSocksProxy());
     }
 
     /**
@@ -171,25 +206,20 @@ public class ThriftClientManager implements Closeable
         checkNotNull(type, "type is null");
         checkNotNull(eventHandlers, "eventHandlers is null");
 
-        InetSocketAddress socksProxyAddress = toSocksProxyAddress(socksProxy);
-        final ListenableFuture<C> connectFuture = niftyClient.connectAsync(
+        final ListenableFuture<C> connectFuture = createChannel(
                 connector,
                 connectTimeout,
                 receiveTimeout,
                 readTimeout,
                 writeTimeout,
                 maxFrameSize,
-                socksProxyAddress);
+                socksProxy);
 
         ListenableFuture<T> clientFuture = Futures.transform(connectFuture, new Function<C, T>() {
             @Nullable
             @Override
             public T apply(@NotNull C channel)
             {
-                channel.setReceiveTimeout(receiveTimeout);
-                channel.setReadTimeout(readTimeout);
-                channel.setSendTimeout(writeTimeout);
-
                 String name = Strings.isNullOrEmpty(clientName) ? connector.toString() : clientName;
 
                 try {
@@ -239,14 +269,6 @@ public class ThriftClientManager implements Closeable
         ));
     }
 
-    private static InetSocketAddress toSocksProxyAddress(HostAndPort socksProxy)
-    {
-        if (socksProxy == null) {
-            return null;
-        }
-        return new InetSocketAddress(socksProxy.getHostText(), socksProxy.getPortOrDefault(SOCKS_DEFAULT_PORT));
-    }
-
     public ThriftClientMetadata getClientMetadata(Class<?> type, String name)
     {
         return clientMetadataCache.getUnchecked(new TypeAndName(type, name));
@@ -256,6 +278,11 @@ public class ThriftClientManager implements Closeable
     public void close()
     {
         niftyClient.close();
+    }
+
+    public HostAndPort getDefaultSocksProxy()
+    {
+        return niftyClient.getDefaultSocksProxyAddress();
     }
 
     /**

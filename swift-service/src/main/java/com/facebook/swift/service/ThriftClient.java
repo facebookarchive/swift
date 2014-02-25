@@ -148,7 +148,7 @@ public class ThriftClient<T>
                 maxFrameSize,
                 clientName,
                 eventHandlers,
-                socksProxy);
+                getSocksProxyOrDefault());
     }
 
     /***
@@ -159,5 +159,10 @@ public class ThriftClient<T>
     public T open(NiftyClientChannel channel)
     {
         return clientManager.createClient(channel, clientType, clientName, eventHandlers);
+    }
+
+    private HostAndPort getSocksProxyOrDefault()
+    {
+        return (socksProxy != null) ? socksProxy : clientManager.getDefaultSocksProxy();
     }
 }
