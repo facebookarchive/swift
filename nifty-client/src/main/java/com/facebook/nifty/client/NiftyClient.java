@@ -17,6 +17,7 @@ package com.facebook.nifty.client;
 
 import com.facebook.nifty.client.socks.Socks4ClientBootstrap;
 import com.facebook.nifty.core.ShutdownUtil;
+import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.airlift.units.Duration;
@@ -54,7 +55,7 @@ public class NiftyClient implements Closeable
     private final ExecutorService bossExecutor;
     private final ExecutorService workerExecutor;
     private final NioClientSocketChannelFactory channelFactory;
-    private final InetSocketAddress defaultSocksProxyAddress;
+    private final HostAndPort defaultSocksProxyAddress;
     private final ChannelGroup allChannels = new DefaultChannelGroup();
     private final Timer timer;
 
@@ -142,7 +143,7 @@ public class NiftyClient implements Closeable
             @Nullable Duration receiveTimeout,
             @Nullable Duration sendTimeout,
             int maxFrameSize,
-            @Nullable InetSocketAddress socksProxyAddress)
+            @Nullable HostAndPort socksProxyAddress)
     {
         return connectAsync(clientChannelConnector,
                             connectTimeout,
@@ -160,7 +161,7 @@ public class NiftyClient implements Closeable
             @Nullable Duration readTimeout,
             @Nullable Duration sendTimeout,
             int maxFrameSize,
-            @Nullable InetSocketAddress socksProxyAddress)
+            @Nullable HostAndPort socksProxyAddress)
     {
         checkNotNull(clientChannelConnector, "clientChannelConnector is null");
 
@@ -212,7 +213,7 @@ public class NiftyClient implements Closeable
             @Nullable Duration receiveTimeout,
             @Nullable Duration sendTimeout,
             int maxFrameSize,
-            @Nullable InetSocketAddress socksProxyAddress)
+            @Nullable HostAndPort socksProxyAddress)
             throws TTransportException, InterruptedException
     {
         // TODO: implement send timeout for sync client
@@ -266,14 +267,19 @@ public class NiftyClient implements Closeable
                                             allChannels);
     }
 
-    private ClientBootstrap createClientBootstrap(@Nullable InetSocketAddress socksProxyAddress)
+    private ClientBootstrap createClientBootstrap(@Nullable HostAndPort socksProxyAddress)
     {
         if (socksProxyAddress != null) {
-            return new Socks4ClientBootstrap(channelFactory, socksProxyAddress);
+            return new Socks4ClientBootstrap(channelFactory, toInetAddress(socksProxyAddress));
         }
         else {
             return new ClientBootstrap(channelFactory);
         }
+    }
+
+    private static InetSocketAddress toInetAddress(HostAndPort hostAndPort)
+    {
+        return (hostAndPort == null) ? null : new InetSocketAddress(hostAndPort.getHostText(), hostAndPort.getPort());
     }
 
     private class TNiftyFuture<T extends NiftyClientChannel> extends AbstractFuture<T>

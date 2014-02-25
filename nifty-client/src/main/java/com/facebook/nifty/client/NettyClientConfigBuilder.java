@@ -18,6 +18,7 @@ package com.facebook.nifty.client;
 import com.facebook.nifty.core.NettyConfigBuilderBase;
 import com.facebook.nifty.core.NiftyTimer;
 import com.google.common.base.Strings;
+import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 
@@ -39,7 +40,7 @@ import static java.util.concurrent.Executors.newCachedThreadPool;
  */
 public class NettyClientConfigBuilder extends NettyConfigBuilderBase<NettyClientConfigBuilder>
 {
-    private InetSocketAddress defaultSocksProxyAddress = null;
+    private HostAndPort defaultSocksProxyAddress = null;
 
     private final NioSocketChannelConfig socketChannelConfig = (NioSocketChannelConfig) Proxy.newProxyInstance(
             getClass().getClassLoader(),
@@ -75,7 +76,7 @@ public class NettyClientConfigBuilder extends NettyConfigBuilderBase<NettyClient
      * @param defaultSocksProxyAddress The address of the SOCKS proxy server
      * @return This builder
      */
-    public NettyClientConfigBuilder setDefaultSocksProxyAddress(InetSocketAddress defaultSocksProxyAddress)
+    public NettyClientConfigBuilder setDefaultSocksProxyAddress(HostAndPort defaultSocksProxyAddress)
     {
         this.defaultSocksProxyAddress = defaultSocksProxyAddress;
         return this;

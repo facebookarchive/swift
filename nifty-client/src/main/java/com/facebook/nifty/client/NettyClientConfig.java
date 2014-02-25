@@ -15,6 +15,7 @@
  */
 package com.facebook.nifty.client;
 
+import com.google.common.net.HostAndPort;
 import org.jboss.netty.util.Timer;
 
 import java.net.InetSocketAddress;
@@ -24,7 +25,7 @@ import java.util.concurrent.ExecutorService;
 public class NettyClientConfig
 {
     private final Map<String, Object> bootstrapOptions;
-    private final InetSocketAddress defaultSocksProxyAddress;
+    private final HostAndPort defaultSocksProxyAddress;
     private final Timer timer;
     private final ExecutorService bossExecutor;
     private final int bossThreadCount;
@@ -32,7 +33,7 @@ public class NettyClientConfig
     private final int workerThreadCount;
 
     public NettyClientConfig(Map<String, Object> bootstrapOptions,
-                             InetSocketAddress defaultSocksProxyAddress,
+                             HostAndPort defaultSocksProxyAddress,
                              Timer timer,
                              ExecutorService bossExecutor,
                              int bossThreadCount,
@@ -64,7 +65,7 @@ public class NettyClientConfig
         return bossThreadCount;
     }
 
-    public InetSocketAddress getDefaultSocksProxyAddress()
+    public HostAndPort getDefaultSocksProxyAddress()
     {
         return defaultSocksProxyAddress;
     }
