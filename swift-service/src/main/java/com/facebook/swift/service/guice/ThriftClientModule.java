@@ -15,8 +15,10 @@
  */
 package com.facebook.swift.service.guice;
 
+import com.facebook.nifty.client.NettyClientConfig;
 import com.facebook.nifty.client.NiftyClient;
 import com.facebook.swift.service.ThriftClientManager;
+import com.facebook.swift.service.ThriftClientManagerConfig;
 import com.google.inject.*;
 
 import static com.facebook.swift.service.guice.ClientEventHandlersBinder.clientEventHandlersBinder;
@@ -27,12 +29,32 @@ public class ThriftClientModule implements Module
     @Override
     public void configure(Binder binder)
     {
-        binder.bind(NiftyClient.class).in(Scopes.SINGLETON);
+        bindConfig(binder).to(ThriftClientManagerConfig.class);
+
+        binder.bind(NiftyClient.class).toProvider(NiftyClientProvider.class).in(Scopes.SINGLETON);
 
         // Bind single shared ThriftClientManager
         binder.bind(ThriftClientManager.class).in(Scopes.SINGLETON);
 
         // Create a multibinder for global event handlers
         clientEventHandlersBinder(binder);
+    }
+
+    private static class NiftyClientProvider implements Provider<NiftyClient>
+    {
+        private final ThriftClientManagerConfig clientManagerConfig;
+
+        @Inject
+        public NiftyClientProvider(ThriftClientManagerConfig clientManagerConfig)
+        {
+            this.clientManagerConfig = clientManagerConfig;
+        }
+
+        @Override
+        public NiftyClient get()
+        {
+            NettyClientConfig config = NettyClientConfig.newBuilder().setDefaultSocksProxyAddress(clientManagerConfig.getDefaultSocksProxyAddress()).build();
+            return new NiftyClient(config);
+        }
     }
 }
