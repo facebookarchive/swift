@@ -97,6 +97,11 @@ public class NiftyClient implements Closeable
                             defaultSocksProxyAddress);
     }
 
+    public HostAndPort getDefaultSocksProxyAddress()
+    {
+        return defaultSocksProxyAddress;
+    }
+
     /**
      * @deprecated Use {@link NiftyClient#connectAsync(NiftyClientConnector, Duration, Duration, Duration, Duration, int)}.
      */
