@@ -173,7 +173,6 @@ public class ThriftClientManager implements Closeable
         checkNotNull(type, "type is null");
         checkNotNull(eventHandlers, "eventHandlers is null");
 
-        InetSocketAddress socksProxyAddress = toSocksProxyAddress(socksProxy);
         final ListenableFuture<C> connectFuture = niftyClient.connectAsync(
                 connector,
                 connectTimeout,
@@ -181,7 +180,7 @@ public class ThriftClientManager implements Closeable
                 readTimeout,
                 writeTimeout,
                 maxFrameSize,
-                socksProxyAddress);
+                socksProxy);
 
         ListenableFuture<T> clientFuture = Futures.transform(connectFuture, new Function<C, T>() {
             @Nullable
@@ -239,14 +238,6 @@ public class ThriftClientManager implements Closeable
                 new Class<?>[]{ type, Closeable.class },
                 handler
         ));
-    }
-
-    private static InetSocketAddress toSocksProxyAddress(HostAndPort socksProxy)
-    {
-        if (socksProxy == null) {
-            return null;
-        }
-        return new InetSocketAddress(socksProxy.getHostText(), socksProxy.getPortOrDefault(SOCKS_DEFAULT_PORT));
     }
 
     public ThriftClientMetadata getClientMetadata(Class<?> type, String name)
