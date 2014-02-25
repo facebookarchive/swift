@@ -187,10 +187,6 @@ public class ThriftClientManager implements Closeable
             @Override
             public T apply(@NotNull C channel)
             {
-                channel.setReceiveTimeout(receiveTimeout);
-                channel.setReadTimeout(readTimeout);
-                channel.setSendTimeout(writeTimeout);
-
                 String name = Strings.isNullOrEmpty(clientName) ? connector.toString() : clientName;
 
                 try {
