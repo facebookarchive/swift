@@ -16,26 +16,11 @@
 package com.facebook.swift.service.guice;
 
 import com.facebook.nifty.client.NiftyClient;
-import com.facebook.swift.service.ThriftClientEventHandler;
 import com.facebook.swift.service.ThriftClientManager;
-import com.facebook.swift.service.ThriftClientManager.ThriftClientMetadata;
-import com.facebook.swift.service.ThriftMethodHandler;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.*;
-import org.weakref.jmx.guice.ExportBinder;
-import org.weakref.jmx.guice.MapObjectNameFunction;
-
-import javax.inject.Singleton;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-import java.util.Map;
-import java.util.Set;
 
 import static com.facebook.swift.service.guice.ClientEventHandlersBinder.clientEventHandlersBinder;
-import static com.google.inject.multibindings.Multibinder.newSetBinder;
 import static io.airlift.configuration.ConfigurationModule.bindConfig;
-import static java.lang.String.format;
 
 public class ThriftClientModule implements Module
 {
