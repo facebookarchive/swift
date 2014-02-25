@@ -60,6 +60,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import javax.annotation.PreDestroy;
 import javax.annotation.concurrent.Immutable;
+import javax.annotation.concurrent.ThreadSafe;
 import javax.validation.constraints.NotNull;
 
 import static com.facebook.nifty.duplex.TTransportPair.fromSeparateTransports;
@@ -72,6 +73,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
 
+@ThreadSafe
 public class ThriftClientManager implements Closeable
 {
     public static final String DEFAULT_NAME = "default";
