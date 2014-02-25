@@ -190,6 +190,7 @@ public class NiftyClient implements Closeable
         });
         return new TNiftyFuture<>(clientChannelConnector,
                                   receiveTimeout,
+                                  readTimeout,
                                   sendTimeout,
                                   nettyChannelFuture);
     }
@@ -291,6 +292,7 @@ public class NiftyClient implements Closeable
     {
         private TNiftyFuture(final NiftyClientConnector<T> clientChannelConnector,
                              @Nullable final Duration receiveTimeout,
+                             @Nullable final Duration readTimeout,
                              @Nullable final Duration sendTimeout,
                              final ChannelFuture channelFuture)
         {
@@ -306,6 +308,7 @@ public class NiftyClient implements Closeable
                             T channel = clientChannelConnector.newThriftClientChannel(nettyChannel,
                                                                                       timer);
                             channel.setReceiveTimeout(receiveTimeout);
+                            channel.setReadTimeout(readTimeout);
                             channel.setSendTimeout(sendTimeout);
                             set(channel);
                         }
