@@ -100,6 +100,7 @@ public class NettyServerTransport implements ExternalResourceReleasable
                 ChannelPipeline cp = Channels.pipeline();
                 TProtocolFactory inputProtocolFactory = def.getDuplexProtocolFactory().getInputProtocolFactory();
                 NiftySecurityHandlers securityHandlers = def.getSecurityFactory().getSecurityHandlers(def);
+                cp.addLast("connectionContext", new ConnectionContextHandler());
                 cp.addLast("connectionLimiter", connectionLimiter);
                 cp.addLast(ChannelStatistics.NAME, channelStatistics);
                 cp.addLast("encryptionHandler", securityHandlers.getEncryptionHandler());

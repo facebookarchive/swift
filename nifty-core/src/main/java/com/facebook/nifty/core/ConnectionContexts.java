@@ -15,13 +15,20 @@
  */
 package com.facebook.nifty.core;
 
-import org.apache.thrift.protocol.TProtocol;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelLocal;
 
-public interface RequestContext
+public class ConnectionContexts
 {
-    TProtocol getOutputProtocol();
+    private static final ChannelLocal<ConnectionContext> context = new ChannelLocal<ConnectionContext>(true) {
+        @Override
+        protected ConnectionContext initialValue(Channel channel)
+        {
+            return new NiftyConnectionContext();
+        }
+    };
 
-    TProtocol getInputProtocol();
-
-    ConnectionContext getConnectionContext();
+    public static ConnectionContext getContext(Channel channel) {
+        return context.get(channel);
+    }
 }

@@ -132,7 +132,8 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
 
                 try {
                     try {
-                        RequestContext requestContext = new NiftyRequestContext(ctx.getChannel(), inProtocol, outProtocol, messageTransport);
+                        ConnectionContext connectionContext = ConnectionContexts.getContext(ctx.getChannel());
+                        RequestContext requestContext = new NiftyRequestContext(connectionContext, inProtocol, outProtocol, messageTransport);
                         RequestContexts.setCurrentContext(requestContext);
                         processFuture = processorFactory.getProcessor(messageTransport).process(inProtocol, outProtocol, requestContext);
                     }

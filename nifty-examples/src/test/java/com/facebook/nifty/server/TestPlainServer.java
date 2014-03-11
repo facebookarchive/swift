@@ -17,7 +17,6 @@ package com.facebook.nifty.server;
 
 import com.facebook.nifty.client.NiftyClient;
 import com.facebook.nifty.core.NiftyBootstrap;
-import com.facebook.nifty.core.NiftyRequestContext;
 import com.facebook.nifty.core.RequestContext;
 import com.facebook.nifty.core.RequestContexts;
 import com.facebook.nifty.core.ThriftServerDefBuilder;
@@ -171,7 +170,7 @@ public class TestPlainServer
 
                         for (LogEntry message : messages) {
                             log.info("[Client: {}] {}: {}",
-                                     context.getRemoteAddress(),
+                                     context.getConnectionContext().getRemoteAddress(),
                                      message.getCategory(),
                                      message.getMessage());
                         }

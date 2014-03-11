@@ -85,7 +85,7 @@ public class TestNiftyServer
 
                         for (LogEntry message : messages) {
                             log.info("[Client: {}] {}: {}",
-                                    context.getRemoteAddress(),
+                                    context.getConnectionContext().getRemoteAddress(),
                                     message.getCategory(),
                                     message.getMessage());
                         }

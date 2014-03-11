@@ -16,15 +16,12 @@
 package com.facebook.nifty.core;
 
 import org.apache.thrift.protocol.TProtocol;
-import org.jboss.netty.channel.Channel;
 
 import java.net.SocketAddress;
 
-import static com.google.common.base.Preconditions.checkState;
-
 public class NiftyRequestContext implements RequestContext
 {
-    private final SocketAddress remoteAddress;
+    private final ConnectionContext connectionContext;
     private final TProtocol inputProtocol;
     private final TProtocol outputProtocol;
     private final TNiftyTransport niftyTransport;
@@ -34,12 +31,6 @@ public class NiftyRequestContext implements RequestContext
      *
      * @return The client's remote address as a {@link SocketAddress}
      */
-    @Override
-    public SocketAddress getRemoteAddress()
-    {
-        return remoteAddress;
-    }
-
     @Override
     public TProtocol getInputProtocol()
     {
@@ -57,11 +48,17 @@ public class NiftyRequestContext implements RequestContext
         return niftyTransport;
     }
 
-    NiftyRequestContext(Channel channel, TProtocol inputProtocol, TProtocol outputProtocol, TNiftyTransport niftyTransport)
+    @Override
+    public ConnectionContext getConnectionContext()
     {
+        return connectionContext;
+    }
+
+    NiftyRequestContext(ConnectionContext connectionContext, TProtocol inputProtocol, TProtocol outputProtocol, TNiftyTransport niftyTransport)
+    {
+        this.connectionContext = connectionContext;
         this.niftyTransport = niftyTransport;
         this.inputProtocol = inputProtocol;
         this.outputProtocol = outputProtocol;
-        this.remoteAddress = channel.getRemoteAddress();
     }
 }
