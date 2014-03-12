@@ -29,7 +29,6 @@ import com.google.common.collect.Lists;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.testng.annotations.Test;
@@ -41,7 +40,10 @@ import java.util.List;
 import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.net.HostAndPort.fromParts;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * Demonstrates creating a Thrift service using Swift.
@@ -171,7 +173,7 @@ public class TestThriftService
             assertEquals(methodName, "scribe.Log");
             if (niftyProcessor) {
                 assertNotNull(requestContext);
-                assertTrue(((InetSocketAddress)requestContext.getRemoteAddress()).getAddress().isLoopbackAddress());
+                assertTrue(((InetSocketAddress)requestContext.getConnectionContext().getRemoteAddress()).getAddress().isLoopbackAddress());
             } else {
                 assertNull(requestContext);
             }
