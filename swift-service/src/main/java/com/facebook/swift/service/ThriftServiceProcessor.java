@@ -42,6 +42,7 @@ import java.util.Map;
 
 import javax.annotation.concurrent.ThreadSafe;
 
+import static com.google.common.collect.Maps.newHashMap;
 import static org.apache.thrift.TApplicationException.INVALID_MESSAGE_TYPE;
 import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
 
@@ -74,16 +75,20 @@ public class ThriftServiceProcessor implements NiftyProcessor
         Preconditions.checkArgument(!services.isEmpty(), "services is empty");
 
         // NOTE: ImmutableMap enforces that we don't have duplicate method names
-        ImmutableMap.Builder<String, ThriftMethodProcessor> processorBuilder = ImmutableMap.builder();
+        Map<String, ThriftMethodProcessor> processorMap = newHashMap();
         for (Object service : services) {
             ThriftServiceMetadata serviceMetadata = new ThriftServiceMetadata(service.getClass(), codecManager.getCatalog());
             for (ThriftMethodMetadata methodMetadata : serviceMetadata.getMethods().values()) {
+                String methodName = methodMetadata.getName();
                 ThriftMethodProcessor methodProcessor = new ThriftMethodProcessor(service,
                         serviceMetadata.getName(), methodMetadata, codecManager);
-                processorBuilder.put(methodMetadata.getName(), methodProcessor);
+                if (processorMap.containsKey(methodName)) {
+                    throw new IllegalArgumentException("Multiple @ThriftMethod-annotated methods named '" + methodName + "' found in the given services");
+                }
+                processorMap.put(methodName, methodProcessor);
             }
         }
-        methods = processorBuilder.build();
+        methods = ImmutableMap.copyOf(processorMap);
         this.eventHandlers = ImmutableList.copyOf(eventHandlers);
     }
 
