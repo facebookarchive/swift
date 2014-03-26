@@ -45,4 +45,9 @@ public class Swift2ThriftGeneratorCommandLineConfig {
         "Note that Swift classes generated from the resultant Thrift file will all reside in one Java package"
     )
     public String allowMultiplePackages;
+
+    @Parameter(names = "-recursive", description =
+        "Generate all types transitively reachable from the specified types and services")
+    public boolean recursive = false;
+
 }

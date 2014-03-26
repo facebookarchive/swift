@@ -25,10 +25,11 @@ public class Swift2ThriftGeneratorConfig {
     private final String defaultPackage;
     private final Map<String, String> namespaceMap;
     private final String allowMultiplePackages;
+    private final boolean recursive;
 
     private Swift2ThriftGeneratorConfig(final File outputFile, final Map<String, String> includeMap,
                                         boolean verbose, String defaultPackage, final Map<String, String> namespaceMap,
-                                        String allowMultiplePackages)
+                                        String allowMultiplePackages, boolean recursive)
     {
         this.outputFile = outputFile;
         this.includeMap = includeMap;
@@ -36,6 +37,7 @@ public class Swift2ThriftGeneratorConfig {
         this.defaultPackage = defaultPackage;
         this.namespaceMap = namespaceMap;
         this.allowMultiplePackages = allowMultiplePackages;
+        this.recursive = recursive;
     }
 
     public static Builder builder()
@@ -76,6 +78,11 @@ public class Swift2ThriftGeneratorConfig {
         return allowMultiplePackages;
     }
 
+    public boolean isRecursive()
+    {
+        return recursive;
+    }
+
     public static class Builder
     {
         private File outputFile = null;
@@ -84,6 +91,7 @@ public class Swift2ThriftGeneratorConfig {
         private String defaultPackage;
         private Map<String, String> namespaceMap;
         private String allowMultiplePackages;
+        private boolean recursive;
 
         private Builder()
         {
@@ -92,7 +100,7 @@ public class Swift2ThriftGeneratorConfig {
         public Swift2ThriftGeneratorConfig build()
         {
             return new Swift2ThriftGeneratorConfig(outputFile, includeMap, verbose, defaultPackage,
-                    namespaceMap, allowMultiplePackages);
+                    namespaceMap, allowMultiplePackages, recursive);
         }
 
         public Builder outputFile(final File outputFile)
@@ -128,6 +136,12 @@ public class Swift2ThriftGeneratorConfig {
         public Builder allowMultiplePackages(String allowMultiplePackages)
         {
             this.allowMultiplePackages = allowMultiplePackages;
+            return this;
+        }
+
+        public Builder recursive(boolean recursive)
+        {
+            this.recursive = recursive;
             return this;
         }
     }
