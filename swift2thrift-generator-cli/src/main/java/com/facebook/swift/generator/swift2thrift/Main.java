@@ -58,7 +58,8 @@ public class Main
                 .verbose(cliConfig.verbose)
                 .defaultPackage(cliConfig.defaultPackage)
                 .namespaceMap(namespaceMapBuilder.build())
-                .allowMultiplePackages(cliConfig.allowMultiplePackages);
+                .allowMultiplePackages(cliConfig.allowMultiplePackages)
+                .recursive(cliConfig.recursive);
 
         new Swift2ThriftGenerator(configBuilder.build()).parse(cliConfig.inputFiles);
     }

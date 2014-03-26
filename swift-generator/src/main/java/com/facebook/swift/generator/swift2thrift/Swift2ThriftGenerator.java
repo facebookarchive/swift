@@ -52,6 +52,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -67,21 +68,24 @@ public class Swift2ThriftGenerator
     private final String defaultPackage;
     private final String allowMultiplePackages;     // null means don't allow
     private ThriftTypeRenderer thriftTypeRenderer;
-    private List<ThriftType> thriftTypes = Lists.newArrayList();
-    private List<ThriftServiceMetadata> thriftServices = Lists.newArrayList();
+    private ArrayList<ThriftType> thriftTypes = Lists.newArrayList();
+    private ArrayList<ThriftServiceMetadata> thriftServices = Lists.newArrayList();
     private String packageName;
     // includeMap maps a ThriftType or a ThriftServiceMetadata to the include that defines it
     private Map<Object, String> includeMap = Maps.newHashMap();
     private Set<ThriftType> usedIncludedTypes = Sets.newHashSet();
     private Set<ThriftServiceMetadata> usedIncludedServices = Sets.newHashSet();
-    private Set<ThriftType> knownTypes = Sets.newHashSet(ThriftType.BOOL, ThriftType.BYTE, ThriftType.I16, ThriftType.I32,
+    private Set<ThriftType> knownTypes = Sets.newHashSet(builtInKnownTypes);
+    private Set<ThriftServiceMetadata> knownServices = Sets.newHashSet();
+    private Map<String, String> namespaceMap;
+    private boolean recursive;
+    private static final Set<ThriftType> builtInKnownTypes =
+        ImmutableSet.of(ThriftType.BOOL, ThriftType.BYTE, ThriftType.I16, ThriftType.I32,
             ThriftType.I64, ThriftType.DOUBLE, ThriftType.STRING,
             new ThriftType(ThriftType.BOOL, Boolean.class), new ThriftType(ThriftType.BYTE, Byte.class),
             new ThriftType(ThriftType.I16, Short.class), new ThriftType(ThriftType.I32, Integer.class),
             new ThriftType(ThriftType.I64, Long.class), new ThriftType(ThriftType.DOUBLE, Double.class),
             new ThriftType(ThriftType.STRING, String.class), new ThriftType(ThriftType.STRING, byte[].class));
-    private Set<ThriftServiceMetadata> knownServices = Sets.newHashSet();
-    private Map<String, String> namespaceMap;
 
     Swift2ThriftGenerator(final Swift2ThriftGeneratorConfig config) throws FileNotFoundException
     {
@@ -113,6 +117,7 @@ public class Swift2ThriftGenerator
 
         this.namespaceMap = config.getNamespaceMap();
         this.allowMultiplePackages = config.isAllowMultiplePackages();
+        this.recursive = config.isRecursive();
     }
 
     @SuppressWarnings("PMD.CollapsibleIfStatements")
@@ -173,6 +178,29 @@ public class Swift2ThriftGenerator
 
     private boolean verify()
     {
+        if (recursive) {
+            // Call verifyStruct and verifyService until the lists of discovered types and services stop changing.
+            // This populates the list with all transitive dependencies of the input types/services to be fed into the
+            // topological sort of verifyTypes() and verifyServices().
+            int len;
+            do {
+                len = thriftTypes.size();
+                for (int i = 0; i < len; i++) {
+                    verifyStruct(thriftTypes.get(i), true);
+                }
+            } while (len != thriftTypes.size());
+            do {
+                len = thriftServices.size();
+                for (int i = 0; i < len; i++) {
+                    verifyService(thriftServices.get(i), true);
+                }
+            } while (len != thriftServices.size());
+            recursive = false;
+            usedIncludedTypes.clear();
+            usedIncludedServices.clear();
+            knownTypes = Sets.newHashSet(builtInKnownTypes);
+            knownServices.clear();
+        }
         // no short-circuit
         return verifyTypes() & verifyServices();
     }
@@ -187,10 +215,7 @@ public class Swift2ThriftGenerator
             public boolean apply(@Nullable ThriftType t)
             {
                 ThriftProtocolType proto = checkNotNull(t).getProtocolType();
-                if (proto == ThriftProtocolType.ENUM) {
-                    knownTypes.add(t);
-                    return true;
-                } else if (proto == ThriftProtocolType.STRUCT) {
+                if (proto == ThriftProtocolType.ENUM || proto == ThriftProtocolType.STRUCT) {
                     return verifyStruct(t, true);
                 } else {
                     Preconditions.checkState(false, "Top-level non-enum and non-struct?");
@@ -235,22 +260,22 @@ public class Swift2ThriftGenerator
     private class SuccessAndResult<T>
     {
         public boolean success;
-        public List<T> result;
-        SuccessAndResult(boolean success, List<T> result)
+        public ArrayList<T> result;
+        SuccessAndResult(boolean success, ArrayList<T> result)
         {
             this.success = success;
             this.result = result;
         }
     }
 
-    private <T> SuccessAndResult<T> topologicalSort(List<T> list, Predicate<T> isKnown)
+    private <T> SuccessAndResult<T> topologicalSort(ArrayList<T> list, Predicate<T> isKnown)
     {
-        List<T> remaining = list;
-        List<T> newList = Lists.newArrayList();
+        ArrayList<T> remaining = list;
+        ArrayList<T> newList = Lists.newArrayList();
         int prevSize = 0;
         while (prevSize != remaining.size()) {
             prevSize = remaining.size();
-            List<T> bad = Lists.newArrayList();
+            ArrayList<T> bad = Lists.newArrayList();
             for (T t: remaining) {
                 if (isKnown.apply(t)) {
                     newList.add(t);
@@ -350,12 +375,22 @@ public class Swift2ThriftGenerator
                 usedIncludedTypes.add(t);
                 return true;
             }
+
+            if (recursive) {
+                // recursive but type is unknown - add it to the list and recurse
+                thriftTypes.add(t);
+                return verifyStruct(t, true);
+            }
             return false;
         }
     }
 
     private boolean verifyStruct(ThriftType t, boolean quiet)
     {
+        if (t.getProtocolType() == ThriftProtocolType.ENUM) {
+            knownTypes.add(t);
+            return true;
+        }
         ThriftStructMetadata metadata = t.getStructMetadata();
         boolean ok = true;
         for (ThriftFieldMetadata fieldMetadata: metadata.getFields(FieldKind.THRIFT_FIELD)) {
