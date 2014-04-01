@@ -116,9 +116,11 @@ public class TemplateContextGenerator
     {
         Preconditions.checkState(field.getIdentifier().isPresent(), "exception %s has no identifier!", field.getName());
 
+        boolean isOptional = field.getRequired() == ThriftField.Required.OPTIONAL;
+
         return new FieldContext(field.getName(),
                                 field.getIdentifier().get().shortValue(),
-                                typeConverter.convertType(field.getType()),
+                                typeConverter.convert(field.getType(), !isOptional),
                                 mangleJavamethodName(field.getName()),
                                 getterName(field),
                                 setterName(field),
