@@ -44,7 +44,11 @@ _structkind(struct) ::= <<
 
 _field(field) ::= <<
 <_doc(field.documentation)><\\\>
-<field.id>: <field.thriftType> <field.name>
+<_fieldRequiredness(field)><field.id>: <field.thriftType> <field.name>
+>>
+
+_fieldRequiredness(field) ::= <<
+<if(field.requiredness)><field.requiredness> <endif>
 >>
 
 _service(service) ::= <<

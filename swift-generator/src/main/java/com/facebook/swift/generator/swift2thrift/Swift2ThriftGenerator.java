@@ -16,12 +16,14 @@
 package com.facebook.swift.generator.swift2thrift;
 
 import com.facebook.swift.codec.ThriftCodecManager;
+import com.facebook.swift.codec.ThriftField.Requiredness;
 import com.facebook.swift.codec.ThriftProtocolType;
 import com.facebook.swift.codec.metadata.FieldKind;
 import com.facebook.swift.codec.metadata.ReflectionHelper;
 import com.facebook.swift.codec.metadata.ThriftFieldMetadata;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
 import com.facebook.swift.codec.metadata.ThriftType;
+import com.facebook.swift.generator.swift2thrift.template.FieldRequirednessRenderer;
 import com.facebook.swift.generator.swift2thrift.template.ThriftContext;
 import com.facebook.swift.generator.swift2thrift.template.ThriftServiceMetadataRenderer;
 import com.facebook.swift.generator.swift2thrift.template.ThriftTypeRenderer;
@@ -427,7 +429,10 @@ public class Swift2ThriftGenerator
         this.thriftTypeRenderer = new ThriftTypeRenderer(typenameMap.build());
         ThriftServiceMetadataRenderer serviceRenderer = new ThriftServiceMetadataRenderer(serviceMap.build());
         TemplateLoader tl = new TemplateLoader(ImmutableList.of("thrift/common.st"),
-                ImmutableMap.of(ThriftType.class, thriftTypeRenderer, ThriftServiceMetadata.class, serviceRenderer));
+                ImmutableMap.of(
+                        ThriftType.class, thriftTypeRenderer,
+                        ThriftServiceMetadata.class, serviceRenderer,
+                        Requiredness.class, new FieldRequirednessRenderer()));
         ThriftContext ctx = new ThriftContext(packageName, ImmutableList.copyOf(includes.build()), thriftTypes, thriftServices, namespaceMap);
         ST template = tl.load("thriftfile");
         template.add("context", ctx);
