@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import static com.facebook.swift.codec.ThriftField.Requiredness;
 import static com.facebook.swift.codec.metadata.FieldMetadata.extractThriftFieldName;
 import static com.facebook.swift.codec.metadata.FieldMetadata.getOrExtractThriftFieldName;
 import static com.facebook.swift.codec.metadata.FieldMetadata.getThriftFieldId;
@@ -408,7 +409,7 @@ public abstract class AbstractThriftMetadataBuilder
                     if (!annotation.name().isEmpty()) {
                         metadataErrors.addError("A method with annotated parameters can not have a field name specified: %s.%s ", clazz.getName(), method.getName());
                     }
-                    if (annotation.required()) {
+                    if (annotation.requiredness() == Requiredness.REQUIRED) {
                         metadataErrors.addError("A method with annotated parameters can not be marked as required: %s.%s ", clazz.getName(), method.getName());
                     }
                 }
