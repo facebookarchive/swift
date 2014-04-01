@@ -119,6 +119,7 @@ public class TemplateContextGenerator
         boolean isOptional = field.getRequiredness() == ThriftField.Requiredness.OPTIONAL;
 
         return new FieldContext(field.getName(),
+                                field.getRequiredness(),
                                 field.getIdentifier().get().shortValue(),
                                 typeConverter.convert(field.getType(), !isOptional),
                                 mangleJavamethodName(field.getName()),
