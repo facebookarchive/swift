@@ -116,7 +116,7 @@ public class TemplateContextGenerator
     {
         Preconditions.checkState(field.getIdentifier().isPresent(), "exception %s has no identifier!", field.getName());
 
-        boolean isOptional = field.getRequired() == ThriftField.Required.OPTIONAL;
+        boolean isOptional = field.getRequiredness() == ThriftField.Requiredness.OPTIONAL;
 
         return new FieldContext(field.getName(),
                                 field.getIdentifier().get().shortValue(),

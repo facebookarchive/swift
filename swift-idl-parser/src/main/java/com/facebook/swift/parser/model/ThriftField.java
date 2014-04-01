@@ -27,7 +27,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class ThriftField implements Visitable
 {
-    public static enum Required
+    public static enum Requiredness
     {
         REQUIRED, OPTIONAL, NONE
     }
@@ -35,7 +35,7 @@ public class ThriftField implements Visitable
     private final String name;
     private final ThriftType type;
     private final Optional<Long> identifier;
-    private final Required required;
+    private final Requiredness requiredness;
     private final Optional<ConstValue> value;
     private final List<TypeAnnotation> annotations;
 
@@ -43,14 +43,14 @@ public class ThriftField implements Visitable
             String name,
             ThriftType type,
             Long identifier,
-            Required required,
+            Requiredness requiredness,
             ConstValue value,
             List<TypeAnnotation> annotations)
     {
         this.name = checkNotNull(name, "name");
         this.type = checkNotNull(type, "type");
         this.identifier = Optional.fromNullable(identifier);
-        this.required = checkNotNull(required, "required");
+        this.requiredness = checkNotNull(requiredness, "requiredness");
         this.value = Optional.fromNullable(value);
         this.annotations = checkNotNull(annotations, "annotations");
     }
@@ -70,9 +70,9 @@ public class ThriftField implements Visitable
         return identifier;
     }
 
-    public Required getRequired()
+    public Requiredness getRequiredness()
     {
-        return required;
+        return requiredness;
     }
 
     public Optional<ConstValue> getValue()
@@ -92,7 +92,7 @@ public class ThriftField implements Visitable
                 .add("name", name)
                 .add("type", type)
                 .add("identifier", identifier)
-                .add("required", required)
+                .add("requiredness", requiredness)
                 .add("value", value)
                 .add("annotations", annotations)
                 .toString();
