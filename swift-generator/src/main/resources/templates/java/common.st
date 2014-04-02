@@ -9,6 +9,7 @@ service(context, tweaks) ::= <<
 package <context.javaPackage>;
 
 import com.facebook.swift.codec.*;
+import com.facebook.swift.codec.ThriftField.Requiredness;
 import com.facebook.swift.service.*;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.io.*;
@@ -37,6 +38,7 @@ struct(context, tweaks) ::= <<
 package <context.javaPackage>;
 
 import com.facebook.swift.codec.*;
+import com.facebook.swift.codec.ThriftField.Requiredness;
 import java.util.*;
 
 import static com.google.common.base.Objects.toStringHelper;
@@ -61,6 +63,7 @@ union(context, tweaks) ::= <<
 package <context.javaPackage>;
 
 import com.facebook.swift.codec.*;
+import com.facebook.swift.codec.ThriftField.Requiredness;
 import java.util.*;
 
 import static com.google.common.base.Objects.toStringHelper;
@@ -99,6 +102,7 @@ exception(context, tweaks) ::= <<
 package <context.javaPackage>;
 
 import com.facebook.swift.codec.*;
+import com.facebook.swift.codec.ThriftField.Requiredness;
 import java.util.*;
 
 @ThriftStruct("<context.name>")
@@ -212,8 +216,8 @@ _annotatedExceptions(method) ::= <<
 <method.annotatedExceptions: {exception |<_exceptionElement(exception)>}; separator=",\n">
 >>
 
-_annotation(field) ::= <<
-@ThriftField(value=<field.id>, name="<field.name>")
+_fieldAnnotation(field) ::= <<
+@ThriftField(value=<field.id>, name="<field.name>"<if(field.requiredness)>, requiredness=Requiredness.<field.requiredness><endif>)
 >>
 
 _params(parameters) ::= <<
@@ -223,7 +227,7 @@ _params(parameters) ::= <<
 >>
 
 _param(param) ::= <<
-<_annotation(param)> final <param.javaType> <param.javaName>
+<_fieldAnnotation(param)> final <param.javaType> <param.javaName>
 >>
 
 _exceptionElement(exception) ::= <<
@@ -249,7 +253,7 @@ _toStringField(field) ::= <<
 >>
 
 _union_field(field) ::= <<
-<_annotation(field)> 
+<_fieldAnnotation(field)>
 public <field.javaType> <field.javaGetterName>() {
     if (this.id != <field.id>) {
         throw new IllegalStateException("Not a <field.name> element!");

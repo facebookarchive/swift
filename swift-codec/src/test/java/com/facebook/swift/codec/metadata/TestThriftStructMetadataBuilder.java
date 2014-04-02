@@ -19,12 +19,15 @@ import com.facebook.swift.codec.ThriftConstructor;
 import com.facebook.swift.codec.ThriftField;
 import com.facebook.swift.codec.ThriftStruct;
 import com.google.common.reflect.TypeToken;
+import org.apache.commons.lang3.text.translate.NumericEntityUnescaper;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Type;
 import java.util.concurrent.locks.Lock;
 
+import static com.facebook.swift.codec.ThriftField.Requiredness;
 import static org.fest.assertions.Assertions.assertThat;
+import static org.testng.Assert.assertEquals;
 
 public class TestThriftStructMetadataBuilder
 {
@@ -121,13 +124,13 @@ public class TestThriftStructMetadataBuilder
 
         assertThat(metadataErrors.getErrors())
                 .as("metadata errors")
-                .isEmpty();
+                .hasSize(1);
 
         assertThat(metadataErrors.getWarnings())
                 .as("metadata warnings")
-                .hasSize(1);
+                .hasSize(0);
 
-        assertThat(metadataErrors.getWarnings().get(0).getMessage())
+        assertThat(metadataErrors.getErrors().get(0).getMessage())
                 .as("error message")
                 .containsIgnoringCase("multiple names");
     }
@@ -185,13 +188,13 @@ public class TestThriftStructMetadataBuilder
 
         assertThat(metadataErrors.getErrors())
                 .as("metadata errors")
-                .isEmpty();
+                .hasSize(1);
 
         assertThat(metadataErrors.getWarnings())
                 .as("metadata warnings")
-                .hasSize(1);
+                .isEmpty();
 
-        assertThat(metadataErrors.getWarnings().get(0).getMessage())
+        assertThat(metadataErrors.getErrors().get(0).getMessage())
                 .as("error message")
                 .containsIgnoringCase("multiple types");
     }
@@ -276,6 +279,65 @@ public class TestThriftStructMetadataBuilder
             {
                 return new NonGenericStruct();
             }
+        }
+    }
+
+    @Test
+    public void testMulitpleRequiredness()
+    {
+        ThriftStructMetadataBuilder builder = new ThriftStructMetadataBuilder(new ThriftCatalog(), MultipleRequiredness.class);
+
+        MetadataErrors metadataErrors = builder.getMetadataErrors();
+
+        assertThat(metadataErrors.getErrors())
+                .as("metadata errors")
+                .hasSize(1);
+
+        assertThat(metadataErrors.getWarnings())
+                .as("metadata warnings")
+                .isEmpty();
+
+        assertThat(metadataErrors.getErrors().get(0).getMessage())
+                .as("error message")
+                .containsIgnoringCase("multiple requiredness");
+    }
+
+    @ThriftStruct
+    public static class MultipleRequiredness
+    {
+        @ThriftField(value = 1, requiredness = Requiredness.OPTIONAL)
+        public int getFoo()
+        {
+            return 0;
+        }
+
+        @ThriftField(value = 1, requiredness = Requiredness.NONE)
+        public void setFoo(int value)
+        {
+        }
+    }
+
+    @Test
+    public void testMergeableRequiredness()
+    {
+        ThriftStructMetadata metadata = new ThriftStructMetadataBuilder(new ThriftCatalog(), MergeableRequiredness.class).build();
+        assertThat(metadata.getField(1).getRequiredness())
+                .as("requiredness of field 'foo'")
+                .isEqualTo(Requiredness.OPTIONAL);
+    }
+
+    @ThriftStruct
+    public static class MergeableRequiredness
+    {
+        @ThriftField(value = 1, requiredness = Requiredness.OPTIONAL)
+        public int getFoo()
+        {
+            return 0;
+        }
+
+        @ThriftField
+        public void setFoo(int value)
+        {
         }
     }
 }

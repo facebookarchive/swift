@@ -15,6 +15,7 @@
  */
 package com.facebook.swift.codec.metadata;
 
+import com.facebook.swift.codec.ThriftField;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
@@ -25,6 +26,7 @@ import javax.annotation.concurrent.Immutable;
 import java.util.List;
 import java.util.Objects;
 
+import static com.facebook.swift.codec.ThriftField.Requiredness;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -45,9 +47,11 @@ public class ThriftFieldMetadata
     private final Optional<ThriftExtraction> extraction;
     private final Optional<TypeCoercion> coercion;
     private final ImmutableList<String> documentation;
+    private final Requiredness requiredness;
 
     public ThriftFieldMetadata(
             short id,
+            Requiredness requiredness,
             ThriftType thriftType,
             String name,
             FieldKind fieldKind,
@@ -58,6 +62,7 @@ public class ThriftFieldMetadata
             Optional<TypeCoercion> coercion
     )
     {
+        this.requiredness = requiredness;
         this.thriftType= checkNotNull(thriftType, "thriftType is null");
         this.fieldKind = checkNotNull(fieldKind, "type is null");
         this.name = checkNotNull(name, "name is null");
@@ -110,6 +115,8 @@ public class ThriftFieldMetadata
     {
         return thriftType;
     }
+
+    public Requiredness getRequiredness() { return requiredness; }
 
     public String getName()
     {

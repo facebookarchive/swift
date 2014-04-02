@@ -175,10 +175,10 @@ field returns [ThriftField value]
         { $value = new ThriftField($k.text, $t.value, $i.value, $r.value, $c.value, $a.value); }
     ;
 
-field_req returns [ThriftField.Required value]
-    : REQUIREDNESS             { $value = ThriftField.Required.NONE; }
-    | ^(REQUIREDNESS REQUIRED) { $value = ThriftField.Required.REQUIRED; }
-    | ^(REQUIREDNESS OPTIONAL) { $value = ThriftField.Required.OPTIONAL; }
+field_req returns [ThriftField.Requiredness value]
+    : REQUIREDNESS             { $value = ThriftField.Requiredness.NONE; }
+    | ^(REQUIREDNESS REQUIRED) { $value = ThriftField.Requiredness.REQUIRED; }
+    | ^(REQUIREDNESS OPTIONAL) { $value = ThriftField.Requiredness.OPTIONAL; }
     ;
 
 

@@ -128,13 +128,13 @@ public class TestThriftUnionMetadataBuilder
 
         assertThat(metadataErrors.getErrors())
                 .as("metadata errors")
-                .isEmpty();
+                .hasSize(1);
 
         assertThat(metadataErrors.getWarnings())
                 .as("metadata warnings")
-                .hasSize(1);
+                .isEmpty();
 
-        assertThat(metadataErrors.getWarnings().get(0).getMessage())
+        assertThat(metadataErrors.getErrors().get(0).getMessage())
                 .as("error message")
                 .containsIgnoringCase("multiple names");
     }
@@ -202,13 +202,13 @@ public class TestThriftUnionMetadataBuilder
 
         assertThat(metadataErrors.getErrors())
                 .as("metadata errors")
-                .isEmpty();
+                .hasSize(1);
 
         assertThat(metadataErrors.getWarnings())
                 .as("metadata warnings")
-                .hasSize(1);
+                .isEmpty();
 
-        assertThat(metadataErrors.getWarnings().get(0).getMessage())
+        assertThat(metadataErrors.getErrors().get(0).getMessage())
                 .as("error message")
                 .containsIgnoringCase("multiple types");
     }
