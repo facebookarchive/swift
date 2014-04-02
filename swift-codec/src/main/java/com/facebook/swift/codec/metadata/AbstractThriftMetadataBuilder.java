@@ -150,12 +150,12 @@ public abstract class AbstractThriftMetadataBuilder
         }
 
         if (!(structType instanceof ParameterizedType)) {
-            metadataErrors.addError("Builder class [%s] may only be generic if the type it builds ([%s]) is also generic", builderClass.getName(), getStructClass().getName());
+            metadataErrors.addError("Builder class '%s' may only be generic if the type it builds ('%s') is also generic", builderClass.getName(), getStructClass().getName());
             return builderClass;
         }
 
         if (builderClass.getTypeParameters().length != getStructClass().getTypeParameters().length) {
-            metadataErrors.addError("Generic builder class [%s] must have the same number of type parameters as the type it builds ([%s])", builderClass.getName(), getStructClass().getName());
+            metadataErrors.addError("Generic builder class '%s' must have the same number of type parameters as the type it builds ('%s')", builderClass.getName(), getStructClass().getName());
             return builderClass;
         }
 
@@ -169,14 +169,14 @@ public abstract class AbstractThriftMetadataBuilder
     {
         // Verify struct class is public and not abstract
         if (Modifier.isAbstract(getStructClass().getModifiers())) {
-            metadataErrors.addError("%s class [%s] is abstract", annotation.getSimpleName(), getStructClass().getName());
+            metadataErrors.addError("%s class '%s' is abstract", annotation.getSimpleName(), getStructClass().getName());
         }
         if (!Modifier.isPublic(getStructClass().getModifiers())) {
-            metadataErrors.addError("%s class [%s] is not public", annotation.getSimpleName(), getStructClass().getName());
+            metadataErrors.addError("%s class '%s' is not public", annotation.getSimpleName(), getStructClass().getName());
         }
 
         if (!getStructClass().isAnnotationPresent(annotation)) {
-            metadataErrors.addError("%s class [%s] does not have a @%s annotation", getStructClass().getName(), annotation.getSimpleName());
+            metadataErrors.addError("%s class '%s' does not have a @%s annotation", getStructClass().getName(), annotation.getSimpleName());
         }
     }
 
@@ -196,7 +196,7 @@ public abstract class AbstractThriftMetadataBuilder
             // verify struct class does not have @ThriftConstructors
             for (Constructor<?> constructor : getStructClass().getConstructors()) {
                 if (constructor.isAnnotationPresent(ThriftConstructor.class)) {
-                    metadataErrors.addWarning("Thrift class [%s] has a builder class, but constructor %s annotated with @ThriftConstructor", getStructClass().getName(), constructor);
+                    metadataErrors.addWarning("Thrift class '%s' has a builder class, but constructor '%s' annotated with @ThriftConstructor", getStructClass().getName(), constructor);
                 }
             }
         }
@@ -215,7 +215,7 @@ public abstract class AbstractThriftMetadataBuilder
             }
 
             if (!Modifier.isPublic(constructor.getModifiers())) {
-                metadataErrors.addError("@ThriftConstructor [%s] is not public", constructor.toGenericString());
+                metadataErrors.addError("@ThriftConstructor '%s' is not public", constructor.toGenericString());
                 continue;
             }
 
@@ -235,12 +235,12 @@ public abstract class AbstractThriftMetadataBuilder
             try {
                 Constructor<?> constructor = clazz.getDeclaredConstructor();
                 if (!Modifier.isPublic(constructor.getModifiers())) {
-                    metadataErrors.addError("Default constructor [%s] is not public", constructor.toGenericString());
+                    metadataErrors.addError("Default constructor '%s' is not public", constructor.toGenericString());
                 }
                 constructorInjections.add(new ConstructorInjection(constructor));
             }
             catch (NoSuchMethodException e) {
-                metadataErrors.addError("Struct class [%s] does not have a public no-arg constructor", clazz.getName());
+                metadataErrors.addError("Struct class '%s' does not have a public no-arg constructor", clazz.getName());
             }
         }
 
@@ -264,7 +264,7 @@ public abstract class AbstractThriftMetadataBuilder
 
             if (!getStructClass().isAssignableFrom(method.getReturnType())) {
                 metadataErrors.addError(
-                        "[%s] says that [%s] is its builder class, but @ThriftConstructor method [%s] in the builder does not build an instance assignable to that type",
+                        "'%s' says that '%s' is its builder class, but @ThriftConstructor method '%s' in the builder does not build an instance assignable to that type",
                         structType,
                         builderType,
                         method.getName());
@@ -275,16 +275,16 @@ public abstract class AbstractThriftMetadataBuilder
         for (Method method : getAllDeclaredMethods(getBuilderClass())) {
             if (method.isAnnotationPresent(ThriftConstructor.class) || hasThriftFieldAnnotation(method)) {
                 if (!Modifier.isPublic(method.getModifiers())) {
-                    metadataErrors.addError("@ThriftConstructor method [%s] is not public", method.toGenericString());
+                    metadataErrors.addError("@ThriftConstructor method '%s' is not public", method.toGenericString());
                 }
                 if (Modifier.isStatic(method.getModifiers())) {
-                    metadataErrors.addError("@ThriftConstructor method [%s] is static", method.toGenericString());
+                    metadataErrors.addError("@ThriftConstructor method '%s' is static", method.toGenericString());
                 }
             }
         }
 
         if (builderMethodInjections.isEmpty()) {
-            metadataErrors.addError("Struct builder class [%s] does not have a public builder method annotated with @ThriftConstructor", getBuilderClass().getName());
+            metadataErrors.addError("Struct builder class '%s' does not have a public builder method annotated with @ThriftConstructor", getBuilderClass().getName());
         }
         if (builderMethodInjections.size() > 1) {
             metadataErrors.addError("Multiple builder methods are annotated with @ThriftConstructor ", builderMethodInjections);
@@ -315,10 +315,10 @@ public abstract class AbstractThriftMetadataBuilder
         for (Field field : getAllDeclaredFields(clazz)) {
             if (field.isAnnotationPresent(ThriftField.class)) {
                 if (!Modifier.isPublic(field.getModifiers())) {
-                    metadataErrors.addError("@ThriftField field [%s] is not public", field.toGenericString());
+                    metadataErrors.addError("@ThriftField field '%s' is not public", field.toGenericString());
                 }
                 if (Modifier.isStatic(field.getModifiers())) {
-                    metadataErrors.addError("@ThriftField field [%s] is static", field.toGenericString());
+                    metadataErrors.addError("@ThriftField field '%s' is static", field.toGenericString());
                 }
             }
         }
@@ -367,10 +367,10 @@ public abstract class AbstractThriftMetadataBuilder
         for (Method method : getAllDeclaredMethods(clazz)) {
             if (method.isAnnotationPresent(ThriftField.class) || hasThriftFieldAnnotation(method)) {
                 if (!Modifier.isPublic(method.getModifiers())) {
-                    metadataErrors.addError("@ThriftField method [%s] is not public", method.toGenericString());
+                    metadataErrors.addError("@ThriftField method '%s' is not public", method.toGenericString());
                 }
                 if (Modifier.isStatic(method.getModifiers())) {
-                    metadataErrors.addError("@ThriftField method [%s] is static", method.toGenericString());
+                    metadataErrors.addError("@ThriftField method '%s' is static", method.toGenericString());
                 }
             }
         }
@@ -489,11 +489,12 @@ public abstract class AbstractThriftMetadataBuilder
                 for (String fieldName : newTreeSet(transform(fields, getOrExtractThriftFieldName()))) {
                     // only report errors for fields that don't have conflicting ids
                     if (!fieldsWithConflictingIds.contains(fieldName)) {
-                        metadataErrors.addError("Thrift class %s fields %s do not have an id", structName, newTreeSet(transform(fields, getOrExtractThriftFieldName())));
+                        metadataErrors.addError("Thrift class '%s' fields %s do not have an id", structName, newTreeSet(transform(fields, getOrExtractThriftFieldName())));
                     }
                 }
                 continue;
             }
+
             short fieldId = entry.getKey().get();
 
             // assure all fields for this ID have the same name
@@ -548,7 +549,7 @@ public abstract class AbstractThriftMetadataBuilder
             if (ids.size() > 1) {
                 String fieldName = entry.getKey();
                 if (!fieldsWithConflictingIds.contains(fieldName)) {
-                    metadataErrors.addError("Thrift class '%s' field '%s' has multiple ids: %s", structName, fieldName, ids);
+                    metadataErrors.addError("Thrift class '%s' field '%s' has multiple ids: %s", structName, fieldName, ids.toString());
                     fieldsWithConflictingIds.add(fieldName);
                 }
                 continue;
@@ -593,7 +594,7 @@ public abstract class AbstractThriftMetadataBuilder
         boolean isSupportedType = true;
         for (FieldMetadata field : fields) {
             if (!catalog.isSupportedStructFieldType(field.getJavaType())) {
-                metadataErrors.addError("Thrift class %s field %s(%s) type %s is not a supported Java type", structName, name, id, TypeToken.of(field.getJavaType()));
+                metadataErrors.addError("Thrift class '%s' field '%s(%s)' type '%s' is not a supported Java type", structName, name, id, TypeToken.of(field.getJavaType()));
                 isSupportedType = false;
                 // only report the error once
                 break;
@@ -607,7 +608,7 @@ public abstract class AbstractThriftMetadataBuilder
                 types.add(catalog.getThriftType(field.getJavaType()));
             }
             if (types.size() > 1) {
-                metadataErrors.addWarning("Thrift class %s field %s(%s) has multiple types %s", structName, name, id, types);
+                metadataErrors.addWarning("Thrift class '%s' field '%s(%s)' has multiple types: %s", structName, name, id, types);
             }
         }
     }
