@@ -24,6 +24,7 @@ import org.testng.annotations.Test;
 import java.lang.reflect.Type;
 import java.util.concurrent.locks.Lock;
 
+import static com.facebook.swift.codec.ThriftField.Requiredness;
 import static org.fest.assertions.Assertions.assertThat;
 
 public class TestThriftStructMetadataBuilder
@@ -276,6 +277,65 @@ public class TestThriftStructMetadataBuilder
             {
                 return new NonGenericStruct();
             }
+        }
+    }
+
+    @Test
+    public void testMulitpleRequiredness()
+    {
+        ThriftStructMetadataBuilder builder = new ThriftStructMetadataBuilder(new ThriftCatalog(), MultipleRequiredness.class);
+
+        MetadataErrors metadataErrors = builder.getMetadataErrors();
+
+        assertThat(metadataErrors.getErrors())
+                .as("metadata errors")
+                .hasSize(1);
+
+        assertThat(metadataErrors.getWarnings())
+                .as("metadata warnings")
+                .isEmpty();
+
+        assertThat(metadataErrors.getErrors().get(0).getMessage())
+                .as("error message")
+                .containsIgnoringCase("multiple requiredness");
+    }
+
+    @ThriftStruct
+    public static final class MultipleRequiredness
+    {
+        @ThriftField(value = 1, requiredness = Requiredness.OPTIONAL)
+        public int getFoo()
+        {
+            return 0;
+        }
+
+        @ThriftField(value = 1, requiredness = Requiredness.NONE)
+        public void setFoo(int value)
+        {
+        }
+    }
+
+    @Test
+    public void testMergeableRequiredness()
+    {
+        ThriftStructMetadata metadata = new ThriftStructMetadataBuilder(new ThriftCatalog(), MergeableRequiredness.class).build();
+        assertThat(metadata.getField(1).getRequiredness())
+                .as("requiredness of field 'foo'")
+                .isEqualTo(Requiredness.OPTIONAL);
+    }
+
+    @ThriftStruct
+    public static final class MergeableRequiredness
+    {
+        @ThriftField(value = 1, requiredness = Requiredness.OPTIONAL)
+        public int getFoo()
+        {
+            return 0;
+        }
+
+        @ThriftField
+        public void setFoo(int value)
+        {
         }
     }
 }

@@ -19,6 +19,7 @@ import com.facebook.swift.codec.ThriftConstructor;
 import com.facebook.swift.codec.ThriftField;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -29,6 +30,7 @@ import com.google.common.collect.Multimaps;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.internal.MoreTypes;
 
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
 
 import java.lang.annotation.Annotation;
@@ -50,6 +52,7 @@ import static com.facebook.swift.codec.metadata.FieldMetadata.getOrExtractThrift
 import static com.facebook.swift.codec.metadata.FieldMetadata.getThriftFieldId;
 import static com.facebook.swift.codec.metadata.FieldMetadata.getThriftFieldName;
 import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_FIELD;
+import static com.facebook.swift.codec.metadata.FieldMetadata.*;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.extractParameterNames;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.findAnnotatedMethods;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getAllDeclaredFields;
@@ -506,6 +509,11 @@ public abstract class AbstractThriftMetadataBuilder
                 field.setName(fieldName);
             }
 
+            Requiredness requiredness = extractFieldRequiredness(fieldId, fieldName, fields);
+            for (FieldMetadata field : fields) {
+                field.setRequiredness(requiredness);
+            }
+
             // verify fields have a supported java type and all fields
             // for this ID have the same thrift type
             verifyFieldType(fieldId, fieldName, fields, catalog);
@@ -586,6 +594,34 @@ public abstract class AbstractThriftMetadataBuilder
             name = Iterables.find(transform(fields, extractThriftFieldName()), notNull());
         }
         return name;
+    }
+
+    protected final Requiredness extractFieldRequiredness(short fieldId, String fieldName, Collection<FieldMetadata> fields)
+    {
+        Predicate<Requiredness> specificRequiredness = new Predicate<Requiredness>()
+        {
+            @Override
+            public boolean apply(@Nullable Requiredness input)
+            {
+                return (input != null) && (input != Requiredness.UNSPECIFIED);
+            }
+        };
+
+        Set<Requiredness> requirednessValues = ImmutableSet.copyOf(filter(transform(fields, getThriftFieldRequiredness()), specificRequiredness));
+
+        if (requirednessValues.size() > 1) {
+            metadataErrors.addError("Thrift class '%s' field '%s(%d)' has multiple requiredness values: %s", structName, fieldName, fieldId, requirednessValues.toString());
+        }
+
+        Requiredness resolvedRequiredness;
+        if (requirednessValues.isEmpty()) {
+            resolvedRequiredness = Requiredness.NONE;
+        }
+        else {
+            resolvedRequiredness = requirednessValues.iterator().next();
+        }
+
+        return resolvedRequiredness;
     }
 
     /**
