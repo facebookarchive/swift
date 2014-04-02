@@ -19,15 +19,20 @@ import com.facebook.swift.codec.ThriftField;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
+import com.google.inject.internal.asm.$AnnotationVisitor;
 
 import javax.annotation.Nullable;
 
 import java.lang.reflect.Type;
 
+import static com.facebook.swift.codec.ThriftField.Requiredness;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 abstract class FieldMetadata
 {
     private Short id;
     private String name;
+    private Requiredness requiredness;
     private final FieldKind type;
 
     protected FieldMetadata(ThriftField annotation, FieldKind type)
@@ -43,6 +48,7 @@ abstract class FieldMetadata
                     if (!annotation.name().isEmpty()) {
                         name = annotation.name();
                     }
+                    requiredness = checkNotNull(annotation.requiredness());
                 }
                 break;
             case THRIFT_UNION_ID:
@@ -151,6 +157,19 @@ abstract class FieldMetadata
         };
     }
 
+    static <T extends FieldMetadata> Function<T, Requiredness> getThriftFieldRequiredness()
+    {
+        return new Function<T, Requiredness>()
+        {
+            @Nullable
+            @Override
+            public Requiredness apply(@Nullable T input)
+            {
+                return input.getRequiredness();
+            }
+        };
+    }
+
     public static Predicate<FieldMetadata> isType(final FieldKind type)
     {
         return new Predicate<FieldMetadata>() {
@@ -160,5 +179,15 @@ abstract class FieldMetadata
                 return fieldMetadata.getType() == type;
             }
         };
+    }
+
+    public Requiredness getRequiredness()
+    {
+        return requiredness;
+    }
+
+    public void setRequiredness(Requiredness requiredness)
+    {
+        this.requiredness = requiredness;
     }
 }

@@ -30,6 +30,7 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
 
+import static com.facebook.swift.codec.ThriftField.Requiredness;
 import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_FIELD;
 
 @NotThreadSafe
@@ -139,6 +140,7 @@ public class ThriftStructMetadataBuilder
     {
         short id = -1;
         String name = null;
+        Requiredness requiredness = Requiredness.UNSPECIFIED;
         ThriftType type = null;
 
         // process field injections and extractions
@@ -147,6 +149,7 @@ public class ThriftStructMetadataBuilder
         for (FieldMetadata fieldMetadata : input) {
             id = fieldMetadata.getId();
             name = fieldMetadata.getName();
+            requiredness = fieldMetadata.getRequiredness();
             type = catalog.getThriftType(fieldMetadata.getJavaType());
 
             if (fieldMetadata instanceof FieldInjection) {
@@ -180,6 +183,7 @@ public class ThriftStructMetadataBuilder
 
         ThriftFieldMetadata thriftFieldMetadata = new ThriftFieldMetadata(
                 id,
+                requiredness,
                 type,
                 name,
                 THRIFT_FIELD,

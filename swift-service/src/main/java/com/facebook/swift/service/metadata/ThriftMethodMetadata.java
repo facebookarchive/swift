@@ -49,6 +49,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import static com.facebook.swift.codec.ThriftField.Requiredness;
 import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_FIELD;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.extractParameterNames;
 import static com.google.common.base.Preconditions.checkState;
@@ -103,8 +104,10 @@ public class ThriftMethodMetadata
 
             short parameterId = Short.MIN_VALUE;
             String parameterName = null;
+            Requiredness parameterRequiredness = Requiredness.UNSPECIFIED;
             if (thriftField != null) {
                 parameterId = thriftField.value();
+                parameterRequiredness = thriftField.requiredness();
                 if (!thriftField.name().isEmpty()) {
                     parameterName = thriftField.name();
                 }
@@ -123,6 +126,7 @@ public class ThriftMethodMetadata
             ThriftInjection parameterInjection = new ThriftParameterInjection(parameterId, parameterName, index, parameterType);
             ThriftFieldMetadata fieldMetadata = new ThriftFieldMetadata(
                     parameterId,
+                    parameterRequiredness,
                     thriftType,
                     parameterName,
                     THRIFT_FIELD,
