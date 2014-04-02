@@ -611,7 +611,7 @@ public abstract class AbstractThriftMetadataBuilder
                 types.add(catalog.getThriftType(field.getJavaType()));
             }
             if (types.size() > 1) {
-                metadataErrors.addWarning("Thrift class '%s' field '%s(%s)' has multiple types: %s", structName, name, id, types);
+                metadataErrors.addError("Thrift class '%s' field '%s(%s)' has multiple types: %s", structName, name, id, types);
             }
         }
     }
