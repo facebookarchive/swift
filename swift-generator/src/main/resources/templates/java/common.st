@@ -47,6 +47,10 @@ public class <context.javaName>
     <_structbody(context)>
 
     <_toString(context)>
+
+    <_equalsImpl(context)>
+
+    <_hashCodeImpl(context)>
 }<\n>
 >>
 
@@ -248,8 +252,51 @@ _toStringField(field) ::= <<
 .add("<field.javaName>", <field.javaName>)
 >>
 
+_hashCodeImpl(context) ::= <<
+@Override
+public int hashCode() {
+    return Arrays.deepHashCode(new Object[] {
+        <context.fields : { field |<field.javaName>}; separator = ",\n">
+    });
+}
+>>
+
+_equalsImpl(context) ::= <<
+@Override
+public boolean equals(Object o) {
+    if (this == o) {
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+        return false;
+    }
+
+    <context.javaName> other = (<context.javaName>)o;
+
+    <context.fields : { field |<_checkFieldEquality(field)>}; separator="\n">
+
+    return true;
+}
+>>
+
+_checkFieldEquality(field) ::= <<
+<if(field.arrayType)><_checkArrayFieldEquality(field)><else><_checkNormalFieldEquality(field)><endif>
+>>
+
+_checkArrayFieldEquality(field) ::= <<
+if (!Array.equals(<field.javaName>, other.<field.javaName>)) {
+    return false;
+}
+>>
+
+_checkNormalFieldEquality(field) ::= <<
+if (<field.javaName> != null ? !<field.javaName>.equals(other.<field.javaName>) : other.<field.javaName> == null) {
+    return false;
+}
+>>
+
 _union_field(field) ::= <<
-<_annotation(field)> 
+<_annotation(field)>
 public <field.javaType> <field.javaGetterName>() {
     if (this.id != <field.id>) {
         throw new IllegalStateException("Not a <field.name> element!");
