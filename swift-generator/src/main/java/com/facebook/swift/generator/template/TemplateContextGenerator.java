@@ -63,7 +63,7 @@ public class TemplateContextGenerator
 
     public ServiceContext serviceFromThrift(final Service service)
     {
-        final String name = mangleJavatypeName(service.getName());
+        final String name = mangleJavaTypeName(service.getName());
         final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, service.getName());
         final SwiftJavaType parentType = typeRegistry.findType(defaultNamespace, service.getParent().orNull());
 
@@ -101,7 +101,7 @@ public class TemplateContextGenerator
     {
         return new MethodContext(method.getName(),
                                  method.isOneway(),
-                                 mangleJavamethodName(method.getName()),
+                                 mangleJavaMethodName(method.getName()),
                                  typeConverter.convertType(method.getReturnType()),
                                  typeConverter.convert(
                                      method.getReturnType(),
@@ -122,7 +122,7 @@ public class TemplateContextGenerator
                                 field.getRequiredness(),
                                 field.getIdentifier().get().shortValue(),
                                 typeConverter.convert(field.getType(), !isOptional),
-                                mangleJavamethodName(field.getName()),
+                                mangleJavaMethodName(field.getName()),
                                 getterName(field),
                                 setterName(field),
                                 testPresenceName(field));
@@ -178,16 +178,22 @@ public class TemplateContextGenerator
 
     /**
      * Turn an incoming snake case name into camel case for use in a java method name.
+     *
+     * The general idea is: first letter lowercase (unless name starts with multiple caps
+     * letters), drop underscores and capitalize the following letter, otherwise don't touch case.
      */
-    public static final String mangleJavamethodName(final String src)
+    public static final String mangleJavaMethodName(final String src)
     {
         return mangleJavaName(src, false);
     }
 
     /**
-     * Turn an incoming snake case name into camel case for use in a java type name.
+     * Turn an incoming snake case name into camel case for use in a java type name
+     *
+     * The general idea is: first letter of type name capitalized, drop underscores and capitalize
+     * the following letter, otherwise don't touch case.
      */
-    public static final String mangleJavatypeName(final String src)
+    public static final String mangleJavaTypeName(final String src)
     {
         return mangleJavaName(src, true);
     }
@@ -197,15 +203,25 @@ public class TemplateContextGenerator
         Preconditions.checkArgument(!isBlank(src), "input name must not be blank!");
 
         final StringBuilder sb = new StringBuilder();
+        // When we are capitalizing, initialize upCase to true in order to force first
+        // character to upper case
         boolean upCase = capitalize;
+        // On the other hand, force first character to lowercase, unless both first AND
+        // second characters are uppercase (this is so we don't mess up any poorly-named
+        // method that might start with acronyms)
+        boolean downCase = !capitalize && !nameStartsWithAcronym(src);
         for (int i = 0; i < src.length(); i++) {
             if (src.charAt(i) == '_') {
                 upCase = true;
                 continue;
             }
             else {
-                sb.append(upCase ? Character.toUpperCase(src.charAt(i)) : src.charAt(i));
+                char ch = src.charAt(i);
+                ch = downCase ? Character.toLowerCase(src.charAt(i)) : ch;
+                ch = upCase ? Character.toUpperCase(src.charAt(i)) : ch;
+                sb.append(ch);
                 upCase = false;
+                downCase = false;
             }
         }
         return sb.toString();
@@ -237,20 +253,31 @@ public class TemplateContextGenerator
         return sb.toString();
     }
 
+    private static boolean nameStartsWithAcronym(String name)
+    {
+        if (name.length() <= 1) {
+            return false;
+        }
+        if (Character.isUpperCase(name.charAt(0)) && Character.isUpperCase(name.charAt(1))) {
+            return true;
+        }
+        return false;
+    }
+
     private String getterName(final ThriftField field)
     {
         final String type = typeConverter.convertType(field.getType());
-        return ("boolean".equals(type) ? "is" : "get") + mangleJavatypeName(field.getName());
+        return ("boolean".equals(type) ? "is" : "get") + mangleJavaTypeName(field.getName());
     }
 
     private String setterName(final ThriftField field)
     {
-        return "set" + mangleJavatypeName(field.getName());
+        return "set" + mangleJavaTypeName(field.getName());
     }
 
     private String testPresenceName(final ThriftField field)
     {
-        return "isSet" + mangleJavatypeName(field.getName());
+        return "isSet" + mangleJavaTypeName(field.getName());
     }
 
 }

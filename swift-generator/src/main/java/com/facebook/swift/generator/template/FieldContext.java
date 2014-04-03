@@ -88,6 +88,11 @@ public class FieldContext
         return javaTestPresenceName;
     }
 
+    public boolean isArrayType()
+    {
+        return getJavaType().endsWith("[]");
+    }
+
     @Override
     public int hashCode()
     {

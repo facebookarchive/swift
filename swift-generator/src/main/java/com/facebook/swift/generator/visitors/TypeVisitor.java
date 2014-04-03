@@ -52,7 +52,7 @@ public class TypeVisitor implements DocumentVisitor
         final Nameable type = Nameable.class.cast(visitable);
         final SwiftJavaType swiftJavaType = new SwiftJavaType(
                 documentContext.getNamespace(),
-                TemplateContextGenerator.mangleJavatypeName(type.getName()),
+                TemplateContextGenerator.mangleJavaTypeName(type.getName()),
                 type.getName(),
                 javaNamespace);
         if (visitable instanceof Typedef) {

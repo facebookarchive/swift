@@ -49,6 +49,10 @@ public final class <context.javaName>
     <_structbody(context)>
 
     <_toString(context)>
+
+    <_equalsImpl(context)>
+
+    <_hashCodeImpl(context)>
 }<\n>
 >>
 
@@ -252,6 +256,44 @@ public String toString()
 
 _toStringField(field) ::= <<
 .add("<field.javaName>", <field.javaName>)
+>>
+
+_hashCodeImpl(context) ::= <<
+@Override
+public int hashCode() {
+    return Arrays.deepHashCode(new Object[] {
+        <context.fields : { field |<field.javaName>}; separator = ",\n">
+    });
+}
+>>
+
+_equalsImpl(context) ::= <<
+@Override
+public boolean equals(Object o) {
+    if (this == o) {
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+        return false;
+    }
+
+    <context.javaName> other = (<context.javaName>)o;
+
+    return
+        <context.fields : { field |<_checkFieldEquality(field)>}; separator=" &&\n">;
+}
+>>
+
+_checkFieldEquality(field) ::= <<
+<if(field.arrayType)><_checkArrayFieldEquality(field)><else><_checkObjectFieldEquality(field)><endif>
+>>
+
+_checkArrayFieldEquality(field) ::= <<
+Arrays.equals(<field.javaName>, other.<field.javaName>)
+>>
+
+_checkObjectFieldEquality(field) ::= <<
+Objects.equals(<field.javaName>, other.<field.javaName>)
 >>
 
 _union_field(field) ::= <<
