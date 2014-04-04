@@ -124,7 +124,7 @@ public class TypeToJavaConverter
             javaPrimitivesMap.put(BaseType.Type.I64, "long");
             javaPrimitivesMap.put(BaseType.Type.DOUBLE, "double");
             javaPrimitivesMap.put(BaseType.Type.STRING, "String");
-            javaPrimitivesMap.put(BaseType.Type.BINARY, "byte []");
+            javaPrimitivesMap.put(BaseType.Type.BINARY, "byte[]");
             JAVA_PRIMITIVES_MAP = javaPrimitivesMap;
 
             final EnumMap<BaseType.Type, String> javaTypeMap = Maps.newEnumMap(BaseType.Type.class);
@@ -135,7 +135,7 @@ public class TypeToJavaConverter
             javaTypeMap.put(BaseType.Type.I64, "Long");
             javaTypeMap.put(BaseType.Type.DOUBLE, "Double");
             javaTypeMap.put(BaseType.Type.STRING, "String");
-            javaTypeMap.put(BaseType.Type.BINARY, "byte []");
+            javaTypeMap.put(BaseType.Type.BINARY, "byte[]");
             JAVA_TYPE_MAP = javaTypeMap;
         }
 
