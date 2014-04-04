@@ -15,9 +15,12 @@
  */
 package com.facebook.swift.generator.template;
 
+import static com.facebook.swift.parser.model.ThriftField.Requiredness;
+
 public class FieldContext
 {
     private final String name;
+    private final Requiredness requiredness;
     private final short id;
     private final String javaType;
     private final String javaName;
@@ -25,15 +28,18 @@ public class FieldContext
     private final String javaSetterName;
     private final String javaTestPresenceName;
 
-    FieldContext(final String name,
-                 final short id,
-                 final String javaType,
-                 final String javaName,
-                 final String javaGetterName,
-                 final String javaSetterName,
-                 final String javaTestPresenceName)
+    FieldContext(
+            final String name,
+            final Requiredness requiredness,
+            final short id,
+            final String javaType,
+            final String javaName,
+            final String javaGetterName,
+            final String javaSetterName,
+            final String javaTestPresenceName)
     {
         this.name = name;
+        this.requiredness = requiredness;
         this.id = id;
         this.javaType = javaType;
         this.javaName = javaName;
@@ -45,6 +51,11 @@ public class FieldContext
     public String getName()
     {
         return name;
+    }
+
+    public Requiredness getRequiredness()
+    {
+        return requiredness;
     }
 
     public short getId()

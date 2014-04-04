@@ -9,7 +9,7 @@ _structbody(context) ::= <<
 _field(field) ::= <<
 private final <field.javaType> <field.javaName>;
 
-<_annotation(field)>
+<_fieldAnnotation(field)>
 public <field.javaType> <field.javaGetterName>() { return <field.javaName>; }
 >>
 
