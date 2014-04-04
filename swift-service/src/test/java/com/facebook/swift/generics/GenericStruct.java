@@ -21,7 +21,7 @@ import com.facebook.swift.codec.ThriftStruct;
 import java.util.Objects;
 
 @ThriftStruct
-public class GenericStruct<T>
+public final class GenericStruct<T>
 {
     @ThriftField(1)
     public T genericField;

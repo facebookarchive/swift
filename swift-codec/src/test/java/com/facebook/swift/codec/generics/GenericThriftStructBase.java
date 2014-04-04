@@ -17,16 +17,13 @@ package com.facebook.swift.codec.generics;
 
 import com.facebook.swift.codec.ThriftConstructor;
 import com.facebook.swift.codec.ThriftField;
-import com.facebook.swift.codec.ThriftStruct;
 
 import java.util.Objects;
 
-@ThriftStruct
 public class GenericThriftStructBase<T>
 {
     private T genericProperty;
 
-    @ThriftConstructor
     public GenericThriftStructBase(@ThriftField(1) T genericProperty)
     {
         this.genericProperty = genericProperty;
