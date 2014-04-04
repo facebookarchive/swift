@@ -280,17 +280,23 @@ public boolean equals(Object o) {
 >>
 
 _checkFieldEquality(field) ::= <<
-<if(field.arrayType)><_checkArrayFieldEquality(field)><else><_checkNormalFieldEquality(field)><endif>
+<if(field.arrayType)><_checkArrayFieldEquality(field)><elseif(field.primitiveType)><_checkPrimitiveFieldEquality(field)><else><_checkObjectFieldEquality(field)><endif>
 >>
 
 _checkArrayFieldEquality(field) ::= <<
-if (!Array.equals(<field.javaName>, other.<field.javaName>)) {
+if (!Arrays.equals(<field.javaName>, other.<field.javaName>)) {
     return false;
 }
 >>
 
-_checkNormalFieldEquality(field) ::= <<
-if (<field.javaName> != null ? !<field.javaName>.equals(other.<field.javaName>) : other.<field.javaName> == null) {
+_checkPrimitiveFieldEquality(field) ::= <<
+if (<field.javaName> != other.<field.javaName>) {
+    return false;
+}
+>>
+
+_checkObjectFieldEquality(field) ::= <<
+if (<field.javaName> != null ? !<field.javaName>.equals(other.<field.javaName>) : other.<field.javaName> != null) {
     return false;
 }
 >>

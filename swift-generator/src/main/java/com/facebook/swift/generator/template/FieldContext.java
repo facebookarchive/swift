@@ -77,7 +77,23 @@ public class FieldContext
         return javaTestPresenceName;
     }
 
-    public boolean isArrayType() { return getJavaType().endsWith("[]"); }
+    public boolean isArrayType()
+    {
+        return getJavaType().endsWith("[]");
+    }
+
+    public boolean isPrimitiveType() {
+        switch (getJavaType()) {
+            case "boolean":
+            case "byte":
+            case "short":
+            case "long":
+            case "int":
+            case "double":
+                return true;
+        }
+        return false;
+    }
 
     @Override
     public int hashCode()
