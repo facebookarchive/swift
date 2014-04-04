@@ -66,7 +66,7 @@ import java.util.*;
 import static com.google.common.base.Objects.toStringHelper;
 
 @ThriftUnion("<context.name>")
-public class <context.javaName>
+public final class <context.javaName>
 {
     <_union_body(context)>
 
@@ -82,7 +82,6 @@ public class <context.javaName>
     {
         return this.name;
     }
-
 
     <_union_toString(context)>
 }<\n>
