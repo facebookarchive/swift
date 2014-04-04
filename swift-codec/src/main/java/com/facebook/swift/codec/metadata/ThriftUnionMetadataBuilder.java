@@ -215,6 +215,20 @@ public class ThriftUnionMetadataBuilder
             fieldType = fieldMetadata.getType();
             thriftType = catalog.getThriftType(fieldMetadata.getJavaType());
 
+            switch (requiredness) {
+                case REQUIRED:
+                case OPTIONAL:
+                    metadataErrors.addError(
+                            "Thrift union '%s' field '%s(%s)' should not be marked required or optional",
+                            structName,
+                            name,
+                            id);
+                    break;
+
+                default:
+                    break;
+            }
+
             if (fieldMetadata instanceof FieldInjection) {
                 FieldInjection fieldInjection = (FieldInjection) fieldMetadata;
                 injections.add(new ThriftFieldInjection(fieldInjection.getId(), fieldInjection.getName(), fieldInjection.getField(), fieldInjection.getType()));
