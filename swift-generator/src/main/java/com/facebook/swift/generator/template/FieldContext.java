@@ -82,19 +82,6 @@ public class FieldContext
         return getJavaType().endsWith("[]");
     }
 
-    public boolean isPrimitiveType() {
-        switch (getJavaType()) {
-            case "boolean":
-            case "byte":
-            case "short":
-            case "long":
-            case "int":
-            case "double":
-                return true;
-        }
-        return false;
-    }
-
     @Override
     public int hashCode()
     {

@@ -273,32 +273,21 @@ public boolean equals(Object o) {
 
     <context.javaName> other = (<context.javaName>)o;
 
-    <context.fields : { field |<_checkFieldEquality(field)>}; separator="\n">
-
-    return true;
+    return
+        <context.fields : { field |<_checkFieldEquality(field)>}; separator=" &&\n">;
 }
 >>
 
 _checkFieldEquality(field) ::= <<
-<if(field.arrayType)><_checkArrayFieldEquality(field)><elseif(field.primitiveType)><_checkPrimitiveFieldEquality(field)><else><_checkObjectFieldEquality(field)><endif>
+<if(field.arrayType)><_checkArrayFieldEquality(field)><else><_checkObjectFieldEquality(field)><endif>
 >>
 
 _checkArrayFieldEquality(field) ::= <<
-if (!Arrays.equals(<field.javaName>, other.<field.javaName>)) {
-    return false;
-}
->>
-
-_checkPrimitiveFieldEquality(field) ::= <<
-if (<field.javaName> != other.<field.javaName>) {
-    return false;
-}
+Arrays.equals(<field.javaName>, other.<field.javaName>)
 >>
 
 _checkObjectFieldEquality(field) ::= <<
-if (<field.javaName> != null ? !<field.javaName>.equals(other.<field.javaName>) : other.<field.javaName> != null) {
-    return false;
-}
+Objects.equals(<field.javaName>, other.<field.javaName>)
 >>
 
 _union_field(field) ::= <<
