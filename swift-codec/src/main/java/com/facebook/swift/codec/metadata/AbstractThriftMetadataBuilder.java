@@ -503,7 +503,7 @@ public abstract class AbstractThriftMetadataBuilder
 
             short fieldId = entry.getKey().get();
 
-            // assure all fields for this ID have the same name
+            // ensure all fields for this ID have the same name
             String fieldName = extractFieldName(fieldId, fields);
             for (FieldMetadata field : fields) {
                 field.setName(fieldName);
@@ -580,19 +580,33 @@ public abstract class AbstractThriftMetadataBuilder
     protected final String extractFieldName(short id, Collection<FieldMetadata> fields)
     {
         // get the names used by these fields
+
+        // Field names specified in the 'name' field of the @ThriftField annotations (if any) should all match
         Set<String> names = ImmutableSet.copyOf(filter(transform(fields, getThriftFieldName()), notNull()));
+        if (names.size() > 1) {
+            metadataErrors.addError("Thrift class '%s' field '%d' has multiple names: %s", structName, id, names.toString());
+        }
+
+        // Field names extracted from the names of the fields, methods, or parameters should also all match
+        Set<String> extractedNames = ImmutableSet.copyOf(filter(transform(fields, extractThriftFieldName()), notNull()));
+        if (extractedNames.size() > 1) {
+            metadataErrors.addError("Thrift class '%s' field '%d' has multiple names: %s", structName, id, extractedNames.toString());
+        }
 
         String name;
         if (!names.isEmpty()) {
-            if (names.size() > 1) {
-                metadataErrors.addWarning("Thrift class %s field %s has multiple names %s", structName, id, names);
-            }
+            // If there is an override name available, use that
             name = names.iterator().next();
         }
-        else {
-            // pick a name for this field
-            name = Iterables.find(transform(fields, extractThriftFieldName()), notNull());
+        else if (!extractedNames.isEmpty()) {
+            // Otherwise use the extracted name
+            name = extractedNames.iterator().next();
         }
+        else {
+            metadataErrors.addError("Thrift class '%s' field '%d' has no names available", structName, id);
+            name = null;
+        }
+
         return name;
     }
 
