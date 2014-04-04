@@ -166,16 +166,19 @@ public abstract class AbstractThriftMetadataBuilder
 
     protected final void verifyClass(Class<? extends Annotation> annotation)
     {
-        // Verify struct class is public and not abstract
-        if (Modifier.isAbstract(getStructClass().getModifiers())) {
-            metadataErrors.addError("%s class [%s] is abstract", annotation.getSimpleName(), getStructClass().getName());
-        }
+        String annotationName = annotation.getSimpleName();
+        String structClassName = getStructClass().getName();
+
+        // Verify struct class is public and final
         if (!Modifier.isPublic(getStructClass().getModifiers())) {
-            metadataErrors.addError("%s class [%s] is not public", annotation.getSimpleName(), getStructClass().getName());
+            metadataErrors.addError("%s class [%s] is not public", annotationName, structClassName);
+        }
+        if (!Modifier.isFinal(getStructClass().getModifiers())) {
+            metadataErrors.addError("%s class [%s] is not final (thrift does not support polymorphism)", annotationName, structClassName);
         }
 
         if (!getStructClass().isAnnotationPresent(annotation)) {
-            metadataErrors.addError("%s class [%s] does not have a @%s annotation", getStructClass().getName(), annotation.getSimpleName());
+            metadataErrors.addError("%s class [%s] does not have a @%s annotation", annotationName, structClassName, annotationName);
         }
     }
 

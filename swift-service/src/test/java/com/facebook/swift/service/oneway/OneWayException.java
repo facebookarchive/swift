@@ -18,6 +18,6 @@ package com.facebook.swift.service.oneway;
 import com.facebook.swift.codec.ThriftStruct;
 
 @ThriftStruct
-public class OneWayException extends Exception {
+public final class OneWayException extends Exception {
     private static final long serialVersionUID = 1L;
 }

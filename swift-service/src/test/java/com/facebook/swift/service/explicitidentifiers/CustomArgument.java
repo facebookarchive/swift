@@ -19,7 +19,7 @@ import com.facebook.swift.codec.ThriftField;
 import com.facebook.swift.codec.ThriftStruct;
 
 @ThriftStruct
-public class CustomArgument
+public final class CustomArgument
 {
     public CustomArgument()
     {

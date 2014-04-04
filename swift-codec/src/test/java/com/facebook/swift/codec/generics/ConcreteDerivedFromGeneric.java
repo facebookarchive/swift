@@ -22,7 +22,7 @@ import com.facebook.swift.codec.ThriftStruct;
 import java.util.Objects;
 
 @ThriftStruct
-public class ConcreteDerivedFromGeneric extends GenericThriftStructBase<Double>
+public final class ConcreteDerivedFromGeneric extends GenericThriftStructBase<Double>
 {
     private final Double concreteProperty;
 

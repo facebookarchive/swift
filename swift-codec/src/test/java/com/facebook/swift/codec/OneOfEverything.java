@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 @ThriftStruct
-public class OneOfEverything
+public final class OneOfEverything
 {
     @ThriftField(1)
     public boolean aBoolean;

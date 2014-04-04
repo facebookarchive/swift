@@ -20,7 +20,7 @@ import com.facebook.swift.codec.ThriftField;
 import com.facebook.swift.codec.ThriftStruct;
 
 @ThriftStruct
-public class LogEntry
+public final class LogEntry
 {
     private final String category;
     private final String message;

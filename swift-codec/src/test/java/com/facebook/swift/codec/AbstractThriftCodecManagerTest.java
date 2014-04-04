@@ -15,14 +15,14 @@
  */
 package com.facebook.swift.codec;
 
+import com.facebook.swift.codec.generics.GenericThriftStruct;
+import com.facebook.swift.codec.generics.GenericThriftStructFromBuilder;
 import com.facebook.swift.codec.internal.EnumThriftCodec;
 import com.facebook.swift.codec.generics.ConcreteDerivedFromGeneric;
 import com.facebook.swift.codec.generics.ConcreteDerivedFromGenericBean;
 import com.facebook.swift.codec.generics.ConcreteThriftStructDerivedFromGenericField;
-import com.facebook.swift.codec.generics.GenericThriftStructBase;
-import com.facebook.swift.codec.generics.GenericThriftStructBaseFromBuilder;
-import com.facebook.swift.codec.generics.GenericThriftStructBeanBase;
-import com.facebook.swift.codec.generics.GenericThriftStructFieldBase;
+import com.facebook.swift.codec.generics.GenericThriftStructBean;
+import com.facebook.swift.codec.generics.GenericThriftStructField;
 import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
 import com.facebook.swift.codec.metadata.ThriftCatalog;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
@@ -308,10 +308,10 @@ public abstract class AbstractThriftCodecManagerTest
     public void testBeanGeneric()
             throws Exception
     {
-        GenericThriftStructBeanBase<String> bean = new GenericThriftStructBeanBase<>();
+        GenericThriftStructBean<String> bean = new GenericThriftStructBean<>();
         bean.setGenericProperty("genericValue");
 
-        testRoundTripSerialize(new TypeToken<GenericThriftStructBeanBase<String>>() {}, bean);
+        testRoundTripSerialize(new TypeToken<GenericThriftStructBean<String>>() {}, bean);
     }
 
     @Test
@@ -329,9 +329,9 @@ public abstract class AbstractThriftCodecManagerTest
     public void testImmutableGeneric()
             throws Exception
     {
-        GenericThriftStructBase<Double> immutable = new GenericThriftStructBase<>(Math.PI);
+        GenericThriftStruct<Double> immutable = new GenericThriftStruct<>(Math.PI);
 
-        testRoundTripSerialize(new TypeToken<GenericThriftStructBase<Double>>() {}, immutable);
+        testRoundTripSerialize(new TypeToken<GenericThriftStruct<Double>>() {}, immutable);
     }
 
     @Test
@@ -347,14 +347,14 @@ public abstract class AbstractThriftCodecManagerTest
     public void testGenericFromBuilder()
             throws Exception
     {
-        GenericThriftStructBaseFromBuilder<Integer, Double> builderObject =
-                new GenericThriftStructBaseFromBuilder.Builder<Integer, Double>()
+        GenericThriftStructFromBuilder<Integer, Double> builderObject =
+                new GenericThriftStructFromBuilder.Builder<Integer, Double>()
                         .setFirstGenericProperty(12345)
                         .setSecondGenericProperty(1.2345)
                         .build();
 
         testRoundTripSerialize(
-                new TypeToken<GenericThriftStructBaseFromBuilder<Integer, Double>>() {},
+                new TypeToken<GenericThriftStructFromBuilder<Integer, Double>>() {},
                 builderObject);
     }
 
@@ -362,11 +362,11 @@ public abstract class AbstractThriftCodecManagerTest
     public void testFieldGeneric()
             throws Exception
     {
-        GenericThriftStructFieldBase<Integer> fieldObject = new GenericThriftStructFieldBase<>();
+        GenericThriftStructField<Integer> fieldObject = new GenericThriftStructField<>();
         fieldObject.genericField = 5757;
 
         testRoundTripSerialize(
-                new TypeToken<GenericThriftStructFieldBase<Integer>>() {},
+                new TypeToken<GenericThriftStructField<Integer>>() {},
                 fieldObject);
     }
 

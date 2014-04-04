@@ -27,7 +27,7 @@ import java.util.Set;
 import static com.google.common.base.Charsets.UTF_8;
 
 @ThriftStruct
-public class IsSetBean
+public final class IsSetBean
 {
     public static IsSetBean createEmpty()
     {

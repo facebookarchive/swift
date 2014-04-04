@@ -21,13 +21,13 @@ import com.facebook.swift.codec.ThriftStruct;
 
 import java.util.Objects;
 
-@ThriftStruct(builder = GenericThriftStructBaseFromBuilder.Builder.class)
-public class GenericThriftStructBaseFromBuilder<S, T>
+@ThriftStruct(builder = GenericThriftStructFromBuilder.Builder.class)
+public final class GenericThriftStructFromBuilder<S, T>
 {
     private final S firstGenericProperty;
     private final T secondGenericProperty;
 
-    private GenericThriftStructBaseFromBuilder(S firstGenericProperty, T secondGenericProperty)
+    private GenericThriftStructFromBuilder(S firstGenericProperty, T secondGenericProperty)
     {
         this.firstGenericProperty = firstGenericProperty;
         this.secondGenericProperty = secondGenericProperty;
@@ -54,7 +54,7 @@ public class GenericThriftStructBaseFromBuilder<S, T>
         if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
-        GenericThriftStructBaseFromBuilder<?, ?> other = (GenericThriftStructBaseFromBuilder<?, ?>) obj;
+        GenericThriftStructFromBuilder<?, ?> other = (GenericThriftStructFromBuilder<?, ?>) obj;
         return
                 Objects.equals(firstGenericProperty, other.firstGenericProperty) &&
                 Objects.equals(secondGenericProperty, other.secondGenericProperty);
@@ -80,9 +80,9 @@ public class GenericThriftStructBaseFromBuilder<S, T>
         }
 
         @ThriftConstructor
-        public GenericThriftStructBaseFromBuilder<X, Y> build()
+        public GenericThriftStructFromBuilder<X, Y> build()
         {
-            return new GenericThriftStructBaseFromBuilder<>(firstGenericProperty, secondGenericProperty);
+            return new GenericThriftStructFromBuilder<>(firstGenericProperty, secondGenericProperty);
         }
     }
 }

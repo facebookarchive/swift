@@ -21,7 +21,7 @@ import javax.annotation.concurrent.Immutable;
 
 @Immutable
 @ThriftStruct(value = "Bonk", builder = Builder.class)
-public class BonkBuilder
+public final class BonkBuilder
 {
     private final String message;
     private final int type;

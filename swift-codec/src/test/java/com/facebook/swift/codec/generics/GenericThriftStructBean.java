@@ -15,25 +15,9 @@
  */
 package com.facebook.swift.codec.generics;
 
-import com.facebook.swift.codec.ThriftField;
+import com.facebook.swift.codec.ThriftStruct;
 
-import java.util.Objects;
-
-public class GenericThriftStructFieldBase<T>
+@ThriftStruct
+public final class GenericThriftStructBean<T> extends GenericThriftStructBeanBase<T>
 {
-    @ThriftField(1)
-    public T genericField;
-
-    @Override
-    public boolean equals(Object obj)
-    {
-        if (obj == this) {
-            return true;
-        }
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-        GenericThriftStructFieldBase<?> other = (GenericThriftStructFieldBase<?>) obj;
-        return Objects.equals(genericField, other.genericField);
-    }
 }

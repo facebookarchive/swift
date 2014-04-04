@@ -19,7 +19,7 @@ import javax.annotation.concurrent.Immutable;
 
 @Immutable
 @ThriftStruct("Bonk")
-public class BonkConstructor
+public final class BonkConstructor
 {
     private final String message;
     private final int type;
