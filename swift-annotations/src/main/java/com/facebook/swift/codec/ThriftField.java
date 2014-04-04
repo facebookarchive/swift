@@ -58,7 +58,7 @@ public @interface ThriftField
          * annotations that specify either {@link #OPTIONAL} or {@link #REQUIRED} for the same
          * field.
          *
-         * The serialization behavior is that {@code null} values will be serialized, but
+         * The serialization behavior is that {@code null} values will not be serialized, but
          * if the field is non-nullable (i.e. it's type is primitive) it will be serialized, even
          * if the field was not explicitly set.
          *
