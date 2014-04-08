@@ -122,13 +122,13 @@ public class TestThriftStructMetadataBuilder
 
         assertThat(metadataErrors.getErrors())
                 .as("metadata errors")
-                .hasSize(1);
+                .isEmpty();
 
         assertThat(metadataErrors.getWarnings())
                 .as("metadata warnings")
-                .hasSize(0);
+                .hasSize(1);
 
-        assertThat(metadataErrors.getErrors().get(0).getMessage())
+        assertThat(metadataErrors.getWarnings().get(0).getMessage())
                 .as("error message")
                 .containsIgnoringCase("multiple names");
     }
