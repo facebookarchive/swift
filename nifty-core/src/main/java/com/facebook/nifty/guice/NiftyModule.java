@@ -16,7 +16,6 @@
 package com.facebook.nifty.guice;
 
 import com.facebook.nifty.core.NettyServerConfig;
-import com.facebook.nifty.core.NettyServerConfigBuilder;
 import com.facebook.nifty.core.ThriftServerDef;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;

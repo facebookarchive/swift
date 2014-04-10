@@ -15,6 +15,7 @@
  */
 package com.facebook.nifty.server;
 
+import com.facebook.nifty.client.FramedClientConnector;
 import com.facebook.nifty.client.NiftyClient;
 import com.facebook.nifty.server.util.ScopedNiftyServer;
 import com.facebook.nifty.test.LogEntry;
@@ -23,6 +24,7 @@ import com.facebook.nifty.test.scribe;
 import com.google.common.base.Throwables;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.logging.InternalLoggerFactory;
 import org.jboss.netty.logging.Slf4JLoggerFactory;
@@ -84,6 +86,9 @@ public class TestNiftyClient
                     log.info("caught expected exception " + e.toString());
                     exceptionCount++;
                 }
+                catch (Throwable t) {
+                    log.info("caught unexpected exception " + t.toString());
+                }
             }
             Assert.assertTrue(exceptionCount > 0);
 
@@ -113,7 +118,10 @@ public class TestNiftyClient
             throws TTransportException, InterruptedException
     {
         InetSocketAddress address = new InetSocketAddress("localhost", server.getPort());
-        TBinaryProtocol tp = new TBinaryProtocol(niftyClient.connectSync(address));
+        FramedClientConnector framedClientConnector = new FramedClientConnector(address);
+        TTransport transport = niftyClient.connectSync(scribe.Client.class, framedClientConnector);
+        //TTransport transport = niftyClient.connectSync(address);
+        TBinaryProtocol tp = new TBinaryProtocol(transport);
         return new scribe.Client(tp);
     }
 }

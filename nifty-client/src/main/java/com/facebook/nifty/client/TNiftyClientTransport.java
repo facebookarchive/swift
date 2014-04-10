@@ -36,7 +36,10 @@ import java.util.concurrent.locks.ReentrantLock;
  * You should just use a TSocket for sync client.
  * <p/>
  * This already has a built in TFramedTransport. No need to wrap.
+ *
+ * @deprecated Use {@link com.facebook.nifty.client.TNiftyClientChannelTransport} instead
  */
+@Deprecated
 public class TNiftyClientTransport extends TNiftyAsyncClientTransport
 {
 

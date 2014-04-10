@@ -15,13 +15,20 @@
  */
 package com.facebook.nifty.server;
 
+import com.facebook.nifty.client.FramedClientConnector;
 import com.facebook.nifty.client.NiftyClient;
-import com.facebook.nifty.core.*;
+import com.facebook.nifty.core.NettyServerConfig;
+import com.facebook.nifty.core.NettyServerTransport;
+import com.facebook.nifty.core.RequestContext;
+import com.facebook.nifty.core.RequestContexts;
+import com.facebook.nifty.core.ThriftServerDefBuilder;
 import com.facebook.nifty.test.LogEntry;
 import com.facebook.nifty.test.ResultCode;
 import com.facebook.nifty.test.scribe;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.logging.InternalLoggerFactory;
@@ -98,8 +105,9 @@ public class TestNiftyServer
             throws TTransportException, InterruptedException
     {
         InetSocketAddress address = new InetSocketAddress("localhost", port);
-        TBinaryProtocol tp = new TBinaryProtocol(new NiftyClient().connectSync(address));
-        return new scribe.Client(tp);
+        TTransport transport = new NiftyClient().connectSync(scribe.Client.class, new FramedClientConnector(address));
+        TProtocol protocol = new TBinaryProtocol(transport);
+        return new scribe.Client(protocol);
     }
 
     @Test

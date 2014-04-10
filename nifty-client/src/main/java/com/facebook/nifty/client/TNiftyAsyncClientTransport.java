@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * This already has a built in TFramedTransport. No need to wrap.
  */
 @NotThreadSafe
-public class TNiftyAsyncClientTransport extends TTransport
+class TNiftyAsyncClientTransport extends TTransport
         implements ChannelUpstreamHandler, ChannelDownstreamHandler
 {
     private static final int DEFAULT_BUFFER_SIZE = 1024;

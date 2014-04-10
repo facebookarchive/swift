@@ -18,6 +18,7 @@ package com.facebook.nifty.server;
 import com.facebook.nifty.client.FramedClientChannel;
 import com.facebook.nifty.client.FramedClientConnector;
 import com.facebook.nifty.client.NiftyClient;
+import com.facebook.nifty.test.scribe;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.airlift.units.Duration;
@@ -69,8 +70,10 @@ public class TestNiftyClientTimeout
         int port = serverSocket.getLocalPort();
         final NiftyClient client = new NiftyClient();
         try {
-                client.connectSync(new InetSocketAddress(port),
+                client.connectSync(scribe.Client.class,
+                                   new FramedClientConnector(new InetSocketAddress(port)),
                                    TEST_CONNECT_TIMEOUT,
+                                   TEST_RECEIVE_TIMEOUT,
                                    TEST_READ_TIMEOUT,
                                    TEST_SEND_TIMEOUT,
                                    TEST_MAX_FRAME_SIZE);

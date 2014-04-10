@@ -18,7 +18,6 @@ package com.facebook.nifty.client;
 import com.google.common.net.HostAndPort;
 import org.jboss.netty.util.Timer;
 
-import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
