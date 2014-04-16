@@ -42,7 +42,7 @@ public class TNiftyTransport extends TTransport
                            ThriftTransportType thriftTransportType)
     {
         this.channel = channel;
-        this.in = in;
+        this.in = in.duplicate();
         this.thriftTransportType = thriftTransportType;
         this.out = ChannelBuffers.dynamicBuffer(DEFAULT_OUTPUT_BUFFER_SIZE);
         this.initialReaderIndex = in.readerIndex();

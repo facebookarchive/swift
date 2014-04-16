@@ -40,7 +40,7 @@ public class TChannelBufferInputTransport extends TTransport {
     }
 
     public TChannelBufferInputTransport(ChannelBuffer inputBuffer) {
-        this.inputBuffer = inputBuffer;
+        setInputBuffer(inputBuffer);
     }
 
     @Override
@@ -71,7 +71,7 @@ public class TChannelBufferInputTransport extends TTransport {
     }
 
     public void setInputBuffer(ChannelBuffer inputBuffer) {
-        this.inputBuffer = inputBuffer;
+        this.inputBuffer = inputBuffer.duplicate();
     }
 
     public boolean isReadable() {
