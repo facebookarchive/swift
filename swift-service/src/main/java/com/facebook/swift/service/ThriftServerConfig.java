@@ -15,18 +15,25 @@
  */
 package com.facebook.swift.service;
 
+import com.facebook.nifty.codec.ThriftFrameCodecFactory;
+import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.inject.Inject;
 import io.airlift.configuration.Config;
 import io.airlift.units.DataSize;
 import io.airlift.units.Duration;
 
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static io.airlift.units.DataSize.Unit.MEGABYTE;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 
@@ -45,6 +52,7 @@ public class ThriftServerConfig
     private Duration idleConnectionTimeout = Duration.valueOf("60s");
     private Optional<Integer> workerThreads = Optional.absent();
     private Optional<ExecutorService> workerExecutor = Optional.absent();
+    private Optional<String> workerExecutorKey = Optional.absent();
     private String transportName = "framed";
     private String protocolName = "binary";
     /**
@@ -128,29 +136,6 @@ public class ThriftServerConfig
         return acceptBacklog;
     }
 
-    @Min(1)
-    public int getWorkerThreads()
-    {
-        return workerThreads.or(DEFAULT_WORKER_THREAD_COUNT);
-    }
-
-    /**
-     * Sets the number of worker threads that will be created for processing thrift requests after
-     * they have arrived. Any value passed here will be ignored if
-     * {@link ThriftServerConfig#setWorkerExecutor(java.util.concurrent.ExecutorService)} is called.
-     *
-     * The default value is 200.
-     *
-     * @param workerThreads Number of worker threads to use
-     * @return This {@link ThriftServerConfig} instance
-     */
-    @Config("thrift.threads.max")
-    public ThriftServerConfig setWorkerThreads(int workerThreads)
-    {
-        this.workerThreads = Optional.of(workerThreads);
-        return this;
-    }
-
     public int getAcceptorThreadCount()
     {
         return acceptorThreadCount;
@@ -218,8 +203,81 @@ public class ThriftServerConfig
         return this;
     }
 
-    public ExecutorService getWorkerExecutor()
+    @Min(1)
+    public int getWorkerThreads()
     {
+        return workerThreads.or(DEFAULT_WORKER_THREAD_COUNT);
+    }
+
+    /**
+     * Sets the number of worker threads that will be created for processing thrift requests after
+     * they have arrived. Any value passed here will be ignored if
+     * {@link ThriftServerConfig#setWorkerExecutor(java.util.concurrent.ExecutorService)} is called.
+     *
+     * The default value is 200.
+     *
+     * @param workerThreads Number of worker threads to use
+     * @return This {@link ThriftServerConfig} instance
+     */
+    @Config("thrift.threads.max")
+    public ThriftServerConfig setWorkerThreads(int workerThreads)
+    {
+        this.workerThreads = Optional.of(workerThreads);
+        return this;
+    }
+
+    public String getWorkerExecutorKey()
+    {
+        return workerExecutorKey.orNull();
+    }
+
+    /**
+     * Sets the key for locating the an {@link java.util.concurrent.ExecutorService} from the
+     * mapped executors installed by Guice modules.
+     *
+     * If you are not configuring your application usingGuice, it will probably be simpler to just
+     * call {@link this#setWorkerExecutor(java.util.concurrent.ExecutorService)} instead.
+     *
+     * Use of this method on a {@link com.facebook.swift.service.ThriftServerConfig} instance is
+     * incompatible with use of {@link this#setWorkerExecutor(java.util.concurrent.ExecutorService)}
+     * or {@link this#setWorkerThreads(int)}
+     */
+    @Config("thrift.worker-executor-key")
+    public ThriftServerConfig setWorkerExecutorKey(String workerExecutorKey)
+    {
+        this.workerExecutorKey = Optional.fromNullable(workerExecutorKey);
+        return this;
+    }
+
+    /**
+     * <p>Builds the {@link java.util.concurrent.ExecutorService} used for running Thrift server methods.</p>
+     *
+     * <p>The details of the {@link java.util.concurrent.ExecutorService} that gets built can be tweaked
+     * by calling any of the following (though only <b>one</b> of these should actually be called):</p>
+     *
+     * <ul>
+     *     <li>{@link this#setWorkerThreads(int)}</li>
+     *     <li>{@link this#setWorkerExecutor(java.util.concurrent.ExecutorService)}</li>
+     *     <li>{@link this#setWorkerExecutorKey(String)}</li>
+     * </ul>
+     *
+     * <p>The default behavior if none of the above were called is to synthesize a fixed-size
+     * {@link java.util.concurrent.ThreadPoolExecutor} using {@link this#DEFAULT_WORKER_THREAD_COUNT}
+     * threads.</p>
+     */
+    public ExecutorService getOrBuildWorkerExecutor(Map<String, ExecutorService> boundWorkerExecutors)
+    {
+        if (workerExecutorKey.isPresent()) {
+            checkState(!workerExecutor.isPresent() && !workerThreads.isPresent());
+
+            String key = workerExecutorKey.get();
+            checkArgument(boundWorkerExecutors.containsKey(key),
+                          "No ExecutorService was bound to key '" + key + "'");
+            ExecutorService executor = boundWorkerExecutors.get(key);
+            checkNotNull(executor, "WorkerExecutorKey maps to null");
+            return executor;
+        }
+
         return workerExecutor.or(makeDefaultWorkerExecutor());
     }
 
@@ -227,8 +285,9 @@ public class ThriftServerConfig
      * Sets the executor that will be used to process thrift requests after they arrive. Setting
      * this will override any call to {@link ThriftServerConfig#setWorkerThreads(int)}.
      *
-     * The default behavior will be to synthesize a fixed-size {@link java.util.concurrent.ThreadPoolExecutor}
-     * using the result of {@link ThriftServerConfig#getWorkerThreads()}
+     * Use of this method on a {@link com.facebook.swift.service.ThriftServerConfig} instance is
+     * incompatible with use of {@link this#setWorkerExecutorKey(String)} or
+     * {@link this#setWorkerThreads(int)}
      *
      * @param workerExecutor The worker executor
      * @return This {@link ThriftServerConfig} instance

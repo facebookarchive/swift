@@ -68,10 +68,11 @@ public class ThriftServer implements Closeable
             "binary", TDuplexProtocolFactory.fromSingleFactory(new TBinaryProtocol.Factory()),
             "compact", TDuplexProtocolFactory.fromSingleFactory(new TCompactProtocol.Factory())
     );
-    public static final ImmutableMap<String,ThriftFrameCodecFactory> DEFAULT_FRAME_CODEC_FACTORIES = ImmutableMap.<String, ThriftFrameCodecFactory>of(
-            "buffered", new DefaultThriftFrameCodecFactory(),
-            "framed", new DefaultThriftFrameCodecFactory()
+    public static final ImmutableMap<String,ThriftFrameCodecFactory> DEFAULT_FRAME_CODEC_FACTORIES = ImmutableMap.of(
+            "buffered", (ThriftFrameCodecFactory) new DefaultThriftFrameCodecFactory(),
+            "framed", (ThriftFrameCodecFactory) new DefaultThriftFrameCodecFactory()
     );
+    private static final ImmutableMap<String, ExecutorService> DEFAULT_WORKER_EXECUTORS = ImmutableMap.of();
 
     private enum State {
         NOT_STARTED,
@@ -105,18 +106,7 @@ public class ThriftServer implements Closeable
 
     public ThriftServer(NiftyProcessor processor, ThriftServerConfig config, Timer timer)
     {
-        this(processor, config, timer, DEFAULT_FRAME_CODEC_FACTORIES, DEFAULT_PROTOCOL_FACTORIES);
-    }
-
-    public ThriftServer(
-            final NiftyProcessor processor,
-            ThriftServerConfig config,
-            @ThriftServerTimer Timer timer,
-            Map<String, ThriftFrameCodecFactory> availableFrameCodecFactories,
-            Map<String, TDuplexProtocolFactory> availableProtocolFactories)
-    {
-        this(processor, config, timer, availableFrameCodecFactories, availableProtocolFactories,
-             new NiftySecurityFactoryHolder());
+        this(processor, config, timer, DEFAULT_FRAME_CODEC_FACTORIES, DEFAULT_PROTOCOL_FACTORIES, DEFAULT_WORKER_EXECUTORS);
     }
 
     public ThriftServer(
@@ -125,10 +115,35 @@ public class ThriftServer implements Closeable
             @ThriftServerTimer Timer timer,
             Map<String, ThriftFrameCodecFactory> availableFrameCodecFactories,
             Map<String, TDuplexProtocolFactory> availableProtocolFactories,
+            Map<String, ExecutorService> availableWorkerExecutors)
+    {
+        this(
+            processor,
+            config,
+            timer,
+            availableFrameCodecFactories,
+            availableProtocolFactories,
+            availableWorkerExecutors,
+            new NiftySecurityFactoryHolder());
+    }
+
+    public ThriftServer(
+            final NiftyProcessor processor,
+            ThriftServerConfig config,
+            @ThriftServerTimer Timer timer,
+            Map<String, ThriftFrameCodecFactory> availableFrameCodecFactories,
+            Map<String, TDuplexProtocolFactory> availableProtocolFactories,
+            Map<String, ExecutorService> availableWorkerExecutors,
             NiftySecurityFactory securityFactory)
     {
-        this(processor, config, timer, availableFrameCodecFactories, availableProtocolFactories,
-             new NiftySecurityFactoryHolder(securityFactory));
+        this(
+            processor,
+            config,
+            timer,
+            availableFrameCodecFactories,
+            availableProtocolFactories,
+            availableWorkerExecutors,
+            new NiftySecurityFactoryHolder(securityFactory));
     }
 
     @Inject
@@ -138,6 +153,7 @@ public class ThriftServer implements Closeable
             @ThriftServerTimer Timer timer,
             Map<String, ThriftFrameCodecFactory> availableFrameCodecFactories,
             Map<String, TDuplexProtocolFactory> availableProtocolFactories,
+            @ThriftServerWorkerExecutor Map<String, ExecutorService> availableWorkerExecutors,
             NiftySecurityFactoryHolder securityFactoryHolder)
     {
         checkNotNull(availableFrameCodecFactories, "availableFrameCodecFactories cannot be null");
@@ -160,7 +176,7 @@ public class ThriftServer implements Closeable
 
         configuredPort = config.getPort();
 
-        workerExecutor = config.getWorkerExecutor();
+        workerExecutor = config.getOrBuildWorkerExecutor(availableWorkerExecutors);
 
         acceptorExecutor = newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("thrift-acceptor-%s").build());
         acceptorThreads = config.getAcceptorThreadCount();
@@ -232,6 +248,11 @@ public class ThriftServer implements Closeable
         // it's work, but we have no way to ask a generic Executor for the number of threads it is
         // running.
         return 0;
+    }
+
+    public Executor getWorkerExecutor()
+    {
+        return workerExecutor;
     }
 
     private int getBoundPort()
