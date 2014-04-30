@@ -243,8 +243,22 @@ public class ThriftType
         if (javaType != null ? !javaType.equals(that.javaType) : that.javaType != null) {
             return false;
         }
+
         if (protocolType != that.protocolType) {
             return false;
+        }
+
+        if(protocolType == ThriftProtocolType.SET || protocolType == ThriftProtocolType.LIST
+            || protocolType == ThriftProtocolType.MAP){
+            if(valueType != null ? !valueType.equals(that.valueType) : that.valueType != null){
+                return false;
+            }
+        }
+
+        if(protocolType == ThriftProtocolType.MAP){
+            if(keyType != null ? !keyType.equals(that.valueType) : that.keyType != null){
+                return false;
+            }
         }
 
         return true;
@@ -255,6 +269,8 @@ public class ThriftType
     {
         int result = protocolType != null ? protocolType.hashCode() : 0;
         result = 31 * result + (javaType != null ? javaType.hashCode() : 0);
+        result = 31 * result + (valueType != null ? valueType.hashCode() : 0);
+        result = 31 * result + (keyType != null ? keyType.hashCode() : 0);
         return result;
     }
 
