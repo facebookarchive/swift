@@ -42,7 +42,7 @@ public class TNiftyTransport extends TTransport
                            ThriftTransportType thriftTransportType)
     {
         this.channel = channel;
-        this.in = in.duplicate();
+        this.in = in;
         this.thriftTransportType = thriftTransportType;
         this.out = ChannelBuffers.dynamicBuffer(DEFAULT_OUTPUT_BUFFER_SIZE);
         this.initialReaderIndex = in.readerIndex();
@@ -56,6 +56,11 @@ public class TNiftyTransport extends TTransport
             buffer = in.array();
             initialBufferPosition = bufferPosition = in.arrayOffset() + in.readerIndex();
             bufferEnd = bufferPosition + in.readableBytes();
+            // Without this, reading from a !in.hasArray() buffer will advance the readerIndex
+            // of the buffer, while reading from a in.hasArray() buffer will not advance the
+            // readerIndex, and this has led to subtle bugs. This should help to identify
+            // those problems by making things more consistent.
+            in.readerIndex(in.readerIndex() + in.readableBytes());
         }
     }
 

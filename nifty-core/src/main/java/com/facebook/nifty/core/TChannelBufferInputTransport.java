@@ -71,7 +71,7 @@ public class TChannelBufferInputTransport extends TTransport {
     }
 
     public void setInputBuffer(ChannelBuffer inputBuffer) {
-        this.inputBuffer = inputBuffer.duplicate();
+        this.inputBuffer = inputBuffer;
     }
 
     public boolean isReadable() {
