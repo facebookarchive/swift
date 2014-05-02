@@ -24,20 +24,25 @@ import com.facebook.swift.service.ThriftEventHandler;
 import com.facebook.swift.service.ThriftServer;
 import com.facebook.swift.service.ThriftServerConfig;
 import com.facebook.swift.service.ThriftServerTimer;
+import com.facebook.swift.service.ThriftServerWorkerExecutor;
 import com.facebook.swift.service.ThriftServiceProcessor;
 import com.facebook.swift.service.guice.ThriftServiceExporter.ThriftServiceExport;
 import com.facebook.swift.service.guice.ThriftServiceExporter.ThriftServiceProcessorProvider;
 import com.google.inject.Binder;
 import com.google.inject.Key;
 import com.google.inject.Module;
+import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.binder.ScopedBindingBuilder;
 
+import com.google.inject.multibindings.MapBinder;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.jboss.netty.util.Timer;
+
+import java.util.concurrent.ExecutorService;
 
 import static com.google.inject.multibindings.MapBinder.newMapBinder;
 import static com.google.inject.multibindings.Multibinder.newSetBinder;
@@ -49,7 +54,10 @@ public class ThriftServerModule implements Module
     @Override
     public void configure(Binder binder)
     {
-        // Setup binder for message frame codecs...
+        // Setup map binder for executor services
+        workerExecutorBinder(binder).permitDuplicates();
+
+        // Setup map binder for message frame codecs
         newMapBinder(binder, String.class, ThriftFrameCodecFactory.class).permitDuplicates();
 
         // ...and bind unframed (aka buffered) and framed codecs by default. The default frame codec
@@ -75,6 +83,8 @@ public class ThriftServerModule implements Module
         binder.bind(ThriftServer.class).in(Scopes.SINGLETON);
     }
 
+    // helpers for binding frame codec factories
+
     public static ScopedBindingBuilder bindFrameCodecFactory(Binder binder, String key, Class<? extends ThriftFrameCodecFactory> frameCodecFactoryClass)
     {
         return newMapBinder(binder, String.class, ThriftFrameCodecFactory.class).addBinding(key).to(frameCodecFactoryClass);
@@ -85,6 +95,8 @@ public class ThriftServerModule implements Module
         newMapBinder(binder, String.class, ThriftFrameCodecFactory.class).addBinding(key).toInstance(frameCodecFactory);
     }
 
+    // helpers for binding protocol factories
+
     public static ScopedBindingBuilder bindProtocolFactory(Binder binder, String key, Class<? extends TDuplexProtocolFactory> protocolFactoryClass)
     {
         return newMapBinder(binder, String.class, TDuplexProtocolFactory.class).addBinding(key).to(protocolFactoryClass);
@@ -93,6 +105,28 @@ public class ThriftServerModule implements Module
     public static void bindProtocolFactory(Binder binder, String key, TDuplexProtocolFactory protocolFactory)
     {
         newMapBinder(binder, String.class, TDuplexProtocolFactory.class).addBinding(key).toInstance(protocolFactory);
+    }
+
+    // Helpers for binding worker executors
+
+    public static ScopedBindingBuilder bindWorkerExecutor(Binder binder, String key, Class<? extends ExecutorService> executorServiceClass)
+    {
+        return workerExecutorBinder(binder).addBinding(key).to(executorServiceClass);
+    }
+
+    public static ScopedBindingBuilder bindWorkerExecutor(Binder binder, String key, Provider<? extends ExecutorService> executorServiceProvider)
+    {
+        return workerExecutorBinder(binder).addBinding(key).toProvider(executorServiceProvider);
+    }
+
+    public static void bindWorkerExecutor(Binder binder, String key, ExecutorService executorService)
+    {
+        workerExecutorBinder(binder).addBinding(key).toInstance(executorService);
+    }
+
+    private static MapBinder<String, ExecutorService> workerExecutorBinder(Binder binder)
+    {
+        return newMapBinder(binder, String.class, ExecutorService.class, ThriftServerWorkerExecutor.class);
     }
 
     @Provides
