@@ -22,8 +22,13 @@ import com.facebook.nifty.processor.NiftyProcessorFactory;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TMessage;
+import org.apache.thrift.protocol.TMessageType;
 import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.protocol.TProtocolUtil;
+import org.apache.thrift.protocol.TType;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.Channels;
@@ -34,6 +39,7 @@ import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -71,7 +77,19 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
         if (e.getMessage() instanceof ThriftMessage) {
             ThriftMessage message = (ThriftMessage) e.getMessage();
             checkResponseOrderingRequirements(ctx, message);
-            processRequest(ctx, message);
+
+            TNiftyTransport messageTransport = new TNiftyTransport(ctx.getChannel(), message);
+            TTransportPair transportPair = TTransportPair.fromSingleTransport(messageTransport);
+            TProtocolPair protocolPair = duplexProtocolFactory.getProtocolPair(transportPair);
+            TProtocol inProtocol = protocolPair.getInputProtocol();
+            TProtocol outProtocol = protocolPair.getOutputProtocol();
+
+            try {
+                processRequest(ctx, message, messageTransport, inProtocol, outProtocol);
+            }
+            catch (RejectedExecutionException ex) {
+                onRejectedExecution(ctx, message, messageTransport, inProtocol, outProtocol);
+            }
         }
         else {
             ctx.sendUpstream(e);
@@ -96,7 +114,12 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
         }
     }
 
-    private void processRequest(final ChannelHandlerContext ctx, final ThriftMessage message) {
+    private void processRequest(
+            final ChannelHandlerContext ctx,
+            final ThriftMessage message,
+            final TNiftyTransport messageTransport,
+            final TProtocol inProtocol,
+            final TProtocol outProtocol) {
         // Remember the ordering of requests as they arrive, used to enforce an order on the
         // responses.
         final int requestSequenceId = dispatcherSequenceId.incrementAndGet();
@@ -121,13 +144,6 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
             @Override
             public void run()
             {
-                final TNiftyTransport messageTransport = new TNiftyTransport(ctx.getChannel(), message);
-
-                TTransportPair transportPair = TTransportPair.fromSingleTransport(messageTransport);
-                TProtocolPair protocolPair = duplexProtocolFactory.getProtocolPair(transportPair);
-                TProtocol inProtocol = protocolPair.getInputProtocol();
-                TProtocol outProtocol = protocolPair.getOutputProtocol();
-
                 ListenableFuture<Boolean> processFuture;
 
                 try {
@@ -161,28 +177,53 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
                                         }
                                     }
                                     catch (Throwable t) {
-                                        onDispatchException(t);
+                                        onDispatchException(ctx, t);
                                     }
                                 }
 
                                 @Override
                                 public void onFailure(Throwable t)
                                 {
-                                    onDispatchException(t);
+                                    onDispatchException(ctx, t);
                                 }
                             });
                 }
                 catch (TException e) {
-                    onDispatchException(e);
+                    onDispatchException(ctx, e);
                 }
             }
-
-            private void onDispatchException(Throwable t)
-            {
-                Channels.fireExceptionCaught(ctx, t);
-                closeChannel(ctx);
-            }
         });
+    }
+
+    private void onRejectedExecution(
+            ChannelHandlerContext ctx,
+            ThriftMessage request,
+            TNiftyTransport requestTransport,
+            TProtocol inProtocol,
+            TProtocol outProtocol)
+    {
+        try {
+            TMessage message = inProtocol.readMessageBegin();
+            TProtocolUtil.skip(inProtocol, TType.STRUCT);
+
+            TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Server overloaded");
+            outProtocol.writeMessageBegin(new TMessage(message.name, TMessageType.EXCEPTION, message.seqid));
+            x.write(outProtocol);
+            outProtocol.writeMessageEnd();
+            outProtocol.getTransport().flush();
+
+            ThriftMessage response = request.getMessageFactory().create(requestTransport.getOutputBuffer());
+            writeResponse(ctx, response, message.seqid, DispatcherContext.isResponseOrderingRequired(ctx));
+        }
+        catch (TException ex) {
+            onDispatchException(ctx, ex);
+        }
+    }
+
+    private void onDispatchException(ChannelHandlerContext ctx, Throwable t)
+    {
+        Channels.fireExceptionCaught(ctx, t);
+        closeChannel(ctx);
     }
 
     private void writeResponse(ChannelHandlerContext ctx,
