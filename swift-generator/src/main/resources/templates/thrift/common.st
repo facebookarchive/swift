@@ -6,7 +6,7 @@ thriftfile(context) ::= <<
 <! = called from the generator to render a new thrift source file.                  = !>
 <! =                                                                                = !>
 <! ================================================================================== !>
-namespace java.swift <context.namespace>
+namespace java <context.namespace>
 <context.customNamespaces : {key | namespace <key> <context.customNamespaces.(key)>}; separator="\n">
 
 <context.includes : {inc | include "<inc>"}; separator="\n">
@@ -44,7 +44,7 @@ _structkind(struct) ::= <<
 
 _field(field) ::= <<
 <_doc(field.documentation)><\\\>
-<_fieldRequiredness(field)><field.id>: <field.thriftType> <field.name>
+<field.id>:<_fieldRequiredness(field)> <field.thriftType> <field.name>
 >>
 
 _fieldRequiredness(field) ::= <<
