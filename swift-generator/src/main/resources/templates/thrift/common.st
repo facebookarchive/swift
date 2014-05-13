@@ -6,6 +6,7 @@ thriftfile(context) ::= <<
 <! = called from the generator to render a new thrift source file.                  = !>
 <! =                                                                                = !>
 <! ================================================================================== !>
+namespace java.swift <context.namespace>
 namespace java <context.namespace>
 <context.customNamespaces : {key | namespace <key> <context.customNamespaces.(key)>}; separator="\n">
 
