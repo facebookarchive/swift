@@ -264,7 +264,7 @@ public class ThriftClientManager implements Closeable
 
         return type.cast(Proxy.newProxyInstance(
                 type.getClassLoader(),
-                new Class<?>[]{ type, Closeable.class },
+                new Class<?>[]{ type, Closeable.class,ThriftClientStatus.class },
                 handler
         ));
     }
@@ -470,6 +470,8 @@ public class ThriftClientManager implements Closeable
             if (args.length == 0 && "close".equals(method.getName())) {
                 channel.close();
                 return null;
+            }else if(args.length==0 && "isOpen".equals(method.getName())){
+                return channel.getNettyChannel().isOpen();
             }
 
             ThriftMethodHandler methodHandler = methods.get(method);
