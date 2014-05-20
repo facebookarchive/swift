@@ -63,6 +63,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 public class TestPlainServer
@@ -177,6 +178,54 @@ public class TestPlainServer
             // - second call is queued, filling the queue which has a fixed length of 1
             // - third call is rejected, we should receive an INTERNAL_ERROR
             assertEquals(ex.getType(), TApplicationException.INTERNAL_ERROR);
+        }
+    }
+
+    @Test
+    public void testTaskTimeout()
+        throws InterruptedException, TException
+    {
+        BlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(2);
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, 60, TimeUnit.SECONDS, queue);
+        final TProcessor defaultProcessor = defaultProcessor();
+        TProcessor slowProcessor = new TProcessor() {
+            @Override
+            public boolean process(TProtocol in, TProtocol out) throws TException {
+                Uninterruptibles.sleepUninterruptibly(300, TimeUnit.MILLISECONDS);
+                return defaultProcessor.process(in, out);
+            }
+        };
+        startServer(getThriftServerDefBuilder()
+                .taskTimeout(new Duration(200, TimeUnit.MILLISECONDS))
+                .using(executor)
+                .withProcessor(slowProcessor)
+        );
+
+        scribe.Client client1 = makeClient();
+        scribe.Client client2 = makeClient();
+        List<LogEntry> messages = ImmutableList.of(new LogEntry("hello", "world"));
+        client1.send_Log(messages);
+        Uninterruptibles.sleepUninterruptibly(50, TimeUnit.MILLISECONDS);
+        client2.send_Log(messages);
+
+        try {
+            client1.recv_Log();
+            fail("Should have failed because processing delay is longer than task time out");
+        }
+        catch (TApplicationException ex) {
+            // Task timeout expires after start processing this request, but before finish processing it.
+            assertEquals(ex.getType(), TApplicationException.INTERNAL_ERROR);
+            assertEquals(ex.getMessage(), "Task timed out while executing.");
+        }
+
+        try {
+            client2.recv_Log();
+            fail("Should have failed because it stays on the queue longer than task time out");
+        }
+        catch (TApplicationException ex) {
+            // Task timeout expires before start processing this request.
+            assertEquals(ex.getType(), TApplicationException.INTERNAL_ERROR);
+            assertTrue(ex.getMessage().contains("exceeding configured task timeout of 200 milliseconds"));
         }
     }
 

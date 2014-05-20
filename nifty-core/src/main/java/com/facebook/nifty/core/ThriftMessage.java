@@ -21,6 +21,7 @@ public class ThriftMessage
 {
     private final ChannelBuffer buffer;
     private final ThriftTransportType transportType;
+    private long processStartTimeMillis;
 
     public ThriftMessage(ChannelBuffer buffer, ThriftTransportType transportType)
     {
@@ -69,6 +70,13 @@ public class ThriftMessage
     public boolean isOrderedResponsesRequired()
     {
         return true;
+    }
+
+    public long getProcessStartTimeMillis() { return processStartTimeMillis; }
+
+    public void setProcessStartTimeMillis(long processStartTimeMillis)
+    {
+        this.processStartTimeMillis = processStartTimeMillis;
     }
 
     public static interface Factory
