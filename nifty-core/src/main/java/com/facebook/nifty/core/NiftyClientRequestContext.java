@@ -17,17 +17,14 @@ package com.facebook.nifty.core;
 
 import org.apache.thrift.protocol.TProtocol;
 
-public class NiftyRequestContext implements RequestContext
-{
-    private final ConnectionContext connectionContext;
+public class NiftyClientRequestContext implements ClientRequestContext{
     private final TProtocol inputProtocol;
     private final TProtocol outputProtocol;
-    private final TNiftyTransport niftyTransport;
 
-    @Override
-    public TProtocol getInputProtocol()
+    public NiftyClientRequestContext(TProtocol inputProtocol, TProtocol outputProtocol)
     {
-        return inputProtocol;
+        this.inputProtocol = inputProtocol;
+        this.outputProtocol = outputProtocol;
     }
 
     @Override
@@ -36,22 +33,9 @@ public class NiftyRequestContext implements RequestContext
         return outputProtocol;
     }
 
-    public TNiftyTransport getNiftyTransport()
-    {
-        return niftyTransport;
-    }
-
     @Override
-    public ConnectionContext getConnectionContext()
+    public TProtocol getInputProtocol()
     {
-        return connectionContext;
-    }
-
-    NiftyRequestContext(ConnectionContext connectionContext, TProtocol inputProtocol, TProtocol outputProtocol, TNiftyTransport niftyTransport)
-    {
-        this.connectionContext = connectionContext;
-        this.niftyTransport = niftyTransport;
-        this.inputProtocol = inputProtocol;
-        this.outputProtocol = outputProtocol;
+        return inputProtocol;
     }
 }
