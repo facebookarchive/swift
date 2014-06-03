@@ -15,14 +15,14 @@
  */
 package com.facebook.swift.service;
 
-import com.facebook.nifty.client.NiftyClientChannel;
+import com.facebook.nifty.client.RequestChannel;
 import org.apache.thrift.TException;
 import org.jboss.netty.buffer.ChannelBuffer;
 
 import java.util.concurrent.CountDownLatch;
 
 /**
- * Helper class simulating synchronous operations on asynchronous {@link NiftyClientChannel}
+ * Helper class simulating synchronous operations on asynchronous {@link RequestChannel}
  */
 class SyncClientHelpers
 {
@@ -38,7 +38,7 @@ class SyncClientHelpers
      *                              while receiving or de-serializing the response
      * @throws InterruptedException if the operation is interrupted before the response arrives
      */
-    public static ChannelBuffer sendSynchronousTwoWayMessage(NiftyClientChannel channel,
+    public static ChannelBuffer sendSynchronousTwoWayMessage(RequestChannel channel,
                                                              final ChannelBuffer request)
             throws TException, InterruptedException
     {
@@ -49,7 +49,7 @@ class SyncClientHelpers
         responseHolder[0] = null;
         exceptionHolder[0] = null;
 
-        channel.sendAsynchronousRequest(request, false, new NiftyClientChannel.Listener()
+        channel.sendAsynchronousRequest(request, false, new RequestChannel.Listener()
         {
             @Override
             public void onRequestSent()
@@ -92,7 +92,7 @@ class SyncClientHelpers
      *                              sending the request
      * @throws InterruptedException if the thread is interrupted before the request is sent
      */
-    public static void sendSynchronousOneWayMessage(NiftyClientChannel channel,
+    public static void sendSynchronousOneWayMessage(RequestChannel channel,
                                                     final ChannelBuffer request)
             throws TException, InterruptedException
     {
@@ -102,7 +102,7 @@ class SyncClientHelpers
 
         exceptionHolder[0] = null;
 
-        channel.sendAsynchronousRequest(request, true, new NiftyClientChannel.Listener()
+        channel.sendAsynchronousRequest(request, true, new RequestChannel.Listener()
         {
             @Override
             public void onRequestSent()

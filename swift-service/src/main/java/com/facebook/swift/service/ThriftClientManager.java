@@ -18,6 +18,7 @@ package com.facebook.swift.service;
 import com.facebook.nifty.client.NiftyClient;
 import com.facebook.nifty.client.NiftyClientChannel;
 import com.facebook.nifty.client.NiftyClientConnector;
+import com.facebook.nifty.client.RequestChannel;
 import com.facebook.nifty.core.TChannelBufferInputTransport;
 import com.facebook.nifty.core.TChannelBufferOutputTransport;
 import com.facebook.nifty.duplex.TProtocolPair;
@@ -247,7 +248,7 @@ public class ThriftClientManager implements Closeable
         return createClient(channel, type, DEFAULT_NAME, eventHandlers);
     }
 
-    public <T> T createClient(NiftyClientChannel channel, Class<T> type, String name, List<? extends ThriftClientEventHandler> eventHandlers)
+    public <T> T createClient(RequestChannel channel, Class<T> type, String name, List<? extends ThriftClientEventHandler> eventHandlers)
     {
         checkNotNull(channel, "channel is null");
         checkNotNull(type, "type is null");
@@ -286,11 +287,11 @@ public class ThriftClientManager implements Closeable
     }
 
     /**
-     * Returns the {@link NiftyClientChannel} backing a Swift client
+     * Returns the {@link RequestChannel} backing a Swift client
      *
      * @throws IllegalArgumentException if the client is not a Swift client
      */
-    public NiftyClientChannel getNiftyChannel(Object client)
+    public RequestChannel getRequestChannel(Object client)
     {
         try {
             InvocationHandler genericHandler = Proxy.getInvocationHandler(client);
@@ -299,6 +300,23 @@ public class ThriftClientManager implements Closeable
         }
         catch (IllegalArgumentException | ClassCastException e) {
             throw new IllegalArgumentException("Invalid swift client object", e);
+        }
+    }
+
+    /**
+     * Returns the {@link NiftyClientChannel} backing a Swift client
+     *
+     * @throws IllegalArgumentException if the client is not using a {@link com.facebook.nifty.client.NiftyClientChannel}
+     *
+     * @deprecated Use {@link #getRequestChannel} instead, and cast the result to a {@link NiftyClientChannel} if necessary
+     */
+    public NiftyClientChannel getNiftyChannel(Object client)
+    {
+        try {
+            return NiftyClientChannel.class.cast(getRequestChannel(client));
+        }
+        catch (ClassCastException e) {
+            throw new IllegalArgumentException("The swift client uses a channel that is not a NiftyClientChannel", e);
         }
     }
 
@@ -401,7 +419,7 @@ public class ThriftClientManager implements Closeable
         private static final Object[] NO_ARGS = new Object[0];
         private final String clientDescription;
 
-        private final NiftyClientChannel channel;
+        private final RequestChannel channel;
 
         private final Map<Method, ThriftMethodHandler> methods;
         private final AtomicInteger sequenceId = new AtomicInteger(1);
@@ -413,7 +431,7 @@ public class ThriftClientManager implements Closeable
 
         private ThriftInvocationHandler(
                 String clientDescription,
-                NiftyClientChannel channel,
+                RequestChannel channel,
                 Map<Method, ThriftMethodHandler> methods,
                 List<? extends ThriftClientEventHandler> eventHandlers)
         {
@@ -431,7 +449,7 @@ public class ThriftClientManager implements Closeable
             this.outputProtocol = protocolPair.getOutputProtocol();
         }
 
-        public NiftyClientChannel getChannel()
+        public RequestChannel getChannel()
         {
             return channel;
         }
