@@ -252,6 +252,7 @@ _toStringField(field) ::= <<
 >>
 
 _union_field(field) ::= <<
+<_annotation(field)>
 public <field.javaType> <field.javaGetterName>() {
     if (this.id != <field.id>) {
         throw new IllegalStateException("Not a <field.name> element!");
