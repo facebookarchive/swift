@@ -15,7 +15,7 @@
  */
 package com.facebook.swift.service;
 
-import com.facebook.nifty.client.NiftyClientChannel;
+import com.facebook.nifty.client.RequestChannel;
 import com.facebook.nifty.core.TChannelBufferInputTransport;
 import com.facebook.nifty.core.TChannelBufferOutputTransport;
 import com.facebook.swift.codec.ThriftCodec;
@@ -110,7 +110,7 @@ public class ThriftMethodHandler
     }
 
     public Object invoke(
-            final NiftyClientChannel channel,
+            final RequestChannel channel,
             final TChannelBufferInputTransport inputTransport,
             final TChannelBufferOutputTransport outputTransport,
             final TProtocol inputProtocol,
@@ -138,7 +138,7 @@ public class ThriftMethodHandler
     }
 
     private Object synchronousInvoke(
-            NiftyClientChannel channel,
+            RequestChannel channel,
             TChannelBufferInputTransport inputTransport,
             TChannelBufferOutputTransport outputTransport,
             TProtocol inputProtocol,
@@ -191,7 +191,7 @@ public class ThriftMethodHandler
     }
 
     public ListenableFuture<Object> asynchronousInvoke(
-            final NiftyClientChannel channel,
+            final RequestChannel channel,
             final TChannelBufferInputTransport inputTransport,
             final TChannelBufferOutputTransport outputTransport,
             final TProtocol inputProtocol,
@@ -210,7 +210,7 @@ public class ThriftMethodHandler
         contextChain.postWrite(args);
 
         // send message and setup listener to handle the response
-        channel.sendAsynchronousRequest(requestBuffer, false, new NiftyClientChannel.Listener() {
+        channel.sendAsynchronousRequest(requestBuffer, false, new RequestChannel.Listener() {
             @Override
             public void onRequestSent() {
                 if (oneway) {

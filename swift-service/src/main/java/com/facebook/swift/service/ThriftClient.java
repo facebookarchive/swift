@@ -17,6 +17,7 @@ package com.facebook.swift.service;
 
 import com.facebook.nifty.client.NiftyClientChannel;
 import com.facebook.nifty.client.NiftyClientConnector;
+import com.facebook.nifty.client.RequestChannel;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.net.HostAndPort;
@@ -156,7 +157,7 @@ public class ThriftClient<T>
      * @param channel Established client connection
      * @return The new client
      */
-    public T open(NiftyClientChannel channel)
+    public T open(RequestChannel channel)
     {
         return clientManager.createClient(channel, clientType, clientName, eventHandlers);
     }
