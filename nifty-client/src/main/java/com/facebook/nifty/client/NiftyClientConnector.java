@@ -21,7 +21,7 @@ import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.util.Timer;
 
-public interface NiftyClientConnector<T extends NiftyClientChannel> {
+public interface NiftyClientConnector<T extends RequestChannel> {
     ChannelFuture connect(ClientBootstrap bootstrap);
 
     T newThriftClientChannel(Channel channel, Timer timer);

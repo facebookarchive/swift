@@ -23,22 +23,7 @@ import org.jboss.netty.channel.Channel;
 
 import javax.annotation.Nullable;
 
-public interface NiftyClientChannel {
-    /**
-     * Sends a single message asynchronously, and notifies the {@link Listener}
-     * when the request is finished sending, when the response has arrived, and/or when an error
-     * occurs.
-     *
-     *
-     * @param request
-     * @param oneway
-     *@param listener  @throws TException
-     */
-    void sendAsynchronousRequest(final ChannelBuffer request,
-                                 final boolean oneway,
-                                 final Listener listener)
-            throws TException;
-
+public interface NiftyClientChannel extends RequestChannel {
     /**
      * Sets a timeout used to limit elapsed time for sending a message.
      *
@@ -86,27 +71,6 @@ public interface NiftyClientChannel {
     Duration getReadTimeout();
 
     /**
-     * Closes the channel
-     */
-    void close();
-
-    /**
-     * Returns true if the channel has encountered an error. This method is a shortcut for:
-     * <p/>
-     * {@code return (getError() != null);}
-     *
-     * @return
-     */
-    boolean hasError();
-
-    /**
-     * Returns the {@link TException} representing the error the channel encountered, if any.
-     *
-     * @return
-     */
-    TException getError();
-
-    /**
      * Executes the given {@link Runnable} on the I/O thread that manages reads/writes for this
      * channel.
      *
@@ -115,14 +79,4 @@ public interface NiftyClientChannel {
     void executeInIoThread(Runnable runnable);
 
     Channel getNettyChannel();
-
-    TDuplexProtocolFactory getProtocolFactory();
-
-    public interface Listener {
-        public abstract void onRequestSent();
-
-        public abstract void onResponseReceived(ChannelBuffer message);
-
-        public abstract void onChannelError(TException t);
-    }
 }
