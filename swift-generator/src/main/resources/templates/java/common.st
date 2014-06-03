@@ -206,7 +206,10 @@ _method(method) ::= <<
 _asyncMethod(method) ::= <<
 <if(method.name)>
 @ThriftMethod(value = "<method.name>"<if(method.oneway)>,
-              oneway = true<endif>)
+              oneway = true<endif><if(method.annotatedExceptions)>,
+              exception = {
+                  <_annotatedExceptions(method)>
+              }<endif>)
 <endif>
 <if(method.allowAsync)>ListenableFuture\<<method.boxedJavaType>\><else><method.javaType><endif> <method.javaName><_params(method.parameters)>;
 >>
