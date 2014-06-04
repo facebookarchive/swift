@@ -27,12 +27,18 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
+import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
+import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TMemoryBuffer;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.ByteArrayOutputStream;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.security.SecureRandom;
 
 import static com.facebook.swift.codec.metadata.ThriftType.BOOL;
 import static com.facebook.swift.codec.metadata.ThriftType.BYTE;
@@ -221,6 +227,25 @@ public class TestThriftCodecManager
 
         // verify they are the same
         assertEquals(copy, value);
+    }
+
+    public void testWriteToBuffer() {
+        SecureRandom random = new SecureRandom();
+        BasicThriftStruct tstruct = new BasicThriftStruct(
+            new BigInteger(130, random).toString(),
+            new BigInteger(130, random).toString(),
+            new BigInteger(130, random).toString(),
+            1337L);
+        TProtocolFactory protocolFactory = new TBinaryProtocol.Factory();
+        ByteArrayOutputStream oStream = new ByteArrayOutputStream();
+        codecManager.write(BasicThriftStruct.class, oStream, protocolFactory);
+
+        BasicThriftStruct tstructCopy = codecManager.read(
+                oStream.toByteArray(),
+                BasicThriftStruct.class,
+                protocolFactory);
+
+        Assert.assertEquals(tstruct, tstructCopy);
     }
 
     private ByteBuffer toByteBuffer(String string)

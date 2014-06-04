@@ -42,8 +42,12 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.protocol.TProtocolFactory;
+import org.apache.thrift.transport.TIOStreamTransport;
 
 import javax.annotation.concurrent.ThreadSafe;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Type;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -199,10 +203,39 @@ public class ThriftCodecManager
         return codec.read(protocol);
     }
 
+    public <T> T read(byte[] serializedStruct,
+                      Class<T> clazz,
+                      TProtocolFactory protocolFactory) {
+        Preconditions.checkNotNull(serializedStruct, "ttype is null");
+        Preconditions.checkNotNull(clazz, "clazz is null");
+        try {
+            ByteArrayInputStream istream = new ByteArrayInputStream(serializedStruct);
+            TIOStreamTransport resultIOStream = new TIOStreamTransport(istream);
+            TProtocol resultProtocolBuffer = protocolFactory.getProtocol(resultIOStream);
+            return read(clazz, resultProtocolBuffer);
+        } catch (Exception e) {
+            throw Throwables.propagate(e);
+        }
+    }
+
     public <T> void write(Class<T> type, T value, TProtocol protocol)
             throws Exception
     {
         getCodec(type).write(value, protocol);
+    }
+
+    public <T> void write(T ttype,
+                          ByteArrayOutputStream oStream,
+                          TProtocolFactory protocolFactory) {
+        Preconditions.checkNotNull(ttype, "ttype is null");
+        Preconditions.checkNotNull(protocolFactory, "protocolFactory is null");
+        try {
+            TIOStreamTransport resultIOStream = new TIOStreamTransport(oStream);
+            TProtocol resultProtocolBuffer = protocolFactory.getProtocol(resultIOStream);
+            write((Class<T>) ttype.getClass(), ttype, resultProtocolBuffer);
+        } catch (Exception e) {
+            throw Throwables.propagate(e);
+        }
     }
 
     public void write(ThriftType type, Object value, TProtocol protocol)
