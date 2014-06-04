@@ -18,6 +18,8 @@ package com.facebook.swift.service;
 import com.facebook.nifty.client.NiftyClient;
 import com.facebook.nifty.client.NiftyClientChannel;
 import com.facebook.nifty.client.NiftyClientConnector;
+import com.facebook.nifty.core.ClientRequestContext;
+import com.facebook.nifty.core.NiftyClientRequestContext;
 import com.facebook.nifty.client.RequestChannel;
 import com.facebook.nifty.core.TChannelBufferInputTransport;
 import com.facebook.nifty.core.TChannelBufferOutputTransport;
@@ -501,7 +503,8 @@ public class ThriftClientManager implements Closeable
                     throw new TTransportException(channel.getError());
                 }
 
-                ClientContextChain context = new ClientContextChain(eventHandlers, methodHandler.getQualifiedName());
+                ClientRequestContext requestContext = new NiftyClientRequestContext(getInputProtocol(), getOutputProtocol());
+                ClientContextChain context = new ClientContextChain(eventHandlers, methodHandler.getQualifiedName(), requestContext);
                 return methodHandler.invoke(channel,
                                             inputTransport,
                                             outputTransport,

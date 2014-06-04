@@ -15,6 +15,8 @@
  */
 package com.facebook.swift.service;
 
+import com.facebook.nifty.core.ClientRequestContext;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,13 +26,13 @@ public class ClientContextChain
     private final String methodName;
     private final List<Object> contexts;
 
-    ClientContextChain(List<? extends ThriftClientEventHandler> handlers, String methodName)
+    ClientContextChain(List<? extends ThriftClientEventHandler> handlers, String methodName, ClientRequestContext requestContext)
     {
         this.handlers = handlers;
         this.methodName = methodName;
         this.contexts = new ArrayList<>();
         for (ThriftClientEventHandler h: this.handlers) {
-            this.contexts.add(h.getContext(methodName));
+            this.contexts.add(h.getContext(methodName, requestContext));
         }
     }
 

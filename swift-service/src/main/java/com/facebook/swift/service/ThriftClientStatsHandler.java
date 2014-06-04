@@ -15,6 +15,7 @@
  */
 package com.facebook.swift.service;
 
+import com.facebook.nifty.core.ClientRequestContext;
 import io.airlift.units.Duration;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,7 +49,7 @@ public class ThriftClientStatsHandler extends ThriftClientEventHandler
     }
 
     @Override
-    public Object getContext(String methodName)
+    public Object getContext(String methodName, ClientRequestContext requestContext)
     {
         stats.putIfAbsent(methodName, new ThriftMethodStats());
         return new PerCallMethodStats();
