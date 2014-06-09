@@ -119,6 +119,11 @@ public class ThriftServerModule implements Module
         return workerExecutorBinder(binder).addBinding(key).toProvider(executorServiceProvider);
     }
 
+    public static ScopedBindingBuilder bindWorkerExecutorProvider(Binder binder, String key, Class<? extends javax.inject.Provider<? extends ExecutorService>> executorServiceProvider)
+    {
+      return workerExecutorBinder(binder).addBinding(key).toProvider(executorServiceProvider);
+    }
+
     public static void bindWorkerExecutor(Binder binder, String key, ExecutorService executorService)
     {
         workerExecutorBinder(binder).addBinding(key).toInstance(executorService);
