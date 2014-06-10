@@ -179,7 +179,9 @@ public class ThriftServer implements Closeable
                                                          .thriftFrameCodecFactory(availableFrameCodecFactories.get(transportName))
                                                          .protocol(availableProtocolFactories.get(protocolName))
                                                          .withSecurityFactory(securityFactoryHolder.niftySecurityFactory)
-                                                         .using(workerExecutor).build();
+                                                         .using(workerExecutor)
+                                                         .taskTimeout(config.getTaskExpirationTimeout())
+                                                         .build();
 
         NettyServerConfigBuilder nettyServerConfigBuilder = NettyServerConfig.newBuilder();
 

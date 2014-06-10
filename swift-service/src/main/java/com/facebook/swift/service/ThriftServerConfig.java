@@ -15,11 +15,8 @@
  */
 package com.facebook.swift.service;
 
-import com.facebook.nifty.codec.ThriftFrameCodecFactory;
-import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.inject.Inject;
 import io.airlift.configuration.Config;
 import io.airlift.units.DataSize;
 import io.airlift.units.Duration;
@@ -50,6 +47,7 @@ public class ThriftServerConfig
     private int acceptorThreadCount = DEFAULT_BOSS_THREAD_COUNT;
     private int ioThreadCount = DEFAULT_IO_WORKER_THREAD_COUNT;
     private Duration idleConnectionTimeout = Duration.valueOf("60s");
+    private Duration taskExpirationTimeout = Duration.valueOf("5s");
     private Optional<Integer> workerThreads = Optional.absent();
     private Optional<ExecutorService> workerExecutor = Optional.absent();
     private Optional<String> workerExecutorKey = Optional.absent();
@@ -179,6 +177,28 @@ public class ThriftServerConfig
     public ThriftServerConfig setIdleConnectionTimeout(Duration idleConnectionTimeout)
     {
         this.idleConnectionTimeout = idleConnectionTimeout;
+        return this;
+    }
+
+    public Duration getTaskExpirationTimeout()
+    {
+        return taskExpirationTimeout;
+    }
+
+    /**
+     * Sets a timeout period between receiving a request and the completion of that request. If
+     * the timeout expires before the request reaches the front of the queue and begins processing,
+     * the server will discard the request instead of processing it. If the timeout expires after
+     * the request has started processing, the server will send an error immediately, and discard
+     * the result of request handling.
+     *
+     * @param taskExpirationTimeout The timeout
+     * @return This {@link ThriftServerConfig} instance
+     */
+    @Config("thrift.task-expiration-timeout")
+    public ThriftServerConfig setTaskExpirationTimeout(Duration taskExpirationTimeout)
+    {
+        this.taskExpirationTimeout = taskExpirationTimeout;
         return this;
     }
 
