@@ -72,7 +72,8 @@ public class ThriftServer implements Closeable
             "buffered", (ThriftFrameCodecFactory) new DefaultThriftFrameCodecFactory(),
             "framed", (ThriftFrameCodecFactory) new DefaultThriftFrameCodecFactory()
     );
-    private static final ImmutableMap<String, ExecutorService> DEFAULT_WORKER_EXECUTORS = ImmutableMap.of();
+    public static final ImmutableMap<String, ExecutorService> DEFAULT_WORKER_EXECUTORS = ImmutableMap.of();
+    public static final NiftySecurityFactoryHolder DEFAULT_SECURITY_FACTORY = new NiftySecurityFactoryHolder();
 
     private enum State {
         NOT_STARTED,
@@ -106,25 +107,7 @@ public class ThriftServer implements Closeable
 
     public ThriftServer(NiftyProcessor processor, ThriftServerConfig config, Timer timer)
     {
-        this(processor, config, timer, DEFAULT_FRAME_CODEC_FACTORIES, DEFAULT_PROTOCOL_FACTORIES, DEFAULT_WORKER_EXECUTORS);
-    }
-
-    public ThriftServer(
-            final NiftyProcessor processor,
-            ThriftServerConfig config,
-            @ThriftServerTimer Timer timer,
-            Map<String, ThriftFrameCodecFactory> availableFrameCodecFactories,
-            Map<String, TDuplexProtocolFactory> availableProtocolFactories,
-            Map<String, ExecutorService> availableWorkerExecutors)
-    {
-        this(
-            processor,
-            config,
-            timer,
-            availableFrameCodecFactories,
-            availableProtocolFactories,
-            availableWorkerExecutors,
-            new NiftySecurityFactoryHolder());
+        this(processor, config, timer, DEFAULT_FRAME_CODEC_FACTORIES, DEFAULT_PROTOCOL_FACTORIES, DEFAULT_WORKER_EXECUTORS, DEFAULT_SECURITY_FACTORY);
     }
 
     public ThriftServer(
