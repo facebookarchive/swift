@@ -22,7 +22,11 @@ import io.airlift.units.DataSize;
 import io.airlift.units.Duration;
 
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
@@ -32,7 +36,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static io.airlift.units.DataSize.Unit.MEGABYTE;
-import static java.util.concurrent.Executors.newFixedThreadPool;
 
 public class ThriftServerConfig
 {
@@ -49,6 +52,7 @@ public class ThriftServerConfig
     private Duration idleConnectionTimeout = Duration.valueOf("60s");
     private Duration taskExpirationTimeout = Duration.valueOf("5s");
     private Optional<Integer> workerThreads = Optional.absent();
+    private Optional<Integer> maxQueuedRequests = Optional.absent();
     private Optional<ExecutorService> workerExecutor = Optional.absent();
     private Optional<String> workerExecutorKey = Optional.absent();
     private String transportName = "framed";
@@ -252,7 +256,7 @@ public class ThriftServerConfig
     }
 
     /**
-     * Sets the key for locating the an {@link java.util.concurrent.ExecutorService} from the
+     * Sets the key for locating an {@link java.util.concurrent.ExecutorService} from the
      * mapped executors installed by Guice modules.
      *
      * If you are not configuring your application usingGuice, it will probably be simpler to just
@@ -266,6 +270,18 @@ public class ThriftServerConfig
     public ThriftServerConfig setWorkerExecutorKey(String workerExecutorKey)
     {
         this.workerExecutorKey = Optional.fromNullable(workerExecutorKey);
+        return this;
+    }
+
+    public Integer getMaxQueuedRequests()
+    {
+        return maxQueuedRequests.orNull();
+    }
+
+    @Config("thrift.max-queued-requests")
+    public ThriftServerConfig setMaxQueuedRequests(Integer maxQueuedRequests)
+    {
+        this.maxQueuedRequests = Optional.fromNullable(maxQueuedRequests);
         return this;
     }
 
@@ -288,7 +304,12 @@ public class ThriftServerConfig
     public ExecutorService getOrBuildWorkerExecutor(Map<String, ExecutorService> boundWorkerExecutors)
     {
         if (workerExecutorKey.isPresent()) {
-            checkState(!workerExecutor.isPresent() && !workerThreads.isPresent());
+            checkState(!workerExecutor.isPresent(),
+                       "Worker executor key should not be set along with a specific worker executor instance");
+            checkState(!workerThreads.isPresent(),
+                       "Worker executor key should not be set along with a number of worker threads");
+            checkState(!maxQueuedRequests.isPresent(),
+                       "When using a custom executor, handling maximum queued requests must be done manually");
 
             String key = workerExecutorKey.get();
             checkArgument(boundWorkerExecutors.containsKey(key),
@@ -297,8 +318,17 @@ public class ThriftServerConfig
             checkNotNull(executor, "WorkerExecutorKey maps to null");
             return executor;
         }
+        else if (workerExecutor.isPresent()) {
+            checkState(!workerThreads.isPresent(),
+                       "Worker executor should not be set along with number of worker threads");
+            checkState(!maxQueuedRequests.isPresent(),
+                       "When using a custom executor, handling maximum queued requests must be done manually");
 
-        return workerExecutor.or(makeDefaultWorkerExecutor());
+            return workerExecutor.get();
+        }
+        else {
+            return makeDefaultWorkerExecutor();
+        }
     }
 
     /**
@@ -320,7 +350,24 @@ public class ThriftServerConfig
 
     private ExecutorService makeDefaultWorkerExecutor()
     {
-        return newFixedThreadPool(getWorkerThreads(), new ThreadFactoryBuilder().setNameFormat("thrift-worker-%s").build());
+        BlockingQueue<Runnable> queue;
+
+        if (maxQueuedRequests.isPresent()) {
+            // Create a limited-capacity executor that will throw RejectedExecutionException when full.
+            // NiftyDispatcher will handle RejectedExecutionException by sending a TApplicationException.
+            queue = new LinkedBlockingQueue<>(maxQueuedRequests.get());
+        }
+        else {
+            queue = new LinkedBlockingQueue<>();
+        }
+
+        return new ThreadPoolExecutor(getWorkerThreads(),
+                                      getWorkerThreads(),
+                                      0L,
+                                      TimeUnit.MILLISECONDS,
+                                      queue,
+                                      new ThreadFactoryBuilder().setNameFormat("thrift-worker-%s").build(),
+                                      new ThreadPoolExecutor.AbortPolicy());
     }
 
     /**

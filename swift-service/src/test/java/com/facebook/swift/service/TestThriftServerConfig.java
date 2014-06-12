@@ -61,6 +61,7 @@ public class TestThriftServerConfig
                         .setProtocolName("binary")
                         .setWorkerExecutorKey(null)
                         .setTaskExpirationTimeout(Duration.valueOf("5s"))
+                        .setMaxQueuedRequests(null)
         );
     }
 
@@ -81,6 +82,7 @@ public class TestThriftServerConfig
                 .put("thrift.transport", "buffered")
                 .put("thrift.protocol", "compact")
                 .put("thrift.task-expiration-timeout", "10s")
+                .put("thrift.max-queued-requests", "1000")
                 .build();
 
         ThriftServerConfig expected = new ThriftServerConfig()
@@ -96,7 +98,8 @@ public class TestThriftServerConfig
                 .setWorkerExecutorKey("my-executor")
                 .setTransportName("buffered")
                 .setProtocolName("compact")
-                .setTaskExpirationTimeout(Duration.valueOf("10s"));
+                .setTaskExpirationTimeout(Duration.valueOf("10s"))
+                .setMaxQueuedRequests(1000);
 
         ConfigAssertions.assertFullMapping(properties, expected);
     }
