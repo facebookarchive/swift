@@ -48,9 +48,9 @@ public class UnframedClientConnector extends AbstractClientConnector<UnframedCli
     }
 
     @Override
-    public UnframedClientChannel newThriftClientChannel(Channel nettyChannel, Timer timer)
+    public UnframedClientChannel newThriftClientChannel(Channel nettyChannel, NettyClientConfig clientConfig)
     {
-        UnframedClientChannel channel = new UnframedClientChannel(nettyChannel, timer, getProtocolFactory());
+        UnframedClientChannel channel = new UnframedClientChannel(nettyChannel, clientConfig.getTimer(), getProtocolFactory());
         ChannelPipeline cp = nettyChannel.getPipeline();
         TimeoutHandler.addToPipeline(cp);
         cp.addLast("thriftHandler", channel);
@@ -58,7 +58,7 @@ public class UnframedClientConnector extends AbstractClientConnector<UnframedCli
     }
 
     @Override
-    public ChannelPipelineFactory newChannelPipelineFactory(final int maxFrameSize)
+    public ChannelPipelineFactory newChannelPipelineFactory(final int maxFrameSize, NettyClientConfig clientConfig)
     {
         return new ChannelPipelineFactory() {
             @Override

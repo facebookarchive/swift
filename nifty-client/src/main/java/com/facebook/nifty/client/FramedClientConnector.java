@@ -66,9 +66,9 @@ public class FramedClientConnector extends AbstractClientConnector<FramedClientC
     }
 
     @Override
-    public FramedClientChannel newThriftClientChannel(Channel nettyChannel, Timer timer)
+    public FramedClientChannel newThriftClientChannel(Channel nettyChannel, NettyClientConfig clientConfig)
     {
-        FramedClientChannel channel = new FramedClientChannel(nettyChannel, timer, getProtocolFactory());
+        FramedClientChannel channel = new FramedClientChannel(nettyChannel, clientConfig.getTimer(), getProtocolFactory());
         ChannelPipeline cp = nettyChannel.getPipeline();
         TimeoutHandler.addToPipeline(cp);
         cp.addLast("thriftHandler", channel);
@@ -76,7 +76,7 @@ public class FramedClientConnector extends AbstractClientConnector<FramedClientC
     }
 
     @Override
-    public ChannelPipelineFactory newChannelPipelineFactory(final int maxFrameSize)
+    public ChannelPipelineFactory newChannelPipelineFactory(final int maxFrameSize, NettyClientConfig clientConfig)
     {
         return new ChannelPipelineFactory() {
             @Override

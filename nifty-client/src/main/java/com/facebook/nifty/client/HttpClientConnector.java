@@ -69,11 +69,11 @@ public class HttpClientConnector extends AbstractClientConnector<HttpClientChann
     }
 
     @Override
-    public HttpClientChannel newThriftClientChannel(Channel nettyChannel, Timer timer)
+    public HttpClientChannel newThriftClientChannel(Channel nettyChannel, NettyClientConfig clientConfig)
     {
         HttpClientChannel channel =
                 new HttpClientChannel(nettyChannel,
-                                      timer,
+                                      clientConfig.getTimer(),
                                       getProtocolFactory(),
                                       endpointUri.getHost(),
                                       endpointUri.getPath());
@@ -82,7 +82,7 @@ public class HttpClientConnector extends AbstractClientConnector<HttpClientChann
     }
 
     @Override
-    public ChannelPipelineFactory newChannelPipelineFactory(final int maxFrameSize)
+    public ChannelPipelineFactory newChannelPipelineFactory(final int maxFrameSize, NettyClientConfig clientConfig)
     {
         return new ChannelPipelineFactory()
         {

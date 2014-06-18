@@ -180,7 +180,7 @@ public class NiftyClient implements Closeable
             bootstrap.setOption("connectTimeoutMillis", connectTimeout.toMillis());
         }
 
-        bootstrap.setPipelineFactory(clientChannelConnector.newChannelPipelineFactory(maxFrameSize));
+        bootstrap.setPipelineFactory(clientChannelConnector.newChannelPipelineFactory(maxFrameSize, nettyClientConfig));
         ChannelFuture nettyChannelFuture = clientChannelConnector.connect(bootstrap);
         nettyChannelFuture.addListener(new ChannelFutureListener() {
             @Override
@@ -392,7 +392,7 @@ public class NiftyClient implements Closeable
                         if (future.isSuccess()) {
                             Channel nettyChannel = future.getChannel();
                             T channel = clientChannelConnector.newThriftClientChannel(nettyChannel,
-                                                                                      timer);
+                                                                                      nettyClientConfig);
                             channel.setReceiveTimeout(receiveTimeout);
                             channel.setReadTimeout(readTimeout);
                             channel.setSendTimeout(sendTimeout);
