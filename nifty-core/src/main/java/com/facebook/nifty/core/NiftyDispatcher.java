@@ -27,6 +27,7 @@ import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TMessage;
 import org.apache.thrift.protocol.TMessageType;
 import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.transport.TTransport;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelStateEvent;
@@ -90,19 +91,15 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
             }
             checkResponseOrderingRequirements(ctx, message);
 
-            TNiftyTransport messageTransport = new TNiftyTransport(ctx.getChannel(), message);
-            TTransportPair transportPair = TTransportPair.fromSingleTransport(messageTransport);
-            TProtocolPair protocolPair = duplexProtocolFactory.getProtocolPair(transportPair);
-            TProtocol inProtocol = protocolPair.getInputProtocol();
-            TProtocol outProtocol = protocolPair.getOutputProtocol();
+            DispatcherContext.setupTransportBuffersForRequest(ctx, message, duplexProtocolFactory);
 
             try {
-                processRequest(ctx, message, messageTransport, inProtocol, outProtocol);
+                processRequest(ctx, message);
             }
             catch (RejectedExecutionException ex) {
                 TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR,
                         "Server overloaded");
-                sendTApplicationException(x, ctx, message, messageTransport, inProtocol, outProtocol);
+                sendTApplicationException(x, ctx, message);
             }
         }
         else {
@@ -130,10 +127,7 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
 
     private void processRequest(
             final ChannelHandlerContext ctx,
-            final ThriftMessage message,
-            final TNiftyTransport messageTransport,
-            final TProtocol inProtocol,
-            final TProtocol outProtocol) {
+            final ThriftMessage message) {
         // Remember the ordering of requests as they arrive, used to enforce an order on the
         // responses.
         final int requestSequenceId = dispatcherSequenceId.incrementAndGet();
@@ -161,6 +155,9 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
                 ListenableFuture<Boolean> processFuture;
                 final AtomicBoolean responseSent = new AtomicBoolean(false);
 
+                final TTransportPair transportPair = DispatcherContext.getTransportPair(ctx);
+                TProtocolPair protocolPair = DispatcherContext.getProtocolPair(ctx);
+
                 try {
                     try {
                         long timeRemaining = 0;
@@ -172,8 +169,7 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
                                         "Task stayed on the queue for " + timeElapsed +
                                         " milliseconds, exceeding configured task timeout of " + taskTimeoutMillis +
                                         " milliseconds.");
-                                sendTApplicationException(taskTimeoutException, ctx, message, messageTransport,
-                                        inProtocol, outProtocol);
+                                sendTApplicationException(taskTimeoutException, ctx, message);
                                 return;
                             } else {
                                 timeRemaining = taskTimeoutMillis - timeElapsed;
@@ -191,27 +187,17 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
                                                 TApplicationException.INTERNAL_ERROR,
                                                 "Task timed out while executing."
                                         );
-                                        // Create a temporary transport to send the exception
-                                        ChannelBuffer duplicateBuffer = message.getBuffer().duplicate();
-                                        duplicateBuffer.resetReaderIndex();
-                                        TNiftyTransport temporaryTransport = new TNiftyTransport(
-                                                ctx.getChannel(),
-                                                duplicateBuffer,
-                                                message.getTransportType());
-                                        TProtocolPair protocolPair = duplexProtocolFactory.getProtocolPair(
-                                                TTransportPair.fromSingleTransport(temporaryTransport));
-                                        sendTApplicationException(ex, ctx, message, temporaryTransport,
-                                                protocolPair.getInputProtocol(),
-                                                protocolPair.getOutputProtocol());
+                                        sendTApplicationException(ex, ctx, message);
                                     }
                                 }
                             }, timeRemaining, TimeUnit.MILLISECONDS);
                         }
 
                         ConnectionContext connectionContext = ConnectionContexts.getContext(ctx.getChannel());
-                        RequestContext requestContext = new NiftyRequestContext(connectionContext, inProtocol, outProtocol, messageTransport);
+                        RequestContext requestContext = new NiftyRequestContext(connectionContext, transportPair, protocolPair);
                         RequestContexts.setCurrentContext(requestContext);
-                        processFuture = processorFactory.getProcessor(messageTransport).process(inProtocol, outProtocol, requestContext);
+                        TTransport compositeTransport = new TInputOutputCompositeTransport(transportPair.getInputTransport(), transportPair.getOutputTransport());
+                        processFuture = processorFactory.getProcessor(compositeTransport).process(protocolPair.getInputProtocol(), protocolPair.getOutputProtocol(), requestContext);
                     }
                     finally {
                         // RequestContext does NOT stay set while we are waiting for the process
@@ -233,8 +219,10 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
                                         // Only write response if the client is still there and the task timeout
                                         // hasn't expired.
                                         if (ctx.getChannel().isConnected() && responseSent.compareAndSet(false, true)) {
+                                            TChannelBufferOutputTransport outputTransport =
+                                                    (TChannelBufferOutputTransport) transportPair.getOutputTransport();
                                             ThriftMessage response = message.getMessageFactory().create(
-                                                    messageTransport.getOutputBuffer());
+                                                    outputTransport.getOutputBuffer());
                                             writeResponse(ctx, response, requestSequenceId,
                                                     DispatcherContext.isResponseOrderingRequired(ctx));
                                         }
@@ -261,20 +249,30 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
     private void sendTApplicationException(
             TApplicationException x,
             ChannelHandlerContext ctx,
-            ThriftMessage request,
-            TNiftyTransport requestTransport,
-            TProtocol inProtocol,
-            TProtocol outProtocol)
+            ThriftMessage request)
     {
         if (ctx.getChannel().isConnected()) {
             try {
-                TMessage message = inProtocol.readMessageBegin();
-                outProtocol.writeMessageBegin(new TMessage(message.name, TMessageType.EXCEPTION, message.seqid));
-                x.write(outProtocol);
-                outProtocol.writeMessageEnd();
-                outProtocol.getTransport().flush();
+                ChannelBuffer duplicatedRequestBuffer = request.getBuffer().duplicate();
+                duplicatedRequestBuffer.resetReaderIndex();
 
-                ThriftMessage response = request.getMessageFactory().create(requestTransport.getOutputBuffer());
+                TTransportPair transportPair = DispatcherContext.getTransportPair(ctx);
+                TProtocolPair protocolPair = DispatcherContext.getProtocolPair(ctx);
+
+                TChannelBufferInputTransport inputTransport = (TChannelBufferInputTransport) transportPair.getInputTransport();
+                TChannelBufferOutputTransport outputTransport = (TChannelBufferOutputTransport) transportPair.getOutputTransport();
+                inputTransport.setInputBuffer(duplicatedRequestBuffer);
+
+                TProtocol outputProtocol = protocolPair.getOutputProtocol();
+                TProtocol inputProtocol = protocolPair.getInputProtocol();
+
+                TMessage message = inputProtocol.readMessageBegin();
+                outputProtocol.writeMessageBegin(new TMessage(message.name, TMessageType.EXCEPTION, message.seqid));
+                x.write(outputProtocol);
+                outputProtocol.writeMessageEnd();
+                outputProtocol.getTransport().flush();
+
+                ThriftMessage response = request.getMessageFactory().create(outputTransport.getOutputBuffer());
                 writeResponse(ctx, response, message.seqid, DispatcherContext.isResponseOrderingRequired(ctx));
             }
             catch (TException ex) {
@@ -365,6 +363,8 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
 
     private static class DispatcherContext
     {
+        private TTransportPair transportPair;
+        private TProtocolPair protocolPair;
         private ReadBlockedState readBlockedState = ReadBlockedState.NOT_BLOCKED;
         private boolean responseOrderingRequired = false;
         private boolean responseOrderingRequirementInitialized = false;
@@ -407,6 +407,37 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
         public static boolean isResponseOrderingRequirementInitialized(ChannelHandlerContext ctx)
         {
             return getDispatcherContext(ctx).responseOrderingRequirementInitialized;
+        }
+
+        public static void setupTransportBuffersForRequest(ChannelHandlerContext ctx, ThriftMessage message, TDuplexProtocolFactory protocolFactory)
+        {
+            DispatcherContext dispatcherContext = getDispatcherContext(ctx);
+
+            if (dispatcherContext.transportPair == null) {
+                TChannelBufferInputTransport inputTransport = new TChannelBufferInputTransport(message.getBuffer());
+                TChannelBufferOutputTransport outputTransport = new TChannelBufferOutputTransport();
+
+                dispatcherContext.transportPair = TTransportPair.fromSeparateTransports(inputTransport, outputTransport);
+                dispatcherContext.protocolPair = protocolFactory.getProtocolPair(dispatcherContext.transportPair);
+            }
+            else {
+                TTransportPair transportPair = dispatcherContext.transportPair;
+                TChannelBufferInputTransport inputTransport = (TChannelBufferInputTransport) transportPair.getInputTransport();
+                TChannelBufferOutputTransport outputTransport = (TChannelBufferOutputTransport) transportPair.getOutputTransport();
+
+                inputTransport.setInputBuffer(message.getBuffer());
+                outputTransport.resetOutputBuffer();
+            }
+        }
+
+        public static TTransportPair getTransportPair(ChannelHandlerContext ctx)
+        {
+            return DispatcherContext.getDispatcherContext(ctx).transportPair;
+        }
+
+        public static TProtocolPair getProtocolPair(ChannelHandlerContext ctx)
+        {
+            return DispatcherContext.getDispatcherContext(ctx).protocolPair;
         }
 
         private static DispatcherContext getDispatcherContext(ChannelHandlerContext ctx)
