@@ -17,5 +17,5 @@ package com.facebook.nifty.core;
 
 public interface NiftySecurityFactory
 {
-    NiftySecurityHandlers getSecurityHandlers(ThriftServerDef def);
+    NiftySecurityHandlers getSecurityHandlers(ThriftServerDef def, NettyServerConfig serverConfig);
 }

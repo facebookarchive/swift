@@ -33,7 +33,7 @@ public class NiftyNoOpClientSecurityFactory implements NiftyClientSecurityFactor
     };
 
     @Override
-    public NiftySecurityHandlers getSecurityHandlers(int maxFrameSize)
+    public NiftySecurityHandlers getSecurityHandlers(int maxFrameSize, NettyClientConfig clientConfig)
     {
         return new NiftySecurityHandlers()
         {

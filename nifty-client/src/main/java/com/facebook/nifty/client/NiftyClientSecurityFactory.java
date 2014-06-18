@@ -15,9 +15,10 @@
  */
 package com.facebook.nifty.client;
 
+import com.facebook.nifty.core.NettyServerConfig;
 import com.facebook.nifty.core.NiftySecurityHandlers;
 
 public interface NiftyClientSecurityFactory
 {
-    NiftySecurityHandlers getSecurityHandlers(int maxFrameSize);
+    NiftySecurityHandlers getSecurityHandlers(int maxFrameSize, NettyClientConfig clientConfig);
 }

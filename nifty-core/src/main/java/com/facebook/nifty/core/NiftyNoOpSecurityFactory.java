@@ -32,7 +32,7 @@ public class NiftyNoOpSecurityFactory implements NiftySecurityFactory
     };
 
     @Override
-    public NiftySecurityHandlers getSecurityHandlers(ThriftServerDef def)
+    public NiftySecurityHandlers getSecurityHandlers(ThriftServerDef def, NettyServerConfig serverConfig)
     {
         return new NiftySecurityHandlers()
         {
