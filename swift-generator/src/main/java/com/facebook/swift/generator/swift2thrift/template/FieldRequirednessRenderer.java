@@ -40,9 +40,10 @@ public class FieldRequirednessRenderer implements AttributeRenderer
 
             case OPTIONAL:
                 return "optional";
-
+            case UNSPECIFIED:
+                return "";
             default:
-                throw new IllegalArgumentException("Invalid value for field requiredness");
+                throw new IllegalArgumentException("Invalid value for field requiredness "+requiredness);
         }
     }
 }
