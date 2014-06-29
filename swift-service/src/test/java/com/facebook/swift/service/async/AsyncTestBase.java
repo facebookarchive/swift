@@ -18,6 +18,7 @@ package com.facebook.swift.service.async;
 import com.facebook.nifty.client.FramedClientChannel;
 import com.facebook.nifty.client.FramedClientConnector;
 import com.facebook.nifty.client.HttpClientConnector;
+import com.facebook.nifty.client.NettyClientConfig;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.*;
 import com.google.common.collect.ImmutableList;
@@ -72,7 +73,7 @@ public class AsyncTestBase
         FramedClientConnector connector = new FramedClientConnector(address) {
             @Override
             public FramedClientChannel newThriftClientChannel(
-                    Channel nettyChannel, Timer timer)
+                    Channel nettyChannel, NettyClientConfig nettyClientConfig)
             {
                 if (connectDelay.toMillis() > 0) {
                     // Introduce an artificial delay to the client creation process, to test
@@ -80,7 +81,7 @@ public class AsyncTestBase
                     // connections
                     Uninterruptibles.sleepUninterruptibly(connectDelay.toMillis(), TimeUnit.MILLISECONDS);
                 }
-                return super.newThriftClientChannel(nettyChannel, timer);
+                return super.newThriftClientChannel(nettyChannel, nettyClientConfig);
             }
         };
         return new ThriftClient<>(clientManager, clientClass, config, "asyncTestClient").open(connector);

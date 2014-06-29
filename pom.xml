@@ -23,7 +23,7 @@
   <parent>
     <groupId>com.facebook</groupId>
     <artifactId>facebook-oss-pom</artifactId>
-    <version>10</version>
+    <version>11</version>
   </parent>
 
   <groupId>com.facebook.swift</groupId>
@@ -74,10 +74,10 @@
     <!-- This actually wants to be fixed -->
     <fb.check.fail-findbugs>false</fb.check.fail-findbugs>
 
-    <dep.airlift.version>0.83</dep.airlift.version>
+    <dep.airlift.version>0.91</dep.airlift.version>
     <dep.antlr.version>3.5</dep.antlr.version>
     <dep.maven-api.version>2.2.1</dep.maven-api.version>
-    <dep.fb.nifty.version>0.13.0-SNAPSHOT</dep.fb.nifty.version>
+    <dep.fb.nifty.version>0.13.0</dep.fb.nifty.version>
   </properties>
 
   <dependencyManagement>
@@ -210,7 +210,7 @@
       <dependency>
         <groupId>org.weakref</groupId>
         <artifactId>jmxutils</artifactId>
-        <version>1.14</version>
+        <version>1.16</version>
       </dependency>
 
       <dependency>

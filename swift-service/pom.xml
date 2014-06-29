@@ -33,7 +33,8 @@
 
   <properties>
     <fb.main.basedir>${project.parent.basedir}</fb.main.basedir>
-    <dep.jetty.version>9.0.4.v20130625</dep.jetty.version>
+    <dep.jetty.version>9.1.4.v20140401</dep.jetty.version>
+    <dep.servlet-api.version>3.1.0</dep.servlet-api.version>
   </properties>
 
   <dependencies>
@@ -190,6 +191,36 @@
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>
       <scope>test</scope>
+      <version>${dep.servlet-api.version}</version>
     </dependency>
   </dependencies>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <!-- can't include both commons-logging (which comes via apache http components) and jcl-over-slf4j -->
+        <!-- (which comes via airlift bootstrap), so lets exclude commons-logging -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <configuration>
+            <classpathDependencyExcludes>
+              <classpathDependencyExcludes>commons-logging:commons-logging</classpathDependencyExcludes>
+            </classpathDependencyExcludes>
+          </configuration>
+        </plugin>
+
+        <!-- unfortunately duplicate finder pluging doesn't recognize the effect of the above configuration -->
+        <!-- so we need to turn off it's checking for the test classpath -->
+        <plugin>
+          <groupId>com.ning.maven.plugins</groupId>
+          <artifactId>maven-duplicate-finder-plugin</artifactId>
+          <configuration>
+            <checkTestClasspath>false</checkTestClasspath>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
 </project>
