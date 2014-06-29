@@ -15,36 +15,30 @@
  */
 package com.facebook.nifty.core;
 
-import com.facebook.nifty.duplex.TProtocolPair;
-import com.facebook.nifty.duplex.TTransportPair;
 import org.apache.thrift.protocol.TProtocol;
 
 public class NiftyRequestContext implements RequestContext
 {
     private final ConnectionContext connectionContext;
-    private final TTransportPair transportPair;
-    private final TProtocolPair protocolPair;
+    private final TProtocol inputProtocol;
+    private final TProtocol outputProtocol;
+    private final TNiftyTransport niftyTransport;
 
     @Override
     public TProtocol getInputProtocol()
     {
-        return protocolPair.getInputProtocol();
+        return inputProtocol;
     }
 
     @Override
     public TProtocol getOutputProtocol()
     {
-        return protocolPair.getOutputProtocol();
+        return outputProtocol;
     }
 
-    public TChannelBufferInputTransport getInputTransport()
+    public TNiftyTransport getNiftyTransport()
     {
-        return (TChannelBufferInputTransport) transportPair.getInputTransport();
-    }
-
-    public TChannelBufferOutputTransport getOutputTransport()
-    {
-        return (TChannelBufferOutputTransport) transportPair.getOutputTransport();
+        return niftyTransport;
     }
 
     @Override
@@ -53,13 +47,11 @@ public class NiftyRequestContext implements RequestContext
         return connectionContext;
     }
 
-    NiftyRequestContext(
-            ConnectionContext connectionContext,
-            TTransportPair transportPair,
-            TProtocolPair protocolPair)
+    NiftyRequestContext(ConnectionContext connectionContext, TProtocol inputProtocol, TProtocol outputProtocol, TNiftyTransport niftyTransport)
     {
         this.connectionContext = connectionContext;
-        this.transportPair = transportPair;
-        this.protocolPair = protocolPair;
+        this.niftyTransport = niftyTransport;
+        this.inputProtocol = inputProtocol;
+        this.outputProtocol = outputProtocol;
     }
 }
