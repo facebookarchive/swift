@@ -260,8 +260,8 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
             throws Exception
     {
         Throwable t = event.getCause();
-        ctx.getChannel().close();
         onError(t);
+        ctx.getChannel().close();
     }
 
     private Request makeRequest(int sequenceId, Listener listener)
