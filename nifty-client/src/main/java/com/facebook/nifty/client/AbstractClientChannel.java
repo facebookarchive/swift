@@ -187,6 +187,13 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
                         return;
                     }
 
+                    if (hasError()) {
+                        fireChannelErrorCallback(
+                                listener,
+                                new TTransportException("Channel is in a bad state due to failing a previous request"));
+                        return;
+                    }
+
                     ChannelFuture sendFuture = writeRequest(message);
                     queueSendTimeout(request);
 
