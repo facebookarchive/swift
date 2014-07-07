@@ -183,14 +183,14 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
                     final Request request = makeRequest(sequenceId, listener);
 
                     if (!nettyChannel.isConnected()) {
-                        onError(new TTransportException("Channel closed"));
+                        fireChannelErrorCallback(listener, new TTransportException(TTransportException.NOT_OPEN, "Channel closed"));
                         return;
                     }
 
                     if (hasError()) {
                         fireChannelErrorCallback(
                                 listener,
-                                new TTransportException("Channel is in a bad state due to failing a previous request"));
+                                new TTransportException(TTransportException.UNKNOWN, "Channel is in a bad state due to failing a previous request"));
                         return;
                     }
 
@@ -322,7 +322,9 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
     @Override
     public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception
     {
-        onError(new TTransportException("Client was disconnected by server"));
+        if (!requestMap.isEmpty()) {
+            onError(new TTransportException("Client was disconnected by server"));
+        }
     }
 
     protected void onError(Throwable t)
@@ -391,21 +393,21 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
     {
         cancelAllTimeouts();
         WriteTimeoutException timeoutException = new WriteTimeoutException("Timed out waiting " + getSendTimeout() + " to send data to server");
-        fireChannelErrorCallback(request.getListener(), timeoutException);
+        fireChannelErrorCallback(request.getListener(), new TTransportException(TTransportException.TIMED_OUT, timeoutException));
     }
 
     private void onReceiveTimeoutFired(Request request)
     {
         cancelAllTimeouts();
         ReadTimeoutException timeoutException = new ReadTimeoutException("Timed out waiting " + getReceiveTimeout() + " to receive response");
-        fireChannelErrorCallback(request.getListener(), timeoutException);
+        fireChannelErrorCallback(request.getListener(), new TTransportException(TTransportException.TIMED_OUT, timeoutException));
     }
 
     private void onReadTimeoutFired(Request request)
     {
         cancelAllTimeouts();
         ReadTimeoutException timeoutException = new ReadTimeoutException("Timed out waiting " + getReadTimeout() + " to read data from server");
-        fireChannelErrorCallback(request.getListener(), timeoutException);
+        fireChannelErrorCallback(request.getListener(), new TTransportException(TTransportException.TIMED_OUT, timeoutException));
     }
 
 
