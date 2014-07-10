@@ -52,7 +52,7 @@ public class TemplateLoader
 
     private static final Logger LOG = LoggerFactory.getLogger(TemplateLoader.class);
 
-    private final STErrorListener ERROR_LISTENER = new LoaderErrorListener();
+    private final STErrorListener ERROR_LISTENER = new ErrorListener();
 
     private final Iterable<String> templateFileNames;
     private volatile STGroup stg = null;
@@ -85,6 +85,7 @@ public class TemplateLoader
 
             // Combine the header and all .st files and load everything into a StringTemplateGroup
             stg = new STGroup();
+            stg.setListener(ERROR_LISTENER);
             for (String templateFileName : templateFileNames) {
                 stg.importTemplates(getTemplateGroupFromFile(templateFileName));
             }
@@ -107,7 +108,7 @@ public class TemplateLoader
         return stg;
     }
 
-    private static class LoaderErrorListener implements STErrorListener
+    private static class ErrorListener implements STErrorListener
     {
         @Override
         public void compileTimeError(STMessage msg)
