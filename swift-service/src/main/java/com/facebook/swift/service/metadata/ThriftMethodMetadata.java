@@ -124,6 +124,13 @@ public class ThriftMethodMetadata
             ThriftType thriftType = catalog.getThriftType(parameterType);
 
             ThriftInjection parameterInjection = new ThriftParameterInjection(parameterId, parameterName, index, parameterType);
+
+            if (parameterRequiredness == Requiredness.UNSPECIFIED) {
+                // There is only one field injection used to build metadata for method parameters, and if a
+                // single injection point has UNSPECIFIED requiredness, that resolves to NONE.
+                parameterRequiredness = Requiredness.NONE;
+            }
+
             ThriftFieldMetadata fieldMetadata = new ThriftFieldMetadata(
                     parameterId,
                     parameterRequiredness,
