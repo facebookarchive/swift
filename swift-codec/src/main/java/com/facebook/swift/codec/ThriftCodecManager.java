@@ -65,7 +65,12 @@ public class ThriftCodecManager
 
     public ThriftCodecManager(ThriftCodec<?>... codecs)
     {
-        this(new CompilerThriftCodecFactory(), codecs);
+        this(new CompilerThriftCodecFactory(ThriftCodecManager.class.getClassLoader()), ImmutableSet.copyOf(codecs));
+    }
+
+    public ThriftCodecManager(ClassLoader parent, ThriftCodec<?>... codecs)
+    {
+        this(new CompilerThriftCodecFactory(parent), ImmutableSet.copyOf(codecs));
     }
 
     public ThriftCodecManager(ThriftCodecFactory factory, ThriftCodec<?>... codecs)

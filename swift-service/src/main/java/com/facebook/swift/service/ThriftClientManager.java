@@ -102,6 +102,11 @@ public class ThriftClientManager implements Closeable
         this(new ThriftCodecManager());
     }
 
+    public ThriftClientManager(ClassLoader parent)
+    {
+        this(new ThriftCodecManager(parent));
+    }
+
     public ThriftClientManager(ThriftCodecManager codecManager)
     {
         this(codecManager, new NiftyClient(), ImmutableSet.<ThriftClientEventHandler>of());

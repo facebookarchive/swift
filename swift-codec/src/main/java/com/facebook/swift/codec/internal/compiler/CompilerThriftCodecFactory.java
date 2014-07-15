@@ -17,8 +17,10 @@ package com.facebook.swift.codec.internal.compiler;
 
 import com.facebook.swift.codec.ThriftCodec;
 import com.facebook.swift.codec.ThriftCodecManager;
+import com.facebook.swift.codec.internal.ForCompiler;
 import com.facebook.swift.codec.internal.ThriftCodecFactory;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
+import com.google.inject.Inject;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -34,20 +36,21 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory
     private final boolean debug;
     private final DynamicClassLoader classLoader;
 
-    public CompilerThriftCodecFactory()
+    @Inject
+    public CompilerThriftCodecFactory(@ForCompiler ClassLoader parent)
     {
-        this(false);
+        this(false, parent);
     }
 
     public CompilerThriftCodecFactory(boolean debug)
     {
-        this(debug, getPriviledgedClassLoader());
+        this(debug, getPriviledgedClassLoader(CompilerThriftCodecFactory.class.getClassLoader()));
     }
 
-    public CompilerThriftCodecFactory(boolean debug, DynamicClassLoader classLoader)
+    public CompilerThriftCodecFactory(boolean debug, ClassLoader parent)
     {
-        this.classLoader = classLoader;
         this.debug = debug;
+        this.classLoader = getPriviledgedClassLoader(parent);
     }
 
     @Override
@@ -62,11 +65,11 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory
         return generator.getThriftCodec();
     }
 
-    private static DynamicClassLoader getPriviledgedClassLoader()
+    private static DynamicClassLoader getPriviledgedClassLoader(final ClassLoader parent)
     {
         return AccessController.doPrivileged(new PrivilegedAction<DynamicClassLoader>() {
             public DynamicClassLoader run() {
-                return new DynamicClassLoader();
+                return new DynamicClassLoader(parent);
             }
         });
     }

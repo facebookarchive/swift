@@ -13,23 +13,22 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package com.facebook.swift.codec.internal.compiler;
+package com.facebook.swift.codec.internal;
 
-import com.facebook.swift.codec.ThriftCodec;
+import com.google.inject.BindingAnnotation;
 
-/**
- * A ClassLoader that allows for loading of classes from an array of bytes.
- */
-public class DynamicClassLoader extends ClassLoader
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+import static java.lang.annotation.ElementType.CONSTRUCTOR;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+@Target({ METHOD, CONSTRUCTOR, FIELD, PARAMETER })
+@Retention(RUNTIME)
+@BindingAnnotation
+public @interface ForCompiler
 {
-    public DynamicClassLoader(ClassLoader parent)
-    {
-        super(parent);
-    }
-
-    public Class<?> defineClass(String name, byte[] byteCode)
-            throws ClassFormatError
-    {
-        return defineClass(name, byteCode, 0, byteCode.length);
-    }
 }

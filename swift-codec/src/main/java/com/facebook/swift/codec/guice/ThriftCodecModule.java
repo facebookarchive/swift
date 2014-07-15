@@ -18,6 +18,7 @@ package com.facebook.swift.codec.guice;
 import com.facebook.swift.codec.InternalThriftCodec;
 import com.facebook.swift.codec.ThriftCodec;
 import com.facebook.swift.codec.ThriftCodecManager;
+import com.facebook.swift.codec.internal.ForCompiler;
 import com.facebook.swift.codec.internal.ThriftCodecFactory;
 import com.facebook.swift.codec.internal.compiler.CompilerThriftCodecFactory;
 import com.facebook.swift.codec.metadata.ThriftCatalog;
@@ -30,6 +31,18 @@ import static com.google.inject.multibindings.Multibinder.newSetBinder;
 
 public class ThriftCodecModule implements Module
 {
+    private final ClassLoader parent;
+
+    public ThriftCodecModule()
+    {
+        this(ThriftCodecModule.class.getClassLoader());
+    }
+
+    public ThriftCodecModule(ClassLoader parent)
+    {
+        this.parent = parent;
+    }
+
     @Override
     public void configure(Binder binder)
     {
@@ -40,6 +53,10 @@ public class ThriftCodecModule implements Module
         binder.bind(ThriftCatalog.class).in(Scopes.SINGLETON);
         binder.bind(ThriftCodecManager.class).in(Scopes.SINGLETON);
         newSetBinder(binder, new TypeLiteral<ThriftCodec<?>>() {}, InternalThriftCodec.class).permitDuplicates();
+
+        binder.bind(ClassLoader.class)
+                .annotatedWith(ForCompiler.class)
+                .toInstance(parent);
     }
 }
 
