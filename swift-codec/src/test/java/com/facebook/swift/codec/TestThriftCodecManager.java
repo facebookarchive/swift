@@ -29,6 +29,8 @@ import com.google.common.collect.ImmutableSet;
 
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
+import org.apache.thrift.protocol.TJSONProtocol;
+import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TMemoryBuffer;
 import org.testng.Assert;
@@ -159,6 +161,7 @@ public class TestThriftCodecManager
 
         // try again
         testRoundTripSerialize(bonk);
+        testJsonRoundTripSerialize(bonk);
     }
 
     @Test
@@ -195,30 +198,27 @@ public class TestThriftCodecManager
         union.fruitValue = Fruit.BANANA;
 
         testRoundTripSerialize(union);
+        testJsonRoundTripSerialize(union);
     }
 
     private <T> void testRoundTripSerialize(T value)
             throws Exception
     {
-        // write value
-        TMemoryBuffer transport = new TMemoryBuffer(10 * 1024);
-        TCompactProtocol protocol = new TCompactProtocol(transport);
-        codecManager.write((Class<T>) value.getClass(), value, protocol);
-
-        // read value back
-        T copy = codecManager.read((Class<T>) value.getClass(), protocol);
-        assertNotNull(copy);
-
-        // verify they are the same
-        assertEquals(copy, value);
+        testRoundTripSerialize(codecManager.getCatalog().getThriftType(value.getClass()), value, new TCompactProtocol.Factory());
     }
 
     private <T> void testRoundTripSerialize(ThriftType type, T value)
             throws Exception
     {
+        testRoundTripSerialize(type, value, new TCompactProtocol.Factory());
+    }
+
+    private <T> void testRoundTripSerialize(ThriftType type, T value, TProtocolFactory protocolFactory)
+            throws Exception
+    {
         // write value
         TMemoryBuffer transport = new TMemoryBuffer(10 * 1024);
-        TCompactProtocol protocol = new TCompactProtocol(transport);
+        TProtocol protocol = protocolFactory.getProtocol(transport);
         codecManager.write(type, value, protocol);
 
         // read value back
@@ -227,6 +227,12 @@ public class TestThriftCodecManager
 
         // verify they are the same
         assertEquals(copy, value);
+    }
+
+    private <T> void testJsonRoundTripSerialize(T value)
+            throws Exception
+    {
+        testRoundTripSerialize(codecManager.getCatalog().getThriftType(value.getClass()), value, new TJSONProtocol.Factory());
     }
 
     public void testWriteToBuffer() {
@@ -246,10 +252,5 @@ public class TestThriftCodecManager
                 protocolFactory);
 
         Assert.assertEquals(tstruct, tstructCopy);
-    }
-
-    private ByteBuffer toByteBuffer(String string)
-    {
-        return ByteBuffer.wrap(string.getBytes(UTF_8));
     }
 }
