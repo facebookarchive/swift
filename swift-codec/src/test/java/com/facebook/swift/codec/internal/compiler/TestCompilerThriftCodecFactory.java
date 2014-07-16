@@ -17,7 +17,9 @@ package com.facebook.swift.codec.internal.compiler;
 
 import com.facebook.swift.codec.AbstractThriftCodecManagerTest;
 import com.facebook.swift.codec.ThriftCodecManager;
+import org.testng.annotations.Test;
 
+@Test
 public class TestCompilerThriftCodecFactory extends AbstractThriftCodecManagerTest
 {
     private final ThriftCodecManager manager = new ThriftCodecManager(new CompilerThriftCodecFactory(true));
