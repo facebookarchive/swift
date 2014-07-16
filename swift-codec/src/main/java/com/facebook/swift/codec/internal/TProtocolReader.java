@@ -113,7 +113,9 @@ public class TProtocolReader
             return null;
         }
         currentField = null;
-        return codec.read(protocol);
+        Object fieldValue = codec.read(protocol);
+        protocol.readFieldEnd();
+        return fieldValue;
     }
 
     public ByteBuffer readBinaryField()
@@ -122,10 +124,10 @@ public class TProtocolReader
         if (!checkReadState(TType.STRING)) {
             return null;
         }
-
-        ByteBuffer value = protocol.readBinary();
         currentField = null;
-        return value;
+        ByteBuffer fieldValue = protocol.readBinary();
+        protocol.readFieldEnd();
+        return fieldValue;
     }
 
     public boolean readBoolField()
@@ -135,7 +137,9 @@ public class TProtocolReader
             return false;
         }
         currentField = null;
-        return protocol.readBool();
+        boolean fieldValue = protocol.readBool();
+        protocol.readFieldEnd();
+        return fieldValue;
     }
 
     public byte readByteField()
@@ -145,7 +149,9 @@ public class TProtocolReader
             return 0;
         }
         currentField = null;
-        return protocol.readByte();
+        byte fieldValue = protocol.readByte();
+        protocol.readFieldEnd();
+        return fieldValue;
     }
 
     public double readDoubleField()
@@ -155,7 +161,9 @@ public class TProtocolReader
             return 0;
         }
         currentField = null;
-        return protocol.readDouble();
+        double fieldValue = protocol.readDouble();
+        protocol.readFieldEnd();
+        return fieldValue;
     }
 
     public short readI16Field()
@@ -165,7 +173,9 @@ public class TProtocolReader
             return 0;
         }
         currentField = null;
-        return protocol.readI16();
+        short fieldValue = protocol.readI16();
+        protocol.readFieldEnd();
+        return fieldValue;
     }
 
     public int readI32Field()
@@ -175,7 +185,9 @@ public class TProtocolReader
             return 0;
         }
         currentField = null;
-        return protocol.readI32();
+        int fieldValue = protocol.readI32();
+        protocol.readFieldEnd();
+        return fieldValue;
     }
 
     public long readI64Field()
@@ -185,7 +197,9 @@ public class TProtocolReader
             return 0;
         }
         currentField = null;
-        return protocol.readI64();
+        long fieldValue = protocol.readI64();
+        protocol.readFieldEnd();
+        return fieldValue;
     }
 
     public String readStringField()
@@ -195,7 +209,9 @@ public class TProtocolReader
             return null;
         }
         currentField = null;
-        return protocol.readString();
+        String fieldValue = protocol.readString();
+        protocol.readFieldEnd();
+        return fieldValue;
     }
 
     public <T> T readStructField(ThriftCodec<T> codec)
@@ -205,7 +221,9 @@ public class TProtocolReader
             return null;
         }
         currentField = null;
-        return codec.read(protocol);
+        T fieldValue = codec.read(protocol);
+        protocol.readFieldEnd();
+        return fieldValue;
     }
 
     public <E> Set<E> readSetField(ThriftCodec<Set<E>> setCodec)
@@ -215,7 +233,9 @@ public class TProtocolReader
             return null;
         }
         currentField = null;
-        return setCodec.read(protocol);
+        Set<E> fieldValue = setCodec.read(protocol);
+        protocol.readFieldEnd();
+        return fieldValue;
     }
 
     public <E> List<E> readListField(ThriftCodec<List<E>> listCodec)
@@ -225,7 +245,9 @@ public class TProtocolReader
             return null;
         }
         currentField = null;
-        return listCodec.read(protocol);
+        List<E> read = listCodec.read(protocol);
+        protocol.readFieldEnd();
+        return read;
     }
 
     public <K, V> Map<K, V> readMapField(ThriftCodec<Map<K, V>> mapCodec)
@@ -235,7 +257,9 @@ public class TProtocolReader
             return null;
         }
         currentField = null;
-        return mapCodec.read(protocol);
+        Map<K, V> fieldValue = mapCodec.read(protocol);
+        protocol.readFieldEnd();
+        return fieldValue;
     }
 
     public <T extends Enum<T>> T readEnumField(ThriftCodec<T> enumCodec)
@@ -245,7 +269,9 @@ public class TProtocolReader
             return null;
         }
         currentField = null;
-        return enumCodec.read(protocol);
+        T fieldValue = enumCodec.read(protocol);
+        protocol.readFieldEnd();
+        return fieldValue;
     }
 
     public ByteBuffer readBinary()
