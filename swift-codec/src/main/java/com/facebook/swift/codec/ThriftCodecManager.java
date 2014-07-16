@@ -27,6 +27,7 @@ import com.facebook.swift.codec.internal.builtin.LongThriftCodec;
 import com.facebook.swift.codec.internal.builtin.MapThriftCodec;
 import com.facebook.swift.codec.internal.builtin.SetThriftCodec;
 import com.facebook.swift.codec.internal.builtin.ShortThriftCodec;
+import com.facebook.swift.codec.internal.builtin.StringThriftCodec;
 import com.facebook.swift.codec.internal.builtin.VoidThriftCodec;
 import com.facebook.swift.codec.internal.coercion.CoercionThriftCodec;
 import com.facebook.swift.codec.internal.compiler.CompilerThriftCodecFactory;
@@ -129,6 +130,7 @@ public class ThriftCodecManager
         addBuiltinCodec(new LongThriftCodec());
         addBuiltinCodec(new DoubleThriftCodec());
         addBuiltinCodec(new ByteBufferThriftCodec());
+        addBuiltinCodec(new StringThriftCodec());
         addBuiltinCodec(new VoidThriftCodec());
 
         for (ThriftCodec<?> codec : codecs) {

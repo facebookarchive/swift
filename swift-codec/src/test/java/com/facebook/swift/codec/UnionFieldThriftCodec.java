@@ -22,8 +22,6 @@ import com.google.common.base.Preconditions;
 
 import org.apache.thrift.protocol.TProtocol;
 
-import static com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions.byteBufferToString;
-
 public class UnionFieldThriftCodec implements ThriftCodec<UnionField>
 {
     private final ThriftType type;
@@ -57,7 +55,7 @@ public class UnionFieldThriftCodec implements ThriftCodec<UnionField>
             field._id = reader.getFieldId();
             switch (field._id) {
             case 1:
-                field.stringValue =  byteBufferToString(reader.readBinaryField());
+                field.stringValue = reader.readStringField();
                 consumed = true;
                 break;
             case 2:

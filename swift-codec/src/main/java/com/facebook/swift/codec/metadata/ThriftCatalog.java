@@ -50,6 +50,7 @@ import static com.facebook.swift.codec.metadata.ReflectionHelper.getFutureReturn
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getIterableType;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getMapKeyType;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getMapValueType;
+import static com.facebook.swift.codec.metadata.ThriftType.BINARY;
 import static com.facebook.swift.codec.metadata.ThriftType.BOOL;
 import static com.facebook.swift.codec.metadata.ThriftType.BYTE;
 import static com.facebook.swift.codec.metadata.ThriftType.DOUBLE;
@@ -230,8 +231,11 @@ public class ThriftCatalog
         if (double.class == rawType) {
             return DOUBLE;
         }
-        if (ByteBuffer.class.isAssignableFrom(rawType)) {
+        if (String.class == rawType) {
             return STRING;
+        }
+        if (ByteBuffer.class.isAssignableFrom(rawType)) {
+            return BINARY;
         }
         if (Enum.class.isAssignableFrom(rawType)) {
             Class<?> enumClass = TypeToken.of(javaType).getRawType();
@@ -297,6 +301,9 @@ public class ThriftCatalog
             return true;
         }
         if (double.class == rawType) {
+            return true;
+        }
+        if (String.class == rawType) {
             return true;
         }
         if (ByteBuffer.class.isAssignableFrom(rawType)) {

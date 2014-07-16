@@ -124,24 +124,6 @@ public final class DefaultJavaCoercions
     }
 
     @FromThrift
-    public static String byteBufferToString(ByteBuffer value)
-    {
-        if (value == null) {
-            return null;
-        }
-        return UTF_8.decode(value.duplicate()).toString();
-    }
-
-    @ToThrift
-    public static ByteBuffer stringToByteBuffer(String value)
-    {
-        if (value == null) {
-            return null;
-        }
-        return UTF_8.encode(value);
-    }
-
-    @FromThrift
     public static byte[] byteBufferToByteArray(ByteBuffer buffer)
     {
         byte[] result = new byte[buffer.remaining()];

@@ -52,9 +52,8 @@ public class ThriftTypeRenderer implements AttributeRenderer
             case LIST:      return "list<" + toString(t.getValueType()) + ">";
             // void is encoded as a struct
             case STRUCT:    return t.equals(ThriftType.VOID) ? "void" : prefix(t) + t.getStructMetadata().getStructName();
-            // binary and string both are STRING
-            case STRING:
-                return t.getJavaType().equals(byte[].class) || t.getJavaType().equals(ByteBuffer.class) ? "binary" : "string";
+            case STRING:    return "string";
+            case BINARY:    return "binary";
         }
         throw new IllegalStateException("Bad protocol type" + t.getProtocolType());
     }

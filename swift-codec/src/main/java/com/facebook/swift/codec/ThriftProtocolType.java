@@ -29,7 +29,8 @@ public enum ThriftProtocolType
     MAP((byte) 13),
     SET((byte) 14),
     LIST((byte) 15),
-    ENUM((byte) 8); // same as I32 type
+    ENUM((byte) 8), // same as I32 type
+    BINARY((byte) 11); // same as STRING type
 
     private final byte type;
 

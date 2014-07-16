@@ -20,8 +20,6 @@ import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftType;
 import org.apache.thrift.protocol.TProtocol;
 
-import static com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions.byteBufferToString;
-
 public class BonkFieldThriftCodec implements ThriftCodec<BonkField>
 {
     private final ThriftType type;
@@ -51,7 +49,7 @@ public class BonkFieldThriftCodec implements ThriftCodec<BonkField>
         while (reader.nextField()) {
             switch (reader.getFieldId()) {
                 case 1:
-                    message = byteBufferToString(reader.readBinaryField());
+                    message = reader.readStringField();
                     break;
                 case 2:
                     type = reader.readI32Field();

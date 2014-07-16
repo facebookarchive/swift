@@ -64,6 +64,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import static com.facebook.swift.codec.ThriftProtocolType.BINARY;
 import static com.facebook.swift.codec.ThriftProtocolType.BOOL;
 import static com.facebook.swift.codec.ThriftProtocolType.BYTE;
 import static com.facebook.swift.codec.ThriftProtocolType.DOUBLE;
@@ -392,7 +393,6 @@ public class ThriftCodecByteCodeGenerator<T>
                 .invokeVirtual(TProtocolReader.class, "readStructEnd", void.class);
         return structData;
     }
-
 
     /**
      * Defines the code to build the struct instance using the data in the local variables.
@@ -1144,6 +1144,7 @@ public class ThriftCodecByteCodeGenerator<T>
             case I32:
             case I64:
             case STRING:
+            case BINARY:
             case STRUCT:
             case ENUM:
                 return type((Class<?>) type.getJavaType());
@@ -1169,7 +1170,8 @@ public class ThriftCodecByteCodeGenerator<T>
             writeBuilder.put(I16, TProtocolWriter.class.getMethod("writeI16Field", String.class, short.class, short.class));
             writeBuilder.put(I32, TProtocolWriter.class.getMethod("writeI32Field", String.class, short.class, int.class));
             writeBuilder.put(I64, TProtocolWriter.class.getMethod("writeI64Field", String.class, short.class, long.class));
-            writeBuilder.put(STRING, TProtocolWriter.class.getMethod("writeBinaryField", String.class, short.class, ByteBuffer.class));
+            writeBuilder.put(STRING, TProtocolWriter.class.getMethod("writeStringField", String.class, short.class, String.class));
+            writeBuilder.put(BINARY, TProtocolWriter.class.getMethod("writeBinaryField", String.class, short.class, ByteBuffer.class));
             writeBuilder.put(STRUCT, TProtocolWriter.class.getMethod("writeStructField", String.class, short.class, ThriftCodec.class, Object.class));
             writeBuilder.put(MAP, TProtocolWriter.class.getMethod("writeMapField", String.class, short.class, ThriftCodec.class, Map.class));
             writeBuilder.put(SET, TProtocolWriter.class.getMethod("writeSetField", String.class, short.class, ThriftCodec.class, Set.class));
@@ -1182,7 +1184,8 @@ public class ThriftCodecByteCodeGenerator<T>
             readBuilder.put(I16, TProtocolReader.class.getMethod("readI16Field"));
             readBuilder.put(I32, TProtocolReader.class.getMethod("readI32Field"));
             readBuilder.put(I64, TProtocolReader.class.getMethod("readI64Field"));
-            readBuilder.put(STRING, TProtocolReader.class.getMethod("readBinaryField"));
+            readBuilder.put(STRING, TProtocolReader.class.getMethod("readStringField"));
+            readBuilder.put(BINARY, TProtocolReader.class.getMethod("readBinaryField"));
             readBuilder.put(STRUCT, TProtocolReader.class.getMethod("readStructField", ThriftCodec.class));
             readBuilder.put(MAP, TProtocolReader.class.getMethod("readMapField", ThriftCodec.class));
             readBuilder.put(SET, TProtocolReader.class.getMethod("readSetField", ThriftCodec.class));

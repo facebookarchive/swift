@@ -21,31 +21,30 @@ import com.google.common.base.Preconditions;
 import org.apache.thrift.protocol.TProtocol;
 
 import javax.annotation.concurrent.Immutable;
-import java.nio.ByteBuffer;
 
 @Immutable
-public class ByteBufferThriftCodec implements ThriftCodec<ByteBuffer>
+public class StringThriftCodec implements ThriftCodec<String>
 {
     @Override
     public ThriftType getType()
     {
-        return ThriftType.BINARY;
+        return ThriftType.STRING;
     }
 
     @Override
-    public ByteBuffer read(TProtocol protocol)
+    public String read(TProtocol protocol)
             throws Exception
     {
         Preconditions.checkNotNull(protocol, "protocol is null");
-        return protocol.readBinary();
+        return protocol.readString();
     }
 
     @Override
-    public void write(ByteBuffer value, TProtocol protocol)
+    public void write(String value, TProtocol protocol)
             throws Exception
     {
         Preconditions.checkNotNull(value, "value is null");
         Preconditions.checkNotNull(protocol, "protocol is null");
-        protocol.writeBinary(value);
+        protocol.writeString(value);
     }
 }

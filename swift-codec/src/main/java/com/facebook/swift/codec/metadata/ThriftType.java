@@ -44,7 +44,8 @@ public class ThriftType
     public static final ThriftType I16 = new ThriftType(ThriftProtocolType.I16, short.class);
     public static final ThriftType I32 = new ThriftType(ThriftProtocolType.I32, int.class);
     public static final ThriftType I64 = new ThriftType(ThriftProtocolType.I64, long.class);
-    public static final ThriftType STRING = new ThriftType(ThriftProtocolType.STRING, ByteBuffer.class);
+    public static final ThriftType STRING = new ThriftType(ThriftProtocolType.STRING, String.class);
+    public static final ThriftType BINARY = new ThriftType(ThriftProtocolType.BINARY, ByteBuffer.class);
     public static final ThriftType VOID = new ThriftType(ThriftProtocolType.STRUCT, void.class);
 
     public static ThriftType struct(ThriftStructMetadata structMetadata)
