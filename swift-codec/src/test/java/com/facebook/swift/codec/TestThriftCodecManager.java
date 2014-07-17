@@ -53,7 +53,6 @@ import static com.facebook.swift.codec.metadata.ThriftType.enumType;
 import static com.facebook.swift.codec.metadata.ThriftType.list;
 import static com.facebook.swift.codec.metadata.ThriftType.map;
 import static com.facebook.swift.codec.metadata.ThriftType.set;
-import static com.google.common.base.Charsets.UTF_8;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -61,6 +60,7 @@ import static org.testng.Assert.fail;
 
 public class TestThriftCodecManager
 {
+    public static final String UTF8_TEST_STRING = "A" + "\u00ea" + "\u00f1" + "\u00fc" + "C";
     private ThriftCodecManager codecManager;
 
     @BeforeMethod
@@ -93,6 +93,10 @@ public class TestThriftCodecManager
         testRoundTripSerialize((long) 10000000);
         testRoundTripSerialize(42.42d);
         testRoundTripSerialize("some string");
+        testRoundTripSerialize(UTF8_TEST_STRING);
+
+        testRoundTripSerialize("some string", new TJSONProtocol.Factory());
+        testRoundTripSerialize(UTF8_TEST_STRING, new TJSONProtocol.Factory());
     }
 
     @Test
@@ -107,6 +111,10 @@ public class TestThriftCodecManager
         testRoundTripSerialize(I64, (long) 10000000);
         testRoundTripSerialize(DOUBLE, 42.42d);
         testRoundTripSerialize(STRING, "some string");
+        testRoundTripSerialize(STRING, UTF8_TEST_STRING);
+
+        testRoundTripSerialize(STRING, "some string", new TJSONProtocol.Factory());
+        testRoundTripSerialize(STRING, UTF8_TEST_STRING, new TJSONProtocol.Factory());
     }
 
     @Test
@@ -161,7 +169,7 @@ public class TestThriftCodecManager
 
         // try again
         testRoundTripSerialize(bonk);
-        testJsonRoundTripSerialize(bonk);
+        testRoundTripSerialize(bonk, new TJSONProtocol.Factory());
     }
 
     @Test
@@ -198,10 +206,16 @@ public class TestThriftCodecManager
         union.fruitValue = Fruit.BANANA;
 
         testRoundTripSerialize(union);
-        testJsonRoundTripSerialize(union);
+        testRoundTripSerialize(union, new TJSONProtocol.Factory());
     }
 
     private <T> void testRoundTripSerialize(T value)
+            throws Exception
+    {
+        testRoundTripSerialize(value, new TCompactProtocol.Factory());
+    }
+
+    private <T> void testRoundTripSerialize(T value, TProtocolFactory protocolFactory)
             throws Exception
     {
         testRoundTripSerialize(codecManager.getCatalog().getThriftType(value.getClass()), value, new TCompactProtocol.Factory());
@@ -227,12 +241,6 @@ public class TestThriftCodecManager
 
         // verify they are the same
         assertEquals(copy, value);
-    }
-
-    private <T> void testJsonRoundTripSerialize(T value)
-            throws Exception
-    {
-        testRoundTripSerialize(codecManager.getCatalog().getThriftType(value.getClass()), value, new TJSONProtocol.Factory());
     }
 
     public void testWriteToBuffer() {
