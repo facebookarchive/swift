@@ -96,14 +96,7 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
             TProtocol inProtocol = protocolPair.getInputProtocol();
             TProtocol outProtocol = protocolPair.getOutputProtocol();
 
-            try {
-                processRequest(ctx, message, messageTransport, inProtocol, outProtocol);
-            }
-            catch (RejectedExecutionException ex) {
-                TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR,
-                        "Server overloaded");
-                sendTApplicationException(x, ctx, message, messageTransport, inProtocol, outProtocol);
-            }
+            processRequest(ctx, message, messageTransport, inProtocol, outProtocol);
         }
         else {
             ctx.sendUpstream(e);
@@ -153,115 +146,119 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
             }
         }
 
-        exe.execute(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                ListenableFuture<Boolean> processFuture;
-                final AtomicBoolean responseSent = new AtomicBoolean(false);
+        try {
+            exe.execute(new Runnable() {
+                @Override
+                public void run() {
+                    ListenableFuture<Boolean> processFuture;
+                    final AtomicBoolean responseSent = new AtomicBoolean(false);
 
-                try {
                     try {
-                        long timeRemaining = 0;
-                        if (taskTimeoutMillis > 0) {
-                            long timeElapsed = System.currentTimeMillis() - message.getProcessStartTimeMillis();
-                            if (timeElapsed >= taskTimeoutMillis) {
-                                TApplicationException taskTimeoutException = new TApplicationException(
-                                        TApplicationException.INTERNAL_ERROR,
-                                        "Task stayed on the queue for " + timeElapsed +
-                                        " milliseconds, exceeding configured task timeout of " + taskTimeoutMillis +
-                                        " milliseconds.");
-                                sendTApplicationException(taskTimeoutException, ctx, message, messageTransport,
-                                        inProtocol, outProtocol);
-                                return;
-                            } else {
-                                timeRemaining = taskTimeoutMillis - timeElapsed;
-                            }
-                        }
-
-                        if (timeRemaining > 0) {
-                            taskTimeoutTimer.newTimeout(new TimerTask() {
-                                @Override
-                                public void run(Timeout timeout) throws Exception {
-                                    // The immediateFuture returned by processors isn't cancellable, cancel() and
-                                    // isCanceled() always return false. Use a flag to detect task expiration.
-                                    if(responseSent.compareAndSet(false, true)) {
-                                        TApplicationException ex = new TApplicationException(
-                                                TApplicationException.INTERNAL_ERROR,
-                                                "Task timed out while executing."
-                                        );
-                                        // Create a temporary transport to send the exception
-                                        ChannelBuffer duplicateBuffer = message.getBuffer().duplicate();
-                                        duplicateBuffer.resetReaderIndex();
-                                        TNiftyTransport temporaryTransport = new TNiftyTransport(
-                                                ctx.getChannel(),
-                                                duplicateBuffer,
-                                                message.getTransportType());
-                                        TProtocolPair protocolPair = duplexProtocolFactory.getProtocolPair(
-                                                TTransportPair.fromSingleTransport(temporaryTransport));
-                                        sendTApplicationException(ex, ctx, message, temporaryTransport,
-                                                protocolPair.getInputProtocol(),
-                                                protocolPair.getOutputProtocol());
-                                    }
+                        try {
+                            long timeRemaining = 0;
+                            if (taskTimeoutMillis > 0) {
+                                long timeElapsed = System.currentTimeMillis() - message.getProcessStartTimeMillis();
+                                if (timeElapsed >= taskTimeoutMillis) {
+                                    TApplicationException taskTimeoutException = new TApplicationException(
+                                            TApplicationException.INTERNAL_ERROR,
+                                            "Task stayed on the queue for " + timeElapsed +
+                                                    " milliseconds, exceeding configured task timeout of " + taskTimeoutMillis +
+                                                    " milliseconds."
+                                    );
+                                    sendTApplicationException(taskTimeoutException, ctx, message, requestSequenceId, messageTransport,
+                                            inProtocol, outProtocol);
+                                    return;
+                                } else {
+                                    timeRemaining = taskTimeoutMillis - timeElapsed;
                                 }
-                            }, timeRemaining, TimeUnit.MILLISECONDS);
-                        }
+                            }
 
-                        ConnectionContext connectionContext = ConnectionContexts.getContext(ctx.getChannel());
-                        RequestContext requestContext = new NiftyRequestContext(connectionContext, inProtocol, outProtocol, messageTransport);
-                        RequestContexts.setCurrentContext(requestContext);
-                        processFuture = processorFactory.getProcessor(messageTransport).process(inProtocol, outProtocol, requestContext);
-                    }
-                    finally {
-                        // RequestContext does NOT stay set while we are waiting for the process
-                        // future to complete. This is by design because we'll might move on to the
-                        // next request using this thread before this one is completed. If you need
-                        // the context throughout an asynchronous handler, you need to read and store
-                        // it before returning a future.
-                        RequestContexts.clearCurrentContext();
-                    }
-
-                    Futures.addCallback(
-                            processFuture,
-                            new FutureCallback<Boolean>()
-                            {
-                                @Override
-                                public void onSuccess(Boolean result)
-                                {
-                                    try {
-                                        // Only write response if the client is still there and the task timeout
-                                        // hasn't expired.
-                                        if (ctx.getChannel().isConnected() && responseSent.compareAndSet(false, true)) {
-                                            ThriftMessage response = message.getMessageFactory().create(
-                                                    messageTransport.getOutputBuffer());
-                                            writeResponse(ctx, response, requestSequenceId,
-                                                    DispatcherContext.isResponseOrderingRequired(ctx));
+                            if (timeRemaining > 0) {
+                                taskTimeoutTimer.newTimeout(new TimerTask() {
+                                    @Override
+                                    public void run(Timeout timeout) throws Exception {
+                                        // The immediateFuture returned by processors isn't cancellable, cancel() and
+                                        // isCanceled() always return false. Use a flag to detect task expiration.
+                                        if (responseSent.compareAndSet(false, true)) {
+                                            TApplicationException ex = new TApplicationException(
+                                                    TApplicationException.INTERNAL_ERROR,
+                                                    "Task timed out while executing."
+                                            );
+                                            // Create a temporary transport to send the exception
+                                            ChannelBuffer duplicateBuffer = message.getBuffer().duplicate();
+                                            duplicateBuffer.resetReaderIndex();
+                                            TNiftyTransport temporaryTransport = new TNiftyTransport(
+                                                    ctx.getChannel(),
+                                                    duplicateBuffer,
+                                                    message.getTransportType());
+                                            TProtocolPair protocolPair = duplexProtocolFactory.getProtocolPair(
+                                                    TTransportPair.fromSingleTransport(temporaryTransport));
+                                            sendTApplicationException(ex, ctx, message,
+                                                    requestSequenceId,
+                                                    temporaryTransport,
+                                                    protocolPair.getInputProtocol(),
+                                                    protocolPair.getOutputProtocol());
                                         }
                                     }
-                                    catch (Throwable t) {
+                                }, timeRemaining, TimeUnit.MILLISECONDS);
+                            }
+
+                            ConnectionContext connectionContext = ConnectionContexts.getContext(ctx.getChannel());
+                            RequestContext requestContext = new NiftyRequestContext(connectionContext, inProtocol, outProtocol, messageTransport);
+                            RequestContexts.setCurrentContext(requestContext);
+                            processFuture = processorFactory.getProcessor(messageTransport).process(inProtocol, outProtocol, requestContext);
+                        } finally {
+                            // RequestContext does NOT stay set while we are waiting for the process
+                            // future to complete. This is by design because we'll might move on to the
+                            // next request using this thread before this one is completed. If you need
+                            // the context throughout an asynchronous handler, you need to read and store
+                            // it before returning a future.
+                            RequestContexts.clearCurrentContext();
+                        }
+
+                        Futures.addCallback(
+                                processFuture,
+                                new FutureCallback<Boolean>() {
+                                    @Override
+                                    public void onSuccess(Boolean result) {
+                                        try {
+                                            // Only write response if the client is still there and the task timeout
+                                            // hasn't expired.
+                                            if (ctx.getChannel().isConnected() && responseSent.compareAndSet(false, true)) {
+                                                ThriftMessage response = message.getMessageFactory().create(
+                                                        messageTransport.getOutputBuffer());
+                                                writeResponse(ctx, response, requestSequenceId,
+                                                        DispatcherContext.isResponseOrderingRequired(ctx));
+                                            }
+                                        } catch (Throwable t) {
+                                            onDispatchException(ctx, t);
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onFailure(Throwable t) {
                                         onDispatchException(ctx, t);
                                     }
                                 }
-
-                                @Override
-                                public void onFailure(Throwable t)
-                                {
-                                    onDispatchException(ctx, t);
-                                }
-                            });
+                        );
+                    } catch (TException e) {
+                        onDispatchException(ctx, e);
+                    }
                 }
-                catch (TException e) {
-                    onDispatchException(ctx, e);
-                }
-            }
-        });
+            });
+        }
+        catch (RejectedExecutionException ex) {
+            TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR,
+                    "Server overloaded");
+            sendTApplicationException(x, ctx, message, requestSequenceId, messageTransport, inProtocol, outProtocol);
+        }
     }
 
     private void sendTApplicationException(
             TApplicationException x,
             ChannelHandlerContext ctx,
             ThriftMessage request,
+            int responseSequenceId,
             TNiftyTransport requestTransport,
             TProtocol inProtocol,
             TProtocol outProtocol)
@@ -275,7 +272,7 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
                 outProtocol.getTransport().flush();
 
                 ThriftMessage response = request.getMessageFactory().create(requestTransport.getOutputBuffer());
-                writeResponse(ctx, response, message.seqid, DispatcherContext.isResponseOrderingRequired(ctx));
+                writeResponse(ctx, response, responseSequenceId, DispatcherContext.isResponseOrderingRequired(ctx));
             }
             catch (TException ex) {
                 onDispatchException(ctx, ex);
