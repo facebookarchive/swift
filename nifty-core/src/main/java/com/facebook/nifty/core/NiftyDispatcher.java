@@ -34,6 +34,9 @@ import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
+import org.jboss.netty.util.Timeout;
+import org.jboss.netty.util.Timer;
+import org.jboss.netty.util.TimerTask;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -42,10 +45,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import org.jboss.netty.util.Timer;
-import org.jboss.netty.util.Timeout;
-import org.jboss.netty.util.TimerTask;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -152,6 +152,10 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
                 public void run() {
                     ListenableFuture<Boolean> processFuture;
                     final AtomicBoolean responseSent = new AtomicBoolean(false);
+                    // Use AtomicReference as a generic holder class to be able to mark it final
+                    // and pass into inner classes. Since we only use .get() and .set(), we don't
+                    // actually do any atomic operations.
+                    final AtomicReference<Timeout> expireTimeout = new AtomicReference<>(null);
 
                     try {
                         try {
@@ -174,7 +178,7 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
                             }
 
                             if (timeRemaining > 0) {
-                                taskTimeoutTimer.newTimeout(new TimerTask() {
+                                expireTimeout.set(taskTimeoutTimer.newTimeout(new TimerTask() {
                                     @Override
                                     public void run(Timeout timeout) throws Exception {
                                         // The immediateFuture returned by processors isn't cancellable, cancel() and
@@ -200,7 +204,7 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
                                                     protocolPair.getOutputProtocol());
                                         }
                                     }
-                                }, timeRemaining, TimeUnit.MILLISECONDS);
+                                }, timeRemaining, TimeUnit.MILLISECONDS));
                             }
 
                             ConnectionContext connectionContext = ConnectionContexts.getContext(ctx.getChannel());
@@ -221,6 +225,7 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
                                 new FutureCallback<Boolean>() {
                                     @Override
                                     public void onSuccess(Boolean result) {
+                                        deleteExpirationTimer(expireTimeout.get());
                                         try {
                                             // Only write response if the client is still there and the task timeout
                                             // hasn't expired.
@@ -237,6 +242,7 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
 
                                     @Override
                                     public void onFailure(Throwable t) {
+                                        deleteExpirationTimer(expireTimeout.get());
                                         onDispatchException(ctx, t);
                                     }
                                 }
@@ -252,6 +258,14 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
                     "Server overloaded");
             sendTApplicationException(x, ctx, message, requestSequenceId, messageTransport, inProtocol, outProtocol);
         }
+    }
+
+    private void deleteExpirationTimer(Timeout timeout)
+    {
+        if (timeout == null) {
+            return;
+        }
+        timeout.cancel();
     }
 
     private void sendTApplicationException(
