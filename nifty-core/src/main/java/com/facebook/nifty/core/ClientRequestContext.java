@@ -17,9 +17,13 @@ package com.facebook.nifty.core;
 
 import org.apache.thrift.protocol.TProtocol;
 
+import java.net.SocketAddress;
+
 public interface ClientRequestContext
 {
     TProtocol getOutputProtocol();
 
     TProtocol getInputProtocol();
+
+    public SocketAddress getRemoteAddress();
 }
