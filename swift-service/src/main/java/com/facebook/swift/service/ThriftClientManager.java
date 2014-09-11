@@ -508,7 +508,16 @@ public class ThriftClientManager implements Closeable
                     throw new TTransportException(channel.getError());
                 }
 
-                ClientRequestContext requestContext = new NiftyClientRequestContext(getInputProtocol(), getOutputProtocol());
+                SocketAddress remoteAddress = null;
+                try {
+                    NiftyClientChannel niftyClientChannel = (NiftyClientChannel)channel;
+                    remoteAddress = niftyClientChannel.getNettyChannel().getRemoteAddress();
+                }
+                catch (ClassCastException e) {
+                    throw new IllegalArgumentException("The swift client uses a channel that is not a NiftyClientChannel", e);
+                }
+
+                ClientRequestContext requestContext = new NiftyClientRequestContext(getInputProtocol(), getOutputProtocol(), remoteAddress);
                 ClientContextChain context = new ClientContextChain(eventHandlers, methodHandler.getQualifiedName(), requestContext);
                 return methodHandler.invoke(channel,
                                             inputTransport,
