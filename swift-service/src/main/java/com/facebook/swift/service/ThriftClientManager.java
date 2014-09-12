@@ -510,7 +510,7 @@ public class ThriftClientManager implements Closeable
 
                 SocketAddress remoteAddress = null;
                 try {
-                    NiftyClientChannel niftyClientChannel = NiftyClientChannel.class.cast(channel);
+                    NiftyClientChannel niftyClientChannel = (NiftyClientChannel)channel;
                     remoteAddress = niftyClientChannel.getNettyChannel().getRemoteAddress();
                 }
                 catch (ClassCastException e) {
