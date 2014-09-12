@@ -255,7 +255,16 @@ public class ThriftType
         if (protocolType != that.protocolType) {
             return false;
         }
-
+        if (shouldHaveKeyType(protocolType)) {
+            if (keyType != null ? !keyType.equals(that.keyType) : that.keyType != null) {
+                return false;
+            }
+        }
+        if (shouldHaveValueType(protocolType)) {
+            if (valueType != null ? !valueType.equals(that.valueType) : that.valueType != null) {
+                return false;
+            }
+        }
         return true;
     }
 
@@ -264,6 +273,12 @@ public class ThriftType
     {
         int result = protocolType != null ? protocolType.hashCode() : 0;
         result = 31 * result + (javaType != null ? javaType.hashCode() : 0);
+        if (shouldHaveKeyType(protocolType)) {
+            result = 31 * result + (keyType != null ? keyType.hashCode() : 0);
+        }
+        if (shouldHaveValueType(protocolType)) {
+            result = 31 * result + (valueType != null ? valueType.hashCode() : 0);
+        }
         return result;
     }
 
@@ -286,5 +301,22 @@ public class ThriftType
         }
         sb.append('}');
         return sb.toString();
+    }
+    
+    private static boolean shouldHaveKeyType(ThriftProtocolType protocolType) {
+        if (protocolType != null && protocolType.equals(ThriftProtocolType.MAP)) {
+            return true;
+        }
+        return false;
+    }
+    
+    private static boolean shouldHaveValueType(ThriftProtocolType protocolType) {
+        if (protocolType != null &&
+                protocolType.equals(ThriftProtocolType.MAP) ||
+                protocolType.equals(ThriftProtocolType.SET) ||
+                protocolType.equals(ThriftProtocolType.LIST)) {
+            return true;
+        }
+        return false;
     }
 }
