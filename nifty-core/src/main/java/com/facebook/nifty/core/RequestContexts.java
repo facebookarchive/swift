@@ -15,8 +15,6 @@
  */
 package com.facebook.nifty.core;
 
-import static com.google.common.base.Preconditions.checkState;
-
 public class RequestContexts
 {
     private static ThreadLocal<RequestContext> threadLocalContext = new ThreadLocal<>();
@@ -29,19 +27,11 @@ public class RequestContexts
      * Gets the thread-local {@link NiftyRequestContext} for the Thrift request that is being processed
      * on the current thread.
      *
-     * Note that this method will only work properly when called from the thread on which Nifty
-     * invoked your server method. If you transfer work to another thread in the course of
-     * processing a request, this is not tracked by Nifty.
-     *
      * @return The {@link NiftyRequestContext} of the current request
-     * @throws IllegalStateException when not called on the thread on which your server * method
-     * was originally invoked
      */
     public static RequestContext getCurrentContext()
     {
         RequestContext currentContext = threadLocalContext.get();
-        checkState(currentContext != null,
-                   "Can only get a RequestContext when running inside a Thrift handler");
         return currentContext;
     }
 

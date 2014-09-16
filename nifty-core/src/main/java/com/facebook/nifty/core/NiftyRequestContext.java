@@ -82,7 +82,7 @@ public class NiftyRequestContext implements RequestContext
         return Collections.unmodifiableSet(data.entrySet()).iterator();
     }
 
-    NiftyRequestContext(ConnectionContext connectionContext, TProtocol inputProtocol, TProtocol outputProtocol, TNiftyTransport niftyTransport)
+    public NiftyRequestContext(ConnectionContext connectionContext, TProtocol inputProtocol, TProtocol outputProtocol, TNiftyTransport niftyTransport)
     {
         this.connectionContext = connectionContext;
         this.niftyTransport = niftyTransport;
