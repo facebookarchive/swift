@@ -15,7 +15,7 @@
  */
 package com.facebook.swift.service;
 
-import com.facebook.nifty.core.ClientRequestContext;
+import com.facebook.nifty.client.ClientRequestContext;
 import io.airlift.units.Duration;
 
 import java.util.concurrent.ConcurrentHashMap;
