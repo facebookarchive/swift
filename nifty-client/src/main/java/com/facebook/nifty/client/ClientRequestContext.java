@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.facebook.nifty.core;
+package com.facebook.nifty.client;
 
 import org.apache.thrift.protocol.TProtocol;
 
@@ -25,5 +25,7 @@ public interface ClientRequestContext
 
     TProtocol getInputProtocol();
 
-    public SocketAddress getRemoteAddress();
+    RequestChannel getRequestChannel();
+
+    SocketAddress getRemoteAddress();
 }

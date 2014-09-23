@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.facebook.nifty.core;
+package com.facebook.nifty.client;
 
 import org.apache.thrift.protocol.TProtocol;
 
@@ -22,12 +22,17 @@ import java.net.SocketAddress;
 public class NiftyClientRequestContext implements ClientRequestContext{
     private final TProtocol inputProtocol;
     private final TProtocol outputProtocol;
+    private final RequestChannel requestChannel;
     private final SocketAddress remoteAddress;
 
-    public NiftyClientRequestContext(TProtocol inputProtocol, TProtocol outputProtocol, SocketAddress remoteAddress)
+    public NiftyClientRequestContext(TProtocol inputProtocol,
+                                     TProtocol outputProtocol,
+                                     RequestChannel requestChannel,
+                                     SocketAddress remoteAddress)
     {
         this.inputProtocol = inputProtocol;
         this.outputProtocol = outputProtocol;
+        this.requestChannel = requestChannel;
         this.remoteAddress = remoteAddress;
     }
 
@@ -41,6 +46,12 @@ public class NiftyClientRequestContext implements ClientRequestContext{
     public TProtocol getInputProtocol()
     {
         return inputProtocol;
+    }
+
+    @Override
+    public RequestChannel getRequestChannel()
+    {
+        return requestChannel;
     }
 
     @Override
