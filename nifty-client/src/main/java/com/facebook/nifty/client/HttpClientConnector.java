@@ -23,7 +23,6 @@ import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
 import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
 import org.jboss.netty.handler.codec.http.HttpClientCodec;
-import org.jboss.netty.util.Timer;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -60,7 +59,7 @@ public class HttpClientConnector extends AbstractClientConnector<HttpClientChann
     public HttpClientConnector(URI uri, TDuplexProtocolFactory protocolFactory)
     {
         super(toSocketAddress(HostAndPort.fromParts(checkNotNull(uri).getHost(), getPortFromURI(uri))),
-              defaultProtocolFactory());
+              protocolFactory);
 
         checkArgument(uri.isAbsolute() && !uri.isOpaque(),
                       "HttpClientConnector requires an absolute URI with a path");
