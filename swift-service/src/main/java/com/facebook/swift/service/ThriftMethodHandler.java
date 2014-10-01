@@ -251,9 +251,12 @@ public class ThriftMethodHandler
             public void onChannelError(TException e) {
                 RequestContext oldRequestContext = RequestContexts.getCurrentContext();
                 RequestContexts.setCurrentContext(requestContext);
-                contextChain.preReadException(e);
-                future.setException(e);
-                RequestContexts.setCurrentContext(oldRequestContext);
+                try {
+                    contextChain.preReadException(e);
+                    future.setException(e);
+                } finally {
+                    RequestContexts.setCurrentContext(oldRequestContext);
+                }
             }
         });
 
