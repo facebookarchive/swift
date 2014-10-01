@@ -16,6 +16,8 @@
 package com.facebook.swift.service;
 
 import com.facebook.nifty.client.RequestChannel;
+import com.facebook.nifty.core.RequestContext;
+import com.facebook.nifty.core.RequestContexts;
 import com.facebook.nifty.core.TChannelBufferInputTransport;
 import com.facebook.nifty.core.TChannelBufferOutputTransport;
 import com.facebook.swift.codec.ThriftCodec;
@@ -202,6 +204,7 @@ public class ThriftMethodHandler
         throws Exception
     {
         final AsyncMethodCallFuture<Object> future = AsyncMethodCallFuture.create(contextChain);
+        final RequestContext requestContext = RequestContexts.getCurrentContext();
 
         contextChain.preWrite(args);
         outputTransport.resetOutputBuffer();
@@ -225,6 +228,8 @@ public class ThriftMethodHandler
 
             @Override
             public void onResponseReceived(ChannelBuffer message) {
+                RequestContext oldRequestContext = RequestContexts.getCurrentContext();
+                RequestContexts.setCurrentContext(requestContext);
                 try {
                     contextChain.preRead();
                     inputTransport.setInputBuffer(message);
@@ -237,12 +242,21 @@ public class ThriftMethodHandler
                     contextChain.postReadException(e);
                     future.setException(e);
                 }
+                finally {
+                    RequestContexts.setCurrentContext(oldRequestContext);
+                }
             }
 
             @Override
             public void onChannelError(TException e) {
-                contextChain.preReadException(e);
-                future.setException(e);
+                RequestContext oldRequestContext = RequestContexts.getCurrentContext();
+                RequestContexts.setCurrentContext(requestContext);
+                try {
+                    contextChain.preReadException(e);
+                    future.setException(e);
+                } finally {
+                    RequestContexts.setCurrentContext(oldRequestContext);
+                }
             }
         });
 
