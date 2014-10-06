@@ -15,6 +15,8 @@
  */
 package com.facebook.swift.service;
 
+import com.facebook.nifty.core.RequestContext;
+import com.facebook.nifty.core.RequestContexts;
 import com.facebook.swift.codec.ThriftCodec;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.codec.internal.TProtocolReader;
@@ -133,6 +135,7 @@ public class ThriftMethodProcessor
         contextChain.preRead();
         Object[] args = readArguments(in);
         contextChain.postRead(args);
+        final RequestContext requestContext = RequestContexts.getCurrentContext();
 
         in.readMessageEnd();
 
@@ -149,6 +152,9 @@ public class ThriftMethodProcessor
                     resultFuture.set(true);
                 }
                 else {
+                    RequestContext oldRequestContext = RequestContexts.getCurrentContext();
+                    RequestContexts.setCurrentContext(requestContext);
+
                     // write success reply
                     try {
                         contextChain.preWrite(result);
@@ -169,12 +175,18 @@ public class ThriftMethodProcessor
                         // An exception occurred trying to serialize a return value onto the output protocol
                         resultFuture.setException(e);
                     }
+                    finally {
+                        RequestContexts.setCurrentContext(oldRequestContext);
+                    }
                 }
             }
 
             @Override
             public void onFailure(Throwable t)
             {
+                RequestContext oldRequestContext = RequestContexts.getCurrentContext();
+                RequestContexts.setCurrentContext(requestContext);
+
                 try {
                     contextChain.preWriteException(t);
                     if (!oneway) {
@@ -210,6 +222,9 @@ public class ThriftMethodProcessor
                 catch (Exception e) {
                     // An exception occurred trying to serialize an exception onto the output protocol
                     resultFuture.setException(e);
+                }
+                finally {
+                    RequestContexts.setCurrentContext(oldRequestContext);
                 }
             }
         });
