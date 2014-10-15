@@ -17,6 +17,7 @@ package com.facebook.swift.codec.internal.reflection;
 
 import com.facebook.swift.codec.ThriftCodec;
 import com.facebook.swift.codec.ThriftCodecManager;
+import com.facebook.swift.codec.ThriftField;
 import com.facebook.swift.codec.internal.TProtocolReader;
 import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftConstructorInjection;
@@ -29,6 +30,7 @@ import com.facebook.swift.codec.metadata.ThriftStructMetadata;
 import com.google.common.base.Throwables;
 
 import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.protocol.TProtocolException;
 
 import javax.annotation.concurrent.Immutable;
 
@@ -76,7 +78,11 @@ public class ReflectionThriftStructCodec<T> extends AbstractReflectionThriftCode
             // read the value
             Object value = reader.readField(codec);
             if (value == null) {
+              if (field.getRequiredness() == ThriftField.Requiredness.REQUIRED) {
+                throw new TProtocolException("required field was not set");
+              } else {
                 continue;
+              }
             }
 
             data.put(fieldId, value);
