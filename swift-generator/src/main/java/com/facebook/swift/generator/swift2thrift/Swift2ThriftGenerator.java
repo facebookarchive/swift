@@ -81,7 +81,7 @@ public class Swift2ThriftGenerator
     private boolean recursive;
     private static final Set<ThriftType> builtInKnownTypes =
         ImmutableSet.of(ThriftType.BOOL, ThriftType.BYTE, ThriftType.I16, ThriftType.I32,
-            ThriftType.I64, ThriftType.DOUBLE, ThriftType.STRING,
+            ThriftType.I64, ThriftType.DOUBLE, ThriftType.STRING, ThriftType.BINARY,
             new ThriftType(ThriftType.BOOL, Boolean.class), new ThriftType(ThriftType.BYTE, Byte.class),
             new ThriftType(ThriftType.I16, Short.class), new ThriftType(ThriftType.I32, Integer.class),
             new ThriftType(ThriftType.I64, Long.class), new ThriftType(ThriftType.DOUBLE, Double.class),
