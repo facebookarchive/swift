@@ -64,8 +64,14 @@ public class EnumThriftCodec<T extends Enum<T>> implements ThriftCodec<T>
                 }
             }
         }
-        // unknown, return null and rely on upper layers to throw exception if field is required
-        return null;
+        // unknown, throw unknown value exception
+        throw new UnknownEnumValueException(
+                String.format(
+                        "Enum %s does not have a value for %s",
+                        enumMetadata.getEnumClass(),
+                        enumValue
+                )
+        );
     }
 
     @Override

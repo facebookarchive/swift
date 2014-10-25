@@ -269,7 +269,12 @@ public class TProtocolReader
             return null;
         }
         currentField = null;
-        T fieldValue = enumCodec.read(protocol);
+        T fieldValue = null;
+        try {
+            fieldValue = enumCodec.read(protocol);
+        } catch (UnknownEnumValueException e) {
+          // return null
+        }
         protocol.readFieldEnd();
         return fieldValue;
     }
@@ -328,8 +333,12 @@ public class TProtocolReader
         TSet tSet = protocol.readSetBegin();
         Set<E> set = new HashSet<>();
         for (int i = 0; i < tSet.size; i++) {
-            E element = elementCodec.read(protocol);
-            set.add(element);
+            try {
+                E element = elementCodec.read(protocol);
+                set.add(element);
+            } catch (UnknownEnumValueException e) {
+              // continue
+            }
         }
         protocol.readSetEnd();
         return set;
@@ -341,8 +350,12 @@ public class TProtocolReader
         TList tList = protocol.readListBegin();
         List<E> list = new ArrayList<>();
         for (int i = 0; i < tList.size; i++) {
-            E element = elementCodec.read(protocol);
-            list.add(element);
+            try {
+                E element = elementCodec.read(protocol);
+                list.add(element);
+            } catch (UnknownEnumValueException e) {
+              // continue
+            }
         }
         protocol.readListEnd();
         return list;
@@ -356,9 +369,13 @@ public class TProtocolReader
         TMap tMap = protocol.readMapBegin();
         Map<K, V> map = new HashMap<>();
         for (int i = 0; i < tMap.size; i++) {
-            K key = keyCodec.read(protocol);
-            V value = valueCodec.read(protocol);
-            map.put(key, value);
+            try {
+                K key = keyCodec.read(protocol);
+                V value = valueCodec.read(protocol);
+                map.put(key, value);
+            } catch (UnknownEnumValueException e) {
+              // continue
+            }
         }
         protocol.readMapEnd();
         return map;
