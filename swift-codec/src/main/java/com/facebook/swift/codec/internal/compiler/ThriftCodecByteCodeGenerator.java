@@ -28,6 +28,7 @@ import com.facebook.swift.codec.internal.compiler.byteCode.MethodDefinition;
 import com.facebook.swift.codec.internal.compiler.byteCode.NamedParameterDefinition;
 import com.facebook.swift.codec.internal.compiler.byteCode.ParameterizedType;
 import com.facebook.swift.codec.metadata.FieldKind;
+import com.facebook.swift.codec.metadata.ReflectionHelper;
 import com.facebook.swift.codec.metadata.ThriftConstructorInjection;
 import com.facebook.swift.codec.metadata.ThriftExtraction;
 import com.facebook.swift.codec.metadata.ThriftFieldExtractor;
@@ -44,9 +45,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
-
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 import org.apache.thrift.protocol.TProtocol;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -57,6 +56,7 @@ import javax.annotation.concurrent.NotThreadSafe;
 import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -90,7 +90,6 @@ import static com.facebook.swift.codec.internal.compiler.byteCode.ParameterizedT
 import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_FIELD;
 import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_UNION_ID;
 import static com.google.common.collect.Iterables.getOnlyElement;
-
 import static java.lang.String.format;
 
 @NotThreadSafe
@@ -100,6 +99,9 @@ public class ThriftCodecByteCodeGenerator<T>
 
     private static final Map<ThriftProtocolType, Method> READ_METHODS;
     private static final Map<ThriftProtocolType, Method> WRITE_METHODS;
+
+    private static final Map<Type, Method> ARRAY_READ_METHODS;
+    private static final Map<Type, Method> ARRAY_WRITE_METHODS;
 
     private final ThriftCodecManager codecManager;
     private final ThriftStructMetadata metadata;
@@ -355,7 +357,7 @@ public class ThriftCodecByteCodeGenerator<T>
             }
 
             // read value
-            Method readMethod = READ_METHODS.get(field.getThriftType().getProtocolType());
+            Method readMethod = getReadMethod(field.getThriftType());
             if (readMethod == null) {
                 throw new IllegalArgumentException("Unsupported field type " + field.getThriftType().getProtocolType());
             }
@@ -553,7 +555,7 @@ public class ThriftCodecByteCodeGenerator<T>
             }
 
             // read value
-            Method readMethod = READ_METHODS.get(field.getThriftType().getProtocolType());
+            Method readMethod = getReadMethod(field.getThriftType());
             if (readMethod == null) {
                 throw new IllegalArgumentException("Unsupported field type " + field.getThriftType().getProtocolType());
             }
@@ -941,7 +943,7 @@ public class ThriftCodecByteCodeGenerator<T>
         }
 
         // write value
-        Method writeMethod = WRITE_METHODS.get(field.getThriftType().getProtocolType());
+        Method writeMethod = getWriteMethod(field.getThriftType());
         if (writeMethod == null) {
             throw new IllegalArgumentException("Unsupported field type " + field.getThriftType().getProtocolType());
         }
@@ -1075,6 +1077,10 @@ public class ThriftCodecByteCodeGenerator<T>
 
     private boolean needsCodec(ThriftFieldMetadata fieldMetadata)
     {
+        if (ReflectionHelper.isArray(fieldMetadata.getThriftType().getJavaType())) {
+            return false;
+        }
+
         ThriftProtocolType protocolType = fieldMetadata.getThriftType().getProtocolType();
         return protocolType == ENUM ||
                 protocolType == STRUCT ||
@@ -1136,6 +1142,10 @@ public class ThriftCodecByteCodeGenerator<T>
 
     public static ParameterizedType toParameterizedType(ThriftType type)
     {
+        if (ReflectionHelper.isArray(type.getJavaType())) {
+            return type((Class<?>) type.getJavaType());
+        }
+
         switch (type.getProtocolType()) {
             case BOOL:
             case BYTE:
@@ -1157,6 +1167,22 @@ public class ThriftCodecByteCodeGenerator<T>
             default:
                 throw new IllegalArgumentException("Unsupported thrift field type " + type);
         }
+    }
+
+    private Method getWriteMethod(ThriftType thriftType)
+    {
+        if (ReflectionHelper.isArray(thriftType.getJavaType())) {
+            return ARRAY_WRITE_METHODS.get(thriftType.getJavaType());
+        }
+        return WRITE_METHODS.get(thriftType.getProtocolType());
+    }
+
+    private Method getReadMethod(ThriftType thriftType)
+    {
+        if (ReflectionHelper.isArray(thriftType.getJavaType())) {
+            return ARRAY_READ_METHODS.get(thriftType.getJavaType());
+        }
+        return READ_METHODS.get(thriftType.getProtocolType());
     }
 
     static {
@@ -1197,5 +1223,27 @@ public class ThriftCodecByteCodeGenerator<T>
         }
         WRITE_METHODS = writeBuilder.build();
         READ_METHODS = readBuilder.build();
+
+        ImmutableMap.Builder<Type, Method> arrayWriteBuilder = ImmutableMap.builder();
+        ImmutableMap.Builder<Type, Method> arrayReadBuilder = ImmutableMap.builder();
+
+        try {
+            arrayWriteBuilder.put(boolean[].class, TProtocolWriter.class.getMethod("writeBoolArrayField", String.class, short.class, boolean[].class));
+            arrayWriteBuilder.put(short[].class, TProtocolWriter.class.getMethod("writeI16ArrayField", String.class, short.class, short[].class));
+            arrayWriteBuilder.put(int[].class, TProtocolWriter.class.getMethod("writeI32ArrayField", String.class, short.class, int[].class));
+            arrayWriteBuilder.put(long[].class, TProtocolWriter.class.getMethod("writeI64ArrayField", String.class, short.class, long[].class));
+            arrayWriteBuilder.put(double[].class, TProtocolWriter.class.getMethod("writeDoubleArrayField", String.class, short.class, double[].class));
+
+            arrayReadBuilder.put(boolean[].class, TProtocolReader.class.getMethod("readBoolArrayField"));
+            arrayReadBuilder.put(short[].class, TProtocolReader.class.getMethod("readI16ArrayField"));
+            arrayReadBuilder.put(int[].class, TProtocolReader.class.getMethod("readI32ArrayField"));
+            arrayReadBuilder.put(long[].class, TProtocolReader.class.getMethod("readI64ArrayField"));
+            arrayReadBuilder.put(double[].class, TProtocolReader.class.getMethod("readDoubleArrayField"));
+        }
+        catch (NoSuchMethodException e) {
+            throw Throwables.propagate(e);
+        }
+        ARRAY_WRITE_METHODS = arrayWriteBuilder.build();
+        ARRAY_READ_METHODS = arrayReadBuilder.build();
     }
 }

@@ -28,8 +28,11 @@ import com.thoughtworks.paranamer.BytecodeReadingParanamer;
 import com.thoughtworks.paranamer.CachingParanamer;
 import com.thoughtworks.paranamer.Paranamer;
 
+import javax.annotation.Nullable;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -43,10 +46,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 
-import javax.annotation.Nullable;
-
 import static com.google.common.base.Preconditions.checkNotNull;
-
 import static java.lang.reflect.Modifier.isStatic;
 
 public final class ReflectionHelper
@@ -76,6 +76,18 @@ public final class ReflectionHelper
         catch (Exception e) {
             throw Throwables.propagate(e);
         }
+    }
+
+    public static boolean isArray(Type type)
+    {
+        return TypeToken.of(type).getComponentType() != null;
+    }
+
+    public static Class<?> getArrayOfType(Type componentType)
+    {
+        // this creates an extra object but is the simplest way to get an array class
+        Class<?> rawComponentType = TypeToken.of(componentType).getRawType();
+        return Array.newInstance(rawComponentType, 0).getClass();
     }
 
     public static Type getMapKeyType(Type type)

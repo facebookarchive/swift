@@ -17,15 +17,20 @@ package com.facebook.swift.codec;
 
 import com.facebook.swift.codec.internal.EnumThriftCodec;
 import com.facebook.swift.codec.internal.ThriftCodecFactory;
+import com.facebook.swift.codec.internal.builtin.BooleanArrayThriftCodec;
 import com.facebook.swift.codec.internal.builtin.BooleanThriftCodec;
 import com.facebook.swift.codec.internal.builtin.ByteBufferThriftCodec;
 import com.facebook.swift.codec.internal.builtin.ByteThriftCodec;
+import com.facebook.swift.codec.internal.builtin.DoubleArrayThriftCodec;
 import com.facebook.swift.codec.internal.builtin.DoubleThriftCodec;
+import com.facebook.swift.codec.internal.builtin.IntArrayThriftCodec;
 import com.facebook.swift.codec.internal.builtin.IntegerThriftCodec;
 import com.facebook.swift.codec.internal.builtin.ListThriftCodec;
+import com.facebook.swift.codec.internal.builtin.LongArrayThriftCodec;
 import com.facebook.swift.codec.internal.builtin.LongThriftCodec;
 import com.facebook.swift.codec.internal.builtin.MapThriftCodec;
 import com.facebook.swift.codec.internal.builtin.SetThriftCodec;
+import com.facebook.swift.codec.internal.builtin.ShortArrayThriftCodec;
 import com.facebook.swift.codec.internal.builtin.ShortThriftCodec;
 import com.facebook.swift.codec.internal.builtin.StringThriftCodec;
 import com.facebook.swift.codec.internal.builtin.VoidThriftCodec;
@@ -47,6 +52,7 @@ import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TIOStreamTransport;
 
 import javax.annotation.concurrent.ThreadSafe;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Type;
@@ -137,6 +143,11 @@ public class ThriftCodecManager
         addBuiltinCodec(new ByteBufferThriftCodec());
         addBuiltinCodec(new StringThriftCodec());
         addBuiltinCodec(new VoidThriftCodec());
+        addBuiltinCodec(new BooleanArrayThriftCodec());
+        addBuiltinCodec(new ShortArrayThriftCodec());
+        addBuiltinCodec(new IntArrayThriftCodec());
+        addBuiltinCodec(new LongArrayThriftCodec());
+        addBuiltinCodec(new DoubleArrayThriftCodec());
 
         for (ThriftCodec<?> codec : codecs) {
             addCodec(codec);

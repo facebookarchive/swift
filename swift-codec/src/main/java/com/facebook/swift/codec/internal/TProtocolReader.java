@@ -226,6 +226,66 @@ public class TProtocolReader
         return fieldValue;
     }
 
+    public boolean[] readBoolArrayField()
+            throws TException
+    {
+        if (!checkReadState(TType.LIST)) {
+            return null;
+        }
+        currentField = null;
+        boolean[] fieldValue = readBoolArray();
+        protocol.readFieldEnd();
+        return fieldValue;
+    }
+
+    public short[] readI16ArrayField()
+            throws TException
+    {
+        if (!checkReadState(TType.LIST)) {
+            return null;
+        }
+        currentField = null;
+        short[] fieldValue = readI16Array();
+        protocol.readFieldEnd();
+        return fieldValue;
+    }
+
+    public int[] readI32ArrayField()
+            throws TException
+    {
+        if (!checkReadState(TType.LIST)) {
+            return null;
+        }
+        currentField = null;
+        int[] fieldValue = readI32Array();
+        protocol.readFieldEnd();
+        return fieldValue;
+    }
+
+    public long[] readI64ArrayField()
+            throws TException
+    {
+        if (!checkReadState(TType.LIST)) {
+            return null;
+        }
+        currentField = null;
+        long[] fieldValue = readI64Array();
+        protocol.readFieldEnd();
+        return fieldValue;
+    }
+
+    public double[] readDoubleArrayField()
+            throws TException
+    {
+        if (!checkReadState(TType.LIST)) {
+            return null;
+        }
+        currentField = null;
+        double[] fieldValue = readDoubleArray();
+        protocol.readFieldEnd();
+        return fieldValue;
+    }
+
     public <E> Set<E> readSetField(ThriftCodec<Set<E>> setCodec)
             throws Exception
     {
@@ -325,6 +385,66 @@ public class TProtocolReader
             throws TException
     {
         return protocol.readString();
+    }
+
+    public boolean[] readBoolArray()
+            throws TException
+    {
+        TList list = protocol.readListBegin();
+        boolean[] array = new boolean[list.size];
+        for (int i = 0; i < list.size; i++) {
+            array[i] = readBool();
+        }
+        protocol.readListEnd();
+        return array;
+    }
+
+    public short[] readI16Array()
+            throws TException
+    {
+        TList list = protocol.readListBegin();
+        short[] array = new short[list.size];
+        for (int i = 0; i < list.size; i++) {
+            array[i] = readI16();
+        }
+        protocol.readListEnd();
+        return array;
+    }
+
+    public int[] readI32Array()
+            throws TException
+    {
+        TList list = protocol.readListBegin();
+        int[] array = new int[list.size];
+        for (int i = 0; i < list.size; i++) {
+            array[i] = readI32();
+        }
+        protocol.readListEnd();
+        return array;
+    }
+
+    public long[] readI64Array()
+            throws TException
+    {
+        TList list = protocol.readListBegin();
+        long[] array = new long[list.size];
+        for (int i = 0; i < list.size; i++) {
+            array[i] = readI64();
+        }
+        protocol.readListEnd();
+        return array;
+    }
+
+    public double[] readDoubleArray()
+            throws TException
+    {
+        TList list = protocol.readListBegin();
+        double[] array = new double[list.size];
+        for (int i = 0; i < list.size; i++) {
+            array[i] = readDouble();
+        }
+        protocol.readListEnd();
+        return array;
     }
 
     public <E> Set<E> readSet(ThriftCodec<E> elementCodec)

@@ -149,6 +149,66 @@ public class TProtocolWriter
         protocol.writeFieldEnd();
     }
 
+    public void writeBoolArrayField(String name, short id, boolean[] array)
+            throws Exception
+    {
+        if (array == null) {
+            return;
+        }
+
+        protocol.writeFieldBegin(new TField(name, TType.LIST, id));
+        writeBoolArray(array);
+        protocol.writeFieldEnd();
+    }
+
+    public void writeI16ArrayField(String name, short id, short[] array)
+            throws Exception
+    {
+        if (array == null) {
+            return;
+        }
+
+        protocol.writeFieldBegin(new TField(name, TType.LIST, id));
+        writeI16Array(array);
+        protocol.writeFieldEnd();
+    }
+
+    public void writeI32ArrayField(String name, short id, int[] array)
+            throws Exception
+    {
+        if (array == null) {
+            return;
+        }
+
+        protocol.writeFieldBegin(new TField(name, TType.LIST, id));
+        writeI32Array(array);
+        protocol.writeFieldEnd();
+    }
+
+    public void writeI64ArrayField(String name, short id, long[] array)
+            throws Exception
+    {
+        if (array == null) {
+            return;
+        }
+
+        protocol.writeFieldBegin(new TField(name, TType.LIST, id));
+        writeI64Array(array);
+        protocol.writeFieldEnd();
+    }
+
+    public void writeDoubleArrayField(String name, short id, double[] array)
+            throws Exception
+    {
+        if (array == null) {
+            return;
+        }
+
+        protocol.writeFieldBegin(new TField(name, TType.LIST, id));
+        writeDoubleArray(array);
+        protocol.writeFieldEnd();
+    }
+
     public <E> void writeSetField(String name, short id, ThriftCodec<Set<E>> codec, Set<E> set)
             throws Exception
     {
@@ -250,6 +310,56 @@ public class TProtocolWriter
             return;
         }
         protocol.writeString(string);
+    }
+
+    public void writeBoolArray(boolean[] array)
+            throws TException
+    {
+        protocol.writeListBegin(new TList(TType.BOOL, array.length));
+        for (boolean booleanValue : array) {
+            writeBool(booleanValue);
+        }
+        protocol.writeListEnd();
+    }
+
+    public void writeI16Array(short[] array)
+            throws TException
+    {
+        protocol.writeListBegin(new TList(TType.I16, array.length));
+        for (int i16 : array) {
+            writeI32(i16);
+        }
+        protocol.writeListEnd();
+    }
+
+    public void writeI32Array(int[] array)
+            throws TException
+    {
+        protocol.writeListBegin(new TList(TType.I32, array.length));
+        for (int i32 : array) {
+            writeI32(i32);
+        }
+        protocol.writeListEnd();
+    }
+
+    public void writeI64Array(long[] array)
+            throws TException
+    {
+        protocol.writeListBegin(new TList(TType.I64, array.length));
+        for (long i64 : array) {
+            writeI64(i64);
+        }
+        protocol.writeListEnd();
+    }
+
+    public void writeDoubleArray(double[] array)
+            throws TException
+    {
+        protocol.writeListBegin(new TList(TType.DOUBLE, array.length));
+        for (double doubleValue : array) {
+            writeDouble(doubleValue);
+        }
+        protocol.writeListEnd();
     }
 
     public <T> void writeSet(ThriftCodec<T> elementCodec, Set<T> set)

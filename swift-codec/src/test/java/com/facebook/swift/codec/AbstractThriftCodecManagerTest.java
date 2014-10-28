@@ -15,14 +15,14 @@
  */
 package com.facebook.swift.codec;
 
-import com.facebook.swift.codec.generics.GenericThriftStruct;
-import com.facebook.swift.codec.generics.GenericThriftStructFromBuilder;
-import com.facebook.swift.codec.internal.EnumThriftCodec;
 import com.facebook.swift.codec.generics.ConcreteDerivedFromGeneric;
 import com.facebook.swift.codec.generics.ConcreteDerivedFromGenericBean;
 import com.facebook.swift.codec.generics.ConcreteThriftStructDerivedFromGenericField;
+import com.facebook.swift.codec.generics.GenericThriftStruct;
 import com.facebook.swift.codec.generics.GenericThriftStructBean;
 import com.facebook.swift.codec.generics.GenericThriftStructField;
+import com.facebook.swift.codec.generics.GenericThriftStructFromBuilder;
+import com.facebook.swift.codec.internal.EnumThriftCodec;
 import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
 import com.facebook.swift.codec.metadata.ThriftCatalog;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
@@ -31,7 +31,6 @@ import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-
 import com.google.common.reflect.TypeToken;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TJSONProtocol;
@@ -48,7 +47,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.google.common.base.Charsets.UTF_8;
-
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
@@ -200,7 +198,7 @@ public abstract class AbstractThriftCodecManagerTest
 
     @Test
     public void testMatchByJavaNameWithThriftNameOverride()
-        throws Exception
+            throws Exception
     {
         ThriftCatalog catalog = readCodecManager.getCatalog();
         ThriftType thriftType = catalog.getThriftType(BonkConstructorNameOverride.class);
@@ -218,6 +216,44 @@ public abstract class AbstractThriftCodecManagerTest
     {
         BonkBuilder bonkBuilder = new BonkBuilder("message", 42);
         testRoundTripSerialize(bonkBuilder, new TCompactProtocol.Factory());
+    }
+
+    @Test
+    public void testArraysManual()
+            throws Exception
+    {
+        ThriftCatalog catalog = new ThriftCatalog();
+        ThriftType thriftType = catalog.getThriftType(ArrayField.class);
+        ArrayFieldThriftCodec arrayFieldCodec = new ArrayFieldThriftCodec(thriftType);
+
+        // manual codec does not implement the Map fields
+        ArrayField arrayField = new ArrayField(
+                new boolean[] {true, false, false, true},
+                new short[] {0, 1, 2, 3},
+                new int[] {10, 11, 12, 13},
+                new long[] {20, Long.MAX_VALUE, Long.MIN_VALUE},
+                new double[] {3.0, Double.MAX_VALUE, Double.MIN_VALUE});
+        testRoundTripSerialize(arrayFieldCodec, arrayFieldCodec, arrayField, new TCompactProtocol.Factory());
+    }
+
+    @Test
+    public void testArrays()
+            throws Exception
+    {
+        ArrayField arrayField = new ArrayField(
+                new boolean[] {true, false, false, true},
+                new short[] {0, 1, 2, 3},
+                new int[] {10, 11, 12, 13},
+                new long[] {20, Long.MAX_VALUE, Long.MIN_VALUE},
+                new double[] {3.0, Double.MAX_VALUE, Double.MIN_VALUE},
+                ImmutableMap.of((short) 1, new boolean[] {false, false}, (short) 2, new boolean[] {true, true}),
+                ImmutableMap.of((short) 1, new short[] {10, 11, 12, 13}, (short) 2, new short[] {15, 16, 17, 18}),
+                ImmutableMap.of((short) 1, new int[] {20, 21, 22, 23}, (short) 2, new int[] {25, 26, 27, 28}),
+                ImmutableMap.of((short) 1, new long[] {30, 31, 32, 33}, (short) 2, new long[] {35, 36, 37, 38}),
+                ImmutableMap.of((short) 1, new double[] {40, 41, 42, 43}, (short) 2, new double[] {45, 46, 47, 48}));
+
+        testRoundTripSerialize(arrayField, new TCompactProtocol.Factory());
+        testRoundTripSerialize(arrayField, new TJSONProtocol.Factory());
     }
 
     @Test
@@ -552,12 +588,12 @@ public abstract class AbstractThriftCodecManagerTest
         one.aUnionList = ImmutableList.of(new UnionField("Hello, World"), new UnionField(123456L), new UnionField(Fruit.CHERRY));
 
         one.aUnionKeyMap = ImmutableMap.of(new UnionField("Hello, World"), "Eins",
-                                           new UnionField(123456L), "Zwei",
-                                           new UnionField(Fruit.CHERRY), "Drei");
+                new UnionField(123456L), "Zwei",
+                new UnionField(Fruit.CHERRY), "Drei");
 
         one.aUnionValueMap = ImmutableMap.of("Eins", new UnionField("Hello, World"),
-                                             "Zwei", new UnionField(123456L),
-                                             "Drei", new UnionField(Fruit.CHERRY));
+                "Zwei", new UnionField(123456L),
+                "Drei", new UnionField(Fruit.CHERRY));
 
         return one;
     }

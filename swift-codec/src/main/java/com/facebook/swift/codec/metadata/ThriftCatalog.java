@@ -59,6 +59,7 @@ import static com.facebook.swift.codec.metadata.ThriftType.I32;
 import static com.facebook.swift.codec.metadata.ThriftType.I64;
 import static com.facebook.swift.codec.metadata.ThriftType.STRING;
 import static com.facebook.swift.codec.metadata.ThriftType.VOID;
+import static com.facebook.swift.codec.metadata.ThriftType.array;
 import static com.facebook.swift.codec.metadata.ThriftType.enumType;
 import static com.facebook.swift.codec.metadata.ThriftType.list;
 import static com.facebook.swift.codec.metadata.ThriftType.map;
@@ -242,6 +243,10 @@ public class ThriftCatalog
             ThriftEnumMetadata<? extends Enum<?>> thriftEnumMetadata = getThriftEnumMetadata(enumClass);
             return enumType(thriftEnumMetadata);
         }
+        if (rawType.isArray()) {
+            Class<?> elementType = rawType.getComponentType();
+            return array(getThriftType(elementType));
+        }
         if (Map.class.isAssignableFrom(rawType)) {
             Type mapKeyType = getMapKeyType(javaType);
             Type mapValueType = getMapValueType(javaType);
@@ -312,6 +317,10 @@ public class ThriftCatalog
         if (Enum.class.isAssignableFrom(rawType)) {
             return true;
         }
+        if (rawType.isArray()) {
+            Class<?> elementType = rawType.getComponentType();
+            return isSupportedArrayComponentType(elementType);
+        }
         if (Map.class.isAssignableFrom(rawType)) {
             Type mapKeyType = getMapKeyType(javaType);
             Type mapValueType = getMapValueType(javaType);
@@ -340,6 +349,15 @@ public class ThriftCatalog
             return true;
         }
         return false;
+    }
+
+    public boolean isSupportedArrayComponentType(Class<?> componentType)
+    {
+        return boolean.class == componentType ||
+                short.class == componentType ||
+                int.class == componentType ||
+                long.class == componentType ||
+                double.class == componentType;
     }
 
     /**
