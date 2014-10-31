@@ -245,6 +245,10 @@ public class ThriftCatalog
         }
         if (rawType.isArray()) {
             Class<?> elementType = rawType.getComponentType();
+            if (elementType == byte.class) {
+                // byte[] is encoded as BINARY and requires a coersion
+                return coercions.get(javaType).getThriftType();
+            }
             return array(getThriftType(elementType));
         }
         if (Map.class.isAssignableFrom(rawType)) {
@@ -354,6 +358,7 @@ public class ThriftCatalog
     public boolean isSupportedArrayComponentType(Class<?> componentType)
     {
         return boolean.class == componentType ||
+                byte.class == componentType ||
                 short.class == componentType ||
                 int.class == componentType ||
                 long.class == componentType ||

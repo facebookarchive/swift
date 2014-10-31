@@ -1239,6 +1239,11 @@ public class ThriftCodecByteCodeGenerator<T>
             arrayReadBuilder.put(int[].class, TProtocolReader.class.getMethod("readI32ArrayField"));
             arrayReadBuilder.put(long[].class, TProtocolReader.class.getMethod("readI64ArrayField"));
             arrayReadBuilder.put(double[].class, TProtocolReader.class.getMethod("readDoubleArrayField"));
+
+            // byte[] is encoded as BINARY which should use the normal rules above, but it
+            // simpler to add explicit handling here
+            arrayWriteBuilder.put(byte[].class, TProtocolWriter.class.getMethod("writeBinaryField", String.class, short.class, ByteBuffer.class));
+            arrayReadBuilder.put(byte[].class, TProtocolReader.class.getMethod("readBinaryField"));
         }
         catch (NoSuchMethodException e) {
             throw Throwables.propagate(e);

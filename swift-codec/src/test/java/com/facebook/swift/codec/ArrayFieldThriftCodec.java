@@ -20,6 +20,8 @@ import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftType;
 import org.apache.thrift.protocol.TProtocol;
 
+import java.nio.ByteBuffer;
+
 public class ArrayFieldThriftCodec
         implements ThriftCodec<ArrayField>
 {
@@ -47,6 +49,7 @@ public class ArrayFieldThriftCodec
         int[] intArray = null;
         long[] longArray = null;
         double[] doubleArray = null;
+        byte[] byteArray = null;
 
         reader.readStructBegin();
 
@@ -66,6 +69,9 @@ public class ArrayFieldThriftCodec
                     break;
                 case 5:
                     doubleArray = reader.readDoubleArrayField();
+                    break;
+                case 6:
+                    byteArray = reader.readBinaryField().array();
                     break;
                 default:
                     reader.skipFieldData();
@@ -88,6 +94,9 @@ public class ArrayFieldThriftCodec
         }
         if (doubleArray != null) {
             arrayField.doubleArray = doubleArray;
+        }
+        if (booleanArray != null) {
+            arrayField.byteArray = byteArray;
         }
 
         return arrayField;
@@ -120,6 +129,10 @@ public class ArrayFieldThriftCodec
         double[] doubleArray = value.doubleArray;
         if (doubleArray != null) {
             writer.writeDoubleArrayField("doubleArray", (short) 5, doubleArray);
+        }
+        byte[] byteArray = value.byteArray;
+        if (byteArray != null) {
+            writer.writeBinaryField("byteArray", (short) 6, ByteBuffer.wrap(byteArray));
         }
 
         writer.writeStructEnd();

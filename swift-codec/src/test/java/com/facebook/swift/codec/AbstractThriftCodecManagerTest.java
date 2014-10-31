@@ -232,7 +232,8 @@ public abstract class AbstractThriftCodecManagerTest
                 new short[] {0, 1, 2, 3},
                 new int[] {10, 11, 12, 13},
                 new long[] {20, Long.MAX_VALUE, Long.MIN_VALUE},
-                new double[] {3.0, Double.MAX_VALUE, Double.MIN_VALUE});
+                new double[] {3.0, Double.MAX_VALUE, Double.MIN_VALUE},
+                "hello".getBytes(UTF_8));
         testRoundTripSerialize(arrayFieldCodec, arrayFieldCodec, arrayField, new TCompactProtocol.Factory());
     }
 
@@ -246,6 +247,7 @@ public abstract class AbstractThriftCodecManagerTest
                 new int[] {10, 11, 12, 13},
                 new long[] {20, Long.MAX_VALUE, Long.MIN_VALUE},
                 new double[] {3.0, Double.MAX_VALUE, Double.MIN_VALUE},
+                "hello".getBytes(UTF_8),
                 ImmutableMap.of((short) 1, new boolean[] {false, false}, (short) 2, new boolean[] {true, true}),
                 ImmutableMap.of((short) 1, new short[] {10, 11, 12, 13}, (short) 2, new short[] {15, 16, 17, 18}),
                 ImmutableMap.of((short) 1, new int[] {20, 21, 22, 23}, (short) 2, new int[] {25, 26, 27, 28}),

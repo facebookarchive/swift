@@ -48,6 +48,9 @@ public final class ArrayField
     @ThriftField(5)
     public double[] doubleArray;
 
+    @ThriftField(6)
+    public byte[] byteArray;
+
     @ThriftField(11)
     public Map<Short, boolean[]> mapBooleanArray;
 
@@ -67,13 +70,14 @@ public final class ArrayField
     {
     }
 
-    public ArrayField(boolean[] booleanArray, short[] shortArray, int[] intArray, long[] longArray, double[] doubleArray)
+    public ArrayField(boolean[] booleanArray, short[] shortArray, int[] intArray, long[] longArray, double[] doubleArray, byte[] byteArray)
     {
         this.booleanArray = booleanArray;
         this.shortArray = shortArray;
         this.intArray = intArray;
         this.longArray = longArray;
         this.doubleArray = doubleArray;
+        this.byteArray = byteArray;
     }
 
     public ArrayField(boolean[] booleanArray,
@@ -81,6 +85,7 @@ public final class ArrayField
             int[] intArray,
             long[] longArray,
             double[] doubleArray,
+            byte[] byteArray,
             Map<Short, boolean[]> mapBooleanArray,
             Map<Short, short[]> mapShortArray,
             Map<Short, int[]> mapIntArray,
@@ -92,6 +97,7 @@ public final class ArrayField
         this.intArray = intArray;
         this.longArray = longArray;
         this.doubleArray = doubleArray;
+        this.byteArray = byteArray;
         this.mapBooleanArray = mapBooleanArray;
         this.mapShortArray = mapShortArray;
         this.mapIntArray = mapIntArray;
@@ -148,6 +154,7 @@ public final class ArrayField
                 intArray,
                 longArray,
                 doubleArray,
+                byteArray,
                 getMapBooleanList(),
                 getMapShortList(),
                 getMapIntegerList(),
@@ -170,6 +177,7 @@ public final class ArrayField
                 Arrays.equals(this.intArray, other.intArray) &&
                 Arrays.equals(this.longArray, other.longArray) &&
                 Arrays.equals(this.doubleArray, other.doubleArray) &&
+                Arrays.equals(this.byteArray, other.byteArray) &&
                 Objects.equal(getMapBooleanList(), other.getMapBooleanList()) &&
                 Objects.equal(getMapShortList(), other.getMapShortList()) &&
                 Objects.equal(getMapIntegerList(), other.getMapIntegerList()) &&
@@ -186,6 +194,7 @@ public final class ArrayField
                 .add("intArray", Arrays.toString(intArray))
                 .add("longArray", Arrays.toString(longArray))
                 .add("doubleArray", Arrays.toString(doubleArray))
+                .add("byteArray", Arrays.toString(byteArray))
                 .add("mapBooleanArray", getMapBooleanList())
                 .add("mapShortArray", getMapShortList())
                 .add("mapIntArray", getMapIntegerList())
