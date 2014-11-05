@@ -15,10 +15,10 @@
  */
 package com.facebook.swift.service;
 
+import com.facebook.nifty.client.ClientRequestContext;
 import com.facebook.nifty.client.NiftyClient;
 import com.facebook.nifty.client.NiftyClientChannel;
 import com.facebook.nifty.client.NiftyClientConnector;
-import com.facebook.nifty.client.ClientRequestContext;
 import com.facebook.nifty.client.NiftyClientRequestContext;
 import com.facebook.nifty.client.RequestChannel;
 import com.facebook.nifty.core.TChannelBufferInputTransport;
@@ -49,6 +49,12 @@ import org.apache.thrift.protocol.TProtocolException;
 import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.channel.Channel;
 
+import javax.annotation.Nullable;
+import javax.annotation.PreDestroy;
+import javax.annotation.concurrent.Immutable;
+import javax.annotation.concurrent.ThreadSafe;
+import javax.validation.constraints.NotNull;
+
 import java.io.Closeable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -60,12 +66,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.annotation.Nullable;
-import javax.annotation.PreDestroy;
-import javax.annotation.concurrent.Immutable;
-import javax.annotation.concurrent.ThreadSafe;
-import javax.validation.constraints.NotNull;
-
 import static com.facebook.nifty.duplex.TTransportPair.fromSeparateTransports;
 import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_CONNECT_TIMEOUT;
 import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_MAX_FRAME_SIZE;
@@ -73,7 +73,6 @@ import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_READ_TIMEOUT
 import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_RECEIVE_TIMEOUT;
 import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_WRITE_TIMEOUT;
 import static com.google.common.base.Preconditions.checkNotNull;
-
 import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
 
 @ThreadSafe
@@ -527,6 +526,10 @@ public class ThriftClientManager implements Closeable
                                             sequenceId.getAndIncrement(),
                                             context,
                                             args);
+            }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeTException("Thread interrupted", new TException(e));
             }
             catch (TException e) {
                 Class<? extends TException> thrownType = e.getClass();
