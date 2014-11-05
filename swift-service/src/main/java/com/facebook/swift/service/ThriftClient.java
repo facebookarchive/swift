@@ -26,6 +26,8 @@ import com.google.inject.Inject;
 import io.airlift.units.Duration;
 import org.weakref.jmx.Managed;
 
+import javax.annotation.Nullable;
+
 import java.util.List;
 
 public class ThriftClient<T>
@@ -64,21 +66,110 @@ public class ThriftClient<T>
             String clientName,
             List<? extends ThriftClientEventHandler> eventHandlers)
     {
+        this(clientManager,
+                clientType,
+                clientName,
+                clientConfig.getConnectTimeout(),
+                clientConfig.getReceiveTimeout(),
+                clientConfig.getReadTimeout(),
+                clientConfig.getWriteTimeout(),
+                clientConfig.getSocksProxy(),
+                clientConfig.getMaxFrameSize(),
+                eventHandlers);
+    }
+
+    public ThriftClient(
+            ThriftClientManager clientManager,
+            Class<T> clientType,
+            String clientName,
+            Duration connectTimeout,
+            Duration receiveTimeout,
+            Duration readTimeout,
+            Duration writeTimeout,
+            @Nullable HostAndPort socksProxy,
+            int maxFrameSize,
+            List<? extends ThriftClientEventHandler> eventHandlers)
+    {
         Preconditions.checkNotNull(clientManager, "clientManager is null");
         Preconditions.checkNotNull(clientType, "clientInterface is null");
         Preconditions.checkNotNull(clientName, "clientName is null");
+        Preconditions.checkNotNull(connectTimeout, "connectTimeout is null");
+        Preconditions.checkNotNull(receiveTimeout, "receiveTimeout is null");
+        Preconditions.checkNotNull(readTimeout, "readTimeout is null");
+        Preconditions.checkNotNull(writeTimeout, "writeTimeout is null");
+        Preconditions.checkArgument(maxFrameSize >= 0, "maxFrameSize cannot be negative");
         Preconditions.checkNotNull(eventHandlers, "eventHandlers is null");
 
         this.clientManager = clientManager;
         this.clientType = clientType;
         this.clientName = clientName;
+        this.connectTimeout = connectTimeout;
+        this.receiveTimeout = receiveTimeout;
+        this.readTimeout = readTimeout;
+        this.writeTimeout = writeTimeout;
+        this.socksProxy = socksProxy;
+        this.maxFrameSize = maxFrameSize;
         this.eventHandlers = eventHandlers;
-        connectTimeout = clientConfig.getConnectTimeout();
-        receiveTimeout = clientConfig.getReceiveTimeout();
-        readTimeout = clientConfig.getReadTimeout();
-        writeTimeout = clientConfig.getWriteTimeout();
-        socksProxy = clientConfig.getSocksProxy();
-        maxFrameSize = clientConfig.getMaxFrameSize();
+    }
+
+    public ThriftClient<T> withConnectTimeout(Duration connectTimeout)
+    {
+        return new ThriftClient<>(
+                this.clientManager,
+                this.clientType,
+                this.clientName,
+                connectTimeout,
+                this.receiveTimeout,
+                this.readTimeout,
+                this.writeTimeout,
+                this.socksProxy,
+                this.maxFrameSize,
+                this.eventHandlers);
+    }
+
+    public ThriftClient<T> withReceiveTimeout(Duration receiveTimeout)
+    {
+        return new ThriftClient<>(
+                this.clientManager,
+                this.clientType,
+                this.clientName,
+                this.connectTimeout,
+                receiveTimeout,
+                this.readTimeout,
+                this.writeTimeout,
+                this.socksProxy,
+                this.maxFrameSize,
+                this.eventHandlers);
+    }
+
+    public ThriftClient<T> withReadTimeout(Duration readTimeout)
+    {
+        return new ThriftClient<>(
+                this.clientManager,
+                this.clientType,
+                this.clientName,
+                this.connectTimeout,
+                this.receiveTimeout,
+                readTimeout,
+                this.writeTimeout,
+                this.socksProxy,
+                this.maxFrameSize,
+                this.eventHandlers);
+    }
+
+    public ThriftClient<T> withWriteTimeout(Duration writeTimeout)
+    {
+        return new ThriftClient<>(
+                this.clientManager,
+                this.clientType,
+                this.clientName,
+                this.connectTimeout,
+                this.receiveTimeout,
+                this.readTimeout,
+                writeTimeout,
+                this.socksProxy,
+                this.maxFrameSize,
+                this.eventHandlers);
     }
 
     @Managed
