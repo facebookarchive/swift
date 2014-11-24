@@ -210,7 +210,7 @@ public class ThriftMethodProcessor
                                             method.getName(),
                                             sequenceId,
                                             INTERNAL_ERROR,
-                                            "Internal error processing " + method.getName(),
+                                            "Internal error processing " + method.getName() + ": " + t.getMessage(),
                                             t);
 
                             contextChain.postWriteException(applicationException);
