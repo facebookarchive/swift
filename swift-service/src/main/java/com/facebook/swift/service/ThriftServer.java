@@ -176,6 +176,7 @@ public class ThriftServer implements Closeable
                                                          .clientIdleTimeout(config.getIdleConnectionTimeout())
                                                          .withProcessorFactory(processorFactory)
                                                          .limitConnectionsTo(config.getConnectionLimit())
+                                                         .limitQueuedResponsesPerConnection(config.getMaxQueuedResponsesPerConnection())
                                                          .thriftFrameCodecFactory(availableFrameCodecFactories.get(transportName))
                                                          .protocol(availableProtocolFactories.get(protocolName))
                                                          .withSecurityFactory(securityFactoryHolder.niftySecurityFactory)

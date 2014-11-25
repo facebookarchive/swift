@@ -42,11 +42,13 @@ public class ThriftServerConfig
     private static final int DEFAULT_BOSS_THREAD_COUNT = 1;
     private static final int DEFAULT_IO_WORKER_THREAD_COUNT = 2 * Runtime.getRuntime().availableProcessors();
     private static final int DEFAULT_WORKER_THREAD_COUNT = 200;
+    private static final int DEFAULT_PER_CONNECTION_QUEUED_RESPONSE_LIMIT = 16;
 
     private String bindAddress = "localhost";
     private int port;
     private int acceptBacklog = 1024;
     private int connectionLimit;
+    private int maxQueuedResponsesPerConnection = DEFAULT_PER_CONNECTION_QUEUED_RESPONSE_LIMIT;
     private int acceptorThreadCount = DEFAULT_BOSS_THREAD_COUNT;
     private int ioThreadCount = DEFAULT_IO_WORKER_THREAD_COUNT;
     private Duration idleConnectionTimeout = Duration.valueOf("60s");
@@ -278,10 +280,35 @@ public class ThriftServerConfig
         return maxQueuedRequests.orNull();
     }
 
+    /**
+     * Sets the maximum number of received requests that will wait in the queue to be executed.
+     *
+     * After this many requests are waiting, the worker queue will start rejecting requests, which
+     * will cause the server to fail those requests.
+     */
     @Config("thrift.max-queued-requests")
     public ThriftServerConfig setMaxQueuedRequests(Integer maxQueuedRequests)
     {
         this.maxQueuedRequests = Optional.fromNullable(maxQueuedRequests);
+        return this;
+    }
+
+    public int getMaxQueuedResponsesPerConnection()
+    {
+        return maxQueuedResponsesPerConnection;
+    }
+
+    /**
+     * Sets the maximum number of responses that may accumulate per connection before the connection
+     * starts blocking reads (to avoid building up limitless queued responses).
+     *
+     * This limit applies whenever either the client doesn't support receiving out-of-order
+     * responses.
+     */
+    @Config("thrift.max-queued-responses-per-connection")
+    public ThriftServerConfig setMaxQueuedResponsesPerConnection(int maxQueuedResponsesPerConnection)
+    {
+        this.maxQueuedResponsesPerConnection = maxQueuedResponsesPerConnection;
         return this;
     }
 
