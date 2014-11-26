@@ -21,7 +21,7 @@ To create a basic Thrift server using Nifty, use the [Thrift 0.9.0](https://dist
 
         // Create the server transport
         final NettyServerTransport server = new NettyServerTransport(serverDef,
-                                                                     new NettyConfigBuilder(),
+                                                                     new NettyServerConfigBuilder(),
                                                                      new DefaultChannelGroup(),
                                                                      new HashedWheelTimer());
 
