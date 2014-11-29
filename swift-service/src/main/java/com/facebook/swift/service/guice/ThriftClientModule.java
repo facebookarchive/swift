@@ -16,6 +16,7 @@
 package com.facebook.swift.service.guice;
 
 import com.facebook.nifty.client.NettyClientConfig;
+import com.facebook.nifty.client.NettyClientConfigBuilder;
 import com.facebook.nifty.client.NiftyClient;
 import com.facebook.swift.service.ThriftClientManager;
 import com.facebook.swift.service.ThriftClientManagerConfig;
@@ -53,8 +54,15 @@ public class ThriftClientModule implements Module
         @Override
         public NiftyClient get()
         {
-            NettyClientConfig config = NettyClientConfig.newBuilder().setDefaultSocksProxyAddress(clientManagerConfig.getDefaultSocksProxyAddress()).build();
-            return new NiftyClient(config);
+            NettyClientConfigBuilder builder = NettyClientConfig.newBuilder();
+
+            builder.setDefaultSocksProxyAddress(clientManagerConfig.getDefaultSocksProxyAddress());
+
+            if (clientManagerConfig.getWorkerThreadCount() != null) {
+                builder.setWorkerThreadCount(clientManagerConfig.getWorkerThreadCount());
+            }
+
+            return new NiftyClient(builder.build());
         }
     }
 }
