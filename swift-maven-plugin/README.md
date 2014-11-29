@@ -84,7 +84,7 @@ Usage:
 * *includes*: A set of files patterns which specify the files to include.
 * *excludes*: The same structure as includes, but specifies which files to ignore. In conflicts between include and exclude, exclude wins.
 
-Wildcards support '*' for all files in a given directory and '**/*' for all files in a given subtree.
+Wildcards support '\*' for all files in a given directory and '\*\*/\*' for all files in a given subtree.
 
 ## outputFolder
 
