@@ -22,15 +22,24 @@ import io.airlift.configuration.Config;
 public class ThriftClientManagerConfig
 {
     private HostAndPort defaultSocksProxyAddress = null;
+    private Integer workerThreadCount = null;
 
     public HostAndPort getDefaultSocksProxyAddress()
     {
         return defaultSocksProxyAddress;
     }
 
+    public Integer getWorkerThreadCount() { return workerThreadCount; }
+
     @Config("thrift.clientmanager.default-socks-proxy")
     public void setDefaultSocksProxyAddress(HostAndPort defaultSocksProxyAddress)
     {
         this.defaultSocksProxyAddress = defaultSocksProxyAddress;
+    }
+
+    @Config("thrift.clientmanager.worker-thread-count")
+    public void setWorkerThreadCount(int workerThreadCount)
+    {
+        this.workerThreadCount = Integer.valueOf(workerThreadCount);
     }
 }
