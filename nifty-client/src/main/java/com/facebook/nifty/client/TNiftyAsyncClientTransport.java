@@ -31,6 +31,7 @@ import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 
 import javax.annotation.concurrent.NotThreadSafe;
+import java.io.Closeable;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -39,7 +40,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  */
 @NotThreadSafe
 class TNiftyAsyncClientTransport extends TTransport
-        implements ChannelUpstreamHandler, ChannelDownstreamHandler
+        implements ChannelUpstreamHandler, ChannelDownstreamHandler, Closeable
 {
     private static final int DEFAULT_BUFFER_SIZE = 1024;
     // this is largely a guess. there shouldn't really be more than 2 write buffers at any given time.
