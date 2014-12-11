@@ -84,6 +84,7 @@ public class ThriftCatalog
     private final ConcurrentMap<Class<?>, ThriftEnumMetadata<?>> enums = new ConcurrentHashMap<>();
     private final ConcurrentMap<Type, TypeCoercion> coercions = new ConcurrentHashMap<>();
     private final ConcurrentMap<Class<?>, ThriftType> manualTypes = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Type, ThriftType> typeCache = new ConcurrentHashMap<>();
 
     private final ThreadLocal<Deque<Type>> stack = new ThreadLocal<Deque<Type>>()
     {
@@ -206,8 +207,17 @@ public class ThriftCatalog
      * @return the ThriftType for the specified java type; never null
      * @throws IllegalArgumentException if the Java Type can not be coerced to a ThriftType
      */
-    public ThriftType getThriftType(Type javaType)
-            throws IllegalArgumentException
+    public ThriftType getThriftType(Type javaType) throws IllegalArgumentException
+    {
+        ThriftType thriftType = typeCache.get(javaType);
+        if (thriftType == null) {
+            thriftType = getThriftTypeUncached(javaType);
+            typeCache.putIfAbsent(javaType, thriftType);
+        }
+        return thriftType;
+    }
+
+    private ThriftType getThriftTypeUncached(Type javaType) throws IllegalArgumentException
     {
         Class<?> rawType = TypeToken.of(javaType).getRawType();
         ThriftType manualType = manualTypes.get(rawType);
@@ -239,8 +249,7 @@ public class ThriftCatalog
             return BINARY;
         }
         if (Enum.class.isAssignableFrom(rawType)) {
-            Class<?> enumClass = TypeToken.of(javaType).getRawType();
-            ThriftEnumMetadata<? extends Enum<?>> thriftEnumMetadata = getThriftEnumMetadata(enumClass);
+            ThriftEnumMetadata<? extends Enum<?>> thriftEnumMetadata = getThriftEnumMetadata(rawType);
             return enumType(thriftEnumMetadata);
         }
         if (rawType.isArray()) {
