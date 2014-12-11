@@ -207,7 +207,8 @@ public class ThriftCatalog
      * @return the ThriftType for the specified java type; never null
      * @throws IllegalArgumentException if the Java Type can not be coerced to a ThriftType
      */
-    public ThriftType getThriftType(Type javaType) throws IllegalArgumentException
+    public ThriftType getThriftType(Type javaType)
+            throws IllegalArgumentException
     {
         ThriftType thriftType = typeCache.get(javaType);
         if (thriftType == null) {
@@ -217,7 +218,8 @@ public class ThriftCatalog
         return thriftType;
     }
 
-    private ThriftType getThriftTypeUncached(Type javaType) throws IllegalArgumentException
+    private ThriftType getThriftTypeUncached(Type javaType)
+            throws IllegalArgumentException
     {
         Class<?> rawType = TypeToken.of(javaType).getRawType();
         ThriftType manualType = manualTypes.get(rawType);
