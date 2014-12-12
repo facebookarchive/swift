@@ -64,7 +64,7 @@ public class Swift2ThriftGenerator
     private static final Logger LOG = LoggerFactory.getLogger(Swift2ThriftGenerator.class);
     private final OutputStreamWriter outputStreamWriter;
     private final boolean verbose;
-    private final ThriftCodecManager codecManager = new ThriftCodecManager();
+    private ThriftCodecManager codecManager = new ThriftCodecManager();
     private final String defaultPackage;
     private final String allowMultiplePackages;     // null means don't allow
     private ThriftTypeRenderer thriftTypeRenderer;
@@ -97,6 +97,10 @@ public class Swift2ThriftGenerator
         } else {
             this.defaultPackage = defaultPackage + ".";
         }
+        
+        if ( config.getCodecManager()!=null ) {
+        	codecManager = config.getCodecManager();
+        }
 
         OutputStream os = config.getOutputFile() != null ? new FileOutputStream(config.getOutputFile()) : System.out;
         this.outputStreamWriter = new OutputStreamWriter(os, Charsets.UTF_8);
@@ -121,15 +125,37 @@ public class Swift2ThriftGenerator
     }
 
     @SuppressWarnings("PMD.CollapsibleIfStatements")
-    public void parse(Iterable<String> inputs) throws IOException
+    public void parseClasses(Iterable<Class<?>> inputClasses) throws IOException
+    {
+        for ( Class<?> cls : inputClasses ) {
+            Object result = convertToThrift(cls);
+            if (result instanceof ThriftType) {
+                thriftTypes.add((ThriftType)result);
+            } else if (result instanceof ThriftServiceMetadata) {
+                thriftServices.add((ThriftServiceMetadata)result);
+            }
+            // if the class we just loaded was also in the include map, remove it from there
+            includeMap.remove(result);
+        }
+
+        if (verify()) {
+            gen();
+        } else {
+            LOG.error("Errors found during verification.");
+        }
+    }
+    
+    @SuppressWarnings("PMD.CollapsibleIfStatements")
+    public void parse(Iterable<String> inputClasses) throws IOException
     {
         boolean loadErrors = false;
-
+        
         if (allowMultiplePackages != null) {
             packageName = allowMultiplePackages;
         }
-
-        for (String className: inputs) {
+        
+        ArrayList<Class<?>> classes = new ArrayList<Class<?>>();
+        for (String className: inputClasses) {
             Class<?> cls = load(className);
             if (cls == null) {
                 loadErrors = true;
@@ -145,25 +171,13 @@ public class Swift2ThriftGenerator
                             cls.getName(), cls.getPackage().getName(), packageName));
                 }
             }
-
-            Object result = convertToThrift(cls);
-            if (result instanceof ThriftType) {
-                thriftTypes.add((ThriftType)result);
-            } else if (result instanceof ThriftServiceMetadata) {
-                thriftServices.add((ThriftServiceMetadata)result);
-            }
-            // if the class we just loaded was also in the include map, remove it from there
-            includeMap.remove(result);
-        }
+            classes.add(cls);
+        }       
+        parseClasses(classes);
+        
         if (loadErrors) {
             LOG.error("Couldn't load some classes");
             return;
-        }
-
-        if (verify()) {
-            gen();
-        } else {
-            LOG.error("Errors found during verification.");
         }
     }
 

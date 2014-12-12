@@ -17,6 +17,7 @@ package com.facebook.swift.generator.swift2thrift;
 
 import java.io.File;
 import java.util.Map;
+import com.facebook.swift.codec.ThriftCodecManager;
 
 public class Swift2ThriftGeneratorConfig {
     private final File outputFile;
@@ -26,11 +27,11 @@ public class Swift2ThriftGeneratorConfig {
     private final Map<String, String> namespaceMap;
     private final String allowMultiplePackages;
     private final boolean recursive;
-
+    private final ThriftCodecManager codecManager;
+    
     private Swift2ThriftGeneratorConfig(final File outputFile, final Map<String, String> includeMap,
-                                        boolean verbose, String defaultPackage, final Map<String, String> namespaceMap,
-                                        String allowMultiplePackages, boolean recursive)
-    {
+            boolean verbose, String defaultPackage, final Map<String, String> namespaceMap,
+            String allowMultiplePackages, boolean recursive, ThriftCodecManager codecManager){
         this.outputFile = outputFile;
         this.includeMap = includeMap;
         this.verbose = verbose;
@@ -38,7 +39,9 @@ public class Swift2ThriftGeneratorConfig {
         this.namespaceMap = namespaceMap;
         this.allowMultiplePackages = allowMultiplePackages;
         this.recursive = recursive;
+        this.codecManager = codecManager;
     }
+    
 
     public static Builder builder()
     {
@@ -82,6 +85,11 @@ public class Swift2ThriftGeneratorConfig {
     {
         return recursive;
     }
+    
+    public ThriftCodecManager getCodecManager()
+    {
+        return codecManager;
+    }
 
     public static class Builder
     {
@@ -92,6 +100,7 @@ public class Swift2ThriftGeneratorConfig {
         private Map<String, String> namespaceMap;
         private String allowMultiplePackages;
         private boolean recursive;
+        private ThriftCodecManager codecManager = new ThriftCodecManager();
 
         private Builder()
         {
@@ -100,7 +109,7 @@ public class Swift2ThriftGeneratorConfig {
         public Swift2ThriftGeneratorConfig build()
         {
             return new Swift2ThriftGeneratorConfig(outputFile, includeMap, verbose, defaultPackage,
-                    namespaceMap, allowMultiplePackages, recursive);
+                    namespaceMap, allowMultiplePackages, recursive, codecManager);
         }
 
         public Builder outputFile(final File outputFile)
@@ -142,6 +151,12 @@ public class Swift2ThriftGeneratorConfig {
         public Builder recursive(boolean recursive)
         {
             this.recursive = recursive;
+            return this;
+        }
+        
+        public Builder codecManager(ThriftCodecManager codecManager)
+        {
+            this.codecManager = codecManager;
             return this;
         }
     }
