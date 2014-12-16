@@ -45,6 +45,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getFutureReturnType;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getIterableType;
@@ -68,7 +69,6 @@ import static com.facebook.swift.codec.metadata.ThriftType.struct;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Iterables.transform;
-
 import static java.lang.reflect.Modifier.isStatic;
 
 /**
@@ -84,6 +84,11 @@ public class ThriftCatalog
     private final ConcurrentMap<Class<?>, ThriftEnumMetadata<?>> enums = new ConcurrentHashMap<>();
     private final ConcurrentMap<Type, TypeCoercion> coercions = new ConcurrentHashMap<>();
     private final ConcurrentMap<Class<?>, ThriftType> manualTypes = new ConcurrentHashMap<>();
+   
+    /**
+     * The types in the order they were registered.
+     */
+    private final ConcurrentLinkedQueue<Class<?>> manualTypesInRegisteredOrder = new ConcurrentLinkedQueue<Class<?>> ();
 
     private final ThreadLocal<Deque<Type>> stack = new ThreadLocal<Deque<Type>>()
     {
@@ -490,6 +495,8 @@ public class ThriftCatalog
         return ImmutableList.<String>of();
     }
 
+    public Iterable<Class<?>> getManualTypesInRegisteredOrder() { return manualTypesInRegisteredOrder; } 
+    
     @SuppressWarnings("PMD.EmptyCatchBlock")
     public static Integer getMethodOrder(Method method)
     {
