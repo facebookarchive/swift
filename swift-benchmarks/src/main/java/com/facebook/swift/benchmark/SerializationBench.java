@@ -30,6 +30,7 @@ import com.facebook.swift.benchmark.structs.Mixed;
 import com.facebook.swift.benchmark.structs.SmallInt;
 import com.facebook.swift.benchmark.structs.SmallListInt;
 import com.facebook.swift.benchmark.structs.SmallString;
+import com.facebook.swift.codec.ThriftCodec;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.google.common.collect.Lists;
 import org.apache.thrift.protocol.TCompactProtocol;
@@ -38,7 +39,6 @@ import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Param;
@@ -54,24 +54,27 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+@State(Scope.Thread)
+@BenchmarkMode(Mode.AverageTime)
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
 public class SerializationBench
 {
-    private static <T> T create(Class<T> cls) {
+    private static Object create(Class<?> cls) {
         if (cls.equals(Empty.class)) {
             Empty e = new Empty();
-            return (T)e;
+            return e;
         } else if (cls.equals(SmallInt.class)) {
             SmallInt i = new SmallInt();
             i.smallint = 5;
-            return (T)i;
+            return i;
         } else if (cls.equals(BigInt.class)) {
             BigInt i = new BigInt();
             i.bigint = 0x123456789abcdefL;
-            return (T)i;
+            return i;
         } else if (cls.equals(SmallString.class)) {
             SmallString s = new SmallString();
             s.str = "small string";
-            return (T)s;
+            return s;
         } else if (cls.equals(BigString.class)) {
             BigString s = new BigString();
             StringBuilder sb = new StringBuilder(10000);
@@ -79,22 +82,22 @@ public class SerializationBench
                 sb.append('a');
             }
             s.str = sb.toString();
-            return (T) s;
+            return s;
         } else if (cls.equals(BigBinary.class)) {
             BigBinary b = new BigBinary();
             b.buf = ByteBuffer.allocate(10000);
-            return (T)b;
+            return b;
         } else if (cls.equals(LargeBinary.class)) {
             LargeBinary b = new LargeBinary();
             b.buf = ByteBuffer.allocate(10000000);
-            return (T)b;
+            return b;
         } else if (cls.equals(Mixed.class)) {
             Mixed m = new Mixed();
             m.i = 5;
             m.l = 12345;
             m.b = true;
             m.s = "hello";
-            return (T)m;
+            return m;
         } else if (cls.equals(SmallListInt.class)) {
             SmallListInt l = new SmallListInt();
             List<Integer> lst = Lists.newArrayListWithCapacity(10);
@@ -102,7 +105,7 @@ public class SerializationBench
                 lst.add(5);
             }
             l.lst = lst;
-            return (T)l;
+            return l;
         } else if (cls.equals(BigListInt.class)) {
             BigListInt l = new BigListInt();
             List<Integer> lst = Lists.newArrayListWithCapacity(10000);
@@ -110,121 +113,104 @@ public class SerializationBench
                 lst.add(5);
             }
             l.lst = lst;
-            return (T)l;
+            return l;
         } else if (cls.equals(BigListMixed.class)) {
             BigListMixed l = new BigListMixed();
             List<Mixed> lst = Lists.newArrayListWithCapacity(10000);
             for (int i = 0; i < 10000; i++) {
-                lst.add(create(Mixed.class));
+                lst.add((Mixed)create(Mixed.class));
             }
             l.lst = lst;
-            return (T)l;
+            return l;
         } else if (cls.equals(LargeListMixed.class)) {
             LargeListMixed l = new LargeListMixed();
             List<Mixed> lst = Lists.newArrayListWithCapacity(1000000);
             for (int i = 0; i < 1000000; i++) {
-                lst.add(create(Mixed.class));
+                lst.add((Mixed)create(Mixed.class));
             }
             l.lst = lst;
-            return (T)l;
+            return l;
         }
         return null;
     }
 
-    @State(Scope.Thread)
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public static class Serialization
+    private ThriftCodecManager codecManager = new ThriftCodecManager();
+
+    @Param({
+            "com.facebook.swift.benchmark.structs.Empty",
+            "com.facebook.swift.benchmark.structs.SmallInt",
+            "com.facebook.swift.benchmark.structs.BigInt",
+            "com.facebook.swift.benchmark.structs.SmallString",
+            "com.facebook.swift.benchmark.structs.BigString",
+            "com.facebook.swift.benchmark.structs.BigBinary",
+            "com.facebook.swift.benchmark.structs.LargeBinary",
+            "com.facebook.swift.benchmark.structs.Mixed",
+            "com.facebook.swift.benchmark.structs.SmallListInt",
+            "com.facebook.swift.benchmark.structs.BigListInt",
+            "com.facebook.swift.benchmark.structs.BigListMixed",
+            "com.facebook.swift.benchmark.structs.LargeListMixed",
+    })
+    private String structClassAsString;
+    private ThriftCodec codec;
+    private Object struct;
+    private ChannelBuffer serialized;
+
+    @Setup
+    public void setup() throws Exception
     {
-        private ThriftCodecManager codecManager = new ThriftCodecManager();
-        private TProtocol protocol;
+        Class structClass = Class.forName(structClassAsString);
+        codec = codecManager.getCodec(structClass);
 
-        @Param({
-                "com.facebook.swift.benchmark.structs.Empty",
-                "com.facebook.swift.benchmark.structs.SmallInt",
-                "com.facebook.swift.benchmark.structs.BigInt",
-                "com.facebook.swift.benchmark.structs.SmallString",
-                "com.facebook.swift.benchmark.structs.BigString",
-                "com.facebook.swift.benchmark.structs.BigBinary",
-                "com.facebook.swift.benchmark.structs.LargeBinary",
-                "com.facebook.swift.benchmark.structs.Mixed",
-                "com.facebook.swift.benchmark.structs.SmallListInt",
-                "com.facebook.swift.benchmark.structs.BigListInt",
-                "com.facebook.swift.benchmark.structs.BigListMixed",
-                "com.facebook.swift.benchmark.structs.LargeListMixed",
-        })
-        private String structClassAsString;
-        private Class structClass;
+        // for serialization
+        struct = create(structClass);
 
-        @Setup(Level.Invocation)
-        public void setup() throws Exception
-        {
-            structClass = Class.forName(structClassAsString);
-            TNiftyTransport transport = new TNiftyTransport(null, new ThriftMessage(ChannelBuffers.EMPTY_BUFFER, ThriftTransportType.UNFRAMED));
-            protocol = new TCompactProtocol(transport);
-        }
-
-        @Benchmark
-        public void serialize() throws Exception
-        {
-            codecManager.write(structClass, create(structClass), protocol);
-        }
+        // for deserialization
+        TNiftyTransport outTransport = new TNiftyTransport(null, new ThriftMessage(ChannelBuffers.EMPTY_BUFFER, ThriftTransportType.UNFRAMED));
+        codec.write(create(structClass), new TCompactProtocol(outTransport));
+        serialized = outTransport.getOutputBuffer();
     }
 
-    @State(Scope.Thread)
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public static class Deserialization
+    @Benchmark
+    public ChannelBuffer serialize() throws Exception
     {
-        private ThriftCodecManager codecManager = new ThriftCodecManager();
-        private TProtocol protocol;
-        private ChannelBuffer serialized;
-
-        @Param({
-                "com.facebook.swift.benchmark.structs.Empty",
-                "com.facebook.swift.benchmark.structs.SmallInt",
-                "com.facebook.swift.benchmark.structs.BigInt",
-                "com.facebook.swift.benchmark.structs.SmallString",
-                "com.facebook.swift.benchmark.structs.BigString",
-                "com.facebook.swift.benchmark.structs.BigBinary",
-                "com.facebook.swift.benchmark.structs.LargeBinary",
-                "com.facebook.swift.benchmark.structs.Mixed",
-                "com.facebook.swift.benchmark.structs.SmallListInt",
-                "com.facebook.swift.benchmark.structs.BigListInt",
-                "com.facebook.swift.benchmark.structs.BigListMixed",
-                "com.facebook.swift.benchmark.structs.LargeListMixed",
-        })
-        private String structClassAsString;
-        private Class structClass;
-
-
-        @Setup
-        public void beforeLoopSetup() throws Exception
-        {
-            structClass = Class.forName(structClassAsString);
-            TNiftyTransport outTransport = new TNiftyTransport(null, new ThriftMessage(ChannelBuffers.EMPTY_BUFFER, ThriftTransportType.UNFRAMED));
-            codecManager.write(structClass, create(structClass), new TCompactProtocol(outTransport));
-            serialized = outTransport.getOutputBuffer();
-        }
-
-        @Setup(Level.Invocation)
-        public void insideLoopSetup()
-        {
-            TNiftyTransport inTransport = new TNiftyTransport(null, new ThriftMessage(serialized.duplicate(), ThriftTransportType.UNFRAMED));
-            protocol = new TCompactProtocol(inTransport);
-        }
-
-        @Benchmark
-        public Object deserialize() throws Exception
-        {
-            return codecManager.read(structClass, protocol);
-        }
+        TNiftyTransport transport = new TNiftyTransport(null, new ThriftMessage(ChannelBuffers.EMPTY_BUFFER, ThriftTransportType.UNFRAMED));
+        TProtocol protocol = new TCompactProtocol(transport);
+        codec.write(struct, protocol);
+        return transport.getOutputBuffer();
     }
+
+    @Benchmark
+    public Object deserialize() throws Exception
+    {
+        serialized.readerIndex(0);
+        TNiftyTransport transport = new TNiftyTransport(null, new ThriftMessage(serialized, ThriftTransportType.UNFRAMED));
+        TProtocol protocol = new TCompactProtocol(transport);
+        return codec.read(protocol);
+    }
+
+    @Benchmark
+    public ChannelBuffer both() throws Exception
+    {
+        serialized.readerIndex(0);
+        TNiftyTransport transport = new TNiftyTransport(null, new ThriftMessage(serialized, ThriftTransportType.UNFRAMED));
+        TProtocol protocol = new TCompactProtocol(transport);
+
+        Object value = codec.read(protocol);
+        codec.write(value, protocol);
+        return transport.getOutputBuffer();
+    }
+
+    @Benchmark
+    public TProtocol overhead() throws Exception
+    {
+        TNiftyTransport transport = new TNiftyTransport(null, new ThriftMessage(ChannelBuffers.EMPTY_BUFFER, ThriftTransportType.UNFRAMED));
+        TProtocol protocol = new TCompactProtocol(transport);
+        return protocol;
+    }
+
 
     public static void main(String[] args) throws RunnerException {
         Options opt = new OptionsBuilder()
-                //.exclude(SerializationBench.Serialization.class.getCanonicalName())
-                //.exclude(SerializationBench.Deserialization.class.getCanonicalName())
                 .warmupIterations(10)
                 .measurementIterations(10)
                 .forks(1)
