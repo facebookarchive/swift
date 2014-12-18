@@ -27,6 +27,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TMessage;
@@ -68,28 +69,55 @@ public class ThriftServiceProcessor implements NiftyProcessor
         this(codecManager, eventHandlers, ImmutableList.copyOf(services));
     }
 
+    public ThriftServiceProcessor(ThriftCodecManager codecManager,  Object service,  Class<?> iface)
+    {
+        this(codecManager, ImmutableList.<ThriftEventHandler>of(), service, iface, true);
+    }
+    
+    public ThriftServiceProcessor(ThriftCodecManager codecManager, List<? extends ThriftEventHandler> eventHandlers, Object service, Class<?> iface, boolean allowUnannotated)
+    {
+        Preconditions.checkNotNull(codecManager, "codecManager is null");
+        Preconditions.checkNotNull(service, "service is null");
+        
+        Map<String, ThriftMethodProcessor> processorMap = newHashMap();
+        ThriftServiceMetadata serviceMetadata = new ThriftServiceMetadata(iface, codecManager.getCatalog(), allowUnannotated);
+        addServiceMetadata(processorMap, service, serviceMetadata, codecManager);
+        methods = ImmutableMap.copyOf(processorMap);
+        this.eventHandlers = ImmutableList.copyOf(eventHandlers);
+    }
+
     public ThriftServiceProcessor(ThriftCodecManager codecManager, List<? extends ThriftEventHandler> eventHandlers, List<?> services)
     {
         Preconditions.checkNotNull(codecManager, "codecManager is null");
         Preconditions.checkNotNull(services, "service is null");
         Preconditions.checkArgument(!services.isEmpty(), "services is empty");
 
+        final boolean allowUnannotated = false;
         Map<String, ThriftMethodProcessor> processorMap = newHashMap();
-        for (Object service : services) {
-            ThriftServiceMetadata serviceMetadata = new ThriftServiceMetadata(service.getClass(), codecManager.getCatalog());
-            for (ThriftMethodMetadata methodMetadata : serviceMetadata.getMethods().values()) {
-                String methodName = methodMetadata.getName();
-                ThriftMethodProcessor methodProcessor = new ThriftMethodProcessor(service, serviceMetadata.getName(), methodMetadata, codecManager);
-                if (processorMap.containsKey(methodName)) {
-                    throw new IllegalArgumentException("Multiple @ThriftMethod-annotated methods named '" + methodName + "' found in the given services");
-                }
-                processorMap.put(methodName, methodProcessor);
-            }
+        for (Object service : services) {            
+            ThriftServiceMetadata serviceMetadata = new ThriftServiceMetadata(service.getClass(), codecManager.getCatalog(), allowUnannotated);
+            addServiceMetadata(processorMap, service, serviceMetadata, codecManager);
         }
         methods = ImmutableMap.copyOf(processorMap);
         this.eventHandlers = ImmutableList.copyOf(eventHandlers);
     }
 
+    final private void addServiceMetadata(
+            Map<String, ThriftMethodProcessor> processorMap,
+            Object service,
+            ThriftServiceMetadata serviceMetadata,
+            ThriftCodecManager codecManager )
+    {
+        for (ThriftMethodMetadata methodMetadata : serviceMetadata.getMethods().values()) {
+            String methodName = methodMetadata.getName();
+            ThriftMethodProcessor methodProcessor = new ThriftMethodProcessor(service, serviceMetadata.getName(), methodMetadata, codecManager);
+            if (processorMap.containsKey(methodName)) {
+                throw new IllegalArgumentException("Multiple @ThriftMethod-annotated methods named '" + methodName + "' found in the given services");
+            }
+            processorMap.put(methodName, methodProcessor);
+        }
+    }
+    
     public Map<String, ThriftMethodProcessor> getMethods()
     {
         return methods;

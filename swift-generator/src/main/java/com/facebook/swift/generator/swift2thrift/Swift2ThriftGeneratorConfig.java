@@ -27,11 +27,12 @@ public class Swift2ThriftGeneratorConfig {
     private final Map<String, String> namespaceMap;
     private final String allowMultiplePackages;
     private final boolean recursive;
+    private final boolean allowUnannotatedServices;
     private final ThriftCodecManager codecManager;
     
     private Swift2ThriftGeneratorConfig(final File outputFile, final Map<String, String> includeMap,
             boolean verbose, String defaultPackage, final Map<String, String> namespaceMap,
-            String allowMultiplePackages, boolean recursive, ThriftCodecManager codecManager){
+            String allowMultiplePackages, boolean recursive, boolean allowUnannotatedServices, ThriftCodecManager codecManager){
         this.outputFile = outputFile;
         this.includeMap = includeMap;
         this.verbose = verbose;
@@ -40,6 +41,7 @@ public class Swift2ThriftGeneratorConfig {
         this.allowMultiplePackages = allowMultiplePackages;
         this.recursive = recursive;
         this.codecManager = codecManager;
+        this.allowUnannotatedServices = allowUnannotatedServices;
     }
     
 
@@ -81,6 +83,11 @@ public class Swift2ThriftGeneratorConfig {
         return allowMultiplePackages;
     }
 
+    public boolean isAllowUnannotatedServices()
+    {
+        return allowUnannotatedServices;
+    }
+
     public boolean isRecursive()
     {
         return recursive;
@@ -100,6 +107,7 @@ public class Swift2ThriftGeneratorConfig {
         private Map<String, String> namespaceMap;
         private String allowMultiplePackages;
         private boolean recursive;
+        private boolean allowUnannotatedServices;
         private ThriftCodecManager codecManager = new ThriftCodecManager();
 
         private Builder()
@@ -109,7 +117,7 @@ public class Swift2ThriftGeneratorConfig {
         public Swift2ThriftGeneratorConfig build()
         {
             return new Swift2ThriftGeneratorConfig(outputFile, includeMap, verbose, defaultPackage,
-                    namespaceMap, allowMultiplePackages, recursive, codecManager);
+                    namespaceMap, allowMultiplePackages, recursive, allowUnannotatedServices, codecManager);
         }
 
         public Builder outputFile(final File outputFile)
@@ -148,6 +156,12 @@ public class Swift2ThriftGeneratorConfig {
             return this;
         }
 
+        public Builder allowUnannotatedServices(boolean allowUnannotatedServices)
+        {
+            this.allowUnannotatedServices = allowUnannotatedServices;
+            return this;
+        }
+        
         public Builder recursive(boolean recursive)
         {
             this.recursive = recursive;

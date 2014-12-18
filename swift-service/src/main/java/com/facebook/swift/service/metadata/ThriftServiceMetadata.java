@@ -24,6 +24,10 @@ import com.google.common.collect.*;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -33,59 +37,48 @@ import static com.facebook.swift.codec.metadata.ReflectionHelper.getEffectiveCla
 @Immutable
 public class ThriftServiceMetadata
 {
+    private static final Logger LOG = LoggerFactory.getLogger(ThriftServiceMetadata.class);
+    
     private final String name;
-    private final Map<String, ThriftMethodMetadata> methods;
-    private final Map<String, ThriftMethodMetadata> declaredMethods;
+    private Map<String, ThriftMethodMetadata> methods;
+    private Map<String, ThriftMethodMetadata> declaredMethods;
     private final ImmutableList<ThriftServiceMetadata> parentServices;
     private final ImmutableList<String> documentation;
 
     public ThriftServiceMetadata(Class<?> serviceClass, ThriftCatalog catalog)
     {
-        Preconditions.checkNotNull(serviceClass, "serviceClass is null");
-        ThriftService thriftService = getThriftServiceAnnotation(serviceClass);
+        this(serviceClass, catalog, false);
+    }
 
-        if (thriftService.value().length() == 0) {
-            name = serviceClass.getSimpleName();
+    public ThriftServiceMetadata(Class<?> serviceClass, ThriftCatalog catalog, boolean allowUnannotated)
+    {
+        Preconditions.checkNotNull(serviceClass, "serviceClass is null");
+
+        if ( hasThriftServiceAnnotation(serviceClass) ) {
+            ThriftService thriftService = getThriftServiceAnnotation(serviceClass);
+
+            if (thriftService.value().length() == 0) {
+                name = serviceClass.getSimpleName();
+            }
+            else {
+                name = thriftService.value();
+            }
+            documentation = ThriftCatalog.getThriftDocumentation(serviceClass);
         }
         else {
-            name = thriftService.value();
+            Preconditions.checkArgument(allowUnannotated, "allowUnannotated is false and @ThriftService annotation is missing for "+serviceClass.getName());
+            name = serviceClass.getSimpleName();
+            // TODO: Extract Java docs.
+            documentation = ImmutableList.of();
         }
 
-        documentation = ThriftCatalog.getThriftDocumentation(serviceClass);
-
-        ImmutableMap.Builder<String, ThriftMethodMetadata> builder = ImmutableMap.builder();
-
-        Function<ThriftMethodMetadata, String> methodMetadataNamer = new Function<ThriftMethodMetadata, String>() {
-            @Nullable
-            @Override
-            public String apply(@Nullable ThriftMethodMetadata methodMetadata)
-            {
-                return methodMetadata.getName();
-            }
-        };
-        // A multimap from order to method name. Sorted by key (order), with nulls (i.e. no order) last.
-        // Within each key, values (ThriftMethodMetadata) are sorted by method name.
-        TreeMultimap<Integer, ThriftMethodMetadata> declaredMethods = TreeMultimap.create(
-                Ordering.natural().nullsLast(),
-                Ordering.natural().onResultOf(methodMetadataNamer));
-        for (Method method : findAnnotatedMethods(serviceClass, ThriftMethod.class)) {
-            if (method.isAnnotationPresent(ThriftMethod.class)) {
-                ThriftMethodMetadata methodMetadata = new ThriftMethodMetadata(name, method, catalog);
-                builder.put(methodMetadata.getName(), methodMetadata);
-                if (method.getDeclaringClass().equals(serviceClass)) {
-                    declaredMethods.put(ThriftCatalog.getMethodOrder(method), methodMetadata);
-                }
-            }
-        }
-        methods = builder.build();
-        // create a name->metadata map keeping the order
-        this.declaredMethods = Maps.uniqueIndex(declaredMethods.values(), methodMetadataNamer);
+        extractMethods(serviceClass, catalog, allowUnannotated);
 
         ThriftServiceMetadata parentService = null;
         ImmutableList.Builder<ThriftServiceMetadata> parentServiceBuilder = ImmutableList.builder();
         for (Class<?> parent : serviceClass.getInterfaces()) {
             if (!getEffectiveClassAnnotations(parent, ThriftService.class).isEmpty()) {
-                parentServiceBuilder.add(new ThriftServiceMetadata(parent, catalog));
+                parentServiceBuilder.add(new ThriftServiceMetadata(parent, catalog, allowUnannotated));
             }
         }
         this.parentServices = parentServiceBuilder.build();
@@ -103,6 +96,47 @@ public class ThriftServiceMetadata
         this.declaredMethods = this.methods;
         this.parentServices = ImmutableList.of();
         this.documentation = ImmutableList.of();
+    }
+
+    final private void extractMethods( Class<?> serviceClass, ThriftCatalog catalog, boolean allowUnannotated )
+    {
+        ImmutableMap.Builder<String, ThriftMethodMetadata> builder = ImmutableMap.builder();
+
+        Function<ThriftMethodMetadata, String> methodMetadataNamer = new Function<ThriftMethodMetadata, String>() {
+            @Nullable
+            @Override
+            public String apply(@Nullable ThriftMethodMetadata methodMetadata)
+            {
+                return methodMetadata.getName();
+            }
+        };
+        // A multimap from order to method name. Sorted by key (order), with nulls (i.e. no order) last.
+        // Within each key, values (ThriftMethodMetadata) are sorted by method name.
+        TreeMultimap<Integer, ThriftMethodMetadata> declaredMethods = TreeMultimap.create(
+                Ordering.natural().nullsLast(),
+                Ordering.natural().onResultOf(methodMetadataNamer));
+        
+        // Find the declared methods
+        Collection<Method> _methods;
+        if ( !allowUnannotated ){
+        	_methods = findAnnotatedMethods(serviceClass, ThriftMethod.class);
+        }
+        else {
+        	_methods = Arrays.asList( serviceClass.getMethods() );
+        }
+        
+        for ( Method method : _methods ) {
+            if (method.isAnnotationPresent(ThriftMethod.class) || allowUnannotated) {
+                ThriftMethodMetadata methodMetadata = new ThriftMethodMetadata(name, method, catalog, allowUnannotated);
+                builder.put(methodMetadata.getName(), methodMetadata);
+                if (method.getDeclaringClass().equals(serviceClass)) {
+                    declaredMethods.put(ThriftCatalog.getMethodOrder(method), methodMetadata);
+                }
+            }
+        }
+        this.methods = builder.build();
+        // create a name->metadata map keeping the order
+        this.declaredMethods = Maps.uniqueIndex(declaredMethods.values(), methodMetadataNamer);
     }
 
     public String getName()
@@ -130,9 +164,14 @@ public class ThriftServiceMetadata
         return documentation;
     }
 
+    public static boolean hasThriftServiceAnnotation(Class<?> serviceClass)
+    {
+        return serviceClass.getAnnotation(ThriftService.class)!=null;
+    }
+
     public static ThriftService getThriftServiceAnnotation(Class<?> serviceClass)
     {
-        Set<ThriftService> serviceAnnotations = getEffectiveClassAnnotations(serviceClass, ThriftService.class);
+    	Set<ThriftService> serviceAnnotations = getEffectiveClassAnnotations(serviceClass, ThriftService.class);
         Preconditions.checkArgument(!serviceAnnotations.isEmpty(), "Service class %s is not annotated with @ThriftService", serviceClass.getName());
         Preconditions.checkArgument(serviceAnnotations.size() == 1,
                 "Service class %s has multiple conflicting @ThriftService annotations: %s",

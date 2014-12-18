@@ -79,6 +79,7 @@ public class Swift2ThriftGenerator
     private Set<ThriftServiceMetadata> knownServices = Sets.newHashSet();
     private Map<String, String> namespaceMap;
     private boolean recursive;
+    private boolean allowUnannotatedServices;
     private static final Set<ThriftType> builtInKnownTypes =
         ImmutableSet.of(ThriftType.BOOL, ThriftType.BYTE, ThriftType.I16, ThriftType.I32,
             ThriftType.I64, ThriftType.DOUBLE, ThriftType.STRING, ThriftType.BINARY,
@@ -90,6 +91,7 @@ public class Swift2ThriftGenerator
     Swift2ThriftGenerator(final Swift2ThriftGeneratorConfig config) throws FileNotFoundException
     {
         this.verbose = config.isVerbose();
+        this.allowUnannotatedServices = config.isAllowUnannotatedServices();
         String defaultPackage = config.getDefaultPackage();
 
         if (defaultPackage.isEmpty()) {
@@ -113,22 +115,46 @@ public class Swift2ThriftGenerator
                 continue;
             }
 
-            Object result = convertToThrift(cls);
+            Object result = convertToThrift(cls, allowUnannotatedServices);
             if (result != null) {
                 this.includeMap.put(result, entry.getValue());
             }
         }
-
         this.namespaceMap = config.getNamespaceMap();
         this.allowMultiplePackages = config.isAllowMultiplePackages();
         this.recursive = config.isRecursive();
     }
 
     @SuppressWarnings("PMD.CollapsibleIfStatements")
-    public void parseClasses(Iterable<Class<?>> inputClasses) throws IOException
+    public void parseServiceInterfaces(Iterable<Class<?>> inputClasses, boolean allowUnannotated ) throws IOException
     {
         for ( Class<?> cls : inputClasses ) {
-            Object result = convertToThrift(cls);
+            ThriftServiceMetadata result = convertToThriftService(cls, allowUnannotated);
+            if (result != null) {
+                thriftServices.add(result);
+            }
+            // if the class we just loaded was also in the include map, remove it from there
+            includeMap.remove(result);
+        }
+
+        if (verify()) {
+            gen();
+        } else {
+            LOG.error("Errors found during verification.");
+        }
+    }
+    
+    @SuppressWarnings("PMD.CollapsibleIfStatements")
+    public void parseClasses(Iterable<Class<?>> inputClasses) throws IOException
+    {
+        parseClasses(inputClasses, allowUnannotatedServices);
+    }
+    
+    @SuppressWarnings("PMD.CollapsibleIfStatements")
+    public void parseClasses(Iterable<Class<?>> inputClasses, boolean allowUnannotated) throws IOException
+    {
+        for ( Class<?> cls : inputClasses ) {
+            Object result = convertToThrift(cls, allowUnannotated);
             if (result instanceof ThriftType) {
                 thriftTypes.add((ThriftType)result);
             } else if (result instanceof ThriftServiceMetadata) {
@@ -438,16 +464,12 @@ public class Swift2ThriftGenerator
     }
 
     // returns ThriftType, ThriftServiceMetadata or null
-    private Object convertToThrift(Class<?> cls)
+    private Object convertToThrift(Class<?> cls, boolean allowUnannotated)
     {
         Set<ThriftService> serviceAnnotations = ReflectionHelper.getEffectiveClassAnnotations(cls, ThriftService.class);
         if (!serviceAnnotations.isEmpty()) {
             // it's a service
-            ThriftServiceMetadata serviceMetadata = new ThriftServiceMetadata(cls, codecManager.getCatalog());
-            if (verbose) {
-                LOG.info("Found thrift service: {}", cls.getSimpleName());
-            }
-            return serviceMetadata;
+            return convertToThriftService(cls, allowUnannotated);
         } else {
             // it's a type (will throw if it's not)
             ThriftType thriftType = codecManager.getCatalog().getThriftType(cls);
@@ -456,6 +478,16 @@ public class Swift2ThriftGenerator
             }
             return thriftType;
         }
+    }
+
+    private ThriftServiceMetadata convertToThriftService(Class<?> cls, boolean allowUnannotated)
+    {
+        // it's a service
+        ThriftServiceMetadata serviceMetadata = new ThriftServiceMetadata(cls, codecManager.getCatalog(), allowUnannotated);
+        if (verbose) {
+            LOG.info("Found thrift service: {}", cls.getSimpleName());
+        }
+        return serviceMetadata;
     }
 
     private void gen() throws IOException
