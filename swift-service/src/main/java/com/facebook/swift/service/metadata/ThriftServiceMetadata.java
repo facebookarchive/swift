@@ -74,7 +74,7 @@ public class ThriftServiceMetadata
 
         extractMethods(serviceClass, catalog, allowUnannotated);
 
-        ThriftServiceMetadata parentService = null;
+        //ThriftServiceMetadata parentService = null;
         ImmutableList.Builder<ThriftServiceMetadata> parentServiceBuilder = ImmutableList.builder();
         for (Class<?> parent : serviceClass.getInterfaces()) {
             if (!getEffectiveClassAnnotations(parent, ThriftService.class).isEmpty()) {
