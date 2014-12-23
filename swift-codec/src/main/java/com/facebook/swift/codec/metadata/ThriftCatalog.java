@@ -45,7 +45,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getFutureReturnType;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getIterableType;
