@@ -69,18 +69,34 @@ public class ThriftServiceProcessor implements NiftyProcessor
         this(codecManager, eventHandlers, ImmutableList.copyOf(services));
     }
 
-    public ThriftServiceProcessor(ThriftCodecManager codecManager,  Object service,  Class<?> iface)
+    public ThriftServiceProcessor(ThriftCodecManager codecManager, Object service, Class<?> iface)
     {
-        this(codecManager, ImmutableList.<ThriftEventHandler>of(), service, iface, true);
+        this(codecManager, ImmutableList.<ThriftEventHandler>of(), service, iface);
+    }
+
+    public ThriftServiceProcessor(ThriftCodecManager codecManager, Object service, ThriftServiceMetadata serviceMetadata)
+    {
+        this(codecManager, ImmutableList.<ThriftEventHandler>of(), service, serviceMetadata);
+    }
+
+    public ThriftServiceProcessor(ThriftCodecManager codecManager, List<? extends ThriftEventHandler> eventHandlers, Object service, ThriftServiceMetadata serviceMetadata)
+    {
+        Preconditions.checkNotNull(codecManager, "codecManager is null");
+        Preconditions.checkNotNull(service, "service is null");
+
+        Map<String, ThriftMethodProcessor> processorMap = newHashMap();
+        addServiceMetadata(processorMap, service, serviceMetadata, codecManager);
+        methods = ImmutableMap.copyOf(processorMap);
+        this.eventHandlers = ImmutableList.copyOf(eventHandlers);
     }
     
-    public ThriftServiceProcessor(ThriftCodecManager codecManager, List<? extends ThriftEventHandler> eventHandlers, Object service, Class<?> iface, boolean allowUnannotated)
+    public ThriftServiceProcessor(ThriftCodecManager codecManager, List<? extends ThriftEventHandler> eventHandlers, Object service, Class<?> iface)
     {
         Preconditions.checkNotNull(codecManager, "codecManager is null");
         Preconditions.checkNotNull(service, "service is null");
         
         Map<String, ThriftMethodProcessor> processorMap = newHashMap();
-        ThriftServiceMetadata serviceMetadata = new ThriftServiceMetadata(iface, codecManager.getCatalog(), allowUnannotated);
+        ThriftServiceMetadata serviceMetadata = new ThriftServiceMetadata(iface, codecManager.getCatalog());
         addServiceMetadata(processorMap, service, serviceMetadata, codecManager);
         methods = ImmutableMap.copyOf(processorMap);
         this.eventHandlers = ImmutableList.copyOf(eventHandlers);
@@ -92,10 +108,9 @@ public class ThriftServiceProcessor implements NiftyProcessor
         Preconditions.checkNotNull(services, "service is null");
         Preconditions.checkArgument(!services.isEmpty(), "services is empty");
 
-        final boolean allowUnannotated = false;
         Map<String, ThriftMethodProcessor> processorMap = newHashMap();
         for (Object service : services) {            
-            ThriftServiceMetadata serviceMetadata = new ThriftServiceMetadata(service.getClass(), codecManager.getCatalog(), allowUnannotated);
+            ThriftServiceMetadata serviceMetadata = new ThriftServiceMetadata(service.getClass(), codecManager.getCatalog());
             addServiceMetadata(processorMap, service, serviceMetadata, codecManager);
         }
         methods = ImmutableMap.copyOf(processorMap);

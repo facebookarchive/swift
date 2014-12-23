@@ -17,7 +17,10 @@ package com.facebook.swift.generator.swift2thrift;
 
 import java.io.File;
 import java.util.Map;
+
 import com.facebook.swift.codec.ThriftCodecManager;
+import com.facebook.swift.service.metadata.AnnotatedThriftServiceMetadataBuilder;
+import com.facebook.swift.service.metadata.ThriftServiceMetadataBuilder;
 
 public class Swift2ThriftGeneratorConfig {
     private final File outputFile;
@@ -27,12 +30,12 @@ public class Swift2ThriftGeneratorConfig {
     private final Map<String, String> namespaceMap;
     private final String allowMultiplePackages;
     private final boolean recursive;
-    private final boolean allowUnannotatedServices;
+    private final ThriftServiceMetadataBuilder serviceMetadataBuilder;
     private final ThriftCodecManager codecManager;
     
     private Swift2ThriftGeneratorConfig(final File outputFile, final Map<String, String> includeMap,
             boolean verbose, String defaultPackage, final Map<String, String> namespaceMap,
-            String allowMultiplePackages, boolean recursive, boolean allowUnannotatedServices, ThriftCodecManager codecManager){
+            String allowMultiplePackages, boolean recursive, ThriftServiceMetadataBuilder serviceMetadataBuilder, ThriftCodecManager codecManager){
         this.outputFile = outputFile;
         this.includeMap = includeMap;
         this.verbose = verbose;
@@ -41,7 +44,7 @@ public class Swift2ThriftGeneratorConfig {
         this.allowMultiplePackages = allowMultiplePackages;
         this.recursive = recursive;
         this.codecManager = codecManager;
-        this.allowUnannotatedServices = allowUnannotatedServices;
+        this.serviceMetadataBuilder = serviceMetadataBuilder;
     }
     
 
@@ -83,9 +86,9 @@ public class Swift2ThriftGeneratorConfig {
         return allowMultiplePackages;
     }
 
-    public boolean isAllowUnannotatedServices()
+    public ThriftServiceMetadataBuilder getServiceMetadataBuilder()
     {
-        return allowUnannotatedServices;
+        return serviceMetadataBuilder;
     }
 
     public boolean isRecursive()
@@ -107,8 +110,8 @@ public class Swift2ThriftGeneratorConfig {
         private Map<String, String> namespaceMap;
         private String allowMultiplePackages;
         private boolean recursive;
-        private boolean allowUnannotatedServices;
         private ThriftCodecManager codecManager = new ThriftCodecManager();
+        private ThriftServiceMetadataBuilder serviceMetadataBuilder = new AnnotatedThriftServiceMetadataBuilder(codecManager.getCatalog());
 
         private Builder()
         {
@@ -117,7 +120,7 @@ public class Swift2ThriftGeneratorConfig {
         public Swift2ThriftGeneratorConfig build()
         {
             return new Swift2ThriftGeneratorConfig(outputFile, includeMap, verbose, defaultPackage,
-                    namespaceMap, allowMultiplePackages, recursive, allowUnannotatedServices, codecManager);
+                    namespaceMap, allowMultiplePackages, recursive, serviceMetadataBuilder, codecManager);
         }
 
         public Builder outputFile(final File outputFile)
@@ -156,12 +159,6 @@ public class Swift2ThriftGeneratorConfig {
             return this;
         }
 
-        public Builder allowUnannotatedServices(boolean allowUnannotatedServices)
-        {
-            this.allowUnannotatedServices = allowUnannotatedServices;
-            return this;
-        }
-        
         public Builder recursive(boolean recursive)
         {
             this.recursive = recursive;
@@ -173,5 +170,11 @@ public class Swift2ThriftGeneratorConfig {
             this.codecManager = codecManager;
             return this;
         }
+        
+        public Builder serviceMetadataBuilder(ThriftServiceMetadataBuilder serviceMetadataBuilder) {
+            this.serviceMetadataBuilder = serviceMetadataBuilder;
+            return this;
+        }
+        
     }
 }

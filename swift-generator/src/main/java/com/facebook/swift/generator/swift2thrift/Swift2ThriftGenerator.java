@@ -31,6 +31,7 @@ import com.facebook.swift.generator.util.TemplateLoader;
 import com.facebook.swift.service.ThriftService;
 import com.facebook.swift.service.metadata.ThriftMethodMetadata;
 import com.facebook.swift.service.metadata.ThriftServiceMetadata;
+import com.facebook.swift.service.metadata.ThriftServiceMetadataBuilder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -41,12 +42,14 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stringtemplate.v4.AutoIndentWriter;
 import org.stringtemplate.v4.ST;
 
 import javax.annotation.Nullable;
+
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -79,7 +82,7 @@ public class Swift2ThriftGenerator
     private Set<ThriftServiceMetadata> knownServices = Sets.newHashSet();
     private Map<String, String> namespaceMap;
     private boolean recursive;
-    private boolean allowUnannotatedServices;
+    private ThriftServiceMetadataBuilder serviceMetadataBuilder;
     private static final Set<ThriftType> builtInKnownTypes =
         ImmutableSet.of(ThriftType.BOOL, ThriftType.BYTE, ThriftType.I16, ThriftType.I32,
             ThriftType.I64, ThriftType.DOUBLE, ThriftType.STRING, ThriftType.BINARY,
@@ -91,7 +94,7 @@ public class Swift2ThriftGenerator
     Swift2ThriftGenerator(final Swift2ThriftGeneratorConfig config) throws FileNotFoundException
     {
         this.verbose = config.isVerbose();
-        this.allowUnannotatedServices = config.isAllowUnannotatedServices();
+        this.serviceMetadataBuilder = config.getServiceMetadataBuilder();
         String defaultPackage = config.getDefaultPackage();
 
         if (defaultPackage.isEmpty()) {
@@ -115,7 +118,7 @@ public class Swift2ThriftGenerator
                 continue;
             }
 
-            Object result = convertToThrift(cls, allowUnannotatedServices);
+            Object result = convertToThrift(cls);
             if (result != null) {
                 this.includeMap.put(result, entry.getValue());
             }
@@ -126,10 +129,10 @@ public class Swift2ThriftGenerator
     }
 
     @SuppressWarnings("PMD.CollapsibleIfStatements")
-    public void parseServiceInterfaces(Iterable<Class<?>> inputClasses, boolean allowUnannotated ) throws IOException
+    public void parseServiceInterfaces(Iterable<Class<?>> inputClasses) throws IOException
     {
         for ( Class<?> cls : inputClasses ) {
-            ThriftServiceMetadata result = convertToThriftService(cls, allowUnannotated);
+            ThriftServiceMetadata result = convertToThriftService(cls);
             if (result != null) {
                 thriftServices.add(result);
             }
@@ -144,17 +147,12 @@ public class Swift2ThriftGenerator
         }
     }
     
+
     @SuppressWarnings("PMD.CollapsibleIfStatements")
     public void parseClasses(Iterable<Class<?>> inputClasses) throws IOException
     {
-        parseClasses(inputClasses, allowUnannotatedServices);
-    }
-    
-    @SuppressWarnings("PMD.CollapsibleIfStatements")
-    public void parseClasses(Iterable<Class<?>> inputClasses, boolean allowUnannotated) throws IOException
-    {
         for ( Class<?> cls : inputClasses ) {
-            Object result = convertToThrift(cls, allowUnannotated);
+            Object result = convertToThrift(cls);
             if (result instanceof ThriftType) {
                 thriftTypes.add((ThriftType)result);
             } else if (result instanceof ThriftServiceMetadata) {
@@ -464,12 +462,12 @@ public class Swift2ThriftGenerator
     }
 
     // returns ThriftType, ThriftServiceMetadata or null
-    private Object convertToThrift(Class<?> cls, boolean allowUnannotated)
+    private Object convertToThrift(Class<?> cls)
     {
         Set<ThriftService> serviceAnnotations = ReflectionHelper.getEffectiveClassAnnotations(cls, ThriftService.class);
         if (!serviceAnnotations.isEmpty()) {
             // it's a service
-            return convertToThriftService(cls, allowUnannotated);
+            return convertToThriftService(cls);
         } else {
             // it's a type (will throw if it's not)
             ThriftType thriftType = codecManager.getCatalog().getThriftType(cls);
@@ -480,10 +478,10 @@ public class Swift2ThriftGenerator
         }
     }
 
-    private ThriftServiceMetadata convertToThriftService(Class<?> cls, boolean allowUnannotated)
+    private ThriftServiceMetadata convertToThriftService(Class<?> cls)
     {
-        // it's a service
-        ThriftServiceMetadata serviceMetadata = new ThriftServiceMetadata(cls, codecManager.getCatalog(), allowUnannotated);
+        // it's a service        
+        ThriftServiceMetadata serviceMetadata = serviceMetadataBuilder.build(cls);
         if (verbose) {
             LOG.info("Found thrift service: {}", cls.getSimpleName());
         }
