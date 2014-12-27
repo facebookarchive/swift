@@ -413,6 +413,10 @@ public class Swift2ThriftGenerator
                 usedIncludedTypes.add(t);
                 return true;
             }
+            
+            if (t.getProtocolType()==ThriftProtocolType.COERCION){
+                return verifyField( t.getUncoercedType() );
+            }
 
             if (recursive) {
                 // recursive but type is unknown - add it to the list and recurse

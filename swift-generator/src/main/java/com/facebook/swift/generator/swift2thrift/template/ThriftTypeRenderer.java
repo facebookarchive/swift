@@ -54,6 +54,7 @@ public class ThriftTypeRenderer implements AttributeRenderer
             case STRUCT:    return t.equals(ThriftType.VOID) ? "void" : prefix(t) + t.getStructMetadata().getStructName();
             case STRING:    return "string";
             case BINARY:    return "binary";
+            case COERCION:  return this.toString(t.getUncoercedType());
         }
         throw new IllegalStateException("Bad protocol type" + t.getProtocolType());
     }

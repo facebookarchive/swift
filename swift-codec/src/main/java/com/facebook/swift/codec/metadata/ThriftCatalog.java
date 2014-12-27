@@ -39,6 +39,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
@@ -84,6 +85,8 @@ public class ThriftCatalog
     private final ConcurrentMap<Type, TypeCoercion> coercions = new ConcurrentHashMap<>();
     private final ConcurrentMap<Class<?>, ThriftType> manualTypes = new ConcurrentHashMap<>();
     private final ConcurrentMap<Type, ThriftType> typeCache = new ConcurrentHashMap<>();
+    // TODO: Looks like there's no ConcurrentList?
+    private final ArrayList<ThriftTypePlugin> typePlugins = new ArrayList<ThriftTypePlugin>();
 
     private final ThreadLocal<Deque<Type>> stack = new ThreadLocal<Deque<Type>>()
     {
@@ -93,7 +96,9 @@ public class ThriftCatalog
             return new ArrayDeque<>();
         }
     };
-
+    
+    public void addTypePlugin(ThriftTypePlugin typePlugin) { typePlugins.add(typePlugin);}
+    
     public ThriftCatalog()
     {
         this(MetadataErrors.NULL_MONITOR);
@@ -183,6 +188,11 @@ public class ThriftCatalog
         }
         this.coercions.putAll(coercions);
     }
+    
+    public void addCoercion(TypeCoercion coercion) {
+        ThriftType thriftType = coercion.getThriftType();
+        this.coercions.put(thriftType.getJavaType(), coercion);
+    }
 
     private void verifyCoercionMethod(Method method)
     {
@@ -199,6 +209,14 @@ public class ThriftCatalog
         return coercions.get(type);
     }
 
+    // Do not Commit!!!
+    public ConcurrentMap<Type, ThriftStructMetadata> getStructs() { return structs; }
+    public ConcurrentMap<Class<?>, ThriftEnumMetadata<?>> getEnums() { return enums; }
+    public ConcurrentMap<Type, TypeCoercion> getCoercions() { return coercions; }
+    public ConcurrentMap<Class<?>, ThriftType> getManualTypes() { return manualTypes; }
+    public ConcurrentMap<Type, ThriftType> getTypeCache() { return typeCache; }
+    public ThreadLocal<Deque<Type>> getStack() { return stack; }
+    
     /**
      * Gets the ThriftType for the specified Java type.  The native Thrift type for the Java type will
      * be inferred from the Java type, and if necessary type coercions will be applied.
@@ -253,6 +271,7 @@ public class ThriftCatalog
             ThriftEnumMetadata<? extends Enum<?>> thriftEnumMetadata = getThriftEnumMetadata(rawType);
             return enumType(thriftEnumMetadata);
         }
+                
         if (rawType.isArray()) {
             Class<?> elementType = rawType.getComponentType();
             if (elementType == byte.class) {
@@ -298,6 +317,16 @@ public class ThriftCatalog
         if (coercion != null) {
             return coercion.getThriftType();
         }
+        
+        // Check custom types
+        for (ThriftTypePlugin typePlugin : typePlugins)
+        {
+            ThriftType custom = typePlugin.getThriftType(this,javaType);
+            if (custom != null) {
+                return custom;
+            }
+        }
+        
         throw new IllegalArgumentException("Type can not be coerced to a Thrift type: " + javaType);
     }
 

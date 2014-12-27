@@ -18,6 +18,8 @@ package com.facebook.swift.codec.internal.coercion;
 import com.facebook.swift.codec.ThriftCodec;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.facebook.swift.codec.metadata.TypeCoercion;
+import com.google.common.base.Preconditions;
+
 import org.apache.thrift.protocol.TProtocol;
 
 import javax.annotation.concurrent.Immutable;
@@ -37,9 +39,20 @@ public class CoercionThriftCodec<T> implements ThriftCodec<T>
     {
         this.codec = (ThriftCodec<Object>) codec;
         this.typeCoercion = typeCoercion;
-        this.thriftType = typeCoercion.getThriftType();
+        
+        //this.thriftType = typeCoercion.getThriftType();
+        // NB. The transport type. The various protocols make checks on thriftType.getProtocolType()
+        this.thriftType = typeCoercion.getThriftType().getUncoercedType();
+        Preconditions.checkArgument(
+                this.thriftType!=null,
+                "typeCoercion %s not have an uncoerced type",
+                typeCoercion.toString());
     }
 
+    /**
+     * Represents the thrift transport(/protocol) type.
+     * The actual pass into read or returned from write is determined by the TypeCoercion methods.
+     */
     @Override
     public ThriftType getType()
     {

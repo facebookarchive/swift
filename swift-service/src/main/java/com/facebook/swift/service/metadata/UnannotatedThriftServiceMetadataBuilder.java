@@ -68,28 +68,32 @@ public class UnannotatedThriftServiceMetadataBuilder implements ThriftServiceMet
         // Unannotated policy.
         ArrayList<ThriftMethodMetadata> methods = new ArrayList<ThriftMethodMetadata>();
         for (Method method : serviceClass.getMethods()) {
-            if (allowMethod(method)) {
-                ThriftMethodMetadata meta = null;
-                if (skipBadMethods) {
-                    try {
-                        meta = new ThriftMethodMetadata(serviceName, method, catalog, allowUnannotated);
-                    } catch (IllegalArgumentException e) {
-                        LOG.warn("Could not add " + serviceName + "." + method.getName() + ": " + e.getMessage());
-                        continue;
-                    }
-                }
-                else {
-                    meta = new ThriftMethodMetadata(serviceName, method, catalog, allowUnannotated);
-                }
-                LOG.debug("Added method: " + serviceName + "." + method.getName());
-                methods.add(meta);
+            if (!isMethodsAllowed(method)) {
+                continue;
             }
+
+            ThriftMethodMetadata meta = null;
+            if (skipBadMethods) {
+                try {
+                    meta = new ThriftMethodMetadata(serviceName, method, catalog, allowUnannotated);
+                } catch (IllegalArgumentException e) {
+                    LOG.warn("Could not add " + serviceName + "." + method.getName() + ": " + e.getMessage());
+                    continue;
+                }
+            }
+            else {
+                meta = new ThriftMethodMetadata(serviceName, method, catalog, allowUnannotated);
+            }
+            LOG.debug("Added method: " + serviceName + "." + method.getName() );
+            methods.add(meta);
         }
 
         ImmutableList.Builder<ThriftServiceMetadata> parentServiceBuilder = ImmutableList.builder();
+        /*
         for (Class<?> parent : serviceClass.getInterfaces()) {
             parentServiceBuilder.add(this.build(parent));
         }
+        */
 
         return new ThriftServiceMetadata(
                 // name =
@@ -102,7 +106,7 @@ public class UnannotatedThriftServiceMetadataBuilder implements ThriftServiceMet
                 parentServiceBuilder.build());
     }
 
-    private boolean allowMethod(Method method) {
+    private boolean isMethodsAllowed(Method method) {
         String methodName = method.getName();
         for (String ignore : ignoredMethodNameSubstrings)
         {
@@ -124,7 +128,8 @@ public class UnannotatedThriftServiceMetadataBuilder implements ThriftServiceMet
     public static UnannotatedThriftServiceMetadataBuilder makeScalaBuilder(ThriftCatalog catalog) {
         UnannotatedThriftServiceMetadataBuilder result = new UnannotatedThriftServiceMetadataBuilder(catalog);
         result.addNameFilter("$");
-        result.skipBadMethods(true);
+        result.skipBadMethods(false);
+        //result.skipBadMethods(true);
         return result;
     }
 }

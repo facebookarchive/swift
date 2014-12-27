@@ -124,7 +124,21 @@ public class ThriftType
         uncoercedType = null;
     }
 
-    private ThriftType(ThriftProtocolType protocolType, Type javaType, ThriftType keyType, ThriftType valueType)
+    public ThriftType(ThriftProtocolType protocolType, Type javaType, ThriftType keyType, ThriftType valueType, ThriftType uncoercedType) {
+        Preconditions.checkNotNull(protocolType, "protocolType is null");
+        Preconditions.checkNotNull(javaType, "javaType is null");
+        //Preconditions.checkNotNull(valueType, "valueType is null");
+
+        this.protocolType = protocolType;
+        this.javaType = javaType;
+        this.keyType = keyType;
+        this.valueType = valueType;
+        this.structMetadata = null;
+        this.enumMetadata = null;
+        this.uncoercedType = uncoercedType;         
+    }
+    
+    public ThriftType(ThriftProtocolType protocolType, Type javaType, ThriftType keyType, ThriftType valueType)
     {
         Preconditions.checkNotNull(protocolType, "protocolType is null");
         Preconditions.checkNotNull(javaType, "javaType is null");
@@ -277,12 +291,14 @@ public class ThriftType
         if (structMetadata != null) {
             sb.append(" ").append(structMetadata.getStructClass().getName());
         }
-        else if (keyType != null) {
+        if (keyType != null) {
             sb.append(" keyType=").append(keyType);
-            sb.append(", valueType=").append(valueType);
         }
-        else if (valueType != null) {
+        if (valueType != null) {
             sb.append(" valueType=").append(valueType);
+        }
+        if (uncoercedType != null) {
+            sb.append(" uncoercedType=").append(uncoercedType);
         }
         sb.append('}');
         return sb.toString();
