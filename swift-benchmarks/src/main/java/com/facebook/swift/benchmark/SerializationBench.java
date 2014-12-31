@@ -32,6 +32,7 @@ import com.facebook.swift.benchmark.structs.SmallListInt;
 import com.facebook.swift.benchmark.structs.SmallString;
 import com.facebook.swift.codec.ThriftCodec;
 import com.facebook.swift.codec.ThriftCodecManager;
+import com.facebook.swift.codec.internal.TProtocolSizers;
 import com.google.common.collect.Lists;
 import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.Message;
@@ -215,6 +216,8 @@ public class SerializationBench
 
         // for deserialization
         TNiftyTransport outTransport = new TNiftyTransport(null, new ThriftMessage(ChannelBuffers.EMPTY_BUFFER, ThriftTransportType.UNFRAMED));
+        int serializedSize = codec.serializedSize(struct, TProtocolSizers.COMPACT_SIZER);
+        outTransport.reserveOutputBuffer(serializedSize);
         codec.write(create(structClass), new TCompactProtocol(outTransport));
         serialized = outTransport.getOutputBuffer();
 
@@ -238,6 +241,8 @@ public class SerializationBench
     public ChannelBuffer serialize() throws Exception
     {
         TNiftyTransport transport = new TNiftyTransport(null, new ThriftMessage(ChannelBuffers.EMPTY_BUFFER, ThriftTransportType.UNFRAMED));
+        int serializedSize = codec.serializedSize(struct, TProtocolSizers.COMPACT_SIZER);
+        transport.reserveOutputBuffer(serializedSize);
         TProtocol protocol = new TCompactProtocol(transport);
         codec.write(struct, protocol);
         return transport.getOutputBuffer();
@@ -272,6 +277,8 @@ public class SerializationBench
         TProtocol protocol = new TCompactProtocol(transport);
 
         Object value = codec.read(protocol);
+        int serializedSize = codec.serializedSize(value, TProtocolSizers.COMPACT_SIZER);
+        transport.reserveOutputBuffer(serializedSize);
         codec.write(value, protocol);
         return transport.getOutputBuffer();
     }

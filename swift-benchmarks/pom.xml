@@ -42,6 +42,10 @@
             <groupId>com.facebook.swift</groupId>
             <artifactId>swift-codec</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.facebook.swift</groupId>
+            <artifactId>swift-codec</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>com.facebook.swift</groupId>

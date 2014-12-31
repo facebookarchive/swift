@@ -19,6 +19,7 @@ import com.facebook.swift.codec.ThriftCodec;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.codec.ThriftProtocolType;
 import com.facebook.swift.codec.internal.TProtocolReader;
+import com.facebook.swift.codec.internal.TProtocolSizer;
 import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.internal.compiler.byteCode.CaseStatement;
 import com.facebook.swift.codec.internal.compiler.byteCode.ClassDefinition;
@@ -49,10 +50,11 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.thrift.protocol.TProtocol;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.util.CheckClassAdapter;
 
 import javax.annotation.concurrent.NotThreadSafe;
-
 import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -99,9 +101,11 @@ public class ThriftCodecByteCodeGenerator<T>
 
     private static final Map<ThriftProtocolType, Method> READ_METHODS;
     private static final Map<ThriftProtocolType, Method> WRITE_METHODS;
+    private static final Map<ThriftProtocolType, Method> SIZE_METHODS;
 
     private static final Map<Type, Method> ARRAY_READ_METHODS;
     private static final Map<Type, Method> ARRAY_WRITE_METHODS;
+    private static final Map<Type, Method> ARRAY_SIZE_METHODS;
 
     private final ThriftCodecManager codecManager;
     private final ThriftStructMetadata metadata;
@@ -151,10 +155,12 @@ public class ThriftCodecByteCodeGenerator<T>
             case STRUCT:
                 defineReadStructMethod();
                 defineWriteStructMethod();
+                defineSizeStructMethod();
                 break;
             case UNION:
                 defineReadUnionMethod();
                 defineWriteUnionMethod();
+                defineSizeUnionMethod();
                 break;
             default:
                 throw new IllegalStateException(format("encountered type %s", metadata.getMetadataType()));
@@ -163,6 +169,7 @@ public class ThriftCodecByteCodeGenerator<T>
         // add the non-generic bridge read and write methods
         defineReadBridgeMethod();
         defineWriteBridgeMethod();
+        defineSizeBridgeMethod();
 
         // generate the byte code
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
@@ -904,6 +911,51 @@ public class ThriftCodecByteCodeGenerator<T>
         write.ret();
     }
 
+    /**
+     * Define the size method.
+     */
+    private void defineSizeStructMethod()
+    {
+        MethodDefinition serializedSize = new MethodDefinition(
+                a(PUBLIC),
+                "serializedSize",
+                type(int.class),
+                arg("struct", structType),
+                arg("sizer", TProtocolSizer.class)
+        );
+
+        classDefinition.addMethod(serializedSize);
+
+        // int size = 0;
+        LocalVariableDefinition size = serializedSize.addInitializedLocalVariable(type(int.class), "size");
+
+        LocalVariableDefinition sizer = serializedSize.getLocalVariable("sizer");
+
+        // size += sizer.serializedSizeStructBegin("StructName");
+        serializedSize.loadVariable(size)
+                .loadVariable(sizer)
+                .loadConstant(metadata.getStructName())
+                .invokeInterface(TProtocolSizer.class, "serializedSizeStructBegin", int.class, String.class)
+                .addInstruction(new InsnNode(Opcodes.IADD))
+                .storeVariable(size);
+
+        // size fields
+        for (ThriftFieldMetadata field : metadata.getFields(THRIFT_FIELD)) {
+            sizeField(serializedSize, size, sizer, field);
+        }
+
+        // size += sizer.serializedSizeStop();
+        serializedSize.loadVariable(size)
+                .loadVariable(sizer)
+                .invokeInterface(TProtocolSizer.class, "serializedSizeStop", int.class)
+                .addInstruction(new InsnNode(Opcodes.IADD))
+                .storeVariable(size);
+
+        // return size;
+        serializedSize.loadVariable(size)
+            .retInteger();
+    }
+
     private void writeField(MethodDefinition write, LocalVariableDefinition protocol, ThriftFieldMetadata field)
     {
         // push protocol
@@ -975,6 +1027,148 @@ public class ThriftCodecByteCodeGenerator<T>
         }
     }
 
+    private void sizeField(MethodDefinition serializedSize, LocalVariableDefinition size, LocalVariableDefinition sizer, ThriftFieldMetadata field)
+    {
+        // push size
+        serializedSize.loadVariable(size);
+
+        // push sizer
+        serializedSize.loadVariable(sizer);
+
+        // push ThriftTypeCodec for this field
+        FieldDefinition codecField = codecFields.get(field.getId());
+        if (codecField != null) {
+            serializedSize.loadThis().getField(codecType, codecField);
+        }
+
+        // push field value
+        loadFieldValue(serializedSize, field);
+
+        // if field value is null, don't coerce or write the field
+        if (!isFieldTypeJavaPrimitive(field)) {
+            // ifNullGoto consumes the top of the stack, so we need to duplicate the value
+            serializedSize.dup();
+            serializedSize.ifNullGoto("field_is_null_" + field.getName());
+        }
+
+        // coerce value
+        if (field.getCoercion().isPresent()) {
+            serializedSize.invokeStatic(field.getCoercion().get().getToThrift());
+
+            // if coerced value is null, don't write the field
+            if (!isProtocolTypeJavaPrimitive(field)) {
+                serializedSize.dup();
+                serializedSize.ifNullGoto("field_is_null_" + field.getName());
+            }
+        }
+
+        // size value
+        Method sizeMethod = getSizeMethod(field.getThriftType());
+        if (sizeMethod == null) {
+            throw new IllegalArgumentException("Unsupported field type " + field.getThriftType().getProtocolType());
+        }
+        serializedSize.invokeInterface(sizeMethod)
+                .addInstruction(new InsnNode(Opcodes.IADD))
+                .storeVariable(size);
+
+        // size += sizer.serializedSizeField(fieldName, thriftType, id)
+        // Do this after the field_is_null checks above so that is the field is not going to be
+        // written, we also don't include it's size
+        serializedSize.loadVariable(size)
+                .loadVariable(sizer)
+                .loadConstant(field.getName())
+                .getStaticField(type(ThriftProtocolType.class), field.getThriftType().getProtocolType().name(), type(ThriftProtocolType.class))
+                .loadConstant(field.getId())
+                .invokeInterface(TProtocolSizer.class, "serializedSizeField", int.class, String.class, ThriftProtocolType.class, short.class)
+                .addInstruction(new InsnNode(Opcodes.IADD))
+                .storeVariable(size);
+
+        //
+        // If not written because of a null, clean-up the stack
+        if (!isProtocolTypeJavaPrimitive(field) || !isFieldTypeJavaPrimitive(field)) {
+
+            // value was written so skip cleanup
+            serializedSize.gotoLabel("field_end_" + field.getName());
+
+            // cleanup stack for null field value
+            serializedSize.visitLabel("field_is_null_" + field.getName());
+            // pop value
+            serializedSize.pop();
+            // pop codec
+            if (codecField != null) {
+                serializedSize.pop();
+            }
+            // pop size
+            serializedSize.pop();
+            // pop sizer
+            serializedSize.pop();
+
+            serializedSize.visitLabel("field_end_" + field.getName());
+        }
+    }
+
+    /**
+     * Define the size method.
+     */
+    private void defineSizeUnionMethod()
+    {
+        MethodDefinition serializedSize = new MethodDefinition(
+                a(PUBLIC),
+                "serializedSize",
+                type(int.class),
+                arg("struct", structType),
+                arg("sizer", TProtocolSizer.class)
+        );
+
+        classDefinition.addMethod(serializedSize);
+
+        // int size = 0;
+        LocalVariableDefinition size = serializedSize.addInitializedLocalVariable(type(int.class), "size");
+
+        LocalVariableDefinition sizer = serializedSize.getLocalVariable("sizer");
+
+        // size += sizer.serializedSizeStructBegin("StructName");
+        serializedSize.loadVariable(size)
+                .loadVariable(sizer)
+                .loadConstant(metadata.getStructName())
+                .invokeInterface(TProtocolSizer.class, "serializedSizeStructBegin", int.class, String.class)
+                .addInstruction(new InsnNode(Opcodes.IADD))
+                .storeVariable(size);
+
+        // find the @ThriftUnionId field
+        ThriftFieldMetadata idField = getOnlyElement(metadata.getFields(THRIFT_UNION_ID));
+
+        // load its value
+        loadFieldValue(serializedSize, idField);
+
+        // switch(fieldId)
+        List<CaseStatement> cases = new ArrayList<>();
+        for (ThriftFieldMetadata field : metadata.getFields(THRIFT_FIELD)) {
+            cases.add(caseStatement(field.getId(), field.getName() + "-write-field"));
+        }
+        serializedSize.switchStatement("default-write", cases);
+
+        // size fields
+        for (ThriftFieldMetadata field : metadata.getFields(THRIFT_FIELD)) {
+            serializedSize.visitLabel(field.getName() + "-write-field");
+            sizeField(serializedSize, size, sizer, field);
+            serializedSize.gotoLabel("default-write");
+        }
+
+        // size += sizer.serializedSizeStop();
+        serializedSize.visitLabel("default-write")
+                .loadVariable(size)
+                .loadVariable(sizer)
+                .invokeInterface(TProtocolSizer.class, "serializedSizeStop", int.class)
+                .addInstruction(new InsnNode(Opcodes.IADD))
+                .storeVariable(size);
+
+        // return size;
+        serializedSize.loadVariable(size)
+                .retInteger();
+    }
+
+
     private void loadFieldValue(MethodDefinition write, ThriftFieldMetadata field)
     {
         write.loadVariable("struct");
@@ -1031,6 +1225,27 @@ public class ThriftCodecByteCodeGenerator<T>
                                 type(TProtocol.class)
                         )
                         .ret()
+        );
+    }
+
+    /**
+     * Defines the generics bridge method with untyped args to the type specific serializedSize method.
+     */
+    private void defineSizeBridgeMethod()
+    {
+        classDefinition.addMethod(
+                new MethodDefinition(a(PUBLIC, BRIDGE, SYNTHETIC), "serializedSize", type(int.class), arg("struct", Object.class), arg("sizer", TProtocolSizer.class))
+                        .loadThis()
+                        .loadVariable("struct", structType)
+                        .loadVariable("sizer")
+                        .invokeVirtual(
+                                codecType,
+                                "serializedSize",
+                                type(int.class),
+                                structType,
+                                type(TProtocolSizer.class)
+                        )
+                        .retInteger()
         );
     }
 
@@ -1185,9 +1400,18 @@ public class ThriftCodecByteCodeGenerator<T>
         return READ_METHODS.get(thriftType.getProtocolType());
     }
 
+    private Method getSizeMethod(ThriftType thriftType)
+    {
+        if (ReflectionHelper.isArray(thriftType.getJavaType())) {
+            return ARRAY_SIZE_METHODS.get(thriftType.getJavaType());
+        }
+        return SIZE_METHODS.get(thriftType.getProtocolType());
+    }
+
     static {
         ImmutableMap.Builder<ThriftProtocolType, Method> writeBuilder = ImmutableMap.builder();
         ImmutableMap.Builder<ThriftProtocolType, Method> readBuilder = ImmutableMap.builder();
+        ImmutableMap.Builder<ThriftProtocolType, Method> sizeBuilder = ImmutableMap.builder();
 
         try {
             writeBuilder.put(BOOL, TProtocolWriter.class.getMethod("writeBoolField", String.class, short.class, boolean.class));
@@ -1217,15 +1441,31 @@ public class ThriftCodecByteCodeGenerator<T>
             readBuilder.put(SET, TProtocolReader.class.getMethod("readSetField", ThriftCodec.class));
             readBuilder.put(LIST, TProtocolReader.class.getMethod("readListField", ThriftCodec.class));
             readBuilder.put(ENUM, TProtocolReader.class.getMethod("readEnumField", ThriftCodec.class));
+
+            sizeBuilder.put(BOOL, TProtocolSizer.class.getMethod("serializedSizeBool", boolean.class));
+            sizeBuilder.put(BYTE, TProtocolSizer.class.getMethod("serializedSizeByte", byte.class));
+            sizeBuilder.put(DOUBLE, TProtocolSizer.class.getMethod("serializedSizeDouble", double.class));
+            sizeBuilder.put(I16, TProtocolSizer.class.getMethod("serializedSizeI16", short.class));
+            sizeBuilder.put(I32, TProtocolSizer.class.getMethod("serializedSizeI32", int.class));
+            sizeBuilder.put(I64, TProtocolSizer.class.getMethod("serializedSizeI64", long.class));
+            sizeBuilder.put(STRING, TProtocolSizer.class.getMethod("serializedSizeString", String.class));
+            sizeBuilder.put(BINARY, TProtocolSizer.class.getMethod("serializedSizeBinary", ByteBuffer.class));
+            sizeBuilder.put(STRUCT, TProtocolSizer.class.getMethod("serializedSizeStruct", ThriftCodec.class, Object.class));
+            sizeBuilder.put(MAP, TProtocolSizer.class.getMethod("serializedSizeMap", ThriftCodec.class, Map.class));
+            sizeBuilder.put(SET, TProtocolSizer.class.getMethod("serializedSizeSet", ThriftCodec.class, Set.class));
+            sizeBuilder.put(LIST, TProtocolSizer.class.getMethod("serializedSizeList", ThriftCodec.class, List.class));
+            sizeBuilder.put(ENUM, TProtocolSizer.class.getMethod("serializedSizeEnum", ThriftCodec.class, Enum.class));
         }
         catch (NoSuchMethodException e) {
             throw Throwables.propagate(e);
         }
         WRITE_METHODS = writeBuilder.build();
         READ_METHODS = readBuilder.build();
+        SIZE_METHODS = sizeBuilder.build();
 
         ImmutableMap.Builder<Type, Method> arrayWriteBuilder = ImmutableMap.builder();
         ImmutableMap.Builder<Type, Method> arrayReadBuilder = ImmutableMap.builder();
+        ImmutableMap.Builder<Type, Method> arraySizeBuilder = ImmutableMap.builder();
 
         try {
             arrayWriteBuilder.put(boolean[].class, TProtocolWriter.class.getMethod("writeBoolArrayField", String.class, short.class, boolean[].class));
@@ -1244,11 +1484,19 @@ public class ThriftCodecByteCodeGenerator<T>
             // simpler to add explicit handling here
             arrayWriteBuilder.put(byte[].class, TProtocolWriter.class.getMethod("writeBinaryField", String.class, short.class, ByteBuffer.class));
             arrayReadBuilder.put(byte[].class, TProtocolReader.class.getMethod("readBinaryField"));
+            arraySizeBuilder.put(byte[].class, TProtocolSizer.class.getMethod("serializedSizeBinary", ByteBuffer.class));
+
+            arraySizeBuilder.put(boolean[].class, TProtocolSizer.class.getMethod("serializedSizeBoolArray", boolean[].class));
+            arraySizeBuilder.put(short[].class, TProtocolSizer.class.getMethod("serializedSizeI16Array", short[].class));
+            arraySizeBuilder.put(int[].class, TProtocolSizer.class.getMethod("serializedSizeI32Array", int[].class));
+            arraySizeBuilder.put(long[].class, TProtocolSizer.class.getMethod("serializedSizeI64Array", long[].class));
+            arraySizeBuilder.put(double[].class, TProtocolSizer.class.getMethod("serializedSizeDoubleArray", double[].class));
         }
         catch (NoSuchMethodException e) {
             throw Throwables.propagate(e);
         }
         ARRAY_WRITE_METHODS = arrayWriteBuilder.build();
         ARRAY_READ_METHODS = arrayReadBuilder.build();
+        ARRAY_SIZE_METHODS = arraySizeBuilder.build();
     }
 }

@@ -18,6 +18,7 @@ package com.facebook.swift.codec.internal.reflection;
 import com.facebook.swift.codec.ThriftCodec;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.codec.internal.TProtocolReader;
+import com.facebook.swift.codec.internal.TProtocolSizer;
 import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.FieldKind;
 import com.facebook.swift.codec.metadata.ThriftConstructorInjection;
@@ -131,6 +132,41 @@ public class ReflectionThriftUnionCodec<T> extends AbstractReflectionThriftCodec
             }
         }
         writer.writeStructEnd();
+    }
+
+    @Override
+    public int serializedSize(T instance, TProtocolSizer sizer)
+    {
+        try {
+            int size = 0;
+
+            Short idValue = (Short) getFieldValue(instance, idField.getKey());
+
+            size += sizer.serializedSizeStructBegin(metadata.getStructName());
+            if (metadataMap.containsKey(idValue)) {
+                ThriftFieldMetadata fieldMetadata = metadataMap.get(idValue);
+
+                if (fieldMetadata.isReadOnly() || fieldMetadata.getType() != THRIFT_FIELD) {
+                    throw new IllegalStateException(format("Field %s is not readable", fieldMetadata.getName()));
+                }
+
+                Object fieldValue = getFieldValue(instance, fieldMetadata);
+
+                // write the field
+                if (fieldValue != null) {
+                    @SuppressWarnings("unchecked")
+                    ThriftCodec<Object> codec = (ThriftCodec<Object>) fields.get(fieldMetadata.getId());
+                    size += sizer.serializedSizeField(fieldMetadata.getName(), fieldMetadata.getThriftType().getProtocolType(), fieldMetadata.getId());
+                    size += sizer.serializedSizeStruct(codec, fieldValue);
+                }
+            }
+            size += sizer.serializedSizeStop();
+
+            return size;
+        } catch (Exception e) {
+            Throwables.propagate(e);
+            return 0;
+        }
     }
 
     @SuppressWarnings("unchecked")

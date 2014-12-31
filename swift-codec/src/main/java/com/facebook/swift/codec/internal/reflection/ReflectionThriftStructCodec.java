@@ -19,6 +19,7 @@ import com.facebook.swift.codec.ThriftCodec;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.codec.ThriftField;
 import com.facebook.swift.codec.internal.TProtocolReader;
+import com.facebook.swift.codec.internal.TProtocolSizer;
 import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftConstructorInjection;
 import com.facebook.swift.codec.metadata.ThriftFieldInjection;
@@ -117,6 +118,40 @@ public class ReflectionThriftStructCodec<T> extends AbstractReflectionThriftCode
             }
         }
         writer.writeStructEnd();
+    }
+
+    @Override
+    public int serializedSize(T instance, TProtocolSizer sizer)
+    {
+        int size = 0;
+
+        size += sizer.serializedSizeStructBegin(metadata.getStructName());
+
+        for (ThriftFieldMetadata fieldMetadata : metadata.getFields(THRIFT_FIELD)) {
+            // is the field readable?
+            if (fieldMetadata.isWriteOnly()) {
+                continue;
+            }
+
+            // get the field value
+            Object fieldValue = null;
+            try {
+                fieldValue = getFieldValue(instance, fieldMetadata);
+            } catch (Exception e) {
+                Throwables.propagate(e);
+            }
+
+            // write the field
+            if (fieldValue != null) {
+                @SuppressWarnings("unchecked")
+                ThriftCodec<Object> codec = (ThriftCodec<Object>) fields.get(fieldMetadata.getId());
+                size += sizer.serializedSizeField(fieldMetadata.getName(), fieldMetadata.getThriftType().getProtocolType(), fieldMetadata.getId());
+                size += codec.serializedSize(fieldValue, sizer);
+            }
+        }
+
+        size += sizer.serializedSizeStop();
+        return size;
     }
 
     @SuppressWarnings("unchecked")

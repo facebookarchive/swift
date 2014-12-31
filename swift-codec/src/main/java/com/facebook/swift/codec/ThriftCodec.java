@@ -15,6 +15,7 @@
  */
 package com.facebook.swift.codec;
 
+import com.facebook.swift.codec.internal.TProtocolSizer;
 import com.facebook.swift.codec.metadata.ThriftType;
 import org.apache.thrift.protocol.TProtocol;
 
@@ -53,4 +54,12 @@ public interface ThriftCodec<T>
      */
     public void write(T value, TProtocol protocol)
             throws Exception;
+
+    /**
+     * Writes a value to the supplied Thrift protocol writer.
+     *
+     * @param value the value to size; not null
+     * @param sizer the protocol sizer use
+     */
+    public int serializedSize(T value, TProtocolSizer sizer);
 }

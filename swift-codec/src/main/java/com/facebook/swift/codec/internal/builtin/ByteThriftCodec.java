@@ -16,6 +16,7 @@
 package com.facebook.swift.codec.internal.builtin;
 
 import com.facebook.swift.codec.ThriftCodec;
+import com.facebook.swift.codec.internal.TProtocolSizer;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.base.Preconditions;
 import org.apache.thrift.protocol.TProtocol;
@@ -46,5 +47,11 @@ public class ByteThriftCodec implements ThriftCodec<Byte>
         Preconditions.checkNotNull(value, "value is null");
         Preconditions.checkNotNull(protocol, "protocol is null");
         protocol.writeByte(value);
+    }
+
+    @Override
+    public int serializedSize(Byte value, TProtocolSizer sizer)
+    {
+        return sizer.serializedSizeByte(value);
     }
 }

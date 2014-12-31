@@ -78,9 +78,11 @@ import static org.objectweb.asm.Opcodes.IFEQ;
 import static org.objectweb.asm.Opcodes.IFNONNULL;
 import static org.objectweb.asm.Opcodes.IFNULL;
 import static org.objectweb.asm.Opcodes.ILOAD;
+import static org.objectweb.asm.Opcodes.INVOKEINTERFACE;
 import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
+import static org.objectweb.asm.Opcodes.IRETURN;
 import static org.objectweb.asm.Opcodes.ISTORE;
 import static org.objectweb.asm.Opcodes.LCONST_0;
 import static org.objectweb.asm.Opcodes.NEW;
@@ -429,9 +431,47 @@ public class MethodDefinition
         return this;
     }
 
+    public MethodDefinition invokeInterface(
+            Class<?> type,
+            String name,
+            Class<?> returnType,
+            Class<?>... parameterTypes
+    )
+    {
+        instructionList.add(
+                new MethodInsnNode(
+                        INVOKEINTERFACE,
+                        type(type).getClassName(),
+                        name,
+                        methodDescription(returnType, parameterTypes)
+                )
+        );
+        return this;
+    }
+
+    public MethodDefinition invokeInterface(Method method)
+    {
+        instructionList.add(
+                new MethodInsnNode(
+                        INVOKEINTERFACE,
+                        Type.getInternalName(method.getDeclaringClass()),
+                        method.getName(),
+                        Type.getMethodDescriptor(method)
+                )
+        );
+        return this;
+    }
+
+
     public MethodDefinition ret()
     {
         instructionList.add(new InsnNode(RETURN));
+        return this;
+    }
+
+    public MethodDefinition retInteger()
+    {
+        instructionList.add(new InsnNode(IRETURN));
         return this;
     }
 

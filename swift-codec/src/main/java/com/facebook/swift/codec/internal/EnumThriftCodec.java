@@ -74,19 +74,28 @@ public class EnumThriftCodec<T extends Enum<T>> implements ThriftCodec<T>
         );
     }
 
+    private int getValue(T enumConstant)
+    {
+        Preconditions.checkNotNull(enumConstant, "enumConstant is null");
+
+        if (enumMetadata.hasExplicitThriftValue()) {
+            return enumMetadata.getByEnumConstant().get(enumConstant);
+        }
+        else {
+            return enumConstant.ordinal();
+        }
+    }
+
     @Override
     public void write(T enumConstant, TProtocol protocol)
             throws Exception
     {
-        Preconditions.checkNotNull(enumConstant, "enumConstant is null");
+        protocol.writeI32(getValue(enumConstant));
+    }
 
-        int enumValue;
-        if (enumMetadata.hasExplicitThriftValue()) {
-            enumValue = enumMetadata.getByEnumConstant().get(enumConstant);
-        }
-        else {
-            enumValue = enumConstant.ordinal();
-        }
-        protocol.writeI32(enumValue);
+    @Override
+    public int serializedSize(T enumConstant, TProtocolSizer sizer)
+    {
+        return sizer.serializedSizeI32(getValue(enumConstant));
     }
 }
