@@ -119,6 +119,8 @@ public class ThriftCatalog
 
     public void addThriftType(ThriftType thriftType)
     {
+        // Is easy to try to register Object when processing generics.
+        Preconditions.checkArgument(TypeToken.of(thriftType.getJavaType()).getRawType()!=Object.class, "Cannot register Object as ThriftType.");        
         manualTypes.put(TypeToken.of(thriftType.getJavaType()).getRawType(), thriftType);
     }
 
@@ -214,7 +216,7 @@ public class ThriftCatalog
     public ConcurrentMap<Class<?>, ThriftEnumMetadata<?>> getEnums() { return enums; }
     public ConcurrentMap<Type, TypeCoercion> getCoercions() { return coercions; }
     public ConcurrentMap<Class<?>, ThriftType> getManualTypes() { return manualTypes; }
-    public ConcurrentMap<Type, ThriftType> getTypeCache() { return typeCache; }
+    public ConcurrentMap<Type, ThriftType> getTypeCache()   { return typeCache; }
     public ThreadLocal<Deque<Type>> getStack() { return stack; }
     
     /**
@@ -267,19 +269,35 @@ public class ThriftCatalog
         if (ByteBuffer.class.isAssignableFrom(rawType)) {
             return BINARY;
         }
+                
+        // Check for custom types. These may override default handling.
+        for (ThriftTypePlugin typePlugin : typePlugins)
+        {
+            ThriftType custom = typePlugin.getThriftType(this,javaType);
+            if (custom != null) {
+                return custom;
+            }
+        }
+        
         if (Enum.class.isAssignableFrom(rawType)) {
             ThriftEnumMetadata<? extends Enum<?>> thriftEnumMetadata = getThriftEnumMetadata(rawType);
             return enumType(thriftEnumMetadata);
         }
-                
+
         if (rawType.isArray()) {
             Class<?> elementType = rawType.getComponentType();
             if (elementType == byte.class) {
-                // byte[] is encoded as BINARY and requires a coersion
+                // byte[] is encoded as BINARY and requires a coercion
                 return coercions.get(javaType).getThriftType();
             }
-            return array(getThriftType(elementType));
+            if ( isSupportedArrayComponentType(elementType) )
+            {
+                // TODO: This takes/produces and ArrayList<E> in the interface, not E[]
+                // Coercion is required.
+                return array(getThriftType(elementType));
+            }
         }
+        
         if (Map.class.isAssignableFrom(rawType)) {
             Type mapKeyType = getMapKeyType(javaType);
             Type mapValueType = getMapValueType(javaType);
@@ -306,25 +324,14 @@ public class ThriftCatalog
             // An union looks like a struct with a single field.
             return struct(structMetadata);
         }
-
         if (ListenableFuture.class.isAssignableFrom(rawType)) {
             Type returnType = getFutureReturnType(javaType);
             return getThriftType(returnType);
         }
-
         // coerce the type if possible
         TypeCoercion coercion = coercions.get(javaType);
         if (coercion != null) {
             return coercion.getThriftType();
-        }
-        
-        // Check custom types
-        for (ThriftTypePlugin typePlugin : typePlugins)
-        {
-            ThriftType custom = typePlugin.getThriftType(this,javaType);
-            if (custom != null) {
-                return custom;
-            }
         }
         
         throw new IllegalArgumentException("Type can not be coerced to a Thrift type: " + javaType);
@@ -332,66 +339,15 @@ public class ThriftCatalog
 
     public boolean isSupportedStructFieldType(Type javaType)
     {
-        Class<?> rawType = TypeToken.of(javaType).getRawType();
-        if (boolean.class == rawType) {
-            return true;
+        boolean result = false;
+        try {
+            result = getThriftType(javaType) != null;
+        } catch (IllegalArgumentException e) {
+            // TODO -- this is not ideal.
+            // Would be better if all the other callers of getThriftTypeUncached checked for non-null
         }
-        if (byte.class == rawType) {
-            return true;
-        }
-        if (short.class == rawType) {
-            return true;
-        }
-        if (int.class == rawType) {
-            return true;
-        }
-        if (long.class == rawType) {
-            return true;
-        }
-        if (double.class == rawType) {
-            return true;
-        }
-        if (String.class == rawType) {
-            return true;
-        }
-        if (ByteBuffer.class.isAssignableFrom(rawType)) {
-            return true;
-        }
-        if (Enum.class.isAssignableFrom(rawType)) {
-            return true;
-        }
-        if (rawType.isArray()) {
-            Class<?> elementType = rawType.getComponentType();
-            return isSupportedArrayComponentType(elementType);
-        }
-        if (Map.class.isAssignableFrom(rawType)) {
-            Type mapKeyType = getMapKeyType(javaType);
-            Type mapValueType = getMapValueType(javaType);
-            return isSupportedStructFieldType(mapKeyType) && isSupportedStructFieldType(mapValueType);
-        }
-        if (Set.class.isAssignableFrom(rawType)) {
-            Type elementType = getIterableType(javaType);
-            return isSupportedStructFieldType(elementType);
-        }
-        if (Iterable.class.isAssignableFrom(rawType)) {
-            Type elementType = getIterableType(javaType);
-            return isSupportedStructFieldType(elementType);
-        }
-        if (rawType.isAnnotationPresent(ThriftStruct.class)) {
-            return true;
-        }
-        if (rawType.isAnnotationPresent(ThriftUnion.class)) {
-            return true;
-        }
-
-        // NOTE: void is not a supported struct type
-
-        // coerce the type if possible
-        TypeCoercion coercion = coercions.get(javaType);
-        if (coercion != null) {
-            return true;
-        }
-        return false;
+        return result;
+        
     }
 
     public boolean isSupportedArrayComponentType(Class<?> componentType)

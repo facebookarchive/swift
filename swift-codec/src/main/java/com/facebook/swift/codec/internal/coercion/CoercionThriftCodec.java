@@ -64,7 +64,7 @@ public class CoercionThriftCodec<T> implements ThriftCodec<T>
             throws Exception
     {
         Object thriftValue = codec.read(protocol);
-        T javaValue = (T) typeCoercion.getFromThrift().invoke(null, thriftValue);
+        T javaValue = (T) typeCoercion.getFromThrift().invoke(typeCoercion.getMethodObject(), thriftValue);
         return javaValue;
     }
 
@@ -72,7 +72,7 @@ public class CoercionThriftCodec<T> implements ThriftCodec<T>
     public void write(T javaValue, TProtocol protocol)
             throws Exception
     {
-        Object thriftValue = typeCoercion.getToThrift().invoke(null, javaValue);
+        Object thriftValue = typeCoercion.getToThrift().invoke(typeCoercion.getMethodObject(), javaValue);
         codec.write(thriftValue, protocol);
     }
 }

@@ -166,7 +166,7 @@ public class TestThriftUnionMetadataBuilder
         ThriftUnionMetadataBuilder builder = new ThriftUnionMetadataBuilder(new ThriftCatalog(), UnsupportedJavaType.class);
 
         MetadataErrors metadataErrors = builder.getMetadataErrors();
-
+        
         assertThat(metadataErrors.getErrors())
                 .as("metadata errors")
                 .hasSize(1);

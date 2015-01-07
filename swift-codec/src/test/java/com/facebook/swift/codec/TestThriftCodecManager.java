@@ -15,9 +15,12 @@
  */
 package com.facebook.swift.codec;
 
+import static org.testng.AssertJUnit.assertTrue;
+
 import com.facebook.swift.codec.internal.EnumThriftCodec;
 import com.facebook.swift.codec.internal.ThriftCodecFactory;
 import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
+import com.facebook.swift.codec.internal.compiler.CompilerThriftCodecFactory;
 import com.facebook.swift.codec.metadata.ThriftCatalog;
 import com.facebook.swift.codec.metadata.ThriftEnumMetadata;
 import com.facebook.swift.codec.metadata.ThriftEnumMetadataBuilder;
@@ -26,6 +29,7 @@ import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.reflect.TypeToken;
 
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
@@ -38,9 +42,10 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayOutputStream;
+import java.lang.reflect.Type;
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 
 import static com.facebook.swift.codec.metadata.ThriftType.BOOL;
 import static com.facebook.swift.codec.metadata.ThriftType.BYTE;
@@ -53,7 +58,6 @@ import static com.facebook.swift.codec.metadata.ThriftType.enumType;
 import static com.facebook.swift.codec.metadata.ThriftType.list;
 import static com.facebook.swift.codec.metadata.ThriftType.map;
 import static com.facebook.swift.codec.metadata.ThriftType.set;
-
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.fail;
@@ -62,19 +66,30 @@ public class TestThriftCodecManager
 {
     public static final String UTF8_TEST_STRING = "A" + "\u00ea" + "\u00f1" + "\u00fc" + "C";
     private ThriftCodecManager codecManager;
-
+    private boolean failIfGenerateThriftCodecCalled = true;
+    
     @BeforeMethod
     protected void setUp()
             throws Exception
     {
-        codecManager = new ThriftCodecManager(new ThriftCodecFactory()
-        {
+        failIfGenerateThriftCodecCalled = true;
+        codecManager = new ThriftCodecManager(new ThriftCodecFactory() {
+
+            //CompilerThriftCodecFactory compilerFactory = new CompilerThriftCodecFactory(true);
+            CompilerThriftCodecFactory compilerFactory = new CompilerThriftCodecFactory(false);
+
             @Override
             public ThriftCodec<?> generateThriftTypeCodec(ThriftCodecManager codecManager, ThriftStructMetadata metadata)
             {
-                throw new UnsupportedOperationException();
+                if (failIfGenerateThriftCodecCalled) {
+                    throw new UnsupportedOperationException();
+                }
+                else {
+                    return compilerFactory.generateThriftTypeCodec(codecManager, metadata);
+                }
             }
         });
+
         ThriftCatalog catalog = codecManager.getCatalog();
         catalog.addDefaultCoercions(DefaultJavaCoercions.class);
         ThriftType fruitType = catalog.getThriftType(Fruit.class);
@@ -140,6 +155,8 @@ public class TestThriftCodecManager
         testRoundTripSerialize(map(STRING, STRING), ImmutableMap.of("1", "one", "2", "two"));
     }
 
+
+    
     @Test
     public void testCoercedCollection()
             throws Exception
@@ -147,8 +164,56 @@ public class TestThriftCodecManager
         testRoundTripSerialize(set(I32.coerceTo(Integer.class)), ImmutableSet.of(1, 2, 3));
         testRoundTripSerialize(list(I32.coerceTo(Integer.class)), ImmutableList.of(4, 5, 6));
         testRoundTripSerialize(map(I32.coerceTo(Integer.class), I32.coerceTo(Integer.class)), ImmutableMap.of(1, 2, 2, 4, 3, 9));
-    }
+    }        
 
+    @Test
+    public void testPluginCoercedType()
+            throws Exception
+    {
+        failIfGenerateThriftCodecCalled = false;
+        codecManager.getCatalog().addTypePlugin(new MyCustomThriftPlugin());
+
+        MyCustomListType<String> value = new MyCustomListType<String>();
+        value.storage.add("123");
+        value.storage.add("456");
+        TypeToken<MyCustomListType<String>> javaTypeTok = new TypeToken<MyCustomListType<String>>() {};
+        ThriftType thriftType = codecManager.getCatalog().getThriftType(javaTypeTok.getType());
+        testRoundTripSerialize(thriftType, value);
+    }
+    
+    /**
+     * The codec used by a struct field of type T can be very different to the codec used by 
+     * type T directly.
+     */
+    @SuppressWarnings("serial")
+    @Test
+    public void testStructWithPluggedInCoercedAttributes()
+            throws Exception
+    {
+        failIfGenerateThriftCodecCalled = false;
+        codecManager.getCatalog().addTypePlugin(new MyCustomThriftPlugin());
+
+        MyCustomTypeWithCoercedAttributes value = new MyCustomTypeWithCoercedAttributes();
+        
+        // Modify constructor default.
+        value.arrayListAttribute.add("qwerq");
+        value.listString.storage.add("ggg");
+        value.listOfList.storage.add(new MyCustomListType<String>("abcdefg"));
+        value.listInt.storage.add(new Integer(-10));
+        
+        OneOfEverything ooe = new OneOfEverything();
+        ooe.aBoolean = false;
+        ooe.aInt = -1234;
+        value.listOneEverything.storage.add(ooe);
+        
+        Type javaType = new TypeToken<MyCustomTypeWithCoercedAttributes>() {}.getType();
+        ThriftType thriftType = codecManager.getCatalog().getThriftType(javaType);
+
+        testRoundTripSerialize(thriftType, value);
+    }    
+    
+    
+    
     @Test
     public void testAddStructCodec()
             throws Exception

@@ -101,6 +101,10 @@ public class ThriftType
         checkNotNull(enumMetadata, "enumMetadata is null");
         return new ThriftType(enumMetadata);
     }
+    
+    public static ThriftType coercion( Type javaType, ThriftType uncoercedType ) {
+        return new ThriftType(ThriftProtocolType.COERCION,  javaType,  uncoercedType);
+    }
 
     private final ThriftProtocolType protocolType;
     private final Type javaType;
@@ -108,6 +112,10 @@ public class ThriftType
     private final ThriftType valueType;
     private final ThriftStructMetadata structMetadata;
     private final ThriftEnumMetadata<?> enumMetadata;
+
+    /**
+     * This is the type the object goes in and out of the transport layer as.
+     */
     private final ThriftType uncoercedType;
 
     private ThriftType(ThriftProtocolType protocolType, Type javaType)
@@ -123,21 +131,7 @@ public class ThriftType
         enumMetadata = null;
         uncoercedType = null;
     }
-
-    public ThriftType(ThriftProtocolType protocolType, Type javaType, ThriftType keyType, ThriftType valueType, ThriftType uncoercedType) {
-        Preconditions.checkNotNull(protocolType, "protocolType is null");
-        Preconditions.checkNotNull(javaType, "javaType is null");
-        //Preconditions.checkNotNull(valueType, "valueType is null");
-
-        this.protocolType = protocolType;
-        this.javaType = javaType;
-        this.keyType = keyType;
-        this.valueType = valueType;
-        this.structMetadata = null;
-        this.enumMetadata = null;
-        this.uncoercedType = uncoercedType;         
-    }
-    
+        
     public ThriftType(ThriftProtocolType protocolType, Type javaType, ThriftType keyType, ThriftType valueType)
     {
         Preconditions.checkNotNull(protocolType, "protocolType is null");
@@ -181,14 +175,29 @@ public class ThriftType
 
     public ThriftType(ThriftType uncoercedType, Type javaType)
     {
-        this.javaType = javaType;
-        this.uncoercedType = uncoercedType;
-
+        // ??? Is this right?
         this.protocolType = uncoercedType.getProtocolType();
+        this.javaType = javaType;
         keyType = null;
         valueType = null;
         structMetadata = null;
         enumMetadata = null;
+        this.uncoercedType = uncoercedType;
+    }
+    
+    private ThriftType(ThriftProtocolType protocolType, Type javaType, ThriftType uncoercedType) {
+        Preconditions.checkNotNull(protocolType, "protocolType is null");
+        Preconditions.checkNotNull(javaType, "javaType is null");
+        Preconditions.checkNotNull(uncoercedType, "javaType is null");
+        Preconditions.checkNotNull(protocolType==ThriftProtocolType.UNKNOWN || protocolType==ThriftProtocolType.COERCION, "protocolType is not COERCION");
+
+        this.protocolType = protocolType;
+        this.javaType = javaType;
+        this.keyType = null;
+        this.valueType = null;
+        this.structMetadata = null;
+        this.enumMetadata = null;
+        this.uncoercedType = uncoercedType;         
     }
 
     public Type getJavaType()
