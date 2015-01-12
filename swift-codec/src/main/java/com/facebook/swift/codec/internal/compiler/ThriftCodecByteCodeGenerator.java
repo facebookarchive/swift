@@ -41,11 +41,14 @@ import com.facebook.swift.codec.metadata.ThriftParameterInjection;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import org.apache.thrift.protocol.TProtocol;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -392,7 +395,17 @@ public class ThriftCodecByteCodeGenerator<T>
                 }
 
                 // coerce the type
-                read.invokeStatic(field.getCoercion().get().getFromThrift());
+                if (field.getCoercion().isPresent()) {
+                    Method method = field.getCoercion().get().getFromThrift();
+                    if ( isStaticMethod(method) ) {
+                        read.invokeStatic(method);
+                    }
+                    else{
+                        Preconditions.checkArgument(false, "Coercion.getMethodObject() must be null"); // unless someone implement calling the method 
+                        //Object o = field.getCoercion().get().getMethodObject();
+                        //read.loadVariable(?).invokeVirtual(method);
+                    }
+                }
 
                 // Cast to field type
                 {
@@ -541,6 +554,10 @@ public class ThriftCodecByteCodeGenerator<T>
         classDefinition.addMethod(read);
     }
 
+    private static boolean isStaticMethod(Method m) {
+        return (m.getModifiers() & java.lang.reflect.Modifier.STATIC) != 0;
+    }
+
     /**
      * Defines the code to read all of the data from the protocol into local
      * variables.
@@ -613,7 +630,15 @@ public class ThriftCodecByteCodeGenerator<T>
 
             // coerce the type
             if (field.getCoercion().isPresent()) {
-                read.invokeStatic(field.getCoercion().get().getFromThrift());
+                Method method = field.getCoercion().get().getFromThrift();
+                if ( isStaticMethod(method) ) {
+                    read.invokeStatic(method);
+                }
+                else{
+                    Preconditions.checkArgument(false, "Coercion.getMethodObject() must be null"); // unless someone implement calling the method 
+                    //Object o = field.getCoercion().get().getMethodObject();
+                    //read.loadVariable(?).invokeVirtual(method);
+                }
             }
 
             // store protocol value
@@ -979,7 +1004,16 @@ public class ThriftCodecByteCodeGenerator<T>
 
         // coerce value
         if (field.getCoercion().isPresent()) {
-            write.invokeStatic(field.getCoercion().get().getToThrift());
+            
+            Method method = field.getCoercion().get().getToThrift();
+            if ( isStaticMethod(method) ) {
+                write.invokeStatic(method);
+            }
+            else{
+                Preconditions.checkArgument(false, "Coercion.getMethodObject() must be null"); // unless someone implement calling the method 
+                //Object o = field.getCoercion().get().getMethodObject();
+                //write.loadVariable(?).invokVirtual(method);
+            }
 
             // if coerced value is null, don't write the field
             if (!isProtocolTypeJavaPrimitive(field)) {
@@ -1241,15 +1275,17 @@ public class ThriftCodecByteCodeGenerator<T>
 
     private Method getWriteMethod(ThriftType thriftType)
     {
-        if (ReflectionHelper.isArray(thriftType.getJavaType())) {
-            return ARRAY_WRITE_METHODS.get(thriftType.getJavaType());
-        }
-
         ThriftProtocolType pt = thriftType.getProtocolType();
 
         if (pt == ThriftProtocolType.COERCION) {
             // Uncoerced type determines the transport-layer type.
             pt = thriftType.getUncoercedType().getProtocolType();
+            // Process as a coercion (never as an array).
+            return WRITE_METHODS.get(pt);
+        }
+
+        if (ReflectionHelper.isArray(thriftType.getJavaType())) {
+            return ARRAY_WRITE_METHODS.get(thriftType.getJavaType());
         }
 
         return WRITE_METHODS.get(pt);

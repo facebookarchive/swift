@@ -25,6 +25,38 @@ import com.facebook.swift.codec.metadata.ThriftCatalog;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
+/*
+class ScalaReflectionUtil{
+}
+
+object ScalaReflectionUtil{
+
+    def describe(t: Type) { //scala.reflect.universe.runtime.Type ) { //reflect.universe.runtime.Tyet: Type) {
+        println("DECLARATIONS")
+        println(t.declarations.mkString("\n"))
+        println("MEMBERS")
+        println(t.members.mkString("\n"))
+        println("ERASURE")
+        println(t.erasure)
+        println("SYMBOL")
+        println(t.typeSymbol)
+        println("CTOR")
+        println(t.typeConstructor)
+      }
+
+      val mirror = runtimeMirror(getClass.getClassLoader)
+      def describe(someClass: Class[_]) {
+        val classSymbol = mirror.classSymbol(someClass)
+        println(s"ANNOTATIONS: ${classSymbol.annotations}")
+        println(classSymbol)
+        val scalaType: Type = classSymbol.toType
+        println(scalaType)
+        describe(scalaType)
+      }
+    
+}
+*/
+
 /**
  * Created ThriftServiceMetadata objects for ThriftServiceProcessor is a way
  * that's a little more loosey-goosey. Facilitates providing thrift services of

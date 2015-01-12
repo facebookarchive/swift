@@ -66,6 +66,19 @@ public class ThriftMethodMetadata
     private final ImmutableList<String> documentation;
     private final boolean oneway;
 
+    public ThriftMethodMetadata(String name, String qualifiedName, ThriftType returnType, List<ThriftFieldMetadata> parameters, Method method, ImmutableMap<Short, ThriftType> exceptions,
+            ImmutableList<String> documentation, boolean oneway) {
+        super();
+        this.name = name;
+        this.qualifiedName = qualifiedName;
+        this.returnType = returnType;
+        this.parameters = parameters;
+        this.method = method;
+        this.exceptions = exceptions;
+        this.documentation = documentation;
+        this.oneway = oneway;
+    }
+
     /**
      * Extract a ThriftMethodMetadata object from a method. The method must have the @ThriftMethod annotation.
      * 
@@ -109,7 +122,7 @@ public class ThriftMethodMetadata
 				name = thriftMethod.value();
 			}
 	        this.oneway = thriftMethod.oneway();
-	        exceptions = buildExceptionMap(catalog, thriftMethod);
+	        exceptions = buildExceptionMap(catalog, thriftMethod, method);
 	        documentation = ThriftCatalog.getThriftDocumentation(method);
         }
     	else{
@@ -132,8 +145,14 @@ public class ThriftMethodMetadata
 
         returnType = catalog.getThriftType(method.getGenericReturnType());
 
+        parameters = toMethodParameters( catalog, method, method.getGenericParameterTypes() );
+    }
+    
+    /**
+     * Method parameters are supplied separately -- allows scala and other language to access no-erased types.
+     */
+    public static List<ThriftFieldMetadata> toMethodParameters(ThriftCatalog catalog, Method method, Type[] parameterTypes) {
         ImmutableList.Builder<ThriftFieldMetadata> builder = ImmutableList.builder();
-        Type[] parameterTypes = method.getGenericParameterTypes();
         String[] parameterNames = extractParameterNames(method);
         Annotation[][] parameterAnnotations = method.getParameterAnnotations();
         for (int index = 0; index < parameterTypes.length; index++) {
@@ -188,7 +207,7 @@ public class ThriftMethodMetadata
             );
             builder.add(fieldMetadata);
         }
-        parameters = builder.build();
+        return builder.build();
     }
 
     public String getName()
@@ -230,8 +249,10 @@ public class ThriftMethodMetadata
         return oneway;
     }
 
-    private ImmutableMap<Short, ThriftType> buildExceptionMap(ThriftCatalog catalog,
-                                                              ThriftMethod thriftMethod) {
+    static public ImmutableMap<Short, ThriftType> buildExceptionMap(
+            ThriftCatalog catalog,
+            ThriftMethod thriftMethod, 
+            Method method ) {
         ImmutableMap.Builder<Short, ThriftType> exceptions = ImmutableMap.builder();
         Set<Type> exceptionTypes = new HashSet<>();
         int customExceptionCount = 0;

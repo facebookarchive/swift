@@ -42,15 +42,30 @@ public class CoercionHelper {
         return result;
     }
 
-    public static Type getTypeParameter(Type t, int index) {
-        return ((ParameterizedType) t).getActualTypeArguments()[index];
+    public static Type getCollectionParameterType(Type javaType, int index) {
+        Type elementType = ((ParameterizedType) javaType).getActualTypeArguments()[index];
+
+        if (elementType == null) {
+            throw new IllegalArgumentException("Could not find collection parameter type " + index + " in " + javaType);
+        }
+        if (elementType == Object.class) {
+            // Uh-oh. Probably some type erasure happened.
+            throw new IllegalArgumentException("Thrift can't serialize type Object, type parameter  " + index + " of " + javaType);
+        }
+
+        return elementType;
     }
 
+    //
+    // TODO. Replace / add a method to scan for @ToThrift or @FromThrift methods
+    // matching a given parameter type. Ordering is important because there are
+    // many potential type matches for
+    // generic and abstract types.
+    //
     public static java.util.List<Method> getMethodsByName(Class<?> cls, String name) {
         ArrayList<Method> result = new ArrayList<Method>();
-        // Class.forName(cls.getName())
         for (Method m : cls.getMethods()) {
-            if ( m.getName()==name) {
+            if (m.getName() == name) {
                 result.add(m);
             }
         }
@@ -103,10 +118,7 @@ public class CoercionHelper {
             String fromThriftMethodName,
             String toThriftMethodName)
     {
-        ThriftType elementType = catalog.getThriftType(CoercionHelper.getTypeParameter(javaType, 0));
-        if (elementType == null) {
-            throw new IllegalArgumentException("Could not find list element type from parameter 0 of " + javaType);
-        }
+        ThriftType elementType = catalog.getThriftType(getCollectionParameterType(javaType, 0));
         return CoercionHelper.makeCoercion(
                 catalog,
                 javaType,
@@ -116,22 +128,32 @@ public class CoercionHelper {
                 ThriftType.list(elementType));
     }
 
-    ThriftType makeMapCoercion(
+    public static ThriftType makeSetCoercion(
             ThriftCatalog catalog,
             Type javaType,
             Class<?> coercionsMethodClass,
             String fromThriftMethodName,
             String toThriftMethodName)
     {
-        ThriftType keyType = catalog.getThriftType(getTypeParameter(javaType, 0));
-        if (keyType == null) {
-            throw new IllegalArgumentException("Could not find map key type from parameter 0 of " + javaType);
-        }
+        ThriftType elementType = catalog.getThriftType(getCollectionParameterType(javaType, 0));
+        return CoercionHelper.makeCoercion(
+                catalog,
+                javaType,
+                coercionsMethodClass,
+                fromThriftMethodName,
+                toThriftMethodName,
+                ThriftType.set(elementType));
+    }
 
-        ThriftType valueType = catalog.getThriftType(getTypeParameter(javaType, 1));
-        if (valueType == null) {
-            throw new IllegalArgumentException("Could not find map value type from parameter 1 of " + javaType);
-        }
+    public static ThriftType makeMapCoercion(
+            ThriftCatalog catalog,
+            Type javaType,
+            Class<?> coercionsMethodClass,
+            String fromThriftMethodName,
+            String toThriftMethodName)
+    {
+        ThriftType keyType = catalog.getThriftType(getCollectionParameterType(javaType, 0));
+        ThriftType valueType = catalog.getThriftType(getCollectionParameterType(javaType, 1));
 
         return makeCoercion(
                 catalog,

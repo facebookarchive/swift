@@ -15,8 +15,6 @@
  */
 package com.facebook.swift.codec;
 
-import static org.testng.AssertJUnit.assertTrue;
-
 import com.facebook.swift.codec.internal.EnumThriftCodec;
 import com.facebook.swift.codec.internal.ThriftCodecFactory;
 import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
@@ -45,7 +43,6 @@ import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Type;
 import java.math.BigInteger;
 import java.security.SecureRandom;
-import java.util.ArrayList;
 
 import static com.facebook.swift.codec.metadata.ThriftType.BOOL;
 import static com.facebook.swift.codec.metadata.ThriftType.BYTE;

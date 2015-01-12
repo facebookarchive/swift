@@ -61,8 +61,6 @@ public class ThriftServiceMetadata
         else {
             name = thriftService.value();
         }
-        // Switch to annotations-required mode
-        //extractMethods(serviceClass, catalog, false);
 
         this.documentation = ThriftCatalog.getThriftDocumentation(serviceClass);
         ImmutableList<ThriftMethodMetadata> _methods = ( extractAnnotatedMethods(serviceClass, name, catalog) );
@@ -78,6 +76,17 @@ public class ThriftServiceMetadata
         this.parentServices = parentServiceBuilder.build();
     }
 
+    /** 
+     * Avoids overloaded constructor ambiguity (due to varargs) when calling from scala.
+     */
+    static public ThriftServiceMetadata construct(
+            String name,
+            ImmutableList<String> documentation,
+            ImmutableList<ThriftMethodMetadata> methods,
+            ImmutableList<ThriftServiceMetadata> parentServices) {
+        return new ThriftServiceMetadata(name, documentation, methods, parentServices);
+    }
+    
     public ThriftServiceMetadata(
             String name,
             ImmutableList<String> documentation,
