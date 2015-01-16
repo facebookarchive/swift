@@ -319,6 +319,83 @@ public class ThriftCodecByteCodeGenerator<T>
         classDefinition.addMethod(read);
     }
 
+    
+    /**
+     * Reads an individual field.
+     */
+    private void readField( MethodDefinition read, ThriftFieldMetadata field,  LocalVariableDefinition protocol,  Map<Short, LocalVariableDefinition> structData)
+    {
+        // push protocol
+        read.loadVariable(protocol);
+
+        // push ThriftTypeCodec for this field
+        FieldDefinition codecField = codecFields.get(field.getId());
+        if (codecField != null) {
+            read.loadThis().getField(codecType, codecField);
+        }
+
+        // read value
+        Method readMethod = getReadMethod(field.getThriftType());
+        if (readMethod == null) {
+            throw new IllegalArgumentException("Unsupported field type " + field.getThriftType().getProtocolType());
+        }
+        read.invokeVirtual(readMethod);
+
+        if (field.getCoercion().isPresent()) {
+
+            // Cast to function parameter type.
+            {
+                Class<?> typeOnStack = TypeToken.of(field.getThriftType().getUncoercedType().getJavaType()).getRawType();
+                Class<?> functionParamType = TypeToken.of(field.getCoercion().get().getFromThrift().getGenericParameterTypes()[0]).getRawType();
+                if (!functionParamType.isAssignableFrom(typeOnStack)) {
+                    // Need a cast
+                    read.checkCast(type(functionParamType));
+                }
+            }
+
+            // coerce the type
+            if (field.getCoercion().isPresent()) {
+                Method method = field.getCoercion().get().getFromThrift();
+                if (isStaticMethod(method)) {
+                    read.invokeStatic(method);
+                }
+                else {
+                    Preconditions.checkArgument(false, "Coercion.getMethodObject() must be null"); // unless
+                                                                                                   // someone
+                                                                                                   // implement
+                                                                                                   // calling
+                                                                                                   // the
+                                                                                                   // method
+                    // Object o = field.getCoercion().get().getMethodObject();
+                    // read.loadVariable(?).invokeVirtual(method);
+                }
+            }
+
+            // Cast to field type
+            {
+                Class<?> functionReturnType = TypeToken.of(field.getCoercion().get().getFromThrift().getReturnType()).getRawType();
+                Class<?> fieldType = TypeToken.of(field.getThriftType().getJavaType()).getRawType();
+                if (!fieldType.isAssignableFrom(functionReturnType)) {
+                    // Need a cast
+                    read.checkCast(toParameterizedType(field.getThriftType()));
+                }
+            }
+        }
+        else {
+            // Not a coerced type
+            Class<?> functionReturnType = TypeToken.of(readMethod.getReturnType()).getRawType();
+            Class<?> fieldType = TypeToken.of(field.getThriftType().getJavaType()).getRawType();
+
+            if (!fieldType.isAssignableFrom(functionReturnType)) {
+                // Need a cast
+                read.checkCast(type(fieldType));
+            }
+        }
+
+        // store protocol value
+        read.storeVariable(structData.get(field.getId()));
+    }
+    
     /**
      * Defines the code to read all of the data from the protocol into local
      * variables.
@@ -363,74 +440,8 @@ public class ThriftCodecByteCodeGenerator<T>
             // case field.id:
             read.visitLabel(field.getName() + "-field");
 
-            // push protocol
-            read.loadVariable(protocol);
-
-            // push ThriftTypeCodec for this field
-            FieldDefinition codecField = codecFields.get(field.getId());
-            if (codecField != null) {
-                read.loadThis().getField(codecType, codecField);
-            }
-
-            // read value
-            Method readMethod = getReadMethod(field.getThriftType());
-            if (readMethod == null) {
-                throw new IllegalArgumentException("Unsupported field type " + field.getThriftType().getProtocolType());
-            }
-            read.invokeVirtual(readMethod);
-
-            // todo this cast should be based on readMethod return type and
-            // fieldType (or coercion type)
-            // add cast if necessary
-            if (field.getCoercion().isPresent()) {
-
-                // Cast to function parameter type.
-                {
-                    Class<?> typeOnStack = TypeToken.of(field.getThriftType().getUncoercedType().getJavaType()).getRawType();
-                    Class<?> functionParamType = TypeToken.of(field.getCoercion().get().getFromThrift().getGenericParameterTypes()[0]).getRawType();
-                    if (!functionParamType.isAssignableFrom(typeOnStack)) {
-                        // Need a cast
-                        read.checkCast(type(functionParamType));
-                    }
-                }
-
-                // coerce the type
-                if (field.getCoercion().isPresent()) {
-                    Method method = field.getCoercion().get().getFromThrift();
-                    if ( isStaticMethod(method) ) {
-                        read.invokeStatic(method);
-                    }
-                    else{
-                        Preconditions.checkArgument(false, "Coercion.getMethodObject() must be null"); // unless someone implement calling the method 
-                        //Object o = field.getCoercion().get().getMethodObject();
-                        //read.loadVariable(?).invokeVirtual(method);
-                    }
-                }
-
-                // Cast to field type
-                {
-                    Class<?> functionReturnType = TypeToken.of(field.getCoercion().get().getFromThrift().getReturnType()).getRawType();
-                    Class<?> fieldType = TypeToken.of(field.getThriftType().getJavaType()).getRawType();
-                    if (!fieldType.isAssignableFrom(functionReturnType)) {
-                        // Need a cast
-                        read.checkCast(toParameterizedType(field.getThriftType()));
-                    }
-                }
-            }
-            else {
-                // Not a coerced type
-                Class<?> functionReturnType = TypeToken.of(readMethod.getReturnType()).getRawType();
-                Class<?> fieldType = TypeToken.of(field.getThriftType().getJavaType()).getRawType();
-                                
-                if (!fieldType.isAssignableFrom(functionReturnType)) {
-                    // Need a cast
-                    read.checkCast(type(fieldType));
-                }
-            }
-
-            // store protocol value
-            read.storeVariable(structData.get(field.getId()));
-
+            readField(read, field, protocol, structData);
+            
             // go back to top of loop
             read.gotoLabel("while-begin");
         }
