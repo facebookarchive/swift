@@ -16,14 +16,22 @@
 package com.facebook.swift.generator.swift2thrift;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.Map;
 
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.metadata.AnnotatedThriftServiceMetadataBuilder;
 import com.facebook.swift.service.metadata.ThriftServiceMetadataBuilder;
+import com.google.common.base.Charsets;
 
 public class Swift2ThriftGeneratorConfig {
     private final File outputFile;
+    // If non-null, used in preference over outputFile.
+    private Writer outputWriter;
     private final Map<String, String> includeMap;
     private final boolean verbose;
     private final String defaultPackage;
@@ -33,10 +41,14 @@ public class Swift2ThriftGeneratorConfig {
     private final ThriftServiceMetadataBuilder serviceMetadataBuilder;
     private final ThriftCodecManager codecManager;
     
-    private Swift2ThriftGeneratorConfig(final File outputFile, final Map<String, String> includeMap,
+    private Swift2ThriftGeneratorConfig(final File outputFile, 
+            Writer outputWriter,
+            final Map<String, String> includeMap,
             boolean verbose, String defaultPackage, final Map<String, String> namespaceMap,
-            String allowMultiplePackages, boolean recursive, ThriftServiceMetadataBuilder serviceMetadataBuilder, ThriftCodecManager codecManager){
+            String allowMultiplePackages, boolean recursive, ThriftServiceMetadataBuilder serviceMetadataBuilder,
+            ThriftCodecManager codecManager){
         this.outputFile = outputFile;
+        this.outputWriter = outputWriter;
         this.includeMap = includeMap;
         this.verbose = verbose;
         this.defaultPackage = defaultPackage;
@@ -59,6 +71,19 @@ public class Swift2ThriftGeneratorConfig {
     public File getOutputFile()
     {
         return outputFile;
+    }
+    
+    public Writer getOutputWriter() throws FileNotFoundException {
+
+        if (this.outputWriter!=null) {
+            return this.outputWriter;
+        }
+        else {
+            @SuppressWarnings("resource")
+            OutputStream os = getOutputFile() != null ? new FileOutputStream(getOutputFile()) : System.out;
+            this.outputWriter = new OutputStreamWriter(os, Charsets.UTF_8);
+            return this.outputWriter;
+        }
     }
 
     public Map<String, String> getIncludeMap()
@@ -104,6 +129,7 @@ public class Swift2ThriftGeneratorConfig {
     public static class Builder
     {
         private File outputFile = null;
+        private Writer outputWriter = null;
         private Map<String, String> includeMap;
         private boolean verbose;
         private String defaultPackage;
@@ -119,13 +145,18 @@ public class Swift2ThriftGeneratorConfig {
 
         public Swift2ThriftGeneratorConfig build()
         {
-            return new Swift2ThriftGeneratorConfig(outputFile, includeMap, verbose, defaultPackage,
+            return new Swift2ThriftGeneratorConfig(outputFile, outputWriter, includeMap, verbose, defaultPackage,
                     namespaceMap, allowMultiplePackages, recursive, serviceMetadataBuilder, codecManager);
         }
 
         public Builder outputFile(final File outputFile)
         {
             this.outputFile = outputFile;
+            return this;
+        }
+
+        public Builder outputWriter(Writer outputWriter) {
+            this.outputWriter = outputWriter;
             return this;
         }
 

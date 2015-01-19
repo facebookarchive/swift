@@ -32,7 +32,6 @@ import com.facebook.swift.service.ThriftService;
 import com.facebook.swift.service.metadata.ThriftMethodMetadata;
 import com.facebook.swift.service.metadata.ThriftServiceMetadata;
 import com.facebook.swift.service.metadata.ThriftServiceMetadataBuilder;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
@@ -51,10 +50,8 @@ import org.stringtemplate.v4.ST;
 import javax.annotation.Nullable;
 
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -65,7 +62,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class Swift2ThriftGenerator
 {
     private static final Logger LOG = LoggerFactory.getLogger(Swift2ThriftGenerator.class);
-    private final OutputStreamWriter outputStreamWriter;
+    private final Writer outputWriter;
     private final boolean verbose;
     private ThriftCodecManager codecManager = new ThriftCodecManager();
     private final String defaultPackage;
@@ -107,8 +104,8 @@ public class Swift2ThriftGenerator
         	codecManager = config.getCodecManager();
         }
 
-        OutputStream os = config.getOutputFile() != null ? new FileOutputStream(config.getOutputFile()) : System.out;
-        this.outputStreamWriter = new OutputStreamWriter(os, Charsets.UTF_8);
+        this.outputWriter = config.getOutputWriter();                       
+        
         Map<String, String> paramIncludeMap = config.getIncludeMap();
         // create a type renderer with an empty map until we build it
         this.thriftTypeRenderer = new ThriftTypeRenderer(ImmutableMap.<ThriftType,String>of());
@@ -519,8 +516,8 @@ public class Swift2ThriftGenerator
         ThriftContext ctx = new ThriftContext(packageName, ImmutableList.copyOf(includes.build()), thriftTypes, thriftServices, namespaceMap);
         ST template = tl.load("thriftfile");
         template.add("context", ctx);
-        template.write(new AutoIndentWriter(outputStreamWriter));
-        outputStreamWriter.flush();
+        template.write(new AutoIndentWriter(outputWriter));
+        outputWriter.flush();
     }
 
     private ClassLoader getClassLoader()
