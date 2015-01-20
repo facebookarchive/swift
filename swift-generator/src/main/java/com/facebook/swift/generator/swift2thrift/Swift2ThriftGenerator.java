@@ -125,45 +125,68 @@ public class Swift2ThriftGenerator
         this.recursive = config.isRecursive();
     }
 
-    @SuppressWarnings("PMD.CollapsibleIfStatements")
-    public void parseServiceInterfaces(Iterable<Class<?>> inputClasses) throws IOException
+    /**
+     * Add a service from its ThriftServiceMetadata representation.
+     */
+    public void addService(ThriftServiceMetadata service)
     {
-        for ( Class<?> cls : inputClasses ) {
-            ThriftServiceMetadata result = convertToThriftService(cls);
-            if (result != null) {
-                thriftServices.add(result);
-            }
-            // if the class we just loaded was also in the include map, remove it from there
-            includeMap.remove(result);
+        thriftServices.add(service);
+    }
+    
+    /**
+     * Add a class.
+     */
+    public void addClass(Class<?> cls) {
+        Object result = convertToThrift(cls);
+        if (result instanceof ThriftType) {
+            thriftTypes.add((ThriftType) result);
+        } else if (result instanceof ThriftServiceMetadata) {
+            addService((ThriftServiceMetadata) result);
         }
-
+        // if the class we just loaded was also in the include map, remove it
+        // from there
+        includeMap.remove(result);
+    }
+    
+    /**
+     * Finalize and flush the output.
+     */
+    public void build() throws IOException {
         if (verify()) {
             gen();
         } else {
             LOG.error("Errors found during verification.");
         }
     }
-    
 
+    /**
+     * Add the supplied ThriftService classes and build.
+     */
     @SuppressWarnings("PMD.CollapsibleIfStatements")
-    public void parseClasses(Iterable<Class<?>> inputClasses) throws IOException
+    public void parseServiceInterfaces(Iterable<Class<?>> inputClasses) throws IOException
     {
         for ( Class<?> cls : inputClasses ) {
-            Object result = convertToThrift(cls);
-            if (result instanceof ThriftType) {
-                thriftTypes.add((ThriftType)result);
-            } else if (result instanceof ThriftServiceMetadata) {
-                thriftServices.add((ThriftServiceMetadata)result);
+            ThriftServiceMetadata result = convertToThriftService(cls);
+            if (result != null) {
+                addService(result);
             }
             // if the class we just loaded was also in the include map, remove it from there
             includeMap.remove(result);
         }
 
-        if (verify()) {
-            gen();
-        } else {
-            LOG.error("Errors found during verification.");
+        build();
+    }
+    
+    /**
+     * Add the supplied classes and build.
+     */
+    @SuppressWarnings("PMD.CollapsibleIfStatements")
+    public void parseClasses(Iterable<Class<?>> inputClasses) throws IOException
+    {
+        for ( Class<?> cls : inputClasses ) {
+            addClass( cls );
         }
+        build();
     }
     
     @SuppressWarnings("PMD.CollapsibleIfStatements")
@@ -194,12 +217,11 @@ public class Swift2ThriftGenerator
             }
             classes.add(cls);
         }       
-        parseClasses(classes);
-        
         if (loadErrors) {
             LOG.error("Couldn't load some classes");
             return;
         }
+        parseClasses(classes);
     }
 
     private String getFullClassName(String className)
