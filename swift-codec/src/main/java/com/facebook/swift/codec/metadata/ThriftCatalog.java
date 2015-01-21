@@ -112,7 +112,7 @@ public class ThriftCatalog
     }
 
     @VisibleForTesting
-    Monitor getMonitor()
+    public Monitor getMonitor()
     {
         return monitor;
     }

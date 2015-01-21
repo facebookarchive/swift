@@ -92,16 +92,18 @@ public class MetadataErrors
 
     public void addError(String format, Object... params)
     {
-        MetadataErrorException message = new MetadataErrorException(format, params);
-        errors.add(message);
-        monitor.onError(message);
+        addError( new MetadataErrorException(format, params) );
     }
 
     public void addError(Throwable e, String format, Object... params)
     {
-        MetadataErrorException message = new MetadataErrorException(e, format, params);
-        errors.add(message);
-        monitor.onError(message);
+       addError( new MetadataErrorException(e, format, params) );
+    }
+    
+    public void addError(MetadataErrorException e)
+    {
+        errors.add(e);
+        monitor.onError(e);
     }
 
     public List<MetadataWarningException> getWarnings()
@@ -111,18 +113,20 @@ public class MetadataErrors
 
     public void addWarning(String format, Object... params)
     {
-        MetadataWarningException message = new MetadataWarningException(format, params);
-        warnings.add(message);
-        monitor.onWarning(message);
+        addWarning(  new MetadataWarningException(format, params) );
     }
 
     public void addWarning(Throwable e, String format, Object... params)
     {
-        MetadataWarningException message = new MetadataWarningException(e, format, params);
+        addWarning( new MetadataWarningException(e, format, params) );
+    }
+    
+    public void addWarning(MetadataWarningException message)
+    {
         warnings.add(message);
         monitor.onWarning(message);
     }
-
+    
     public String toString()
     {
         StringBuilder builder = new StringBuilder();
