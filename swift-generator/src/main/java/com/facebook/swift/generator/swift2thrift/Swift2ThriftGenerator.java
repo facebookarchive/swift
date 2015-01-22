@@ -123,6 +123,11 @@ public class Swift2ThriftGenerator
         this.namespaceMap = config.getNamespaceMap();
         this.allowMultiplePackages = config.isAllowMultiplePackages();
         this.recursive = config.isRecursive();
+        
+        if (this.allowMultiplePackages != null) {
+            packageName = allowMultiplePackages;
+        }
+
     }
 
     /**
@@ -193,11 +198,7 @@ public class Swift2ThriftGenerator
     public void parse(Iterable<String> inputClasses) throws IOException
     {
         boolean loadErrors = false;
-        
-        if (allowMultiplePackages != null) {
-            packageName = allowMultiplePackages;
-        }
-        
+                
         ArrayList<Class<?>> classes = new ArrayList<Class<?>>();
         for (String className: inputClasses) {
             Class<?> cls = load(className);
@@ -433,7 +434,7 @@ public class Swift2ThriftGenerator
                 return true;
             }
             
-            if (t.getProtocolType()==ThriftProtocolType.COERCION){
+            if (t.isCoerced() || t.getProtocolType()==ThriftProtocolType.COERCION){
                 return verifyField( t.getUncoercedType() );
             }
 
