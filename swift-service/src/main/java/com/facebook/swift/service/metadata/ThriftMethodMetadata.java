@@ -111,10 +111,10 @@ public class ThriftMethodMetadata
 
         this.method = method;
         
-    	if (method.getAnnotation(ThriftMethod.class)!=null)
+        ThriftMethod thriftMethod = method.getAnnotation(ThriftMethod.class);
+        if (thriftMethod!=null)
         {
-            ThriftMethod thriftMethod = method.getAnnotation(ThriftMethod.class);
-        	Preconditions.checkArgument(thriftMethod != null, "Method is not annotated with @ThriftMethod: "+ method.getName());
+            Preconditions.checkArgument(thriftMethod != null, "Method is not annotated with @ThriftMethod: " + serviceName + "." + method.getName());
 			if (thriftMethod.value().length() == 0) {
 				name = method.getName();
 			}
@@ -126,7 +126,7 @@ public class ThriftMethodMetadata
 	        documentation = ThriftCatalog.getThriftDocumentation(method);
         }
     	else{
-            Preconditions.checkArgument(allowUnannotated, "Method is not annotated with @ThriftMethod: " +serviceName+"."+ method.getName());
+            Preconditions.checkArgument(allowUnannotated, "Method is not annotated with @ThriftMethod: " + serviceName + "." + method.getName());
     		
     		// Auto
     		name = method.getName();
