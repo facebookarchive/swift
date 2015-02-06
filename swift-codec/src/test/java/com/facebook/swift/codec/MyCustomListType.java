@@ -19,7 +19,7 @@ import java.util.ArrayList;
 
 /**
  * For testing access to 3rd party collection classes (e.g. scala).
-
+ * 
  * NB. No @ThriftStruct annotation here. Simulated 3rd party list type.
  */
 public class MyCustomListType<T> {
@@ -27,14 +27,17 @@ public class MyCustomListType<T> {
 
     public MyCustomListType() {
     }
-    
+
     public MyCustomListType(T element) {
         storage.add(element);
         storage.add(element);
     }
-    
+
     @SuppressWarnings("unchecked")
     public boolean equals(Object other) {
-        return storage.equals(((MyCustomListType<T>)other).storage);
+        if (other == null || !(other instanceof MyCustomListType)) {
+            return false;
+        }
+        return storage.equals(((MyCustomListType<T>) other).storage);
     }
 }
