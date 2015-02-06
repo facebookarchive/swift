@@ -92,7 +92,7 @@ public abstract class AbstractThriftMetadataBuilder
     protected final MetadataErrors metadataErrors;
 
     /**
-     * NB. This class should be refactored. It calls abstract methods in its
+     * NB. This class should be refactored - it calls abstract methods in its
      * constructor.
      * 
      * The concrete implementations of this classes are guaranteed to have its
