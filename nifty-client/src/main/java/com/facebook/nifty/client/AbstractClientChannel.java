@@ -268,7 +268,6 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
     {
         Throwable t = event.getCause();
         onError(t);
-        ctx.getChannel().close();
     }
 
     private Request makeRequest(int sequenceId, Listener listener)
@@ -342,6 +341,12 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
         requestMap.clear();
         for (Request request : requests) {
             fireChannelErrorCallback(request.getListener(), wrappedException);
+        }
+
+        Channel channel = getNettyChannel();
+        if (nettyChannel.isOpen())
+        {
+            channel.close();
         }
     }
 
