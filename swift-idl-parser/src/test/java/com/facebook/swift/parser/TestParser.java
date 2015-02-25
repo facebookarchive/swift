@@ -16,13 +16,12 @@
 package com.facebook.swift.parser;
 
 import com.google.common.base.Charsets;
+import com.google.common.io.CharSource;
 import com.google.common.io.Files;
-import com.google.common.io.InputSupplier;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import java.io.InputStreamReader;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.Iterator;
@@ -64,8 +63,8 @@ public class TestParser
         }
     }
 
-    private static InputSupplier<InputStreamReader> pathReader(Path path)
+    private static CharSource pathReader(Path path)
     {
-        return Files.newReaderSupplier(path.toFile(), Charsets.UTF_8);
+        return Files.asByteSource(path.toFile()).asCharSource(Charsets.UTF_8);
     }
 }
