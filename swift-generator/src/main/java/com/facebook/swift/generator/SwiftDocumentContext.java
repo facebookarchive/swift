@@ -42,7 +42,7 @@ public class SwiftDocumentContext
                                 final TypeRegistry typeRegistry,
                                 final TypedefRegistry typedefRegistry) throws IOException
     {
-        this.document = ThriftIdlParser.parseThriftIdl(Resources.newReaderSupplier(thriftUri.toURL(), Charsets.UTF_8));
+        this.document = ThriftIdlParser.parseThriftIdl(Resources.asCharSource(thriftUri.toURL(), Charsets.UTF_8));
         this.thriftUri = thriftUri;
         this.namespace = namespace;
         this.generatorConfig = generatorConfig;

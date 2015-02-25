@@ -19,7 +19,7 @@ import com.facebook.swift.parser.antlr.DocumentGenerator;
 import com.facebook.swift.parser.antlr.ThriftLexer;
 import com.facebook.swift.parser.antlr.ThriftParser;
 import com.facebook.swift.parser.model.Document;
-import com.google.common.io.InputSupplier;
+import com.google.common.io.CharSource;
 import org.antlr.runtime.ANTLRReaderStream;
 import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.RecognitionException;
@@ -32,7 +32,7 @@ import java.io.Reader;
 
 public class ThriftIdlParser
 {
-    public static Document parseThriftIdl(InputSupplier<? extends Reader> input)
+    public static Document parseThriftIdl(CharSource input)
             throws IOException
     {
         Tree tree = parseTree(input);
@@ -46,10 +46,10 @@ public class ThriftIdlParser
         }
     }
 
-    static Tree parseTree(InputSupplier<? extends Reader> input)
+    static Tree parseTree(CharSource input)
             throws IOException
     {
-        try (Reader reader = input.getInput()) {
+        try (Reader reader = input.openStream()) {
             ThriftLexer lexer = new ThriftLexer(new ANTLRReaderStream(reader));
             ThriftParser parser = new ThriftParser(new CommonTokenStream(lexer));
             try {

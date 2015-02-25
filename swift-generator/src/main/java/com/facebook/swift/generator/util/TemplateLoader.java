@@ -19,7 +19,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.google.common.io.InputSupplier;
+import com.google.common.io.CharSource;
 import com.google.common.io.Resources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,23 +30,22 @@ import org.stringtemplate.v4.STGroup;
 import org.stringtemplate.v4.misc.ErrorManager;
 import org.stringtemplate.v4.misc.STMessage;
 
+import javax.annotation.Nonnull;
+
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.Map;
 
-import javax.annotation.Nonnull;
-
 public class TemplateLoader
 {
-    private static final Function<String,InputSupplier<InputStreamReader>> FILE_TO_INPUT_SUPPLIER_TRANSFORM =
-            new Function<String, InputSupplier<InputStreamReader>>()
+    private static final Function<String,CharSource> FILE_TO_INPUT_SUPPLIER_TRANSFORM =
+            new Function<String, CharSource>()
             {
                 @Nonnull
                 @Override
-                public InputSupplier<InputStreamReader> apply(@Nonnull String templateFileName)
+                public CharSource apply(@Nonnull String templateFileName)
                 {
-                    return Resources.newReaderSupplier(Resources.getResource(this.getClass(), "/templates/" + templateFileName), Charsets.UTF_8);
+                    return Resources.asCharSource(Resources.getResource(this.getClass(), "/templates/" + templateFileName), Charsets.UTF_8);
                 }
             };
 
@@ -80,7 +79,7 @@ public class TemplateLoader
     {
         if (stg == null) {
             // Convert set of relative paths to .st files into a set of input suppliers
-            Iterable<InputSupplier<InputStreamReader>> templateInputSuppliers =
+            Iterable<CharSource> templateInputSuppliers =
                     Iterables.transform(templateFileNames, FILE_TO_INPUT_SUPPLIER_TRANSFORM);
 
             // Combine the header and all .st files and load everything into a StringTemplateGroup

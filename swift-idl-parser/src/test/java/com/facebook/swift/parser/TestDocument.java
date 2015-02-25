@@ -16,12 +16,9 @@
 package com.facebook.swift.parser;
 
 import com.google.common.base.Charsets;
-import com.google.common.io.CharStreams;
-import com.google.common.io.InputSupplier;
+import com.google.common.io.CharSource;
 import com.google.common.io.Resources;
 import org.testng.annotations.Test;
-
-import java.io.InputStreamReader;
 
 import static com.facebook.swift.parser.ThriftIdlParser.parseThriftIdl;
 import static com.facebook.swift.parser.ThriftIdlParser.parseTree;
@@ -33,7 +30,7 @@ public class TestDocument
     public void testEmpty()
             throws Exception
     {
-        parseThriftIdl(CharStreams.newReaderSupplier(""));
+        parseThriftIdl(CharSource.wrap(""));
     }
 
     @Test
@@ -54,8 +51,8 @@ public class TestDocument
         System.out.println(parseThriftIdl(resourceReader("Hbase.thrift")));
     }
 
-    private static InputSupplier<InputStreamReader> resourceReader(String name)
+    private static CharSource resourceReader(String name)
     {
-        return Resources.newReaderSupplier(Resources.getResource(name), Charsets.UTF_8);
+        return Resources.asCharSource(Resources.getResource(name), Charsets.UTF_8);
     }
 }
