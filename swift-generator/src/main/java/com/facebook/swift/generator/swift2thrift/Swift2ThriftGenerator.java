@@ -85,7 +85,7 @@ public class Swift2ThriftGenerator
             new ThriftType(ThriftType.BOOL, Boolean.class), new ThriftType(ThriftType.BYTE, Byte.class),
             new ThriftType(ThriftType.I16, Short.class), new ThriftType(ThriftType.I32, Integer.class),
             new ThriftType(ThriftType.I64, Long.class), new ThriftType(ThriftType.DOUBLE, Double.class),
-            new ThriftType(ThriftType.STRING, String.class), new ThriftType(ThriftType.STRING, byte[].class));
+            new ThriftType(ThriftType.STRING, String.class), new ThriftType(ThriftType.BINARY, byte[].class));
 
     Swift2ThriftGenerator(final Swift2ThriftGeneratorConfig config) throws FileNotFoundException
     {
