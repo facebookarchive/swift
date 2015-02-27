@@ -169,7 +169,7 @@ type_annotations
     ;
 
 type_annotation
-    : IDENTIFIER '=' annotation_value list_separator? -> ^(TYPE IDENTIFIER annotation_value)
+    : IDENTIFIER ('=' annotation_value)? list_separator? -> ^(TYPE IDENTIFIER annotation_value?)
     ;
 
 annotation_value

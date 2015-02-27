@@ -32,7 +32,7 @@ public class TypeAnnotation implements Visitable
     public TypeAnnotation(String name, String value)
     {
         this.name = checkNotNull(name, "name");
-        this.value = Preconditions.checkNotNull(value, "value");
+        this.value = value;
     }
 
     public String getName()
