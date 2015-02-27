@@ -28,6 +28,7 @@ struct foo {
   cpp.type = "DenseFoo",
   python.type = "DenseFoo",
   java.final = "",
+  java.empty_annotation,
 )
 
 typedef string ( unicode.encoding = "UTF-16" ) non_latin_string
