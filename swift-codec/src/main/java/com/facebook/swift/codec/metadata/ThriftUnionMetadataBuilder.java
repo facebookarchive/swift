@@ -15,14 +15,8 @@
  */
 package com.facebook.swift.codec.metadata;
 
-import com.facebook.swift.codec.ThriftField;
-import com.facebook.swift.codec.ThriftUnion;
-import com.facebook.swift.codec.ThriftUnionId;
-import com.facebook.swift.codec.metadata.ThriftStructMetadata.MetadataType;
-import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableList;
-
-import javax.annotation.concurrent.NotThreadSafe;
+import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_UNION_ID;
+import static com.facebook.swift.codec.metadata.ReflectionHelper.findAnnotatedMethods;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -31,9 +25,14 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
 
-import static com.facebook.swift.codec.ThriftField.Requiredness;
-import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_UNION_ID;
-import static com.facebook.swift.codec.metadata.ReflectionHelper.findAnnotatedMethods;
+import javax.annotation.concurrent.NotThreadSafe;
+
+import com.facebook.swift.codec.ThriftField.Requiredness;
+import com.facebook.swift.codec.ThriftUnion;
+import com.facebook.swift.codec.ThriftUnionId;
+import com.facebook.swift.codec.metadata.ThriftStructMetadata.MetadataType;
+import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
 
 @NotThreadSafe
 public class ThriftUnionMetadataBuilder
@@ -285,5 +284,11 @@ public class ThriftUnionMetadataBuilder
                 Optional.fromNullable(coercion)
         );
         return thriftFieldMetadata;
+    }
+
+    @Override
+    protected MetadataType getMetadataType()
+    {
+        return MetadataType.UNION;
     }
 }

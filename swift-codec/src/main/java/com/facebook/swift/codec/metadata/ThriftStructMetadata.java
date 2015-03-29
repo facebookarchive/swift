@@ -15,6 +15,20 @@
  */
 package com.facebook.swift.codec.metadata;
 
+import static com.facebook.swift.codec.metadata.ThriftFieldMetadata.isTypePredicate;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Maps.uniqueIndex;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+import java.util.Collection;
+import java.util.List;
+import java.util.SortedMap;
+
+import javax.annotation.concurrent.Immutable;
+
+import com.facebook.swift.codec.ThriftStruct;
+import com.facebook.swift.codec.ThriftUnion;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.Collections2;
@@ -22,22 +36,73 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.reflect.TypeToken;
 
-import javax.annotation.concurrent.Immutable;
-
-import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.List;
-import java.util.SortedMap;
-
-import static com.facebook.swift.codec.metadata.ThriftFieldMetadata.isTypePredicate;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Maps.uniqueIndex;
-
 @Immutable
 public class ThriftStructMetadata
 {
     public static enum MetadataType {
+        
         STRUCT, UNION;
+        
+        public Class<? extends Annotation> getAnnotationType() {
+            return annotationFor(this);
+        }
+        
+        public static Class<? extends Annotation> annotationFor(final MetadataType metadataType) {
+            switch (metadataType) {
+                case STRUCT:
+                    return ThriftStruct.class;
+                case UNION:
+                    return ThriftUnion.class;
+                default:
+                    throw new IllegalArgumentException("illegal argument in annotationFor: " + metadataType);
+            }
+        }
+        
+        public static MetadataType metadataTypeFor(final Class<?> annotation) {
+            for (final MetadataType metadataType : MetadataType.values()) {
+                if (annotationFor(metadataType).equals(annotation)) {
+                    return metadataType;
+                }
+            }
+            throw new IllegalArgumentException("illegal argument in metadataTypeFor: " + annotation);
+        }
+    }
+    
+    public static Class<?> findStructClass(final Type javaType) {
+        final Class<?> rawType = TypeToken.of(javaType).getRawType();
+        for (final Class<?> assignableType : TypeToken.of(rawType).getTypes().rawTypes()) {
+            for (final MetadataType metadataType : MetadataType.values()) {
+                if (assignableType.isAnnotationPresent(metadataType.getAnnotationType())) {
+                    return assignableType;
+                }
+            }
+        }
+        return null;
+    }
+
+    public static MetadataType getMetadataType(Class<?> structClass) throws IllegalStateException {
+        MetadataType result = null;
+        for (MetadataType metadataType : MetadataType.values()) {
+            if (structClass.isAnnotationPresent(metadataType.getAnnotationType())) {
+                if (result == null) {
+                    result = metadataType;
+                } else {
+                    final String msg = String.format(
+                        "%s is annotated with @%s, however there is also a @%s annotation " + 
+                        "which is not allowed (thrift does not support polymorphic data types)", 
+                        structClass.toString(), 
+                        result.getAnnotationType().getSimpleName(),
+                        metadataType.getAnnotationType().getSimpleName()
+                    );
+                    throw new IllegalStateException(msg);
+                }
+            }
+        }
+        if (result == null) {
+            throw new IllegalStateException(
+                "No metadata annotations were found on %s" + structClass.toString());
+        }
+        return result;
     }
 
     private final String structName;
@@ -52,6 +117,7 @@ public class ThriftStructMetadata
 
     private final List<ThriftMethodInjection> methodInjections;
     private final Type structType;
+    private final Class<?> structClass;
     private final Type builderType;
 
     public ThriftStructMetadata(
@@ -70,6 +136,7 @@ public class ThriftStructMetadata
         this.structName = checkNotNull(structName, "structName is null");
         this.metadataType = checkNotNull(metadataType, "metadataType is null");
         this.structType = checkNotNull(structType, "structType is null");
+        this.structClass = findStructClass(this.structType);
         this.constructorInjection = checkNotNull(constructorInjection, "constructorInjection is null");
         this.documentation = ImmutableList.copyOf(checkNotNull(documentation, "documentation is null"));
         this.fields = ImmutableSortedMap.copyOf(uniqueIndex(checkNotNull(fields, "fields is null"), new Function<ThriftFieldMetadata, Short>()
@@ -95,7 +162,7 @@ public class ThriftStructMetadata
 
     public Class<?> getStructClass()
     {
-        return TypeToken.of(structType).getRawType();
+        return structClass;
     }
 
     public Type getBuilderType()

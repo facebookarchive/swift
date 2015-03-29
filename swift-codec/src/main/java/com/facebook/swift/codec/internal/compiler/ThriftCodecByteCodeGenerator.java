@@ -15,6 +15,51 @@
  */
 package com.facebook.swift.codec.internal.compiler;
 
+import static com.facebook.swift.codec.ThriftProtocolType.BINARY;
+import static com.facebook.swift.codec.ThriftProtocolType.BOOL;
+import static com.facebook.swift.codec.ThriftProtocolType.BYTE;
+import static com.facebook.swift.codec.ThriftProtocolType.DOUBLE;
+import static com.facebook.swift.codec.ThriftProtocolType.ENUM;
+import static com.facebook.swift.codec.ThriftProtocolType.I16;
+import static com.facebook.swift.codec.ThriftProtocolType.I32;
+import static com.facebook.swift.codec.ThriftProtocolType.I64;
+import static com.facebook.swift.codec.ThriftProtocolType.LIST;
+import static com.facebook.swift.codec.ThriftProtocolType.MAP;
+import static com.facebook.swift.codec.ThriftProtocolType.SET;
+import static com.facebook.swift.codec.ThriftProtocolType.STRING;
+import static com.facebook.swift.codec.ThriftProtocolType.STRUCT;
+import static com.facebook.swift.codec.internal.compiler.byteCode.Access.BRIDGE;
+import static com.facebook.swift.codec.internal.compiler.byteCode.Access.FINAL;
+import static com.facebook.swift.codec.internal.compiler.byteCode.Access.PRIVATE;
+import static com.facebook.swift.codec.internal.compiler.byteCode.Access.PUBLIC;
+import static com.facebook.swift.codec.internal.compiler.byteCode.Access.SUPER;
+import static com.facebook.swift.codec.internal.compiler.byteCode.Access.SYNTHETIC;
+import static com.facebook.swift.codec.internal.compiler.byteCode.Access.a;
+import static com.facebook.swift.codec.internal.compiler.byteCode.CaseStatement.caseStatement;
+import static com.facebook.swift.codec.internal.compiler.byteCode.NamedParameterDefinition.arg;
+import static com.facebook.swift.codec.internal.compiler.byteCode.ParameterizedType.type;
+import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_FIELD;
+import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_UNION_ID;
+import static com.google.common.collect.Iterables.getOnlyElement;
+import static java.lang.String.format;
+
+import java.io.PrintWriter;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+
+import javax.annotation.concurrent.NotThreadSafe;
+
+import org.apache.thrift.protocol.TProtocol;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.util.CheckClassAdapter;
+
 import com.facebook.swift.codec.ThriftCodec;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.codec.ThriftProtocolType;
@@ -46,51 +91,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.apache.thrift.protocol.TProtocol;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.util.CheckClassAdapter;
 
-import javax.annotation.concurrent.NotThreadSafe;
-
-import java.io.PrintWriter;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-
-import static com.facebook.swift.codec.ThriftProtocolType.BINARY;
-import static com.facebook.swift.codec.ThriftProtocolType.BOOL;
-import static com.facebook.swift.codec.ThriftProtocolType.BYTE;
-import static com.facebook.swift.codec.ThriftProtocolType.DOUBLE;
-import static com.facebook.swift.codec.ThriftProtocolType.ENUM;
-import static com.facebook.swift.codec.ThriftProtocolType.I16;
-import static com.facebook.swift.codec.ThriftProtocolType.I32;
-import static com.facebook.swift.codec.ThriftProtocolType.I64;
-import static com.facebook.swift.codec.ThriftProtocolType.LIST;
-import static com.facebook.swift.codec.ThriftProtocolType.MAP;
-import static com.facebook.swift.codec.ThriftProtocolType.SET;
-import static com.facebook.swift.codec.ThriftProtocolType.STRING;
-import static com.facebook.swift.codec.ThriftProtocolType.STRUCT;
-import static com.facebook.swift.codec.internal.compiler.byteCode.Access.BRIDGE;
-import static com.facebook.swift.codec.internal.compiler.byteCode.Access.FINAL;
-import static com.facebook.swift.codec.internal.compiler.byteCode.Access.PRIVATE;
-import static com.facebook.swift.codec.internal.compiler.byteCode.Access.PUBLIC;
-import static com.facebook.swift.codec.internal.compiler.byteCode.Access.SUPER;
-import static com.facebook.swift.codec.internal.compiler.byteCode.Access.SYNTHETIC;
-import static com.facebook.swift.codec.internal.compiler.byteCode.Access.a;
-import static com.facebook.swift.codec.internal.compiler.byteCode.CaseStatement.caseStatement;
-import static com.facebook.swift.codec.internal.compiler.byteCode.NamedParameterDefinition.arg;
-import static com.facebook.swift.codec.internal.compiler.byteCode.ParameterizedType.type;
-import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_FIELD;
-import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_UNION_ID;
-import static com.google.common.collect.Iterables.getOnlyElement;
-import static java.lang.String.format;
 
 @NotThreadSafe
 public class ThriftCodecByteCodeGenerator<T>
@@ -106,6 +108,7 @@ public class ThriftCodecByteCodeGenerator<T>
     private final ThriftCodecManager codecManager;
     private final ThriftStructMetadata metadata;
     private final ParameterizedType structType;
+    private final ParameterizedType structClass;
     private final ParameterizedType codecType;
 
     private final ClassDefinition classDefinition;
@@ -129,14 +132,15 @@ public class ThriftCodecByteCodeGenerator<T>
         this.codecManager = codecManager;
         this.metadata = metadata;
 
-        structType = type(metadata.getStructClass());
+        structType = type(TypeToken.of(metadata.getStructType()).getRawType());
+        structClass = type(metadata.getStructClass());
         codecType = toCodecType(metadata);
 
         classDefinition = new ClassDefinition(
-                a(PUBLIC, SUPER),
-                codecType.getClassName(),
-                type(Object.class),
-                type(ThriftCodec.class, structType)
+            a(PUBLIC, SUPER),
+            codecType.getClassName(),
+            type(Object.class),
+            type(ThriftCodec.class, structType)
         );
 
         // declare the class fields
@@ -282,7 +286,7 @@ public class ThriftCodecByteCodeGenerator<T>
         MethodDefinition read = new MethodDefinition(
                 a(PUBLIC),
                 "read",
-                structType,
+                structClass,
                 arg("protocol", TProtocol.class)
         ).addException(Exception.class);
 
@@ -472,7 +476,7 @@ public class ThriftCodecByteCodeGenerator<T>
         MethodDefinition read = new MethodDefinition(
                 a(PUBLIC),
                 "read",
-                structType,
+                structClass,
                 arg("protocol", TProtocol.class)
         ).addException(Exception.class);
 
@@ -631,7 +635,11 @@ public class ThriftCodecByteCodeGenerator<T>
         // find the @ThriftUnionId field
         ThriftFieldMetadata idField = getOnlyElement(metadata.getFields(THRIFT_UNION_ID));
 
-        injectIdField(read, idField, instance, unionData);
+        // if a union has a builder, it should be the builder's responsibility to set the
+        // type field correctly.
+        if (metadata.getBuilderClass() == null) {
+            injectIdField(read, idField, instance, unionData);
+        }
 
         // invoke factory method if present
         invokeFactoryMethod(read, unionData, instance);
@@ -815,7 +823,7 @@ public class ThriftCodecByteCodeGenerator<T>
                 a(PUBLIC),
                 "write",
                 null,
-                arg("struct", structType),
+                arg("struct", structClass),
                 arg("protocol", TProtocol.class)
         );
 
@@ -856,7 +864,7 @@ public class ThriftCodecByteCodeGenerator<T>
                 a(PUBLIC),
                 "write",
                 null,
-                arg("struct", structType),
+                arg("struct", structClass),
                 arg("protocol", TProtocol.class)
         );
 
@@ -1007,7 +1015,7 @@ public class ThriftCodecByteCodeGenerator<T>
                         .addException(Exception.class)
                         .loadThis()
                         .loadVariable("protocol")
-                        .invokeVirtual(codecType, "read", structType, type(TProtocol.class))
+                        .invokeVirtual(codecType, "read", structClass, type(TProtocol.class))
                         .retObject()
         );
     }
@@ -1021,13 +1029,13 @@ public class ThriftCodecByteCodeGenerator<T>
                 new MethodDefinition(a(PUBLIC, BRIDGE, SYNTHETIC), "write", null, arg("struct", Object.class), arg("protocol", TProtocol.class))
                         .addException(Exception.class)
                         .loadThis()
-                        .loadVariable("struct", structType)
+                        .loadVariable("struct", structClass)
                         .loadVariable("protocol")
                         .invokeVirtual(
                                 codecType,
                                 "write",
                                 type(void.class),
-                                structType,
+                                structClass,
                                 type(TProtocol.class)
                         )
                         .ret()
@@ -1091,7 +1099,7 @@ public class ThriftCodecByteCodeGenerator<T>
 
     private ParameterizedType toCodecType(ThriftStructMetadata metadata)
     {
-        return type(PACKAGE + "/" + type(metadata.getStructClass()).getClassName() + "Codec");
+        return type(PACKAGE + "/" + type(TypeToken.of(metadata.getStructType()).getRawType()).getClassName() + "Codec"); //type(metadata.getStructClass()).getClassName() + "Codec");
     }
 
     private static class ConstructorParameters

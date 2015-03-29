@@ -15,37 +15,6 @@
  */
 package com.facebook.swift.codec.metadata;
 
-import com.facebook.swift.codec.ThriftDocumentation;
-import com.facebook.swift.codec.ThriftOrder;
-import com.facebook.swift.codec.ThriftStruct;
-import com.facebook.swift.codec.ThriftUnion;
-import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
-import com.facebook.swift.codec.internal.coercion.FromThrift;
-import com.facebook.swift.codec.internal.coercion.ToThrift;
-import com.facebook.swift.codec.metadata.MetadataErrors.Monitor;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Sets;
-import com.google.common.reflect.TypeToken;
-import com.google.common.util.concurrent.ListenableFuture;
-
-import javax.annotation.concurrent.ThreadSafe;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Type;
-import java.nio.ByteBuffer;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getFutureReturnType;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getIterableType;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getMapKeyType;
@@ -68,8 +37,37 @@ import static com.facebook.swift.codec.metadata.ThriftType.struct;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Iterables.transform;
-
 import static java.lang.reflect.Modifier.isStatic;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+import javax.annotation.concurrent.ThreadSafe;
+
+import com.facebook.swift.codec.ThriftDocumentation;
+import com.facebook.swift.codec.ThriftOrder;
+import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
+import com.facebook.swift.codec.internal.coercion.FromThrift;
+import com.facebook.swift.codec.internal.coercion.ToThrift;
+import com.facebook.swift.codec.metadata.MetadataErrors.Monitor;
+import com.facebook.swift.codec.metadata.ThriftStructMetadata.MetadataType;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
+import com.google.common.reflect.TypeToken;
+import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  * ThriftCatalog contains the metadata for all known structs, enums and type coercions.  Since,
@@ -279,13 +277,9 @@ public class ThriftCatalog
         if (void.class.isAssignableFrom(rawType) || Void.class.isAssignableFrom(rawType)) {
             return VOID;
         }
-        if (rawType.isAnnotationPresent(ThriftStruct.class)) {
+
+        if (ThriftStructMetadata.findStructClass(javaType) != null) {
             ThriftStructMetadata structMetadata = getThriftStructMetadata(javaType);
-            return struct(structMetadata);
-        }
-        if (rawType.isAnnotationPresent(ThriftUnion.class)) {
-            ThriftStructMetadata structMetadata = getThriftStructMetadata(javaType);
-            // An union looks like a struct with a single field.
             return struct(structMetadata);
         }
 
@@ -349,10 +343,7 @@ public class ThriftCatalog
             Type elementType = getIterableType(javaType);
             return isSupportedStructFieldType(elementType);
         }
-        if (rawType.isAnnotationPresent(ThriftStruct.class)) {
-            return true;
-        }
-        if (rawType.isAnnotationPresent(ThriftUnion.class)) {
+        if (ThriftStructMetadata.findStructClass(javaType) != null) {
             return true;
         }
 
@@ -397,17 +388,18 @@ public class ThriftCatalog
 
     /**
      * Gets the ThriftStructMetadata for the specified struct class.  The struct class must be
-     * annotated with @ThriftStruct or @ThriftUnion.
+     * annotated with {@link @ThriftStruct} or {@link @ThriftUnion}.
      */
     public <T> ThriftStructMetadata getThriftStructMetadata(Type structType)
     {
         ThriftStructMetadata structMetadata = structs.get(structType);
-        Class<?> structClass = TypeToken.of(structType).getRawType();
         if (structMetadata == null) {
-            if (structClass.isAnnotationPresent(ThriftStruct.class)) {
+            Class<?> structClass = ThriftStructMetadata.findStructClass(structType);
+            MetadataType metadataType = ThriftStructMetadata.getMetadataType(structClass);
+            if (MetadataType.STRUCT.equals(metadataType)) {
                 structMetadata = extractThriftStructMetadata(structType);
             }
-            else if (structClass.isAnnotationPresent(ThriftUnion.class)) {
+            else if (MetadataType.UNION.equals(metadataType)) {
                 structMetadata = extractThriftUnionMetadata(structType);
             }
             else {

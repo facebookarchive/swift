@@ -81,6 +81,7 @@ import static org.objectweb.asm.Opcodes.ILOAD;
 import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
+import static org.objectweb.asm.Opcodes.INVOKEINTERFACE;
 import static org.objectweb.asm.Opcodes.ISTORE;
 import static org.objectweb.asm.Opcodes.LCONST_0;
 import static org.objectweb.asm.Opcodes.NEW;
@@ -384,7 +385,7 @@ public class MethodDefinition
     {
         instructionList.add(
                 new MethodInsnNode(
-                        INVOKEVIRTUAL,
+                        method.getDeclaringClass().isInterface() ? INVOKEINTERFACE : INVOKEVIRTUAL,
                         Type.getInternalName(method.getDeclaringClass()),
                         method.getName(),
                         Type.getMethodDescriptor(method)

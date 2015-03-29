@@ -15,23 +15,26 @@
  */
 package com.facebook.swift.codec.metadata;
 
-import com.facebook.swift.codec.ThriftConstructor;
-import com.facebook.swift.codec.ThriftField;
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
-import com.google.common.reflect.TypeToken;
-import com.google.inject.internal.MoreTypes;
-
-import javax.annotation.Nullable;
-import javax.annotation.concurrent.NotThreadSafe;
+import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_FIELD;
+import static com.facebook.swift.codec.metadata.FieldMetadata.extractThriftFieldName;
+import static com.facebook.swift.codec.metadata.FieldMetadata.getOrExtractThriftFieldName;
+import static com.facebook.swift.codec.metadata.FieldMetadata.getThriftFieldId;
+import static com.facebook.swift.codec.metadata.FieldMetadata.getThriftFieldName;
+import static com.facebook.swift.codec.metadata.FieldMetadata.getThriftFieldRequiredness;
+import static com.facebook.swift.codec.metadata.ReflectionHelper.extractParameterNames;
+import static com.facebook.swift.codec.metadata.ReflectionHelper.findAnnotatedMethods;
+import static com.facebook.swift.codec.metadata.ReflectionHelper.getAllDeclaredFields;
+import static com.facebook.swift.codec.metadata.ReflectionHelper.getAllDeclaredMethods;
+import static com.facebook.swift.codec.metadata.ReflectionHelper.resolveFieldTypes;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Predicates.notNull;
+import static com.google.common.collect.Iterables.filter;
+import static com.google.common.collect.Iterables.transform;
+import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Lists.newArrayListWithCapacity;
+import static com.google.common.collect.Sets.newTreeSet;
+import static java.util.Arrays.asList;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -46,34 +49,33 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import static com.facebook.swift.codec.ThriftField.Requiredness;
-import static com.facebook.swift.codec.metadata.FieldMetadata.extractThriftFieldName;
-import static com.facebook.swift.codec.metadata.FieldMetadata.getOrExtractThriftFieldName;
-import static com.facebook.swift.codec.metadata.FieldMetadata.getThriftFieldId;
-import static com.facebook.swift.codec.metadata.FieldMetadata.getThriftFieldName;
-import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_FIELD;
-import static com.facebook.swift.codec.metadata.FieldMetadata.*;
-import static com.facebook.swift.codec.metadata.ReflectionHelper.extractParameterNames;
-import static com.facebook.swift.codec.metadata.ReflectionHelper.findAnnotatedMethods;
-import static com.facebook.swift.codec.metadata.ReflectionHelper.getAllDeclaredFields;
-import static com.facebook.swift.codec.metadata.ReflectionHelper.getAllDeclaredMethods;
-import static com.facebook.swift.codec.metadata.ReflectionHelper.resolveFieldTypes;
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Predicates.notNull;
-import static com.google.common.collect.Iterables.filter;
-import static com.google.common.collect.Iterables.transform;
-import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Lists.newArrayListWithCapacity;
-import static com.google.common.collect.Sets.newTreeSet;
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.NotThreadSafe;
 
-import static java.util.Arrays.asList;
+import com.facebook.swift.codec.ThriftConstructor;
+import com.facebook.swift.codec.ThriftField;
+import com.facebook.swift.codec.ThriftField.Requiredness;
+import com.facebook.swift.codec.metadata.ThriftStructMetadata.MetadataType;
+import com.google.common.base.Function;
+import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
+import com.google.common.reflect.TypeToken;
+import com.google.inject.internal.MoreTypes;
 
 @NotThreadSafe
 public abstract class AbstractThriftMetadataBuilder
 {
+
     protected final String structName;
     protected final Type structType;
+    protected final Class<?> structClass;
     protected final Type builderType;
 
     protected final List<String> documentation;
@@ -97,21 +99,24 @@ public abstract class AbstractThriftMetadataBuilder
         this.structType = checkNotNull(structType, "structType is null");
         this.metadataErrors = new MetadataErrors(catalog.getMonitor());
 
+        structClass = ThriftStructMetadata.findStructClass(structType);
         // assign the struct name from the annotation or from the Java class
         structName = extractName();
         // get the builder type from the annotation or from the Java class
         builderType = extractBuilderType();
         // grab any documentation from the annotation or saved JavaDocs
         documentation = ThriftCatalog.getThriftDocumentation(getStructClass());
-        // extract all of the annotated constructor and report an error if
-        // there is more than one or none
-        // also extract thrift fields from the annotated parameters and verify
+
         extractFromConstructors();
+        
         // extract thrift fields from the annotated fields and verify
         extractFromFields();
         // extract thrift fields from the annotated methods (and parameters) and verify
         extractFromMethods();
+        
     }
+    
+    protected abstract MetadataType getMetadataType(); 
 
     protected abstract String extractName();
 
@@ -132,7 +137,8 @@ public abstract class AbstractThriftMetadataBuilder
 
     public Class<?> getStructClass()
     {
-        return TypeToken.of(structType).getRawType();
+        return TypeToken.of(structClass).getRawType();
+        //return TypeToken.of(structType).getRawType();
     }
 
     public Class<?> getBuilderClass()
@@ -173,24 +179,88 @@ public abstract class AbstractThriftMetadataBuilder
         String annotationName = annotation.getSimpleName();
         String structClassName = getStructClass().getName();
 
-        // Verify struct class is public and final
+        // Verify struct class is public
         if (!Modifier.isPublic(getStructClass().getModifiers())) {
             metadataErrors.addError("%s class '%s' is not public", annotationName, structClassName);
         }
-        if (!Modifier.isFinal(getStructClass().getModifiers())) {
-            metadataErrors.addError("%s class '%s' is not final (thrift does not support polymorphic data types)", annotationName, structClassName);
-        }
 
-        if (!getStructClass().isAnnotationPresent(annotation)) {
-            metadataErrors.addError("%s class '%s' does not have a @%s annotation", annotationName, structClassName, annotationName);
+        // verify the class is annotated with exactly 1 type of struct annotation
+        verifyStructClassAnnotations();
+
+        // verify that this is a valid variant by checking for any fields on subclasses
+        verifyStructFieldAnnotations();
+        verifyStructMethodAnnotations();
+
+    }
+
+    protected final void verifyStructClassAnnotations() {
+        for (final Class<?> assignableType : TypeToken.of(structType).getTypes().rawTypes()) {
+            for (final MetadataType metadataType : MetadataType.values()) {
+                if (assignableType.isAnnotationPresent(metadataType.getAnnotationType())) {
+                    final Class<?> structClass = getStructClass();
+                    final boolean isStructClass = structClass.equals(assignableType);
+                    final boolean isRightMetadataType = getMetadataType().equals(metadataType);
+                    if (!isStructClass || !isRightMetadataType) {
+                        metadataErrors.addError(
+                            "%s is annotated with @%s, however there is also a @%s annotation on " + 
+                            "%s which is not allowed (thrift does not support polymorphic data types)", 
+                            structClass.toString(), 
+                            getMetadataType().getAnnotationType().getSimpleName(),
+                            metadataType.getAnnotationType().getSimpleName(), 
+                            assignableType.toString()
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    protected final void verifyStructFieldAnnotations() {
+        for (Class<?> assignableType : TypeToken.of(structType).getTypes().rawTypes()) {
+            if (!assignableType.isAssignableFrom(getStructClass())) {
+                for (final Field field : assignableType.getDeclaredFields()) {
+                    if (field.isAnnotationPresent(ThriftField.class)) {
+                        final String msg = String.format(
+                            "%s inherits a @ThriftField annotation from field '%s' on %s, " +
+                            "but %s is not assignable from the struct %s, which is not " + 
+                            "allowed (thrift does not support polymorphic data types).",
+                            structType, field.getName(), assignableType.toString(),
+                            assignableType.toString(), getStructClass().toString()
+                        );
+                        metadataErrors.addError(msg);
+                    }
+                }
+            }
+        }
+    }
+
+    protected final void verifyStructMethodAnnotations() {
+        for (Class<?> assignableType : TypeToken.of(structType).getTypes().rawTypes()) {
+            if (!assignableType.isAssignableFrom(getStructClass())) {
+                for (final Method method : assignableType.getDeclaredMethods()) {
+                    if (method.isAnnotationPresent(ThriftField.class)) {
+                        metadataErrors.addError(String.format(
+                            "%s inherits a @ThriftField annotation from method '%s' on %s, " +
+                            "but %s is not assignable from the struct %s, which is not " + 
+                            "allowed (thrift does not support polymorphic data types).",
+                            structType, method.getName(), assignableType.toString(),
+                            assignableType.toString(), getStructClass().toString()
+                        ));
+                    }
+                }
+            }
         }
     }
 
     protected final void extractFromConstructors()
     {
         if (builderType == null) {
-            // struct class must have a valid constructor
-            addConstructors(structType);
+            if (getStructClass().isInterface()) {
+                metadataErrors.addError("Interface structs must define a builder");
+            } else {
+                // struct class must have a valid constructor
+                addConstructors(structType);
+            }
         }
         else {
             // builder class must have a valid constructor

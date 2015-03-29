@@ -15,17 +15,22 @@
  */
 package com.facebook.swift.codec.metadata;
 
-import com.facebook.swift.codec.ThriftConstructor;
-import com.facebook.swift.codec.ThriftField;
-import com.facebook.swift.codec.ThriftStruct;
-import com.google.common.reflect.TypeToken;
-import org.testng.annotations.Test;
+import static org.fest.assertions.Assertions.assertThat;
+import static org.testng.Assert.fail;
 
 import java.lang.reflect.Type;
 import java.util.concurrent.locks.Lock;
 
-import static com.facebook.swift.codec.ThriftField.Requiredness;
-import static org.fest.assertions.Assertions.assertThat;
+import org.testng.annotations.Test;
+
+import com.facebook.swift.codec.ComponentWithMultipleAnnotatedInterfaces;
+import com.facebook.swift.codec.ComponentWithSetterAndNoBuilder;
+import com.facebook.swift.codec.DiscreteComponent;
+import com.facebook.swift.codec.ThriftConstructor;
+import com.facebook.swift.codec.ThriftField;
+import com.facebook.swift.codec.ThriftField.Requiredness;
+import com.facebook.swift.codec.ThriftStruct;
+import com.google.common.reflect.TypeToken;
 
 public class TestThriftStructMetadataBuilder
 {
@@ -338,4 +343,77 @@ public class TestThriftStructMetadataBuilder
         {
         }
     }
+
+    @Test
+    public void testStructInterface() {
+        
+        ThriftStructMetadata metadata = new ThriftStructMetadataBuilder(
+            new ThriftCatalog(), DiscreteComponent.class).build();
+
+        assertThat(metadata.getFields())
+            .as("metadata for a valid struct interface")
+            .hasSize(3);
+
+    }
+    
+    @Test
+    public void testInvalidStructWithMultipleAnnotatedInterfaces() {
+
+        ThriftStructMetadataBuilder builder = new ThriftStructMetadataBuilder(
+            new ThriftCatalog(), ComponentWithMultipleAnnotatedInterfaces.class);
+
+        MetadataErrors errors = builder.getMetadataErrors();
+
+        assertThat(errors.getErrors()).as("metadata errors").isNotEmpty();
+        
+        for (MetadataErrorException e : errors.getErrors()) {
+            String msg = e.getMessage();
+            if (msg.contains("is annotated with @ThriftStruct, however there is also a @ThriftStruct annotation on")) {
+                return;
+            }
+        }
+        fail("should have had an error about multiple annotations.");
+
+    }
+
+    @Test
+    public void testInvalidStructClassImplementsAnnotatedInterface() {
+
+        ThriftStructMetadataBuilder builder = new ThriftStructMetadataBuilder(
+                new ThriftCatalog(), ComponentWithMultipleAnnotatedInterfaces.class);
+
+        MetadataErrors errors = builder.getMetadataErrors();
+
+        assertThat(errors.getErrors()).as("metadata errors").isNotEmpty();
+        
+        for (MetadataErrorException e : errors.getErrors()) {
+            String msg = e.getMessage();
+            if (msg.contains("is annotated with @ThriftStruct, however there is also a @ThriftStruct annotation on")) {
+                return;
+            }
+        }
+        fail("should have had an error about multiple annotations.");
+
+    }
+
+    @Test
+    public void testInvalidInterfaceStructWithNoBuilder() {
+
+        ThriftStructMetadataBuilder builder = new ThriftStructMetadataBuilder(
+                new ThriftCatalog(), ComponentWithSetterAndNoBuilder.class);
+
+        MetadataErrors errors = builder.getMetadataErrors();
+
+        assertThat(errors.getErrors()).as("metadata errors").isNotEmpty();
+        
+        for (MetadataErrorException e : errors.getErrors()) {
+            String msg = e.getMessage();
+            if (msg.contains("Interface structs must define a builder")) {
+                return;
+            }
+        }
+        fail("should have had an error saying that interface structs must define a builder.");
+
+    }
+
 }
