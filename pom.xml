@@ -20,9 +20,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.facebook</groupId>
-        <artifactId>facebook-oss-pom</artifactId>
-        <version>11</version>
+        <groupId>io.airlift</groupId>
+        <artifactId>airbase</artifactId>
+        <version>36</version>
     </parent>
 
     <groupId>com.facebook.nifty</groupId>
@@ -38,11 +38,11 @@
     </modules>
 
     <properties>
-        <!-- Nifty actually can not build with the 1.6 compiler because -->
-        <!-- it dependends on airlift, which is 1.7 only.               -->
-        <!-- <project.build.targetJdk>1.6</project.build.targetJdk>     -->
+        <air.check.skip-findbugs>true</air.check.skip-findbugs>
+        <air.check.skip-pmd>true</air.check.skip-pmd>
+        <air.check.skip-jacoco>true</air.check.skip-jacoco>
 
-        <dep.airlift.version>0.91</dep.airlift.version>
+        <dep.airlift.version>0.106</dep.airlift.version>
     </properties>
 
     <url>https://facebook.github.com/nifty</url>
@@ -147,9 +147,9 @@
             </dependency>
 
             <dependency>
-                <groupId>javax.validation</groupId>
-                <artifactId>validation-api</artifactId>
-                <version>1.1.0.Final</version>
+                <groupId>org.easymock</groupId>
+                <artifactId>easymock</artifactId>
+                <version>3.2</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

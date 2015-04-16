@@ -26,12 +26,12 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <name>Nifty client</name>
+    <description>Nifty client</description>
     <artifactId>nifty-client</artifactId>
     <packaging>jar</packaging>
 
     <properties>
-        <fb.main.basedir>${project.parent.basedir}</fb.main.basedir>
+        <air.main.basedir>${project.parent.basedir}</air.main.basedir>
     </properties>
 
     <dependencies>

@@ -25,12 +25,12 @@
         <version>0.15.0-SNAPSHOT</version>
     </parent>
 
-    <name>Load tester</name>
+    <description>Load tester</description>
     <artifactId>nifty-load-tester</artifactId>
     <packaging>jar</packaging>
 
     <properties>
-        <fb.main.basedir>${project.parent.basedir}</fb.main.basedir>
+        <air.main.basedir>${project.parent.basedir}</air.main.basedir>
     </properties>
 
     <dependencyManagement>
