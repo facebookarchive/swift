@@ -34,22 +34,16 @@ import io.airlift.configuration.ConfigurationLoader;
 import io.airlift.configuration.ConfigurationModule;
 import io.airlift.configuration.ConfigurationValidator;
 import io.airlift.configuration.ValidationErrorModule;
-import org.jboss.netty.logging.InternalLoggerFactory;
-import org.jboss.netty.logging.Slf4JLoggerFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+
 import java.util.concurrent.Executors;
 
 public class NiftyLoadTester
 {
     public static void main(String[] args) throws Exception
     {
-        // Configure netty logs to go to SLF4J
-        InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory());
-
         ConfigurationFactory cf = new ConfigurationFactory(new ConfigurationLoader().loadProperties());
         AbstractModule exampleModule = new AbstractModule()
         {
@@ -80,11 +74,6 @@ public class NiftyLoadTester
 
     private static class LoadTestServerProvider implements Provider<ThriftServerDef>
     {
-
-        private static final Logger log = LoggerFactory.getLogger(
-                LoadTestServerProvider.class
-        );
-
         private final LoadTesterConfig config;
         private final LifeCycleManager lifeCycleManager;
 

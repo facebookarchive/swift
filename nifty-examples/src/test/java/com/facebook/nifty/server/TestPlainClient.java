@@ -19,16 +19,12 @@ import com.facebook.nifty.server.util.ScopedNiftyServer;
 import com.facebook.nifty.test.LogEntry;
 import com.facebook.nifty.test.ResultCode;
 import com.facebook.nifty.test.scribe;
+import io.airlift.log.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
-import org.jboss.netty.logging.InternalLoggerFactory;
-import org.jboss.netty.logging.Slf4JLoggerFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -38,13 +34,7 @@ import java.util.List;
 import static com.facebook.nifty.server.util.ScopedNiftyServer.defaultServerDefBuilder;
 
 public class TestPlainClient {
-    private static Logger log = LoggerFactory.getLogger(TestPlainClient.class);
-
-    @BeforeMethod(alwaysRun = true)
-    public void setup()
-    {
-        InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory());
-    }
+    private static final Logger log = Logger.get(TestPlainClient.class);
 
     @Test
     public void testPlainUnframedClient() throws Exception
@@ -90,8 +80,7 @@ public class TestPlainClient {
                     throws TException
             {
                 for (LogEntry message : messages) {
-                    log.info("{}: {}", message.getCategory(),
-                             message.getMessage());
+                    log.info("%s: %s", message.getCategory(), message.getMessage());
                 }
                 return ResultCode.OK;
             }

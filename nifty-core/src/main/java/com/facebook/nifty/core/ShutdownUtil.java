@@ -15,17 +15,16 @@
  */
 package com.facebook.nifty.core;
 
+import io.airlift.log.Logger;
 import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.group.ChannelGroup;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class ShutdownUtil
 {
-    private static final Logger log = LoggerFactory.getLogger(ShutdownUtil.class);
+    private static final Logger log = Logger.get(ShutdownUtil.class);
 
     public static void shutdownChannelFactory(ChannelFactory channelFactory,
                                               ExecutorService bossExecutor,
@@ -64,7 +63,7 @@ public class ShutdownUtil
         {
             // TODO : allow an option here to control if we need to drain connections and wait instead of killing them all
             try {
-                log.info("Closing " + allChannels.size() + " open client connections");
+                log.info("Closing %s open client connections", allChannels.size());
                 if (!allChannels.close().await(5, TimeUnit.SECONDS)) {
                     log.warn("Failed to close all open client connections");
                 }
@@ -80,13 +79,13 @@ public class ShutdownUtil
     {
         executor.shutdown();
         try {
-            log.info("Waiting for {} to shutdown", name);
+            log.info("Waiting for %s to shutdown", name);
             if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
-                log.warn("{} did not shutdown properly", name);
+                log.warn("%s did not shutdown properly", name);
             }
         }
         catch (InterruptedException e) {
-            log.warn("Interrupted while waiting for {} to shutdown", name);
+            log.warn("Interrupted while waiting for %s to shutdown", name);
             Thread.currentThread().interrupt();
         }
     }

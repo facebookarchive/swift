@@ -22,19 +22,14 @@ import com.facebook.nifty.test.LogEntry;
 import com.facebook.nifty.test.ResultCode;
 import com.facebook.nifty.test.scribe;
 import com.google.common.base.Throwables;
+import io.airlift.log.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
-import org.jboss.netty.logging.InternalLoggerFactory;
-import org.jboss.netty.logging.Slf4JLoggerFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.List;
@@ -43,13 +38,7 @@ import static com.facebook.nifty.server.util.ScopedNiftyServer.defaultServerDefB
 
 public class TestNiftyClient
 {
-    private static final Logger log = LoggerFactory.getLogger(TestNiftyClient.class);
-
-    @BeforeMethod(alwaysRun = true)
-    public void setup() throws IOException
-    {
-        InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory());
-    }
+    private static final Logger log = Logger.get(TestNiftyClient.class);
 
     @Test
     public void testServerDisconnect()
@@ -83,11 +72,11 @@ public class TestNiftyClient
                     client.Log(Arrays.asList(new LogEntry("hello", "world " + i)));
                 }
                 catch (TException e) {
-                    log.info("caught expected exception " + e.toString());
+                    log.info("caught expected exception: %s", e);
                     exceptionCount++;
                 }
                 catch (Throwable t) {
-                    log.info("caught unexpected exception " + t.toString());
+                    log.warn(t, "caught unexpected exception");
                 }
             }
             Assert.assertTrue(exceptionCount > 0);
@@ -104,8 +93,7 @@ public class TestNiftyClient
             public ResultCode Log(List<LogEntry> messages) throws TException
             {
                 for (LogEntry message : messages) {
-                    log.info("{}: {}", message.getCategory(),
-                             message.getMessage());
+                    log.info("%s: %s", message.getCategory(), message.getMessage());
                 }
                 return ResultCode.OK;
             }

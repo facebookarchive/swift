@@ -25,11 +25,11 @@ import com.facebook.nifty.test.ResultCode;
 import com.facebook.nifty.test.scribe;
 import com.google.inject.Guice;
 import com.google.inject.Stage;
+import io.airlift.log.Logger;
 import org.apache.thrift.TException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Provider;
+
 import java.util.List;
 
 /**
@@ -37,7 +37,7 @@ import java.util.List;
  */
 public class Plain
 {
-    private static final Logger log = LoggerFactory.getLogger(Plain.class);
+    private static final Logger log = Logger.get(Plain.class);
 
     public static void main(String[] args)
             throws Exception
@@ -59,9 +59,7 @@ public class Plain
                                                               throws TException
                                                       {
                                                           for (LogEntry message : messages) {
-                                                              log.info("{}: {}",
-                                                                       message.getCategory(),
-                                                                       message.getMessage());
+                                                              log.info("%s: %s", message.getCategory(), message.getMessage());
                                                           }
                                                           return ResultCode.OK;
                                                       }

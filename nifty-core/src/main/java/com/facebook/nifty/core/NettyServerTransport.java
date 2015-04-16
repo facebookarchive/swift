@@ -15,6 +15,8 @@
  */
 package com.facebook.nifty.core;
 
+import edu.umd.cs.findbugs.annotations.SuppressWarnings;
+import io.airlift.log.Logger;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
@@ -33,12 +35,8 @@ import org.jboss.netty.channel.socket.nio.NioServerBossPool;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioWorkerPool;
 import org.jboss.netty.handler.timeout.IdleStateHandler;
-import org.jboss.netty.logging.InternalLoggerFactory;
-import org.jboss.netty.logging.Slf4JLoggerFactory;
 import org.jboss.netty.util.ExternalResourceReleasable;
 import org.jboss.netty.util.ThreadNameDeterminer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 
@@ -55,7 +53,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class NettyServerTransport implements ExternalResourceReleasable
 {
-    private static final Logger log = LoggerFactory.getLogger(NettyServerTransport.class);
+    private static final Logger log = Logger.get(NettyServerTransport.class);
 
     private final int port;
     private final ChannelPipelineFactory pipelineFactory;
@@ -138,13 +136,6 @@ public class NettyServerTransport implements ExternalResourceReleasable
 
     public void start(ServerChannelFactory serverChannelFactory)
     {
-        if (!(InternalLoggerFactory.getDefaultFactory() instanceof Slf4JLoggerFactory)) {
-            log.warn("Nifty always logs to slf4j, but netty is currently configured to use a " +
-                     "different logging implementation. To correct this call " +
-                     "InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory()) " +
-                     "during your server's startup");
-        }
-
         bootstrap = new ServerBootstrap(serverChannelFactory);
         bootstrap.setOptions(nettyServerConfig.getBootstrapOptions());
         bootstrap.setPipelineFactory(pipelineFactory);
@@ -152,10 +143,10 @@ public class NettyServerTransport implements ExternalResourceReleasable
         SocketAddress actualSocket = serverChannel.getLocalAddress();
         if (actualSocket instanceof InetSocketAddress) {
             int actualPort = ((InetSocketAddress) actualSocket).getPort();
-            log.info("started transport {}:{} (:{})", def.getName(), actualPort, port);
+            log.info("started transport %s:%s (:%s)", def.getName(), actualPort, port);
         }
         else {
-            log.info("started transport {}:{}", def.getName(), port);
+            log.info("started transport %s:%s", def.getName(), port);
         }
     }
 
@@ -163,7 +154,7 @@ public class NettyServerTransport implements ExternalResourceReleasable
             throws InterruptedException
     {
         if (serverChannel != null) {
-            log.info("stopping transport {}:{}", def.getName(), port);
+            log.info("stopping transport %s:%s", def.getName(), port);
             // first stop accepting
             final CountDownLatch latch = new CountDownLatch(1);
             serverChannel.close().addListener(new ChannelFutureListener()
@@ -225,7 +216,7 @@ public class NettyServerTransport implements ExternalResourceReleasable
                 if (numConnections.incrementAndGet() > maxConnections) {
                     ctx.getChannel().close();
                     // numConnections will be decremented in channelClosed
-                    log.info("Accepted connection above limit ({}). Dropping.", maxConnections);
+                    log.info("Accepted connection above limit (%s). Dropping.", maxConnections);
                 }
             }
             super.channelOpen(ctx, e);

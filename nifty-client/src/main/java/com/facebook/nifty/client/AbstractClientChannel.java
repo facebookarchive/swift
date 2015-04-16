@@ -17,6 +17,7 @@ package com.facebook.nifty.client;
 
 import com.facebook.nifty.core.TChannelBufferInputTransport;
 import com.facebook.nifty.duplex.TDuplexProtocolFactory;
+import io.airlift.log.Logger;
 import io.airlift.units.Duration;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TMessage;
@@ -39,11 +40,10 @@ import org.jboss.netty.handler.timeout.WriteTimeoutException;
 import org.jboss.netty.util.Timeout;
 import org.jboss.netty.util.Timer;
 import org.jboss.netty.util.TimerTask;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -53,7 +53,7 @@ import java.util.concurrent.TimeUnit;
 @NotThreadSafe
 public abstract class AbstractClientChannel extends SimpleChannelHandler implements
         NiftyClientChannel {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractClientChannel.class);
+    private static final Logger LOGGER = Logger.get(AbstractClientChannel.class);
 
     private final Channel nettyChannel;
     private Duration sendTimeout = null;
@@ -360,7 +360,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
             listener.onRequestSent();
         }
         catch (Throwable t) {
-            LOGGER.warn("Request sent listener callback triggered an exception: {}", t);
+            LOGGER.warn(t, "Request sent listener callback triggered an exception");
         }
     }
 
@@ -370,7 +370,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
             listener.onResponseReceived(response);
         }
         catch (Throwable t) {
-            LOGGER.warn("Response received listener callback triggered an exception: {}", t);
+            LOGGER.warn(t, "Response received listener callback triggered an exception");
         }
     }
 
@@ -380,7 +380,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
             listener.onChannelError(exception);
         }
         catch (Throwable t) {
-            LOGGER.warn("Channel error listener callback triggered an exception: {}", t);
+            LOGGER.warn(t, "Channel error listener callback triggered an exception");
         }
     }
 

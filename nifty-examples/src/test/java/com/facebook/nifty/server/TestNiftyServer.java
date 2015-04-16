@@ -25,16 +25,13 @@ import com.facebook.nifty.core.ThriftServerDefBuilder;
 import com.facebook.nifty.test.LogEntry;
 import com.facebook.nifty.test.ResultCode;
 import com.facebook.nifty.test.scribe;
+import io.airlift.log.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
-import org.jboss.netty.logging.InternalLoggerFactory;
-import org.jboss.netty.logging.Slf4JLoggerFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -46,7 +43,7 @@ import java.util.List;
 
 public class TestNiftyServer
 {
-    private static final Logger log = LoggerFactory.getLogger(TestNiftyServer.class);
+    private static final Logger log = Logger.get(TestNiftyServer.class);
     private NettyServerTransport server;
     private int port;
 
@@ -54,7 +51,6 @@ public class TestNiftyServer
     public void setup()
     {
         server = null;
-        InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory());
     }
 
     @AfterMethod(alwaysRun = true)
@@ -91,7 +87,7 @@ public class TestNiftyServer
                         RequestContext context = RequestContexts.getCurrentContext();
 
                         for (LogEntry message : messages) {
-                            log.info("[Client: {}] {}: {}",
+                            log.info("[Client: %s] %s: %s",
                                     context.getConnectionContext().getRemoteAddress(),
                                     message.getCategory(),
                                     message.getMessage());

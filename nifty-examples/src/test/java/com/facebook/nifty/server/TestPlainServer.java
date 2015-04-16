@@ -28,11 +28,11 @@ import com.facebook.nifty.test.LogEntry;
 import com.facebook.nifty.test.ResultCode;
 import com.facebook.nifty.test.scribe;
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Guice;
 import com.google.inject.Provider;
 import com.google.inject.Stage;
+import io.airlift.log.Logger;
 import io.airlift.units.Duration;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
@@ -43,10 +43,6 @@ import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
-import org.jboss.netty.logging.InternalLoggerFactory;
-import org.jboss.netty.logging.Slf4JLoggerFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -58,7 +54,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -68,8 +63,7 @@ import static org.testng.Assert.fail;
 
 public class TestPlainServer
 {
-
-    private static final Logger log = LoggerFactory.getLogger(TestPlainServer.class);
+    private static final Logger log = Logger.get(TestPlainServer.class);
 
     public static final String VERSION = "1.0";
     private NiftyBootstrap bootstrap;
@@ -79,7 +73,6 @@ public class TestPlainServer
     public void setup()
     {
         bootstrap = null;
-        InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory());
     }
 
     @AfterMethod(alwaysRun = true)
@@ -307,7 +300,7 @@ public class TestPlainServer
                 RequestContext context = RequestContexts.getCurrentContext();
 
                 for (LogEntry message : messages) {
-                    log.info("[Client: {}] {}: {}",
+                    log.info("[Client: %s] %s: %s",
                              context.getConnectionContext().getRemoteAddress(),
                              message.getCategory(),
                              message.getMessage());
