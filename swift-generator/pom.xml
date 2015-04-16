@@ -32,7 +32,7 @@
   <description>Code generator for Thrift IDLs</description>
 
   <properties>
-    <fb.main.basedir>${project.parent.basedir}</fb.main.basedir>
+    <air.main.basedir>${project.parent.basedir}</air.main.basedir>
   </properties>
 
   <dependencies>
@@ -54,6 +54,24 @@
     <dependency>
       <groupId>com.facebook.swift</groupId>
       <artifactId>swift-service</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>com.facebook.nifty</groupId>
+          <artifactId>nifty-core</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.facebook.nifty</groupId>
+          <artifactId>nifty-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.airlift</groupId>
+          <artifactId>configuration</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.airlift</groupId>
+          <artifactId>stats</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
       <dependency>

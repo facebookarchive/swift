@@ -32,7 +32,7 @@
     <description>Java 6 annotator for saving JavaDocs</description>
 
     <properties>
-        <fb.main.basedir>${project.parent.basedir}</fb.main.basedir>
+        <air.main.basedir>${project.parent.basedir}</air.main.basedir>
     </properties>
 
     <build>

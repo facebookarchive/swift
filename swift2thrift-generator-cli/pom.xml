@@ -30,7 +30,7 @@
     <description>Command-line interface for swift2thrift-generator</description>
 
     <properties>
-        <fb.main.basedir>${project.parent.basedir}</fb.main.basedir>
+        <air.main.basedir>${project.parent.basedir}</air.main.basedir>
     </properties>
 
     <dependencies>
