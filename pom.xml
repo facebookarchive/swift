@@ -77,7 +77,7 @@
     <dep.airlift.version>0.91</dep.airlift.version>
     <dep.antlr.version>3.5</dep.antlr.version>
     <dep.maven-api.version>2.2.1</dep.maven-api.version>
-    <dep.fb.nifty.version>0.14.0</dep.fb.nifty.version>
+    <dep.fb.nifty.version>0.14.1</dep.fb.nifty.version>
   </properties>
 
   <dependencyManagement>
