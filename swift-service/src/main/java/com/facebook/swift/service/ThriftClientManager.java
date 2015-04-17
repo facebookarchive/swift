@@ -508,12 +508,11 @@ public class ThriftClientManager implements Closeable
                 }
 
                 SocketAddress remoteAddress = null;
-                try {
-                    NiftyClientChannel niftyClientChannel = (NiftyClientChannel)channel;
+                // Can only get remote address if this is a nifty channel, plain RequestChannel does
+                // not support it
+                if (channel instanceof NiftyClientChannel) {
+                    NiftyClientChannel niftyClientChannel = (NiftyClientChannel) channel;
                     remoteAddress = niftyClientChannel.getNettyChannel().getRemoteAddress();
-                }
-                catch (ClassCastException e) {
-                    throw new IllegalArgumentException("The swift client uses a channel that is not a NiftyClientChannel", e);
                 }
 
                 ClientRequestContext requestContext = new NiftyClientRequestContext(getInputProtocol(), getOutputProtocol(), channel, remoteAddress);
