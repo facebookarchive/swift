@@ -31,7 +31,7 @@ import com.facebook.swift.generator.util.TemplateLoader;
 import com.facebook.swift.service.ThriftService;
 import com.facebook.swift.service.metadata.ThriftMethodMetadata;
 import com.facebook.swift.service.metadata.ThriftServiceMetadata;
-import com.google.common.base.Charsets;
+import com.facebook.swift.service.metadata.ThriftServiceMetadataBuilder;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
@@ -41,17 +41,17 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stringtemplate.v4.AutoIndentWriter;
 import org.stringtemplate.v4.ST;
 
 import javax.annotation.Nullable;
+
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -62,9 +62,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class Swift2ThriftGenerator
 {
     private static final Logger LOG = LoggerFactory.getLogger(Swift2ThriftGenerator.class);
-    private final OutputStreamWriter outputStreamWriter;
+    private final Writer outputWriter;
     private final boolean verbose;
-    private final ThriftCodecManager codecManager = new ThriftCodecManager();
+    private ThriftCodecManager codecManager = new ThriftCodecManager();
     private final String defaultPackage;
     private final String allowMultiplePackages;     // null means don't allow
     private ThriftTypeRenderer thriftTypeRenderer;
@@ -79,6 +79,7 @@ public class Swift2ThriftGenerator
     private Set<ThriftServiceMetadata> knownServices = Sets.newHashSet();
     private Map<String, String> namespaceMap;
     private boolean recursive;
+    private ThriftServiceMetadataBuilder serviceMetadataBuilder;
     private static final Set<ThriftType> builtInKnownTypes =
         ImmutableSet.of(ThriftType.BOOL, ThriftType.BYTE, ThriftType.I16, ThriftType.I32,
             ThriftType.I64, ThriftType.DOUBLE, ThriftType.STRING, ThriftType.BINARY,
@@ -90,6 +91,7 @@ public class Swift2ThriftGenerator
     Swift2ThriftGenerator(final Swift2ThriftGeneratorConfig config) throws FileNotFoundException
     {
         this.verbose = config.isVerbose();
+        this.serviceMetadataBuilder = config.getServiceMetadataBuilder();
         String defaultPackage = config.getDefaultPackage();
 
         if (defaultPackage.isEmpty()) {
@@ -97,9 +99,13 @@ public class Swift2ThriftGenerator
         } else {
             this.defaultPackage = defaultPackage + ".";
         }
+        
+        if ( config.getCodecManager()!=null ) {
+        	codecManager = config.getCodecManager();
+        }
 
-        OutputStream os = config.getOutputFile() != null ? new FileOutputStream(config.getOutputFile()) : System.out;
-        this.outputStreamWriter = new OutputStreamWriter(os, Charsets.UTF_8);
+        this.outputWriter = config.getOutputWriter();                       
+        
         Map<String, String> paramIncludeMap = config.getIncludeMap();
         // create a type renderer with an empty map until we build it
         this.thriftTypeRenderer = new ThriftTypeRenderer(ImmutableMap.<ThriftType,String>of());
@@ -114,22 +120,87 @@ public class Swift2ThriftGenerator
                 this.includeMap.put(result, entry.getValue());
             }
         }
-
         this.namespaceMap = config.getNamespaceMap();
         this.allowMultiplePackages = config.isAllowMultiplePackages();
         this.recursive = config.isRecursive();
-    }
-
-    @SuppressWarnings("PMD.CollapsibleIfStatements")
-    public void parse(Iterable<String> inputs) throws IOException
-    {
-        boolean loadErrors = false;
-
-        if (allowMultiplePackages != null) {
+        
+        if (this.allowMultiplePackages != null) {
             packageName = allowMultiplePackages;
         }
 
-        for (String className: inputs) {
+    }
+
+    /**
+     * Add a service from its ThriftServiceMetadata representation.
+     */
+    public void addService(ThriftServiceMetadata service)
+    {
+        thriftServices.add(service);
+    }
+    
+    /**
+     * Add a class.
+     */
+    public void addClass(Class<?> cls) {
+        Object result = convertToThrift(cls);
+        if (result instanceof ThriftType) {
+            thriftTypes.add((ThriftType) result);
+        } else if (result instanceof ThriftServiceMetadata) {
+            addService((ThriftServiceMetadata) result);
+        }
+        // if the class we just loaded was also in the include map, remove it
+        // from there
+        includeMap.remove(result);
+    }
+    
+    /**
+     * Finalize and flush the output.
+     */
+    public void build() throws IOException {
+        if (verify()) {
+            gen();
+        } else {
+            LOG.error("Errors found during verification.");
+        }
+    }
+
+    /**
+     * Add the supplied ThriftService classes and build.
+     */
+    @SuppressWarnings("PMD.CollapsibleIfStatements")
+    public void parseServiceInterfaces(Iterable<Class<?>> inputClasses) throws IOException
+    {
+        for ( Class<?> cls : inputClasses ) {
+            ThriftServiceMetadata result = convertToThriftService(cls);
+            if (result != null) {
+                addService(result);
+            }
+            // if the class we just loaded was also in the include map, remove it from there
+            includeMap.remove(result);
+        }
+
+        build();
+    }
+    
+    /**
+     * Add the supplied classes and build.
+     */
+    @SuppressWarnings("PMD.CollapsibleIfStatements")
+    public void parseClasses(Iterable<Class<?>> inputClasses) throws IOException
+    {
+        for ( Class<?> cls : inputClasses ) {
+            addClass( cls );
+        }
+        build();
+    }
+    
+    @SuppressWarnings("PMD.CollapsibleIfStatements")
+    public void parse(Iterable<String> inputClasses) throws IOException
+    {
+        boolean loadErrors = false;
+                
+        ArrayList<Class<?>> classes = new ArrayList<Class<?>>();
+        for (String className: inputClasses) {
             Class<?> cls = load(className);
             if (cls == null) {
                 loadErrors = true;
@@ -145,26 +216,13 @@ public class Swift2ThriftGenerator
                             cls.getName(), cls.getPackage().getName(), packageName));
                 }
             }
-
-            Object result = convertToThrift(cls);
-            if (result instanceof ThriftType) {
-                thriftTypes.add((ThriftType)result);
-            } else if (result instanceof ThriftServiceMetadata) {
-                thriftServices.add((ThriftServiceMetadata)result);
-            }
-            // if the class we just loaded was also in the include map, remove it from there
-            includeMap.remove(result);
-        }
+            classes.add(cls);
+        }       
         if (loadErrors) {
             LOG.error("Couldn't load some classes");
             return;
         }
-
-        if (verify()) {
-            gen();
-        } else {
-            LOG.error("Errors found during verification.");
-        }
+        parseClasses(classes);
     }
 
     private String getFullClassName(String className)
@@ -375,6 +433,10 @@ public class Swift2ThriftGenerator
                 usedIncludedTypes.add(t);
                 return true;
             }
+            
+            if (t.isCoerced() || t.getProtocolType()==ThriftProtocolType.COERCION){
+                return verifyField( t.getUncoercedType() );
+            }
 
             if (recursive) {
                 // recursive but type is unknown - add it to the list and recurse
@@ -429,11 +491,7 @@ public class Swift2ThriftGenerator
         Set<ThriftService> serviceAnnotations = ReflectionHelper.getEffectiveClassAnnotations(cls, ThriftService.class);
         if (!serviceAnnotations.isEmpty()) {
             // it's a service
-            ThriftServiceMetadata serviceMetadata = new ThriftServiceMetadata(cls, codecManager.getCatalog());
-            if (verbose) {
-                LOG.info("Found thrift service: {}", cls.getSimpleName());
-            }
-            return serviceMetadata;
+            return convertToThriftService(cls);
         } else {
             // it's a type (will throw if it's not)
             ThriftType thriftType = codecManager.getCatalog().getThriftType(cls);
@@ -442,6 +500,16 @@ public class Swift2ThriftGenerator
             }
             return thriftType;
         }
+    }
+
+    private ThriftServiceMetadata convertToThriftService(Class<?> cls)
+    {
+        // it's a service        
+        ThriftServiceMetadata serviceMetadata = serviceMetadataBuilder.build(cls);
+        if (verbose) {
+            LOG.info("Found thrift service: {}", cls.getSimpleName());
+        }
+        return serviceMetadata;
     }
 
     private void gen() throws IOException
@@ -471,8 +539,8 @@ public class Swift2ThriftGenerator
         ThriftContext ctx = new ThriftContext(packageName, ImmutableList.copyOf(includes.build()), thriftTypes, thriftServices, namespaceMap);
         ST template = tl.load("thriftfile");
         template.add("context", ctx);
-        template.write(new AutoIndentWriter(outputStreamWriter));
-        outputStreamWriter.flush();
+        template.write(new AutoIndentWriter(outputWriter));
+        outputWriter.flush();
     }
 
     private ClassLoader getClassLoader()

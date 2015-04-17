@@ -39,6 +39,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
@@ -68,7 +69,6 @@ import static com.facebook.swift.codec.metadata.ThriftType.struct;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Iterables.transform;
-
 import static java.lang.reflect.Modifier.isStatic;
 
 /**
@@ -85,6 +85,8 @@ public class ThriftCatalog
     private final ConcurrentMap<Type, TypeCoercion> coercions = new ConcurrentHashMap<>();
     private final ConcurrentMap<Class<?>, ThriftType> manualTypes = new ConcurrentHashMap<>();
     private final ConcurrentMap<Type, ThriftType> typeCache = new ConcurrentHashMap<>();
+    // TODO: Looks like there's no ConcurrentList?
+    private final ArrayList<ThriftTypePlugin> typePlugins = new ArrayList<ThriftTypePlugin>();
 
     private final ThreadLocal<Deque<Type>> stack = new ThreadLocal<Deque<Type>>()
     {
@@ -94,7 +96,9 @@ public class ThriftCatalog
             return new ArrayDeque<>();
         }
     };
-
+    
+    public void addTypePlugin(ThriftTypePlugin typePlugin) { typePlugins.add(typePlugin);}
+    
     public ThriftCatalog()
     {
         this(MetadataErrors.NULL_MONITOR);
@@ -108,13 +112,15 @@ public class ThriftCatalog
     }
 
     @VisibleForTesting
-    Monitor getMonitor()
+    public Monitor getMonitor()
     {
         return monitor;
     }
 
     public void addThriftType(ThriftType thriftType)
     {
+        // Is easy to try to register Object when processing generics.
+        Preconditions.checkArgument(TypeToken.of(thriftType.getJavaType()).getRawType()!=Object.class, "Cannot register Object as ThriftType.");        
         manualTypes.put(TypeToken.of(thriftType.getJavaType()).getRawType(), thriftType);
     }
 
@@ -184,6 +190,11 @@ public class ThriftCatalog
         }
         this.coercions.putAll(coercions);
     }
+    
+    public void addCoercion(TypeCoercion coercion) {
+        ThriftType thriftType = coercion.getThriftType();
+        this.coercions.put(thriftType.getJavaType(), coercion);
+    }
 
     private void verifyCoercionMethod(Method method)
     {
@@ -200,6 +211,14 @@ public class ThriftCatalog
         return coercions.get(type);
     }
 
+    // Do not Commit!!!
+    public ConcurrentMap<Type, ThriftStructMetadata> getStructs() { return structs; }
+    public ConcurrentMap<Class<?>, ThriftEnumMetadata<?>> getEnums() { return enums; }
+    public ConcurrentMap<Type, TypeCoercion> getCoercions() { return coercions; }
+    public ConcurrentMap<Class<?>, ThriftType> getManualTypes() { return manualTypes; }
+    public ConcurrentMap<Type, ThriftType> getTypeCache()   { return typeCache; }
+    public ThreadLocal<Deque<Type>> getStack() { return stack; }
+    
     /**
      * Gets the ThriftType for the specified Java type.  The native Thrift type for the Java type will
      * be inferred from the Java type, and if necessary type coercions will be applied.
@@ -250,18 +269,35 @@ public class ThriftCatalog
         if (ByteBuffer.class.isAssignableFrom(rawType)) {
             return BINARY;
         }
+                
+        // Check for custom types. These may override default handling.
+        for (ThriftTypePlugin typePlugin : typePlugins)
+        {
+            ThriftType custom = typePlugin.getThriftType(this,javaType);
+            if (custom != null) {
+                return custom;
+            }
+        }
+        
         if (Enum.class.isAssignableFrom(rawType)) {
             ThriftEnumMetadata<? extends Enum<?>> thriftEnumMetadata = getThriftEnumMetadata(rawType);
             return enumType(thriftEnumMetadata);
         }
+
         if (rawType.isArray()) {
             Class<?> elementType = rawType.getComponentType();
             if (elementType == byte.class) {
-                // byte[] is encoded as BINARY and requires a coersion
+                // byte[] is encoded as BINARY and requires a coercion
                 return coercions.get(javaType).getThriftType();
             }
-            return array(getThriftType(elementType));
+            if ( isSupportedArrayComponentType(elementType) )
+            {
+                // TODO: This takes/produces and ArrayList<E> in the interface, not E[]
+                // Coercion is required.
+                return array(getThriftType(elementType));
+            }
         }
+        
         if (Map.class.isAssignableFrom(rawType)) {
             Type mapKeyType = getMapKeyType(javaType);
             Type mapValueType = getMapValueType(javaType);
@@ -288,82 +324,30 @@ public class ThriftCatalog
             // An union looks like a struct with a single field.
             return struct(structMetadata);
         }
-
         if (ListenableFuture.class.isAssignableFrom(rawType)) {
             Type returnType = getFutureReturnType(javaType);
             return getThriftType(returnType);
         }
-
         // coerce the type if possible
         TypeCoercion coercion = coercions.get(javaType);
         if (coercion != null) {
             return coercion.getThriftType();
         }
+        
         throw new IllegalArgumentException("Type can not be coerced to a Thrift type: " + javaType);
     }
 
     public boolean isSupportedStructFieldType(Type javaType)
     {
-        Class<?> rawType = TypeToken.of(javaType).getRawType();
-        if (boolean.class == rawType) {
-            return true;
+        boolean result = false;
+        try {
+            result = getThriftType(javaType) != null;
+        } catch (IllegalArgumentException e) {
+            // TODO -- this is not ideal.
+            // Would be better if all the other callers of getThriftTypeUncached checked for non-null
         }
-        if (byte.class == rawType) {
-            return true;
-        }
-        if (short.class == rawType) {
-            return true;
-        }
-        if (int.class == rawType) {
-            return true;
-        }
-        if (long.class == rawType) {
-            return true;
-        }
-        if (double.class == rawType) {
-            return true;
-        }
-        if (String.class == rawType) {
-            return true;
-        }
-        if (ByteBuffer.class.isAssignableFrom(rawType)) {
-            return true;
-        }
-        if (Enum.class.isAssignableFrom(rawType)) {
-            return true;
-        }
-        if (rawType.isArray()) {
-            Class<?> elementType = rawType.getComponentType();
-            return isSupportedArrayComponentType(elementType);
-        }
-        if (Map.class.isAssignableFrom(rawType)) {
-            Type mapKeyType = getMapKeyType(javaType);
-            Type mapValueType = getMapValueType(javaType);
-            return isSupportedStructFieldType(mapKeyType) && isSupportedStructFieldType(mapValueType);
-        }
-        if (Set.class.isAssignableFrom(rawType)) {
-            Type elementType = getIterableType(javaType);
-            return isSupportedStructFieldType(elementType);
-        }
-        if (Iterable.class.isAssignableFrom(rawType)) {
-            Type elementType = getIterableType(javaType);
-            return isSupportedStructFieldType(elementType);
-        }
-        if (rawType.isAnnotationPresent(ThriftStruct.class)) {
-            return true;
-        }
-        if (rawType.isAnnotationPresent(ThriftUnion.class)) {
-            return true;
-        }
-
-        // NOTE: void is not a supported struct type
-
-        // coerce the type if possible
-        TypeCoercion coercion = coercions.get(javaType);
-        if (coercion != null) {
-            return true;
-        }
-        return false;
+        return result;
+        
     }
 
     public boolean isSupportedArrayComponentType(Class<?> componentType)
@@ -501,6 +485,8 @@ public class ThriftCatalog
         return ImmutableList.<String>of();
     }
 
+    //public ImmutableList<Class<?>> getManualTypesInRegisteredOrder() { return ImmutableList.<Class<?>>copyOf( manualTypesInRegisteredOrder ); } 
+    
     @SuppressWarnings("PMD.EmptyCatchBlock")
     public static Integer getMethodOrder(Method method)
     {

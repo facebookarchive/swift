@@ -314,10 +314,13 @@ public class ThriftMethodHandler
         // write the parameters
         TProtocolWriter writer = new TProtocolWriter(out);
         writer.writeStructBegin(name + "_args");
-        for (int i = 0; i < args.length; i++) {
-            Object value = args[i];
-            ParameterHandler parameter = parameterCodecs.get(i);
-            writer.writeField(parameter.getName(), parameter.getId(), parameter.getCodec(), value);
+
+        if (args!=null){  // Because a void type can be an null list, not an empty one.
+            for (int i = 0; i < args.length; i++) {
+                Object value = args[i];
+                ParameterHandler parameter = parameterCodecs.get(i);
+                writer.writeField(parameter.getName(), parameter.getId(), parameter.getCodec(), value);
+            }
         }
         writer.writeStructEnd();
 

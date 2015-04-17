@@ -51,6 +51,8 @@ public class ListThriftCodec<T> implements ThriftCodec<List<T>>
             throws Exception
     {
         Preconditions.checkNotNull(protocol, "protocol is null");
+        // TODO: Remove this excessive allocation (very slow).
+        // Why not supply TProtocolReader for entire request?
         return new TProtocolReader(protocol).readList(elementCodec);
     }
 
@@ -60,6 +62,8 @@ public class ListThriftCodec<T> implements ThriftCodec<List<T>>
     {
         Preconditions.checkNotNull(value, "value is null");
         Preconditions.checkNotNull(protocol, "protocol is null");
+        // TODO: Remove this excessive allocation (very slow).
+        // Why not supply TProtocolWriter for entire request?
         new TProtocolWriter(protocol).writeList(elementCodec, value);
     }
 }

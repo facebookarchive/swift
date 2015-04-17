@@ -41,11 +41,14 @@ import com.facebook.swift.codec.metadata.ThriftParameterInjection;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import org.apache.thrift.protocol.TProtocol;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -73,6 +76,7 @@ import static com.facebook.swift.codec.ThriftProtocolType.I16;
 import static com.facebook.swift.codec.ThriftProtocolType.I32;
 import static com.facebook.swift.codec.ThriftProtocolType.I64;
 import static com.facebook.swift.codec.ThriftProtocolType.LIST;
+import static com.facebook.swift.codec.ThriftProtocolType.COERCION;
 import static com.facebook.swift.codec.ThriftProtocolType.MAP;
 import static com.facebook.swift.codec.ThriftProtocolType.SET;
 import static com.facebook.swift.codec.ThriftProtocolType.STRING;
@@ -123,8 +127,7 @@ public class ThriftCodecByteCodeGenerator<T>
             ThriftCodecManager codecManager,
             ThriftStructMetadata metadata,
             DynamicClassLoader classLoader,
-            boolean debug
-    )
+            boolean debug)
     {
         this.codecManager = codecManager;
         this.metadata = metadata;
@@ -137,7 +140,7 @@ public class ThriftCodecByteCodeGenerator<T>
                 codecType.getClassName(),
                 type(Object.class),
                 type(ThriftCodec.class, structType)
-        );
+                );
 
         // declare the class fields
         typeField = declareTypeField();
@@ -148,16 +151,16 @@ public class ThriftCodecByteCodeGenerator<T>
         defineGetTypeMethod();
 
         switch (metadata.getMetadataType()) {
-            case STRUCT:
-                defineReadStructMethod();
-                defineWriteStructMethod();
-                break;
-            case UNION:
-                defineReadUnionMethod();
-                defineWriteUnionMethod();
-                break;
-            default:
-                throw new IllegalStateException(format("encountered type %s", metadata.getMetadataType()));
+        case STRUCT:
+            defineReadStructMethod();
+            defineWriteStructMethod();
+            break;
+        case UNION:
+            defineReadUnionMethod();
+            defineWriteUnionMethod();
+            break;
+        default:
+            throw new IllegalStateException(format("encountered type %s", metadata.getMetadataType()));
         }
 
         // add the non-generic bridge read and write methods
@@ -181,8 +184,7 @@ public class ThriftCodecByteCodeGenerator<T>
             Class<?>[] types = parameters.getTypes();
             Constructor<?> constructor = codecClass.getConstructor(types);
             thriftCodec = (ThriftCodec<T>) constructor.newInstance(parameters.getValues());
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new IllegalStateException("Generated class is invalid", e);
         }
     }
@@ -208,7 +210,7 @@ public class ThriftCodecByteCodeGenerator<T>
 
     /**
      * Declares a field for each delegate codec
-     *
+     * 
      * @return a map from field id to the codec for the field
      */
     private Map<Short, FieldDefinition> declareCodecFields()
@@ -217,7 +219,16 @@ public class ThriftCodecByteCodeGenerator<T>
         for (ThriftFieldMetadata fieldMetadata : metadata.getFields()) {
             if (needsCodec(fieldMetadata)) {
 
-                ThriftCodec<?> codec = codecManager.getCodec(fieldMetadata.getThriftType());
+                ThriftType fieldThriftType = fieldMetadata.getThriftType();
+                ThriftType transportThriftType = fieldThriftType;
+
+                if (transportThriftType.isCoerced()) {
+                    // We'll use the fieldThriftType.getUncoercedType();
+                    // for serialization, with the coercion to/from
+                    transportThriftType = transportThriftType.getUncoercedType();
+                }
+
+                ThriftCodec<?> codec = codecManager.getCodec(transportThriftType);
                 String fieldName = fieldMetadata.getName() + "Codec";
 
                 FieldDefinition codecField = new FieldDefinition(a(PRIVATE, FINAL), fieldName, type(codec.getClass()));
@@ -231,8 +242,9 @@ public class ThriftCodecByteCodeGenerator<T>
     }
 
     /**
-     * Defines the constructor with a parameter for the ThriftType and the delegate codecs. The
-     * constructor simply assigns these parameters to the class fields.
+     * Defines the constructor with a parameter for the ThriftType and the
+     * delegate codecs. The constructor simply assigns these parameters to the
+     * class fields.
      */
     private void defineConstructor()
     {
@@ -243,7 +255,7 @@ public class ThriftCodecByteCodeGenerator<T>
                 "<init>",
                 type(void.class),
                 parameters.getParameters()
-        );
+                );
 
         // invoke super (Object) constructor
         constructor.loadThis().invokeConstructor(type(Object.class));
@@ -262,7 +274,8 @@ public class ThriftCodecByteCodeGenerator<T>
     }
 
     /**
-     * Defines the getType method which simply returns the value of the type field.
+     * Defines the getType method which simply returns the value of the type
+     * field.
      */
     private void defineGetTypeMethod()
     {
@@ -271,7 +284,7 @@ public class ThriftCodecByteCodeGenerator<T>
                         .loadThis()
                         .getField(codecType, typeField)
                         .retObject()
-        );
+                );
     }
 
     /**
@@ -284,7 +297,7 @@ public class ThriftCodecByteCodeGenerator<T>
                 "read",
                 structType,
                 arg("protocol", TProtocol.class)
-        ).addException(Exception.class);
+                ).addException(Exception.class);
 
         // TProtocolReader reader = new TProtocolReader(protocol);
         read.addLocalVariable(type(TProtocolReader.class), "reader");
@@ -306,8 +319,86 @@ public class ThriftCodecByteCodeGenerator<T>
         classDefinition.addMethod(read);
     }
 
+    
     /**
-     * Defines the code to read all of the data from the protocol into local variables.
+     * Reads an individual field.
+     */
+    private void readField( MethodDefinition read, ThriftFieldMetadata field,  LocalVariableDefinition protocol,  Map<Short, LocalVariableDefinition> structData)
+    {
+        // push protocol
+        read.loadVariable(protocol);
+
+        // push ThriftTypeCodec for this field
+        FieldDefinition codecField = codecFields.get(field.getId());
+        if (codecField != null) {
+            read.loadThis().getField(codecType, codecField);
+        }
+
+        // read value
+        Method readMethod = getReadMethod(field.getThriftType());
+        if (readMethod == null) {
+            throw new IllegalArgumentException("Unsupported field type " + field.getThriftType().getProtocolType());
+        }
+        read.invokeVirtual(readMethod);
+
+        if (field.getCoercion().isPresent()) {
+
+            // Cast to function parameter type.
+            {
+                Class<?> typeOnStack = TypeToken.of(field.getThriftType().getUncoercedType().getJavaType()).getRawType();
+                Class<?> functionParamType = TypeToken.of(field.getCoercion().get().getFromThrift().getGenericParameterTypes()[0]).getRawType();
+                if (!functionParamType.isAssignableFrom(typeOnStack)) {
+                    // Need a cast
+                    read.checkCast(type(functionParamType));
+                }
+            }
+
+            // coerce the type
+            if (field.getCoercion().isPresent()) {
+                Method method = field.getCoercion().get().getFromThrift();
+                if (isStaticMethod(method)) {
+                    read.invokeStatic(method);
+                }
+                else {
+                    Preconditions.checkArgument(false, "Coercion.getMethodObject() must be null"); // unless
+                                                                                                   // someone
+                                                                                                   // implement
+                                                                                                   // calling
+                                                                                                   // the
+                                                                                                   // method
+                    // Object o = field.getCoercion().get().getMethodObject();
+                    // read.loadVariable(?).invokeVirtual(method);
+                }
+            }
+
+            // Cast to field type
+            {
+                Class<?> functionReturnType = TypeToken.of(field.getCoercion().get().getFromThrift().getReturnType()).getRawType();
+                Class<?> fieldType = TypeToken.of(field.getThriftType().getJavaType()).getRawType();
+                if (!fieldType.isAssignableFrom(functionReturnType)) {
+                    // Need a cast
+                    read.checkCast(toParameterizedType(field.getThriftType()));
+                }
+            }
+        }
+        else {
+            // Not a coerced type
+            Class<?> functionReturnType = TypeToken.of(readMethod.getReturnType()).getRawType();
+            Class<?> fieldType = TypeToken.of(field.getThriftType().getJavaType()).getRawType();
+
+            if (!fieldType.isAssignableFrom(functionReturnType)) {
+                // Need a cast
+                read.checkCast(type(fieldType));
+            }
+        }
+
+        // store protocol value
+        read.storeVariable(structData.get(field.getId()));
+    }
+    
+    /**
+     * Defines the code to read all of the data from the protocol into local
+     * variables.
      */
     private Map<Short, LocalVariableDefinition> readFieldValues(MethodDefinition read)
     {
@@ -316,10 +407,12 @@ public class ThriftCodecByteCodeGenerator<T>
         // declare and init local variables here
         Map<Short, LocalVariableDefinition> structData = new TreeMap<>();
         for (ThriftFieldMetadata field : metadata.getFields(FieldKind.THRIFT_FIELD)) {
+            ThriftType fieldThriftType = field.getThriftType();
+            ParameterizedType parameterizedType = toParameterizedType(fieldThriftType);
             LocalVariableDefinition variable = read.addInitializedLocalVariable(
-                    toParameterizedType(field.getThriftType()),
+                    parameterizedType,
                     "f_" + field.getName()
-            );
+                    );
             structData.put(field.getId(), variable);
         }
 
@@ -328,7 +421,7 @@ public class ThriftCodecByteCodeGenerator<T>
                 TProtocolReader.class,
                 "readStructBegin",
                 void.class
-        );
+                );
 
         // while (protocol.nextField())
         read.visitLabel("while-begin");
@@ -347,36 +440,8 @@ public class ThriftCodecByteCodeGenerator<T>
             // case field.id:
             read.visitLabel(field.getName() + "-field");
 
-            // push protocol
-            read.loadVariable(protocol);
-
-            // push ThriftTypeCodec for this field
-            FieldDefinition codecField = codecFields.get(field.getId());
-            if (codecField != null) {
-                read.loadThis().getField(codecType, codecField);
-            }
-
-            // read value
-            Method readMethod = getReadMethod(field.getThriftType());
-            if (readMethod == null) {
-                throw new IllegalArgumentException("Unsupported field type " + field.getThriftType().getProtocolType());
-            }
-            read.invokeVirtual(readMethod);
-
-            // todo this cast should be based on readMethod return type and fieldType (or coercion type)
-            // add cast if necessary
-            if (needsCastAfterRead(field, readMethod)) {
-                read.checkCast(toParameterizedType(field.getThriftType()));
-            }
-
-            // coerce the type
-            if (field.getCoercion().isPresent()) {
-                read.invokeStatic(field.getCoercion().get().getFromThrift());
-            }
-
-            // store protocol value
-            read.storeVariable(structData.get(field.getId()));
-
+            readField(read, field, protocol, structData);
+            
             // go back to top of loop
             read.gotoLabel("while-begin");
         }
@@ -397,7 +462,8 @@ public class ThriftCodecByteCodeGenerator<T>
     }
 
     /**
-     * Defines the code to build the struct instance using the data in the local variables.
+     * Defines the code to build the struct instance using the data in the local
+     * variables.
      */
     private LocalVariableDefinition buildStruct(MethodDefinition read, Map<Short, LocalVariableDefinition> structData)
     {
@@ -417,8 +483,8 @@ public class ThriftCodecByteCodeGenerator<T>
     }
 
     /**
-     * Defines the code to construct the struct (or builder) instance and stores it in a local
-     * variable.
+     * Defines the code to construct the struct (or builder) instance and stores
+     * it in a local variable.
      */
     private LocalVariableDefinition constructStructInstance(MethodDefinition read, Map<Short, LocalVariableDefinition> structData)
     {
@@ -474,7 +540,7 @@ public class ThriftCodecByteCodeGenerator<T>
                 "read",
                 structType,
                 arg("protocol", TProtocol.class)
-        ).addException(Exception.class);
+                ).addException(Exception.class);
 
         // TProtocolReader reader = new TProtocolReader(protocol);
         read.addLocalVariable(type(TProtocolReader.class), "reader");
@@ -499,8 +565,13 @@ public class ThriftCodecByteCodeGenerator<T>
         classDefinition.addMethod(read);
     }
 
+    private static boolean isStaticMethod(Method m) {
+        return (m.getModifiers() & java.lang.reflect.Modifier.STATIC) != 0;
+    }
+
     /**
-     * Defines the code to read all of the data from the protocol into local variables.
+     * Defines the code to read all of the data from the protocol into local
+     * variables.
      */
     private Map<Short, LocalVariableDefinition> readSingleFieldValue(MethodDefinition read)
     {
@@ -512,7 +583,7 @@ public class ThriftCodecByteCodeGenerator<T>
             LocalVariableDefinition variable = read.addInitializedLocalVariable(
                     toParameterizedType(field.getThriftType()),
                     "f_" + field.getName()
-            );
+                    );
             unionData.put(field.getId(), variable);
         }
 
@@ -521,7 +592,7 @@ public class ThriftCodecByteCodeGenerator<T>
                 TProtocolReader.class,
                 "readStructBegin",
                 void.class
-        );
+                );
 
         // while (protocol.nextField())
         read.visitLabel("while-begin");
@@ -561,7 +632,8 @@ public class ThriftCodecByteCodeGenerator<T>
             }
             read.invokeVirtual(readMethod);
 
-            // todo this cast should be based on readMethod return type and fieldType (or coercion type)
+            // todo this cast should be based on readMethod return type and
+            // fieldType (or coercion type)
             // add cast if necessary
             if (needsCastAfterRead(field, readMethod)) {
                 read.checkCast(toParameterizedType(field.getThriftType()));
@@ -569,7 +641,15 @@ public class ThriftCodecByteCodeGenerator<T>
 
             // coerce the type
             if (field.getCoercion().isPresent()) {
-                read.invokeStatic(field.getCoercion().get().getFromThrift());
+                Method method = field.getCoercion().get().getFromThrift();
+                if ( isStaticMethod(method) ) {
+                    read.invokeStatic(method);
+                }
+                else{
+                    Preconditions.checkArgument(false, "Coercion.getMethodObject() must be null"); // unless someone implement calling the method 
+                    //Object o = field.getCoercion().get().getMethodObject();
+                    //read.loadVariable(?).invokeVirtual(method);
+                }
             }
 
             // store protocol value
@@ -596,7 +676,8 @@ public class ThriftCodecByteCodeGenerator<T>
     }
 
     /**
-     * Defines the code to build the struct instance using the data in the local variables.
+     * Defines the code to build the struct instance using the data in the local
+     * variables.
      */
     private LocalVariableDefinition buildUnion(MethodDefinition read, Map<Short, LocalVariableDefinition> unionData)
     {
@@ -640,8 +721,8 @@ public class ThriftCodecByteCodeGenerator<T>
     }
 
     /**
-     * Defines the code to construct the union (or builder) instance and stores it in a local
-     * variable.
+     * Defines the code to construct the union (or builder) instance and stores
+     * it in a local variable.
      */
     private LocalVariableDefinition constructUnionInstance(MethodDefinition read)
     {
@@ -817,7 +898,7 @@ public class ThriftCodecByteCodeGenerator<T>
                 null,
                 arg("struct", structType),
                 arg("protocol", TProtocol.class)
-        );
+                );
 
         classDefinition.addMethod(write);
 
@@ -858,7 +939,7 @@ public class ThriftCodecByteCodeGenerator<T>
                 null,
                 arg("struct", structType),
                 arg("protocol", TProtocol.class)
-        );
+                );
 
         classDefinition.addMethod(write);
 
@@ -874,8 +955,8 @@ public class ThriftCodecByteCodeGenerator<T>
 
         // protocol.writeStructBegin("bonk");
         write.loadVariable(protocol)
-            .loadConstant(metadata.getStructName())
-            .invokeVirtual(TProtocolWriter.class, "writeStructBegin", void.class, String.class);
+                .loadConstant(metadata.getStructName())
+                .invokeVirtual(TProtocolWriter.class, "writeStructBegin", void.class, String.class);
 
         // find the @ThriftUnionId field
         ThriftFieldMetadata idField = getOnlyElement(metadata.getFields(THRIFT_UNION_ID));
@@ -898,8 +979,8 @@ public class ThriftCodecByteCodeGenerator<T>
         }
 
         write.visitLabel("default-write")
-            .loadVariable(protocol)
-            .invokeVirtual(TProtocolWriter.class, "writeStructEnd", void.class);
+                .loadVariable(protocol)
+                .invokeVirtual(TProtocolWriter.class, "writeStructEnd", void.class);
 
         write.ret();
     }
@@ -926,14 +1007,24 @@ public class ThriftCodecByteCodeGenerator<T>
 
         // if field value is null, don't coerce or write the field
         if (!isFieldTypeJavaPrimitive(field)) {
-            // ifNullGoto consumes the top of the stack, so we need to duplicate the value
+            // ifNullGoto consumes the top of the stack, so we need to duplicate
+            // the value
             write.dup();
             write.ifNullGoto("field_is_null_" + field.getName());
         }
 
         // coerce value
         if (field.getCoercion().isPresent()) {
-            write.invokeStatic(field.getCoercion().get().getToThrift());
+            
+            Method method = field.getCoercion().get().getToThrift();
+            if ( isStaticMethod(method) ) {
+                write.invokeStatic(method);
+            }
+            else{
+                Preconditions.checkArgument(false, "Coercion.getMethodObject() must be null"); // unless someone implement calling the method 
+                //Object o = field.getCoercion().get().getMethodObject();
+                //write.loadVariable(?).invokVirtual(method);
+            }
 
             // if coerced value is null, don't write the field
             if (!isProtocolTypeJavaPrimitive(field)) {
@@ -984,21 +1075,22 @@ public class ThriftCodecByteCodeGenerator<T>
                 ThriftFieldExtractor fieldExtractor = (ThriftFieldExtractor) extraction;
                 write.getField(fieldExtractor.getField());
                 if (fieldExtractor.isGeneric()) {
-                  write.checkCast(type(fieldExtractor.getType()));
+                    write.checkCast(type(fieldExtractor.getType()));
                 }
             }
             else if (extraction instanceof ThriftMethodExtractor) {
                 ThriftMethodExtractor methodExtractor = (ThriftMethodExtractor) extraction;
                 write.invokeVirtual(methodExtractor.getMethod());
                 if (methodExtractor.isGeneric()) {
-                  write.checkCast(type(methodExtractor.getType()));
+                    write.checkCast(type(methodExtractor.getType()));
                 }
             }
         }
     }
 
     /**
-     * Defines the generics bridge method with untyped args to the type specific read method.
+     * Defines the generics bridge method with untyped args to the type specific
+     * read method.
      */
     private void defineReadBridgeMethod()
     {
@@ -1009,11 +1101,12 @@ public class ThriftCodecByteCodeGenerator<T>
                         .loadVariable("protocol")
                         .invokeVirtual(codecType, "read", structType, type(TProtocol.class))
                         .retObject()
-        );
+                );
     }
 
     /**
-     * Defines the generics bridge method with untyped args to the type specific write method.
+     * Defines the generics bridge method with untyped args to the type specific
+     * write method.
      */
     private void defineWriteBridgeMethod()
     {
@@ -1031,7 +1124,7 @@ public class ThriftCodecByteCodeGenerator<T>
                                 type(TProtocol.class)
                         )
                         .ret()
-        );
+                );
     }
 
     private boolean isParameterTypeJavaPrimitive(ThriftParameterInjection parameter)
@@ -1081,7 +1174,15 @@ public class ThriftCodecByteCodeGenerator<T>
             return false;
         }
 
-        ThriftProtocolType protocolType = fieldMetadata.getThriftType().getProtocolType();
+        ThriftType thriftType = fieldMetadata.getThriftType();
+        ThriftProtocolType protocolType = thriftType.getProtocolType();
+
+        if (protocolType == ThriftProtocolType.COERCION) {
+            // return true;
+            // Uncoerced type determines the transport-layer type.
+            protocolType = thriftType.getUncoercedType().getProtocolType();
+        }
+
         return protocolType == ENUM ||
                 protocolType == STRUCT ||
                 protocolType == SET ||
@@ -1147,42 +1248,74 @@ public class ThriftCodecByteCodeGenerator<T>
         }
 
         switch (type.getProtocolType()) {
-            case BOOL:
-            case BYTE:
-            case DOUBLE:
-            case I16:
-            case I32:
-            case I64:
-            case STRING:
-            case BINARY:
-            case STRUCT:
-            case ENUM:
+        case BOOL:
+        case BYTE:
+        case DOUBLE:
+        case I16:
+        case I32:
+        case I64:
+        case STRING:
+        case BINARY:
+        case STRUCT:
+        case ENUM:
+            return type((Class<?>) type.getJavaType());
+        case COERCION: {
+            Type t = type.getJavaType();
+            if (t instanceof Class<?>) {
                 return type((Class<?>) type.getJavaType());
-            case MAP:
-                return type(Map.class, toParameterizedType(type.getKeyType()), toParameterizedType(type.getValueType()));
-            case SET:
-                return type(Set.class, toParameterizedType(type.getValueType()));
-            case LIST:
-                return type(List.class, toParameterizedType(type.getValueType()));
-            default:
-                throw new IllegalArgumentException("Unsupported thrift field type " + type);
+            }
+            else if (t instanceof java.lang.reflect.ParameterizedType) {
+                java.lang.reflect.ParameterizedType pt = (java.lang.reflect.ParameterizedType) t;
+                Type rawType = pt.getRawType();
+                return type((Class<?>) rawType);
+            }
+            else {
+                throw new IllegalArgumentException("Unsupported thrift coercion field type " + t);
+            }
+        }
+        case MAP:
+            return type(Map.class, toParameterizedType(type.getKeyType()), toParameterizedType(type.getValueType()));
+        case SET:
+            return type(Set.class, toParameterizedType(type.getValueType()));
+        case LIST:
+            return type(List.class, toParameterizedType(type.getValueType()));
+        default:
+            throw new IllegalArgumentException("Unsupported thrift field type " + type);
         }
     }
 
     private Method getWriteMethod(ThriftType thriftType)
     {
+        ThriftProtocolType pt = thriftType.getProtocolType();
+
+        if (pt == ThriftProtocolType.COERCION) {
+            // Uncoerced type determines the transport-layer type.
+            pt = thriftType.getUncoercedType().getProtocolType();
+            // Process as a coercion (never as an array).
+            return WRITE_METHODS.get(pt);
+        }
+
         if (ReflectionHelper.isArray(thriftType.getJavaType())) {
             return ARRAY_WRITE_METHODS.get(thriftType.getJavaType());
         }
-        return WRITE_METHODS.get(thriftType.getProtocolType());
+
+        return WRITE_METHODS.get(pt);
     }
 
     private Method getReadMethod(ThriftType thriftType)
     {
+        ThriftProtocolType pt = thriftType.getProtocolType();
+        if (pt == ThriftProtocolType.COERCION) {
+            // Uncoerced type determines the transport-layer type.
+            // Coercions of array types may also go here.
+            pt = thriftType.getUncoercedType().getProtocolType();
+            return READ_METHODS.get(pt);
+        }
+        
         if (ReflectionHelper.isArray(thriftType.getJavaType())) {
             return ARRAY_READ_METHODS.get(thriftType.getJavaType());
         }
-        return READ_METHODS.get(thriftType.getProtocolType());
+        return READ_METHODS.get(pt);
     }
 
     static {
@@ -1217,8 +1350,7 @@ public class ThriftCodecByteCodeGenerator<T>
             readBuilder.put(SET, TProtocolReader.class.getMethod("readSetField", ThriftCodec.class));
             readBuilder.put(LIST, TProtocolReader.class.getMethod("readListField", ThriftCodec.class));
             readBuilder.put(ENUM, TProtocolReader.class.getMethod("readEnumField", ThriftCodec.class));
-        }
-        catch (NoSuchMethodException e) {
+        } catch (NoSuchMethodException e) {
             throw Throwables.propagate(e);
         }
         WRITE_METHODS = writeBuilder.build();
@@ -1240,12 +1372,12 @@ public class ThriftCodecByteCodeGenerator<T>
             arrayReadBuilder.put(long[].class, TProtocolReader.class.getMethod("readI64ArrayField"));
             arrayReadBuilder.put(double[].class, TProtocolReader.class.getMethod("readDoubleArrayField"));
 
-            // byte[] is encoded as BINARY which should use the normal rules above, but it
+            // byte[] is encoded as BINARY which should use the normal rules
+            // above, but it
             // simpler to add explicit handling here
             arrayWriteBuilder.put(byte[].class, TProtocolWriter.class.getMethod("writeBinaryField", String.class, short.class, ByteBuffer.class));
             arrayReadBuilder.put(byte[].class, TProtocolReader.class.getMethod("readBinaryField"));
-        }
-        catch (NoSuchMethodException e) {
+        } catch (NoSuchMethodException e) {
             throw Throwables.propagate(e);
         }
         ARRAY_WRITE_METHODS = arrayWriteBuilder.build();

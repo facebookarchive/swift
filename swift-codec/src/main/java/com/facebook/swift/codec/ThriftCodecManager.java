@@ -47,6 +47,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
+
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TIOStreamTransport;
@@ -57,6 +58,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Type;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -70,6 +72,9 @@ public class ThriftCodecManager
     private final ThriftCatalog catalog;
     private final LoadingCache<ThriftType, ThriftCodec<?>> typeCodecs;
 
+
+    public ConcurrentMap<ThriftType, ThriftCodec<?>> getAll() { return typeCodecs.asMap(); }    
+    
     public ThriftCodecManager(ThriftCodec<?>... codecs)
     {
         this(new CompilerThriftCodecFactory(ThriftCodecManager.class.getClassLoader()), ImmutableSet.copyOf(codecs));

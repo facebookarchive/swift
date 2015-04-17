@@ -91,6 +91,16 @@ public abstract class AbstractThriftMetadataBuilder
     protected final ThriftCatalog catalog;
     protected final MetadataErrors metadataErrors;
 
+    /**
+     * NB. This class should be refactored - it calls abstract methods in its
+     * constructor.
+     * 
+     * The concrete implementations of this classes are guaranteed to have its
+     * methods called with a a non-yet-initialized object. If these methods
+     * access member variables declared in in the subclass, they will be
+     * disappointed. This is a Java language design failure. Calling non-final
+     * members in the constructor should be a compile-time error.
+     */
     protected AbstractThriftMetadataBuilder(ThriftCatalog catalog, Type structType)
     {
         this.catalog = checkNotNull(catalog, "catalog is null");

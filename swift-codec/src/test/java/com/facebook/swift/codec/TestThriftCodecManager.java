@@ -18,6 +18,7 @@ package com.facebook.swift.codec;
 import com.facebook.swift.codec.internal.EnumThriftCodec;
 import com.facebook.swift.codec.internal.ThriftCodecFactory;
 import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
+import com.facebook.swift.codec.internal.compiler.CompilerThriftCodecFactory;
 import com.facebook.swift.codec.metadata.ThriftCatalog;
 import com.facebook.swift.codec.metadata.ThriftEnumMetadata;
 import com.facebook.swift.codec.metadata.ThriftEnumMetadataBuilder;
@@ -26,6 +27,7 @@ import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.reflect.TypeToken;
 
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
@@ -38,8 +40,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayOutputStream;
+import java.lang.reflect.Type;
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 
 import static com.facebook.swift.codec.metadata.ThriftType.BOOL;
@@ -53,7 +55,6 @@ import static com.facebook.swift.codec.metadata.ThriftType.enumType;
 import static com.facebook.swift.codec.metadata.ThriftType.list;
 import static com.facebook.swift.codec.metadata.ThriftType.map;
 import static com.facebook.swift.codec.metadata.ThriftType.set;
-
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.fail;
@@ -62,19 +63,31 @@ public class TestThriftCodecManager
 {
     public static final String UTF8_TEST_STRING = "A" + "\u00ea" + "\u00f1" + "\u00fc" + "C";
     private ThriftCodecManager codecManager;
+    private boolean failIfGenerateThriftCodecCalled = true;
 
     @BeforeMethod
     protected void setUp()
             throws Exception
     {
-        codecManager = new ThriftCodecManager(new ThriftCodecFactory()
-        {
+        failIfGenerateThriftCodecCalled = true;
+        codecManager = new ThriftCodecManager(new ThriftCodecFactory() {
+
+            // CompilerThriftCodecFactory compilerFactory = new
+            // CompilerThriftCodecFactory(true);
+            CompilerThriftCodecFactory compilerFactory = new CompilerThriftCodecFactory(false);
+
             @Override
             public ThriftCodec<?> generateThriftTypeCodec(ThriftCodecManager codecManager, ThriftStructMetadata metadata)
             {
-                throw new UnsupportedOperationException();
+                if (failIfGenerateThriftCodecCalled) {
+                    throw new UnsupportedOperationException();
+                }
+                else {
+                    return compilerFactory.generateThriftTypeCodec(codecManager, metadata);
+                }
             }
         });
+
         ThriftCatalog catalog = codecManager.getCatalog();
         catalog.addDefaultCoercions(DefaultJavaCoercions.class);
         ThriftType fruitType = catalog.getThriftType(Fruit.class);
@@ -140,6 +153,85 @@ public class TestThriftCodecManager
         testRoundTripSerialize(map(STRING, STRING), ImmutableMap.of("1", "one", "2", "two"));
     }
 
+//    @SuppressWarnings("serial")
+//    @Test
+//    public void selfReferentialTypeTest() 
+//            throws Throwable
+//    {
+//        failIfGenerateThriftCodecCalled = false;
+//        codecManager.getCatalog().addTypePlugin(new MyCustomThriftPlugin());
+//
+//        boolean failed = false;
+//        Throwable ex = null;
+//        
+//        {
+//            // Converting SelfReferentialType to a ThriftType should fail.
+//            try {
+//                codecManager.getCatalog().getThriftType(new TypeToken<SelfReferentialType>() {
+//                }.getType());
+//                failed = true;
+//            } catch (Throwable e) {
+//                ex = e;
+//            }
+//
+//            if (failed) {
+//                if (ex != null) {
+//                    throw ex;
+//                }
+//                else {
+//                    fail("Exception was expected.");
+//                }
+//            }
+//        }        
+//
+//        if (true) {
+//            TypeToken<MyCustomListType<SelfReferentialType>> javaTypeTok = new TypeToken<MyCustomListType<SelfReferentialType>>() {};
+//            ThriftType thriftType = codecManager.getCatalog().getThriftType(javaTypeTok.getType());
+//            
+//            MyCustomListType<SelfReferentialType> value = new MyCustomListType<SelfReferentialType>();
+//            value.storage.add(new SelfReferentialType());
+//            testRoundTripSerialize(thriftType, value);
+//        }
+//
+//        //
+//        // @SuppressWarnings("serial")
+//        // TypeToken<MyCustomListType<String>> javaTypeTok = new
+//        // TypeToken<MyCustomListType<String>>() {};
+//        // ThriftType thriftType =
+//        // codecManager.getCatalog().getThriftType(javaTypeTok.getType());
+//        //
+//
+//        // @SuppressWarnings("serial")
+//        // TypeToken<MyCustomListType<SelfReferentialCollectionType>>
+//        // javaTypeTok =
+//        // new TypeToken<MyCustomListType<SelfReferentialCollectionType>>() {
+//        // };
+//        //
+//        // codecManager.getCatalog().getThriftType(javaTypeTok.getType());
+//
+//        // SelfReferentialCollectionType value = new
+//        // SelfReferentialCollectionType();
+//        // value.selfRef.storage.add(new SelfReferentialCollectionType());
+//        // testRoundTripSerialize(codecManager.getCatalog().getThriftType(value.getClass()),
+//        // value);
+//        // }
+//
+//        {
+//            // @SuppressWarnings("serial")
+//            // TypeToken<SelfReferentialType> javaTypeTok = new
+//            // TypeToken<SelfReferentialType>() {};
+//            // ThriftType thriftType =
+//            // codecManager.getCatalog().getThriftType(javaTypeTok.getType());
+//            //
+//            // // Test whether a struct can have itself as a struct field.
+//            // (Usually no --
+//            // // some languages, such as C++ forbid this and it should probably
+//            // be
+//            // // prohibited in the Thrift spec.
+//            // testRoundTripSerialize(thriftType, new SelfReferentialType());
+//        }
+//    }
+
     @Test
     public void testCoercedCollection()
             throws Exception
@@ -147,6 +239,69 @@ public class TestThriftCodecManager
         testRoundTripSerialize(set(I32.coerceTo(Integer.class)), ImmutableSet.of(1, 2, 3));
         testRoundTripSerialize(list(I32.coerceTo(Integer.class)), ImmutableList.of(4, 5, 6));
         testRoundTripSerialize(map(I32.coerceTo(Integer.class), I32.coerceTo(Integer.class)), ImmutableMap.of(1, 2, 2, 4, 3, 9));
+    }
+
+    @Test
+    public void testPluginCoercedType()
+            throws Exception
+    {
+        failIfGenerateThriftCodecCalled = false;
+        codecManager.getCatalog().addTypePlugin(new MyCustomThriftPlugin());
+
+        // List of Builtins
+        {
+            MyCustomListType<String> value = new MyCustomListType<String>();
+            value.storage.add("123");
+            value.storage.add("456");
+            @SuppressWarnings("serial")
+            TypeToken<MyCustomListType<String>> javaTypeTok = new TypeToken<MyCustomListType<String>>() {
+            };
+            ThriftType thriftType = codecManager.getCatalog().getThriftType(javaTypeTok.getType());
+            testRoundTripSerialize(thriftType, value);
+        }
+
+        // List of custom struct
+        {
+            MyCustomListType<BonkBean> value = new MyCustomListType<BonkBean>();
+            value.storage.add(new BonkBean());
+            @SuppressWarnings("serial")
+            TypeToken<MyCustomListType<BonkBean>> javaTypeTok = new TypeToken<MyCustomListType<BonkBean>>() { };
+            ThriftType thriftType = codecManager.getCatalog().getThriftType(javaTypeTok.getType());
+            testRoundTripSerialize(thriftType, value);
+
+        }
+    }
+
+    /**
+     * The codec used by a struct field of type T can be very different to the
+     * codec used by type T directly.
+     */
+    @SuppressWarnings("serial")
+    @Test
+    public void testStructWithPluggedInCoercedAttributes()
+            throws Exception
+    {
+        failIfGenerateThriftCodecCalled = false;
+        codecManager.getCatalog().addTypePlugin(new MyCustomThriftPlugin());
+
+        MyCustomTypeWithCoercedAttributes value = new MyCustomTypeWithCoercedAttributes();
+
+        // Modify constructor default.
+        value.arrayListAttribute.add("qwerq");
+        value.listString.storage.add("ggg");
+        value.listOfList.storage.add(new MyCustomListType<String>("abcdefg"));
+        value.listInt.storage.add(new Integer(-10));
+
+        OneOfEverything ooe = new OneOfEverything();
+        ooe.aBoolean = false;
+        ooe.aInt = -1234;
+        value.listOneEverything.storage.add(ooe);
+
+        Type javaType = new TypeToken<MyCustomTypeWithCoercedAttributes>() {
+        }.getType();
+        ThriftType thriftType = codecManager.getCatalog().getThriftType(javaType);
+
+        testRoundTripSerialize(thriftType, value);
     }
 
     @Test
@@ -159,8 +314,7 @@ public class TestThriftCodecManager
         try {
             testRoundTripSerialize(bonk);
             fail("Expected exception");
-        }
-        catch (Exception ignored) {
+        } catch (Exception ignored) {
         }
 
         // add the codec
@@ -177,15 +331,14 @@ public class TestThriftCodecManager
             throws Exception
     {
         UnionField union = new UnionField();
-        union._id= 1;
+        union._id = 1;
         union.stringValue = "Hello, World";
 
         // no codec for UnionField so this will fail
         try {
             testRoundTripSerialize(union);
             fail("Expected exception");
-        }
-        catch (Exception ignored) {
+        } catch (Exception ignored) {
         }
 
         // add the codec
@@ -246,10 +399,10 @@ public class TestThriftCodecManager
     public void testWriteToBuffer() {
         SecureRandom random = new SecureRandom();
         BasicThriftStruct tstruct = new BasicThriftStruct(
-            new BigInteger(130, random).toString(),
-            new BigInteger(130, random).toString(),
-            new BigInteger(130, random).toString(),
-            1337L);
+                new BigInteger(130, random).toString(),
+                new BigInteger(130, random).toString(),
+                new BigInteger(130, random).toString(),
+                1337L);
         TProtocolFactory protocolFactory = new TBinaryProtocol.Factory();
         ByteArrayOutputStream oStream = new ByteArrayOutputStream();
         codecManager.write(BasicThriftStruct.class, oStream, protocolFactory);

@@ -66,31 +66,93 @@ public class ThriftMethodMetadata
     private final ImmutableList<String> documentation;
     private final boolean oneway;
 
-    public ThriftMethodMetadata(String serviceName, Method method, ThriftCatalog catalog)
+    public ThriftMethodMetadata(String name, String qualifiedName, ThriftType returnType, List<ThriftFieldMetadata> parameters, Method method, ImmutableMap<Short, ThriftType> exceptions,
+            ImmutableList<String> documentation, boolean oneway) {
+        super();
+        this.name = name;
+        this.qualifiedName = qualifiedName;
+        this.returnType = returnType;
+        this.parameters = parameters;
+        this.method = method;
+        this.exceptions = exceptions;
+        this.documentation = documentation;
+        this.oneway = oneway;
+    }
+
+    /**
+     * Extract a ThriftMethodMetadata object from a method. The method must have the @ThriftMethod annotation.
+     * 
+     * @param serviceName
+     * @param method
+     * @param catalog
+     */
+    public ThriftMethodMetadata(String serviceName, Method method, ThriftCatalog catalog )
+    {	
+    	this( serviceName, method, catalog, false );
+    }
+
+    /**
+     * Extract a ThriftMethodMetadata object from a method. The method should
+     * have the @ThriftMethod annotation.
+     * 
+     * @param serviceName
+     * @param method
+     * @param catalog
+     * @param allowUnannotated
+     *            If true, the @ThriftMethod may be omitted and an attempt is
+     *            made to automatically extract the data that would have been
+     *            held in the annotation.
+     */
+    public ThriftMethodMetadata(String serviceName, Method method, ThriftCatalog catalog, boolean allowUnannotated)
     {
         Preconditions.checkNotNull(method, "method is null");
         Preconditions.checkNotNull(catalog, "catalog is null");
-
-        this.method = method;
-
-        ThriftMethod thriftMethod = method.getAnnotation(ThriftMethod.class);
-        Preconditions.checkArgument(thriftMethod != null, "Method is not annotated with @ThriftMethod");
-
         Preconditions.checkArgument(!Modifier.isStatic(method.getModifiers()), "Method %s is static", method.toGenericString());
 
-        if (thriftMethod.value().length() == 0) {
-            name = method.getName();
+        this.method = method;
+        
+        ThriftMethod thriftMethod = method.getAnnotation(ThriftMethod.class);
+        if (thriftMethod!=null)
+        {
+            Preconditions.checkArgument(thriftMethod != null, "Method is not annotated with @ThriftMethod: " + serviceName + "." + method.getName());
+			if (thriftMethod.value().length() == 0) {
+				name = method.getName();
+			}
+			else {
+				name = thriftMethod.value();
+			}
+	        this.oneway = thriftMethod.oneway();
+	        exceptions = buildExceptionMap(catalog, thriftMethod, method);
+	        documentation = ThriftCatalog.getThriftDocumentation(method);
         }
-        else {
-            name = thriftMethod.value();
-        }
+    	else{
+            Preconditions.checkArgument(allowUnannotated, "Method is not annotated with @ThriftMethod: " + serviceName + "." + method.getName());
+    		
+    		// Auto
+    		name = method.getName();
+    		// TODO. Provide override as parameter?
+            this.oneway = false;
+            ImmutableMap.Builder<Short, ThriftType> exceptionsBuilder = ImmutableMap.builder();
+            
+            // TODO. Auto extract methods
+            exceptions = exceptionsBuilder.build();
+            
+            // TODO. Auto extract documentation
+            documentation =  ImmutableList.<String>of();
+    	}
+    	
         this.qualifiedName = serviceName + "." + name;
 
-        documentation = ThriftCatalog.getThriftDocumentation(method);
         returnType = catalog.getThriftType(method.getGenericReturnType());
 
+        parameters = toMethodParameters( catalog, method, method.getGenericParameterTypes() );
+    }
+    
+    /**
+     * Method parameters are supplied separately -- allows scala and other language to access no-erased types.
+     */
+    public static List<ThriftFieldMetadata> toMethodParameters(ThriftCatalog catalog, Method method, Type[] parameterTypes) {
         ImmutableList.Builder<ThriftFieldMetadata> builder = ImmutableList.builder();
-        Type[] parameterTypes = method.getGenericParameterTypes();
         String[] parameterNames = extractParameterNames(method);
         Annotation[][] parameterAnnotations = method.getParameterAnnotations();
         for (int index = 0; index < parameterTypes.length; index++) {
@@ -145,11 +207,7 @@ public class ThriftMethodMetadata
             );
             builder.add(fieldMetadata);
         }
-        parameters = builder.build();
-
-        exceptions = buildExceptionMap(catalog, thriftMethod);
-
-        this.oneway = thriftMethod.oneway();
+        return builder.build();
     }
 
     public String getName()
@@ -191,8 +249,10 @@ public class ThriftMethodMetadata
         return oneway;
     }
 
-    private ImmutableMap<Short, ThriftType> buildExceptionMap(ThriftCatalog catalog,
-                                                              ThriftMethod thriftMethod) {
+    static public ImmutableMap<Short, ThriftType> buildExceptionMap(
+            ThriftCatalog catalog,
+            ThriftMethod thriftMethod, 
+            Method method ) {
         ImmutableMap.Builder<Short, ThriftType> exceptions = ImmutableMap.builder();
         Set<Type> exceptionTypes = new HashSet<>();
         int customExceptionCount = 0;

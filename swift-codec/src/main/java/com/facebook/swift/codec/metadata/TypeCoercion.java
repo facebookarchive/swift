@@ -20,14 +20,43 @@ import com.google.common.base.Preconditions;
 import javax.annotation.concurrent.Immutable;
 import java.lang.reflect.Method;
 
+/**
+ * Coercions map from native types to types known by the Thrift protocol.
+ */
 @Immutable
 public class TypeCoercion
 {
+    /**
+     * thriftType.java type represents the native type.
+     * thriftType.uncoercedType represents the protocol type.
+     * 
+     * Expecting thriftType.protcolType to be COERCED. But it looks like in some cases it represented to protocol type.
+     */
     private final ThriftType thriftType;
+
+    /**
+     * Maps from native type to protocol type.
+     */
     private final Method toThrift;
+    
+    /**
+     * Maps from protcol type to native type.
+     */
     private final Method fromThrift;
+    
+    /**
+     * Must be null, or of the type that owns the methods.
+     */
+    private final Object methodObject;
+
+
 
     public TypeCoercion(ThriftType thriftType, Method toThrift, Method fromThrift)
+    {
+        this(thriftType, toThrift, fromThrift, null);
+    }
+
+    public TypeCoercion(ThriftType thriftType, Method toThrift, Method fromThrift, Object methodObject)
     {
         Preconditions.checkNotNull(thriftType, "thriftType is null");
         Preconditions.checkNotNull(toThrift, "toThrift is null");
@@ -36,23 +65,29 @@ public class TypeCoercion
         this.thriftType = thriftType;
         this.toThrift = toThrift;
         this.fromThrift = fromThrift;
+        // TODO verify (if not null), that methods belong to methodObject.
+        this.methodObject = methodObject;
     }
 
-    public ThriftType getThriftType()
+    final public ThriftType getThriftType()
     {
         return thriftType;
     }
 
-    public Method getToThrift()
+    final public Method getToThrift()
     {
         return toThrift;
     }
 
-    public Method getFromThrift()
+    final public Method getFromThrift()
     {
         return fromThrift;
     }
 
+    final public Object getMethodObject() {
+        return methodObject;
+    }
+    
     @Override
     public String toString()
     {

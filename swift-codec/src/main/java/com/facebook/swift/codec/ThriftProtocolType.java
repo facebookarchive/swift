@@ -30,8 +30,10 @@ public enum ThriftProtocolType
     SET((byte) 14),
     LIST((byte) 15),
     ENUM((byte) 8), // same as I32 type
-    BINARY((byte) 11); // same as STRING type
-
+    BINARY((byte) 11), // same as STRING type
+    // TODO. It would be better if Coercion Types inherited from ThriftType. ThriftProtocol has no COERCION type. 
+    COERCION((byte) 1);
+    
     private final byte type;
 
     private ThriftProtocolType(byte type)
