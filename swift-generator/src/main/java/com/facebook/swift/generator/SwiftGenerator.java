@@ -35,9 +35,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.airlift.log.Logger;
 
 import javax.annotation.Nullable;
 
@@ -57,7 +55,7 @@ import static com.facebook.swift.generator.util.SwiftInternalStringUtils.isBlank
  */
 public class SwiftGenerator
 {
-    private static final Logger LOG = LoggerFactory.getLogger(SwiftGenerator.class);
+    private static final Logger LOG = Logger.get(SwiftGenerator.class);
 
     private static final Map<String, ImmutableList<String>> TEMPLATES =
             ImmutableMap.of(
@@ -83,7 +81,7 @@ public class SwiftGenerator
             outputFolder.mkdirs();
         }
 
-        LOG.debug("Writing source files into {} using {} ...", outputFolder, swiftGeneratorConfig.getCodeFlavor());
+        LOG.debug("Writing source files into %s using %s ...", outputFolder, swiftGeneratorConfig.getCodeFlavor());
 
         this.templateLoader = new TemplateLoader(TEMPLATES.get(swiftGeneratorConfig.getCodeFlavor()));
     }
@@ -94,7 +92,7 @@ public class SwiftGenerator
                 inputs != null && inputs.iterator().hasNext(),
                 "No input files!");
 
-        LOG.info("Parsing Thrift IDL from {}...", inputs);
+        LOG.info("Parsing Thrift IDL from %s...", inputs);
 
         final Map<String, SwiftDocumentContext> contexts = Maps.newHashMap();
         for (final URI inputUri : inputs) {
@@ -126,11 +124,11 @@ public class SwiftGenerator
                 "Input %s recursively includes itself (%s)", thriftUri, Joiner.on(" -> ").join(parentDocuments) + " -> " + thriftUri);
 
         if (parsedDocuments.contains(thriftUri)) {
-            LOG.debug("Skipping already parsed file {}...", thriftUri);
+            LOG.debug("Skipping already parsed file %s...", thriftUri);
             return;
         }
 
-        LOG.debug("Parsing {}...", thriftUri);
+        LOG.debug("Parsing %s...", thriftUri);
 
         final String thriftNamespace = extractThriftNamespace(thriftUri);
 
@@ -151,7 +149,7 @@ public class SwiftGenerator
         try {
             for (final String include : header.getIncludes()) {
                 final URI includeUri = swiftGeneratorConfig.getInputBase().resolve(include);
-                LOG.debug("Found {} included from {}.", includeUri, thriftUri);
+                LOG.debug("Found %s included from %s.", includeUri, thriftUri);
                 parseDocument(includeUri,
                               // If the includes should also generate code, pass the list of
                               // contexts down to the include parser, otherwise pass a null in
@@ -171,7 +169,7 @@ public class SwiftGenerator
         document.visit(new TypeVisitor(javaPackage, context));
 
         if (contexts != null && contexts.put(context.getNamespace(), context) != null) {
-            LOG.info("Thrift Namespace {} included multiple times!", context.getNamespace());
+            LOG.info("Thrift Namespace %s included multiple times!", context.getNamespace());
         }
     }
 
@@ -188,7 +186,7 @@ public class SwiftGenerator
 
     private void generateFiles(final SwiftDocumentContext context) throws IOException
     {
-        LOG.debug("Generating code for {}...", context.getNamespace());
+        LOG.debug("Generating code for %s...", context.getNamespace());
 
         Preconditions.checkState(outputFolder != null, "The output folder was not set!");
         Preconditions.checkState(outputFolder.isDirectory() && outputFolder.canWrite() && outputFolder.canExecute(), "output folder '%s' is not valid!", outputFolder.getAbsolutePath());

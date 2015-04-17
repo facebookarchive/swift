@@ -19,29 +19,17 @@ import com.facebook.swift.service.ThriftServerConfig;
 import com.facebook.swift.service.async.DelayedMap;
 import com.facebook.swift.service.async.DelayedMapSyncHandler;
 import com.facebook.swift.service.base.SuiteBase;
-import org.jboss.netty.logging.InternalLoggerFactory;
-import org.jboss.netty.logging.Slf4JLoggerFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertTrue;
 
 public class TestThriftClientManager extends SuiteBase<DelayedMap.Service, DelayedMap.Client>
 {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestThriftClientManager.class);
     public static final String LOCALHOST_IP_ADDRESS = "127.0.0.1";
 
     public TestThriftClientManager()
     {
         super(DelayedMapSyncHandler.class, DelayedMap.Client.class, new ThriftServerConfig().setBindAddress(LOCALHOST_IP_ADDRESS));
-    }
-
-    @BeforeTest
-    public void setup()
-    {
-        InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory());
     }
 
     @Test

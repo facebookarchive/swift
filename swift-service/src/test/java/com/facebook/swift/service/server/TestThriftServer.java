@@ -25,9 +25,6 @@ import com.facebook.swift.service.ThriftService;
 import com.facebook.swift.service.ThriftServiceProcessor;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Uninterruptibles;
-import org.jboss.netty.logging.InternalLoggerFactory;
-import org.jboss.netty.logging.Slf4JLoggerFactory;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -40,12 +37,6 @@ import static org.testng.Assert.assertTrue;
 
 public class TestThriftServer
 {
-    @BeforeTest
-    public void setup()
-    {
-        InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory());
-    }
-
     // Test that normal shutdown is fast
     @Test
     public void testThriftServerShutdown()

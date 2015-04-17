@@ -26,13 +26,12 @@ import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import io.airlift.log.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -42,7 +41,7 @@ import static org.testng.Assert.assertEquals;
 
 public class UnframedTest
 {
-    private static final Logger LOG = LoggerFactory.getLogger(UnframedTest.class);
+    private static final Logger LOG = Logger.get(UnframedTest.class);
 
     @Test
     public void testUnframedSyncMethod()
@@ -133,7 +132,7 @@ public class UnframedTest
         TThreadPoolServer.Args args = new TThreadPoolServer.Args(serverSocket).processor(processor);
         final TServer thriftServer = info.server = new TThreadPoolServer(args);
 
-        LOG.info("Server running on port {}", serverSocket.getServerSocket().getLocalPort());
+        LOG.info("Server running on port %s", serverSocket.getServerSocket().getLocalPort());
 
         new Thread() {
             @Override

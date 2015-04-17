@@ -15,33 +15,31 @@
  */
 package com.facebook.swift.perf.loadgenerator;
 
+import com.facebook.nifty.client.NiftyClientChannel;
 import com.facebook.nifty.client.NiftyClientConnector;
 import com.facebook.swift.service.ThriftClient;
-import com.google.common.base.Function;
-
-import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import javax.annotation.Nullable;
-
-import org.apache.thrift.TException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.facebook.nifty.client.NiftyClientChannel;
 import com.facebook.swift.service.ThriftClientManager;
+import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
+import io.airlift.log.Logger;
+import org.apache.thrift.TException;
+
+import javax.annotation.Nullable;
+
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static java.lang.Math.max;
 
 public final class AsyncClientWorker extends AbstractClientWorker
 {
     private static final AtomicInteger clientCounter = new AtomicInteger(0);
-    private static final Logger logger = LoggerFactory.getLogger(AsyncClientWorker.class);
+    private static final Logger logger = Logger.get(AsyncClientWorker.class);
     private static final int MAX_FRAME_SIZE = 0x7FFFFFFF;
     private final ThriftClient<AsyncLoadTest> client;
     private final ThriftClientManager clientManager;
@@ -111,7 +109,7 @@ public final class AsyncClientWorker extends AbstractClientWorker
                 @Override
                 public void onSuccess(ClientWrapper result)
                 {
-                    logger.trace("Worker connected");
+                    logger.debug("Worker connected");
 
                     clientWrapper = result;
                     NiftyClientChannel channel = clientManager.getNiftyChannel(clientWrapper.getClient());
@@ -144,7 +142,7 @@ public final class AsyncClientWorker extends AbstractClientWorker
 
     private void onConnectFailed(Throwable cause)
     {
-        logger.error("Could not connect: " + cause.getMessage());
+        logger.error("Could not connect: %s", cause);
         reconnect();
     }
 
@@ -256,7 +254,7 @@ public final class AsyncClientWorker extends AbstractClientWorker
         }
         catch (TException ex) {
             // sending a request failed
-            logger.error("Async client request failed: {}",
+            logger.error("Async client request failed: %s",
                          Throwables.getRootCause(ex).getMessage());
             clientWrapper.close();
         }
@@ -370,7 +368,7 @@ public final class AsyncClientWorker extends AbstractClientWorker
 
             if (t instanceof TException) {
                 clientWrapper.close();
-                logger.error("Async client received failure response: {}",
+                logger.error("Async client received failure response: %s",
                              Throwables.getRootCause(t).getMessage());
             }
 

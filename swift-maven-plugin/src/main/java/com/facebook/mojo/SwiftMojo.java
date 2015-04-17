@@ -20,7 +20,6 @@ import com.facebook.swift.generator.SwiftGeneratorConfig;
 import com.facebook.swift.generator.SwiftGeneratorTweak;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
-import com.pyx4j.log4j.MavenLogAppender;
 import org.apache.maven.model.FileSet;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -123,8 +122,6 @@ public class SwiftMojo extends AbstractMojo
     @Override
     public final void execute() throws MojoExecutionException, MojoFailureException
     {
-        MavenLogAppender.startPluginLog(this);
-
         try {
             if (!skip) {
 
@@ -172,9 +169,6 @@ public class SwiftMojo extends AbstractMojo
 
             getLog().error(format("While executing Mojo %s", this.getClass().getSimpleName()), e);
             throw new MojoExecutionException("Failure:" ,e);
-        }
-        finally {
-            MavenLogAppender.endPluginLog(this);
         }
     }
 }

@@ -21,17 +21,16 @@ import com.facebook.swift.service.RuntimeTException;
 import com.facebook.swift.service.ThriftClient;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Inject;
+import io.airlift.log.Logger;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 public class SyncClientWorker extends AbstractClientWorker
 {
-    private static final Logger logger = LoggerFactory.getLogger(SyncClientWorker.class);
+    private static final Logger logger = Logger.get(SyncClientWorker.class);
     private final ThriftClient<SyncLoadTest> client;
     private volatile boolean shutdownRequested = false;
     private NiftyClientConnector<? extends NiftyClientChannel> connector;
@@ -65,14 +64,14 @@ public class SyncClientWorker extends AbstractClientWorker
                 while (!shutdownRequested) {
                     try {
                         try (SyncLoadTest client = SyncClientWorker.this.client.open(connector).get()) {
-                            logger.trace("Worker connected");
+                            logger.debug("Worker connected");
                             for (int i = 0; i < getOperationsPerConnection(); i++) {
                                 sendRequest(client);
                             }
                         }
                     }
                     catch (ExecutionException | TException ex) {
-                        logger.error("Connection failed: " + ex.getMessage());
+                        logger.error("Connection failed: %s", ex.getMessage());
                         Uninterruptibles.sleepUninterruptibly(10, TimeUnit.MILLISECONDS);
                     }
                     catch (InterruptedException ex) {

@@ -41,12 +41,12 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.airlift.log.Logger;
 import org.stringtemplate.v4.AutoIndentWriter;
 import org.stringtemplate.v4.ST;
 
 import javax.annotation.Nullable;
+
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -61,7 +61,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Swift2ThriftGenerator
 {
-    private static final Logger LOG = LoggerFactory.getLogger(Swift2ThriftGenerator.class);
+    private static final Logger LOG = Logger.get(Swift2ThriftGenerator.class);
     private final OutputStreamWriter outputStreamWriter;
     private final boolean verbose;
     private final ThriftCodecManager codecManager = new ThriftCodecManager();
@@ -310,7 +310,7 @@ public class Swift2ThriftGenerator
             } else {
                 ok = false;
                 if (!quiet) {
-                    LOG.error("Unknown parent service {} in {}",
+                    LOG.error("Unknown parent service %s in %s",
                             parent.getName(),
                             service.getName());
                 }
@@ -322,7 +322,7 @@ public class Swift2ThriftGenerator
                 if (!verifyField(f.getThriftType())) {
                     ok = false;
                     if (!quiet) {
-                        LOG.error("Unknown argument type {} in {}.{}",
+                        LOG.error("Unknown argument type %s in %s.%s",
                                 thriftTypeRenderer.toString(f.getThriftType()),
                                 service.getName(),
                                 method.getKey());
@@ -334,7 +334,7 @@ public class Swift2ThriftGenerator
                 if (!verifyField(ex)) {
                     ok = false;
                     if (!quiet) {
-                        LOG.error("Unknown exception type {} in {}.{}",
+                        LOG.error("Unknown exception type %s in %s.%s",
                                 thriftTypeRenderer.toString(ex),
                                 service.getName(),
                                 method.getKey());
@@ -346,7 +346,7 @@ public class Swift2ThriftGenerator
                     !verifyField(method.getValue().getReturnType())) {
                 ok = false;
                 if (!quiet) {
-                    LOG.error("Unknown return type {} in {}.{}",
+                    LOG.error("Unknown return type %s in %s.%s",
                             thriftTypeRenderer.toString(method.getValue().getReturnType()),
                             service.getName(),
                             method.getKey());
@@ -398,7 +398,7 @@ public class Swift2ThriftGenerator
             if (!fieldOk) {
                 ok = false;
                 if (!quiet) {
-                    LOG.error("Unknown type {} in {}.{}",
+                    LOG.error("Unknown type %s in %s.%s",
                               thriftTypeRenderer.toString(fieldMetadata.getThriftType()),
                               metadata.getStructName(),
                               fieldMetadata.getName());
@@ -418,7 +418,7 @@ public class Swift2ThriftGenerator
         try {
             return getClassLoader().loadClass(className);
         } catch (ClassNotFoundException e) {
-            LOG.warn("Couldn't load class {}", className);
+            LOG.warn("Couldn't load class %s", className);
         }
         return null;
     }
@@ -431,14 +431,14 @@ public class Swift2ThriftGenerator
             // it's a service
             ThriftServiceMetadata serviceMetadata = new ThriftServiceMetadata(cls, codecManager.getCatalog());
             if (verbose) {
-                LOG.info("Found thrift service: {}", cls.getSimpleName());
+                LOG.info("Found thrift service: %s", cls.getSimpleName());
             }
             return serviceMetadata;
         } else {
             // it's a type (will throw if it's not)
             ThriftType thriftType = codecManager.getCatalog().getThriftType(cls);
             if (verbose) {
-                LOG.info("Found thrift type: {}", thriftTypeRenderer.toString(thriftType));
+                LOG.info("Found thrift type: %s", thriftTypeRenderer.toString(thriftType));
             }
             return thriftType;
         }

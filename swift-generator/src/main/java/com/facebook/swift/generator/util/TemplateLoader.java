@@ -21,8 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.io.CharSource;
 import com.google.common.io.Resources;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.airlift.log.Logger;
 import org.stringtemplate.v4.AttributeRenderer;
 import org.stringtemplate.v4.ST;
 import org.stringtemplate.v4.STErrorListener;
@@ -49,7 +48,7 @@ public class TemplateLoader
                 }
             };
 
-    private static final Logger LOG = LoggerFactory.getLogger(TemplateLoader.class);
+    private static final Logger LOG = Logger.get(TemplateLoader.class);
 
     private final STErrorListener ERROR_LISTENER = new ErrorListener();
 

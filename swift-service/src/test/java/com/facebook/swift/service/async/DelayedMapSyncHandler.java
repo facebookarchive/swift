@@ -15,9 +15,8 @@
  */
 package com.facebook.swift.service.async;
 
+import io.airlift.log.Logger;
 import org.apache.thrift.TException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +27,7 @@ import static com.google.common.collect.Maps.newConcurrentMap;
 
 public class DelayedMapSyncHandler implements DelayedMap.Service
 {
-    private static final Logger LOGGER =LoggerFactory.getLogger(DelayedMapSyncHandler.class);
+    private static final Logger LOGGER = Logger.get(DelayedMapSyncHandler.class);
 
     private Map<String, String> store = newConcurrentMap();
 

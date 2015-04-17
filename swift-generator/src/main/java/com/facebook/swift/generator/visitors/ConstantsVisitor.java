@@ -21,8 +21,7 @@ import com.facebook.swift.generator.template.ConstantsContext;
 import com.facebook.swift.generator.util.TemplateLoader;
 import com.facebook.swift.parser.model.Const;
 import com.facebook.swift.parser.visitor.Visitable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.airlift.log.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +30,7 @@ import java.util.Set;
 
 public class ConstantsVisitor extends AbstractTemplateVisitor
 {
-    private static final Logger LOG = LoggerFactory.getLogger(ConstantsVisitor.class);
+    private static final Logger LOG = Logger.get(ConstantsVisitor.class);
     private final Set<Const> constants = new HashSet<>();
 
     public ConstantsVisitor(final TemplateLoader templateLoader,
@@ -68,7 +67,7 @@ public class ConstantsVisitor extends AbstractTemplateVisitor
                     constantContext.addConstant(contextGenerator.constantFromThrift(constant));
                 }
                 catch (IllegalStateException e) {
-                    LOG.error("Could not generate code for constant '{}' due to https://github.com/facebook/swift/issues/209, skipping...", constant.getName());
+                    LOG.error("Could not generate code for constant '%s' due to https://github.com/facebook/swift/issues/209, skipping...", constant.getName());
                 }
             }
             render(constantContext, "constants");

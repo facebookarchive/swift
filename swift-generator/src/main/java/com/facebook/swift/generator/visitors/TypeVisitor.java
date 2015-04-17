@@ -24,12 +24,11 @@ import com.facebook.swift.parser.visitor.DocumentVisitor;
 import com.facebook.swift.parser.visitor.Nameable;
 import com.facebook.swift.parser.visitor.Visitable;
 import com.google.common.base.Preconditions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.airlift.log.Logger;
 
 public class TypeVisitor implements DocumentVisitor
 {
-    private static final Logger LOG = LoggerFactory.getLogger(TypeVisitor.class);
+    private static final Logger LOG = Logger.get(TypeVisitor.class);
     private final String javaNamespace;
     private final SwiftDocumentContext documentContext;
 
@@ -60,7 +59,7 @@ public class TypeVisitor implements DocumentVisitor
             // to have a typedef point at itself.
             final Typedef typedef = Typedef.class.cast(visitable);
 
-            LOG.debug("Checking typedef '{}' as '{}'.", typedef.getType(), typedef.getName());
+            LOG.debug("Checking typedef '%s' as '%s'.", typedef.getType(), typedef.getName());
 
             final TypeToJavaConverter typeConverter = documentContext.getTypeConverter();
 
@@ -68,7 +67,7 @@ public class TypeVisitor implements DocumentVisitor
             documentContext.getTypedefRegistry().add(swiftJavaType, typedef.getType());
         }
 
-        LOG.debug("Registering type '{}'", swiftJavaType);
+        LOG.debug("Registering type '%s'", swiftJavaType);
         documentContext.getTypeRegistry().add(swiftJavaType);
     }
 

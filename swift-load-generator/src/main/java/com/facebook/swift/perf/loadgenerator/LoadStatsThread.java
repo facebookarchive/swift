@@ -15,14 +15,13 @@
  */
 package com.facebook.swift.perf.loadgenerator;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.airlift.log.Logger;
 
 import java.util.concurrent.TimeUnit;
 
 public class LoadStatsThread extends Thread
 {
-    private static final Logger logger = LoggerFactory.getLogger(LoadStatsThread.class);
+    private static final Logger logger = Logger.get(LoadStatsThread.class);
 
     private final AbstractClientWorker[] clientWorkers;
     private volatile boolean shutdown = false;

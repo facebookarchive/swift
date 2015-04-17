@@ -27,6 +27,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import io.airlift.log.Logger;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TMessage;
@@ -34,13 +35,11 @@ import org.apache.thrift.protocol.TMessageType;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolUtil;
 import org.apache.thrift.protocol.TType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import javax.annotation.concurrent.ThreadSafe;
 
 import java.util.List;
 import java.util.Map;
-
-import javax.annotation.concurrent.ThreadSafe;
 
 import static com.google.common.collect.Maps.newHashMap;
 import static org.apache.thrift.TApplicationException.INVALID_MESSAGE_TYPE;
@@ -54,7 +53,7 @@ import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
 @ThreadSafe
 public class ThriftServiceProcessor implements NiftyProcessor
 {
-    private static final Logger LOG = LoggerFactory.getLogger(ThriftServiceProcessor.class);
+    private static final Logger LOG = Logger.get(ThriftServiceProcessor.class);
 
     private final Map<String, ThriftMethodProcessor> methods;
     private final List<ThriftEventHandler> eventHandlers;
@@ -175,7 +174,7 @@ public class ThriftServiceProcessor implements NiftyProcessor
             applicationException.initCause(cause);
         }
 
-        LOG.error(errorMessage, applicationException);
+        LOG.error(applicationException, errorMessage);
 
         // Application exceptions are sent to client, and the connection can be reused
         outputProtocol.writeMessageBegin(new TMessage(methodName, TMessageType.EXCEPTION, sequenceId));
