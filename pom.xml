@@ -277,6 +277,24 @@
         <version>1.30</version>
       </dependency>
 
+      <dependency>
+        <groupId>io.takari.maven.plugins</groupId>
+        <artifactId>takari-plugin-testing</artifactId>
+        <version>2.2.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.takari.maven.plugins</groupId>
+        <artifactId>takari-plugin-integration-testing</artifactId>
+        <version>2.2.0</version>
+        <type>pom</type>
+      </dependency>
+
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>4.12</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -364,8 +382,15 @@
             </execution>
           </executions>
         </plugin>
+
+        <plugin>
+          <groupId>io.takari.maven.plugins</groupId>
+          <artifactId>takari-lifecycle-plugin</artifactId>
+          <version>1.11.3</version>
+        </plugin>
       </plugins>
     </pluginManagement>
+
     <plugins>
       <plugin>
         <groupId>com.mycila</groupId>
@@ -382,5 +407,4 @@
       </plugin>
     </plugins>
   </build>
-
 </project>
