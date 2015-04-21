@@ -17,9 +17,9 @@ package com.facebook.swift.codec.metadata;
 
 
 /**
- * ThriftInjection contains information an injection point for a single thrift field.
- * <p/>
- * Implementation of this interface are expected to be thread safe.
+ * <p>ThriftInjection contains information an injection point for a single thrift field.</p>
+ *
+ * <p>Implementation of this interface are expected to be thread safe.</p>
  */
 public interface ThriftInjection
 {

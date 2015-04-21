@@ -19,10 +19,10 @@ import com.facebook.swift.codec.metadata.ThriftType;
 import org.apache.thrift.protocol.TProtocol;
 
 /**
- * A single type codec for reading and writing in Thrift format.  Each codec is symmetric and
- * therefore only supports a single concrete type.
- * <p/>
- * Implementations of this interface are expected to be thread safe.
+ * <p>A single type codec for reading and writing in Thrift format.  Each codec is symmetric and
+ * therefore only supports a single concrete type.</p>
+ *
+ * <p>Implementations of this interface are expected to be thread safe.</p>
  *
  * @param <T> the type this codec supports
  */

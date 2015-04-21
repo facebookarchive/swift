@@ -112,17 +112,17 @@ public class ThriftServerConfig
     }
 
     /**
-     * Sets the number of pending connections that the {@link java.net.ServerSocket} will
+     * <p>Sets the number of pending connections that the {@link java.net.ServerSocket} will
      * queue up before the server process can actually accept them. If your server may take a lot
      * of connections in a very short interval, you'll want to set this higher to avoid rejecting
-     * some of the connections. Setting this to 0 will apply an implementation-specific default.
-     * </b>
-     * The default value is 1024.
-     * </b>
-     * Actual behavior of the socket backlog is dependent on OS and JDK implementation, and it may
+     * some of the connections. Setting this to 0 will apply an implementation-specific default.</p>
+     *
+     * <p>The default value is 1024.</p>
+     *
+     * <p>Actual behavior of the socket backlog is dependent on OS and JDK implementation, and it may
      * even be ignored on some systems. See JDK docs
-     * <a href="http://docs.oracle.com/javase/7/docs/api/java/net/ServerSocket.html#ServerSocket(int, int)">here</a>
-     * for details.
+     * <a href="http://docs.oracle.com/javase/7/docs/api/java/net/ServerSocket.html#ServerSocket%28int%2C%20int%29" target="_top">here</a>
+     * for details.</p>
      *
      * @param acceptBacklog
      * @return
@@ -261,12 +261,14 @@ public class ThriftServerConfig
      * Sets the key for locating an {@link java.util.concurrent.ExecutorService} from the
      * mapped executors installed by Guice modules.
      *
-     * If you are not configuring your application usingGuice, it will probably be simpler to just
-     * call {@link this#setWorkerExecutor(java.util.concurrent.ExecutorService)} instead.
+     * If you are not configuring your application using Guice, it will probably be simpler to just
+     * call
+     * {@link com.facebook.swift.service.ThriftServerConfig#setWorkerExecutor(java.util.concurrent.ExecutorService)}
+     * instead.
      *
      * Use of this method on a {@link com.facebook.swift.service.ThriftServerConfig} instance is
-     * incompatible with use of {@link this#setWorkerExecutor(java.util.concurrent.ExecutorService)}
-     * or {@link this#setWorkerThreads(int)}
+     * incompatible with use of {@link com.facebook.swift.service.ThriftServerConfig#setWorkerExecutor(java.util.concurrent.ExecutorService)}
+     * or {@link com.facebook.swift.service.ThriftServerConfig#setWorkerThreads(int)}
      */
     @Config("thrift.worker-executor-key")
     public ThriftServerConfig setWorkerExecutorKey(String workerExecutorKey)
@@ -319,13 +321,14 @@ public class ThriftServerConfig
      * by calling any of the following (though only <b>one</b> of these should actually be called):</p>
      *
      * <ul>
-     *     <li>{@link this#setWorkerThreads(int)}</li>
-     *     <li>{@link this#setWorkerExecutor(java.util.concurrent.ExecutorService)}</li>
-     *     <li>{@link this#setWorkerExecutorKey(String)}</li>
+     *     <li>{@link com.facebook.swift.service.ThriftServerConfig#setWorkerThreads}</li>
+     *     <li>{@link com.facebook.swift.service.ThriftServerConfig#setWorkerExecutor}</li>
+     *     <li>{@link com.facebook.swift.service.ThriftServerConfig#setWorkerExecutorKey}</li>
      * </ul>
      *
      * <p>The default behavior if none of the above were called is to synthesize a fixed-size
-     * {@link java.util.concurrent.ThreadPoolExecutor} using {@link this#DEFAULT_WORKER_THREAD_COUNT}
+     * {@link java.util.concurrent.ThreadPoolExecutor} using
+     * {@link com.facebook.swift.service.ThriftServerConfig#DEFAULT_WORKER_THREAD_COUNT}
      * threads.</p>
      */
     public ExecutorService getOrBuildWorkerExecutor(Map<String, ExecutorService> boundWorkerExecutors)
@@ -360,11 +363,13 @@ public class ThriftServerConfig
 
     /**
      * Sets the executor that will be used to process thrift requests after they arrive. Setting
-     * this will override any call to {@link ThriftServerConfig#setWorkerThreads(int)}.
+     * this will override any call to
+     * {@link com.facebook.swift.service.ThriftServerConfig#setWorkerThreads(int)}.
      *
      * Use of this method on a {@link com.facebook.swift.service.ThriftServerConfig} instance is
-     * incompatible with use of {@link this#setWorkerExecutorKey(String)} or
-     * {@link this#setWorkerThreads(int)}
+     * incompatible with use of
+     * {@link com.facebook.swift.service.ThriftServerConfig#setWorkerExecutorKey(String)} or
+     * {@link com.facebook.swift.service.ThriftServerConfig#setWorkerThreads(int)}
      *
      * @param workerExecutor The worker executor
      * @return This {@link ThriftServerConfig} instance

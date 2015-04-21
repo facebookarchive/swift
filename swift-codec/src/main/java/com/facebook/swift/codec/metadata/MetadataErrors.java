@@ -22,10 +22,10 @@ import javax.annotation.concurrent.NotThreadSafe;
 import java.util.List;
 
 /**
- * MetadataErrors collects all known issues with metadata extraction.  This allows all known
- * problems to be reported together instead of one at a time.
- * <p/>
- * This code is heavily based on https://github.com/dain/platform/blob/master/configuration/src/main/java/com/proofpoint/configuration/Problems.java
+ * <p>MetadataErrors collects all known issues with metadata extraction.  This allows all known
+ * problems to be reported together instead of one at a time.</p>
+ *
+ * <p>This code is heavily based on https://github.com/dain/platform/blob/master/configuration/src/main/java/com/proofpoint/configuration/Problems.java</p>
  */
 @NotThreadSafe
 public class MetadataErrors
