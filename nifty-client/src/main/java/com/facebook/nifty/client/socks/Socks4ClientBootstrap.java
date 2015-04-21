@@ -35,7 +35,7 @@ import static com.facebook.nifty.client.socks.SocksProtocols.createSocks4packet;
 /**
  * ClientBootstrap for connecting via SOCKS proxy.
  * Currently only SOCK4 is supported since we don't do authentication anyway.
- * <p/>
+ * <br>
  * See http://en.wikipedia.org/wiki/SOCKS
  */
 public class Socks4ClientBootstrap extends ClientBootstrap

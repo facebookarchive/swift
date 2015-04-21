@@ -43,10 +43,7 @@ import static com.google.common.base.Preconditions.checkState;
  * .using(Executors.newFixedThreadPool(5))
  * .build();
  * </code>
- * <p/>
- * <p/>
  * You can then pass ThriftServerDef to guice via a multibinder.
- * <p/>
  */
 public abstract class ThriftServerDefBuilderBase<T extends ThriftServerDefBuilderBase<T>>
 {

@@ -43,8 +43,10 @@ public interface RequestChannel
 
     /**
      * Checks whether the channel has encountered an error. This method is a shortcut for:
-     * <p/>
-     * {@code return (getError() != null);}
+     *
+     * <code>
+     * return (getError() != null);
+     * </code>
      *
      * @return {@code true} if the {@link RequestChannel} is broken
      */

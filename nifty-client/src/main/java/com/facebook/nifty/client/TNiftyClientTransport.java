@@ -29,13 +29,10 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Netty Equivalent to a {@link org.apache.thrift.transport.TFramedTransport} over a TSocket.
- * <p/>
- * This is just for a proof-of-concept to show that it can be done.
- * <p/>
- * You should just use a TSocket for sync client.
- * <p/>
- * This already has a built in TFramedTransport. No need to wrap.
+ * Netty Equivalent to a {@link org.apache.thrift.transport.TFramedTransport} over
+ * a TSocket. This is just for a proof-of-concept to show that it can be done. You
+ * should just use a TSocket for sync client. This already has a built in
+ * TFramedTransport. No need to wrap.
  *
  * @deprecated Use {@link com.facebook.nifty.client.TNiftyClientChannelTransport} instead
  */
