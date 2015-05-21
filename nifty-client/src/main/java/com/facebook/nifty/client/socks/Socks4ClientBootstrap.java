@@ -26,11 +26,13 @@ import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
 import org.jboss.netty.handler.codec.frame.FixedLengthFrameDecoder;
 
+import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
 import static com.facebook.nifty.client.socks.SocksProtocols.createSock4aPacket;
 import static com.facebook.nifty.client.socks.SocksProtocols.createSocks4packet;
+import static com.google.common.net.InetAddresses.toAddrString;
 
 /**
  * ClientBootstrap for connecting via SOCKS proxy.
@@ -128,21 +130,23 @@ public class Socks4ClientBootstrap extends ClientBootstrap
      * try to look at the remoteAddress and decide to use SOCKS4 or SOCKS4a handshake
      * packet.
      */
-    private ChannelFuture socksConnect(Channel channel, InetSocketAddress remoteAddress)
+    private static ChannelFuture socksConnect(Channel channel, InetSocketAddress remoteAddress)
     {
-        ChannelBuffer handshake = null;
-        if ((remoteAddress.getAddress() == null && remoteAddress.getHostName() != null) || remoteAddress.getHostName().equals("localhost")) {
-            handshake = createSock4aPacket(remoteAddress.getHostName(), remoteAddress.getPort());
-        }
-        if (remoteAddress.getAddress() != null) {
-            handshake = createSocks4packet(remoteAddress.getAddress(), remoteAddress.getPort());
-        }
-
-        if (handshake == null) {
-            throw new IllegalArgumentException("Invalid Address " + remoteAddress);
-        }
-
-        channel.write(handshake);
+        channel.write(createHandshake(remoteAddress));
         return ((Socks4HandshakeHandler) channel.getPipeline().get("handshake")).getChannelFuture();
+    }
+
+    private static ChannelBuffer createHandshake(InetSocketAddress address)
+    {
+        if (address.getAddress() instanceof Inet4Address) {
+            return createSocks4packet(address.getAddress(), address.getPort());
+        }
+        if (address.getAddress() != null) {
+            return createSock4aPacket(toAddrString(address.getAddress()), address.getPort());
+        }
+        if (address.getHostName() != null) {
+            return createSock4aPacket(address.getHostName(), address.getPort());
+        }
+        throw new IllegalArgumentException("Invalid Address " + address);
     }
 }
