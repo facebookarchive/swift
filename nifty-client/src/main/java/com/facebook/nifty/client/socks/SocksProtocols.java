@@ -41,14 +41,12 @@ public class SocksProtocols
         if (address == null) {
             throw new IllegalArgumentException("address is null");
         }
-        byte[] userBytes = System.getProperty("user.name", "").getBytes(Charsets.ISO_8859_1);
-        ChannelBuffer handshake = ChannelBuffers.dynamicBuffer(9 + userBytes.length);
+        ChannelBuffer handshake = ChannelBuffers.dynamicBuffer(9);
         handshake.writeByte(SOCKS_VERSION_4); // SOCKS version
         handshake.writeByte(CONNECT); // CONNECT
         handshake.writeShort(port); // port
         handshake.writeBytes(address.getAddress()); // remote address to connect to
-        handshake.writeBytes(userBytes); // user name
-        handshake.writeByte(0x00); // null terminating the string
+        handshake.writeByte(0x00); // empty user (null terminated)
         return handshake;
     }
 
@@ -57,9 +55,8 @@ public class SocksProtocols
         if (hostName == null) {
             throw new IllegalArgumentException("hostName is null");
         }
-        byte[] userBytes = System.getProperty("user.name", "").getBytes(Charsets.ISO_8859_1);
         byte[] hostNameBytes = hostName.getBytes(Charsets.ISO_8859_1);
-        ChannelBuffer handshake = ChannelBuffers.dynamicBuffer(10 + userBytes.length + hostNameBytes.length);
+        ChannelBuffer handshake = ChannelBuffers.dynamicBuffer(10 + hostNameBytes.length);
         handshake.writeByte(SOCKS_VERSION_4); // SOCKS version
         handshake.writeByte(CONNECT); // CONNECT
         handshake.writeShort(port); // port
@@ -67,8 +64,7 @@ public class SocksProtocols
         handshake.writeByte(0x00); // fake ip
         handshake.writeByte(0x00); // fake ip
         handshake.writeByte(0x01); // fake ip
-        handshake.writeBytes(userBytes); // user name
-        handshake.writeByte(0x00); // null terminating the string
+        handshake.writeByte(0x00); // empty user (null terminated)
         handshake.writeBytes(hostNameBytes); // remote host name to connect to
         handshake.writeByte(0x00); // null terminating the string
         return handshake;
