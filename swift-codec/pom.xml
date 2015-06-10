@@ -33,6 +33,7 @@
 
   <properties>
     <air.main.basedir>${project.parent.basedir}</air.main.basedir>
+    <shadeBase>com.facebook.swift.codec.\$internal</shadeBase>
   </properties>
 
   <dependencies>
@@ -90,4 +91,46 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <createSourcesJar>true</createSourcesJar>
+              <shadeSourcesContent>true</shadeSourcesContent>
+              <dependencyReducedPomLocation>${project.build.directory}/pom.xml</dependencyReducedPomLocation>
+              <artifactSet>
+                <includes>
+                  <include>org.ow2.asm:asm-all</include>
+                </includes>
+              </artifactSet>
+              <relocations>
+                <relocation>
+                  <pattern>org.objectweb.asm</pattern>
+                  <shadedPattern>${shadeBase}.asm</shadedPattern>
+                </relocation>
+              </relocations>
+              <filters>
+                <filter>
+                  <artifact>org.ow2.asm:asm-all</artifact>
+                  <excludes>
+                    <exclude>META-INF/maven/**</exclude>
+                    <excludes>org/objectweb/asm/xml/**</excludes>
+                  </excludes>
+                </filter>
+              </filters>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>
