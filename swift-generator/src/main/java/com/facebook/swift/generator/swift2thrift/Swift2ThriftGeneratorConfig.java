@@ -26,11 +26,11 @@ public class Swift2ThriftGeneratorConfig {
     private final Map<String, String> namespaceMap;
     private final String allowMultiplePackages;
     private final boolean recursive;
+    private final ClassLoader classLoader;
 
     private Swift2ThriftGeneratorConfig(final File outputFile, final Map<String, String> includeMap,
                                         boolean verbose, String defaultPackage, final Map<String, String> namespaceMap,
-                                        String allowMultiplePackages, boolean recursive)
-    {
+                                        String allowMultiplePackages, boolean recursive, ClassLoader classLoader) {
         this.outputFile = outputFile;
         this.includeMap = includeMap;
         this.verbose = verbose;
@@ -38,53 +38,49 @@ public class Swift2ThriftGeneratorConfig {
         this.namespaceMap = namespaceMap;
         this.allowMultiplePackages = allowMultiplePackages;
         this.recursive = recursive;
+        this.classLoader = classLoader;
     }
 
-    public static Builder builder()
-    {
+    public static Builder builder() {
         return new Builder();
     }
 
     /**
      * Returns the output Thrift IDL URI.
      */
-    public File getOutputFile()
-    {
+    public File getOutputFile() {
         return outputFile;
     }
 
-    public Map<String, String> getIncludeMap()
-    {
+    public Map<String, String> getIncludeMap() {
         return includeMap;
     }
 
-    public boolean isVerbose()
-    {
+    public boolean isVerbose() {
         return verbose;
     }
 
-    public String getDefaultPackage()
-    {
+    public String getDefaultPackage() {
         return defaultPackage;
     }
 
-    public Map<String, String> getNamespaceMap()
-    {
+    public Map<String, String> getNamespaceMap() {
         return namespaceMap;
     }
 
-    public String isAllowMultiplePackages()
-    {
+    public String isAllowMultiplePackages() {
         return allowMultiplePackages;
     }
 
-    public boolean isRecursive()
-    {
+    public boolean isRecursive() {
         return recursive;
     }
 
-    public static class Builder
-    {
+    public ClassLoader getClassLoader() {
+        return classLoader;
+    }
+
+    public static class Builder {
         private File outputFile = null;
         private Map<String, String> includeMap;
         private boolean verbose;
@@ -92,56 +88,53 @@ public class Swift2ThriftGeneratorConfig {
         private Map<String, String> namespaceMap;
         private String allowMultiplePackages;
         private boolean recursive;
+        private ClassLoader classLoader;
 
-        private Builder()
-        {
+        private Builder() {
         }
 
-        public Swift2ThriftGeneratorConfig build()
-        {
+        public Swift2ThriftGeneratorConfig build() {
             return new Swift2ThriftGeneratorConfig(outputFile, includeMap, verbose, defaultPackage,
-                    namespaceMap, allowMultiplePackages, recursive);
+                    namespaceMap, allowMultiplePackages, recursive, classLoader);
         }
 
-        public Builder outputFile(final File outputFile)
-        {
+        public Builder outputFile(final File outputFile) {
             this.outputFile = outputFile;
             return this;
         }
 
-        public Builder includeMap(Map<String, String> includeMap)
-        {
+        public Builder includeMap(Map<String, String> includeMap) {
             this.includeMap = includeMap;
             return this;
         }
 
-        public Builder verbose(boolean verbose)
-        {
+        public Builder verbose(boolean verbose) {
             this.verbose = verbose;
             return this;
         }
 
-        public Builder defaultPackage(String defaultPackage)
-        {
+        public Builder defaultPackage(String defaultPackage) {
             this.defaultPackage = defaultPackage;
             return this;
         }
 
-        public Builder namespaceMap(Map<String, String> namespaceMap)
-        {
+        public Builder namespaceMap(Map<String, String> namespaceMap) {
             this.namespaceMap = namespaceMap;
             return this;
         }
 
-        public Builder allowMultiplePackages(String allowMultiplePackages)
-        {
+        public Builder allowMultiplePackages(String allowMultiplePackages) {
             this.allowMultiplePackages = allowMultiplePackages;
             return this;
         }
 
-        public Builder recursive(boolean recursive)
-        {
+        public Builder recursive(boolean recursive) {
             this.recursive = recursive;
+            return this;
+        }
+
+        public Builder classLoader(ClassLoader classLoader) {
+            this.classLoader = classLoader;
             return this;
         }
     }
