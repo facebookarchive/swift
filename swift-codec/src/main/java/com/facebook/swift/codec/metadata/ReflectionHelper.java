@@ -60,6 +60,7 @@ public final class ReflectionHelper
     private static final Type ITERATOR_TYPE;
     private static final Type ITERATOR_ELEMENT_TYPE;
     private static final Type FUTURE_RETURN_TYPE;
+    private static final Type TWITTER_FUTURE_RETURN_TYPE;
 
     static {
         try {
@@ -72,6 +73,9 @@ public final class ReflectionHelper
 
             Method futureGetMethod = Future.class.getMethod("get");
             FUTURE_RETURN_TYPE = futureGetMethod.getGenericReturnType();
+
+            Method twitterFutureGetMethod = com.twitter.util.Future.class.getMethod("get");
+            TWITTER_FUTURE_RETURN_TYPE = twitterFutureGetMethod.getGenericReturnType();
         }
         catch (Exception e) {
             throw Throwables.propagate(e);
@@ -108,6 +112,11 @@ public final class ReflectionHelper
     public static Type getFutureReturnType(Type type)
     {
         return TypeToken.of(type).resolveType(FUTURE_RETURN_TYPE).getType();
+    }
+
+    public static Type getTwitterFutureReturnType(Type type)
+    {
+        return TypeToken.of(type).resolveType(TWITTER_FUTURE_RETURN_TYPE).getType();
     }
 
     public static <T extends Annotation> Set<T> getEffectiveClassAnnotations(Class<?> type, Class<T> annotation)
