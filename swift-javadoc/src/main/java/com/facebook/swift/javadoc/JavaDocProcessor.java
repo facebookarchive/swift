@@ -38,6 +38,7 @@ import java.util.Set;
 
 @SupportedAnnotationTypes({"com.facebook.swift.service.ThriftService",
                            "com.facebook.swift.codec.ThriftStruct",
+                           "com.facebook.swift.codec.ThriftUnion",
                            "com.facebook.swift.codec.ThriftEnum"
 })
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
