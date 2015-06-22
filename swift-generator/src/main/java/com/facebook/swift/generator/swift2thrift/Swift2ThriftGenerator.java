@@ -45,7 +45,8 @@ import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class Swift2ThriftGenerator {
+public class Swift2ThriftGenerator
+{
     private static final Logger LOG = Logger.get(Swift2ThriftGenerator.class);
     private final OutputStreamWriter outputStreamWriter;
     private final boolean verbose;
@@ -66,14 +67,15 @@ public class Swift2ThriftGenerator {
     private Map<String, String> namespaceMap;
     private boolean recursive;
     private static final Set<ThriftType> builtInKnownTypes =
-            ImmutableSet.of(ThriftType.BOOL, ThriftType.BYTE, ThriftType.I16, ThriftType.I32,
-                    ThriftType.I64, ThriftType.DOUBLE, ThriftType.STRING, ThriftType.BINARY,
-                    new ThriftType(ThriftType.BOOL, Boolean.class), new ThriftType(ThriftType.BYTE, Byte.class),
-                    new ThriftType(ThriftType.I16, Short.class), new ThriftType(ThriftType.I32, Integer.class),
-                    new ThriftType(ThriftType.I64, Long.class), new ThriftType(ThriftType.DOUBLE, Double.class),
-                    new ThriftType(ThriftType.STRING, String.class), new ThriftType(ThriftType.BINARY, byte[].class));
+        ImmutableSet.of(ThriftType.BOOL, ThriftType.BYTE, ThriftType.I16, ThriftType.I32,
+            ThriftType.I64, ThriftType.DOUBLE, ThriftType.STRING, ThriftType.BINARY,
+            new ThriftType(ThriftType.BOOL, Boolean.class), new ThriftType(ThriftType.BYTE, Byte.class),
+            new ThriftType(ThriftType.I16, Short.class), new ThriftType(ThriftType.I32, Integer.class),
+            new ThriftType(ThriftType.I64, Long.class), new ThriftType(ThriftType.DOUBLE, Double.class),
+            new ThriftType(ThriftType.STRING, String.class), new ThriftType(ThriftType.BINARY, byte[].class));
 
-    Swift2ThriftGenerator(final Swift2ThriftGeneratorConfig config) throws FileNotFoundException {
+    Swift2ThriftGenerator(final Swift2ThriftGeneratorConfig config) throws FileNotFoundException
+    {
         this.verbose = config.isVerbose();
         String defaultPackage = config.getDefaultPackage();
 
@@ -87,8 +89,8 @@ public class Swift2ThriftGenerator {
         this.outputStreamWriter = new OutputStreamWriter(os, Charsets.UTF_8);
         Map<String, String> paramIncludeMap = config.getIncludeMap();
         // create a type renderer with an empty map until we build it
-        this.thriftTypeRenderer = new ThriftTypeRenderer(ImmutableMap.<ThriftType, String>of());
-        for (Map.Entry<String, String> entry : paramIncludeMap.entrySet()) {
+        this.thriftTypeRenderer = new ThriftTypeRenderer(ImmutableMap.<ThriftType,String>of());
+        for (Map.Entry<String, String> entry: paramIncludeMap.entrySet()) {
             Class<?> cls = load(entry.getKey());
             if (cls == null) {
                 continue;
@@ -107,14 +109,15 @@ public class Swift2ThriftGenerator {
     }
 
     @SuppressWarnings("PMD.CollapsibleIfStatements")
-    public void parse(Iterable<String> inputs) throws IOException {
+    public void parse(Iterable<String> inputs) throws IOException
+    {
         boolean loadErrors = false;
 
         if (allowMultiplePackages != null) {
             packageName = allowMultiplePackages;
         }
 
-        for (String className : inputs) {
+        for (String className: inputs) {
             Class<?> cls = load(className);
             if (cls == null) {
                 loadErrors = true;
@@ -126,16 +129,16 @@ public class Swift2ThriftGenerator {
             } else if (!packageName.equals(cls.getPackage().getName())) {
                 if (allowMultiplePackages == null) {
                     throw new IllegalStateException(
-                            String.format("Class %s is in package %s, previous classes were in package %s",
-                                    cls.getName(), cls.getPackage().getName(), packageName));
+                        String.format("Class %s is in package %s, previous classes were in package %s",
+                            cls.getName(), cls.getPackage().getName(), packageName));
                 }
             }
 
             Object result = convertToThrift(cls);
             if (result instanceof ThriftType) {
-                thriftTypes.add((ThriftType) result);
+                thriftTypes.add((ThriftType)result);
             } else if (result instanceof ThriftServiceMetadata) {
-                thriftServices.add((ThriftServiceMetadata) result);
+                thriftServices.add((ThriftServiceMetadata)result);
             }
             // if the class we just loaded was also in the include map, remove it from there
             includeMap.remove(result);
@@ -152,7 +155,8 @@ public class Swift2ThriftGenerator {
         }
     }
 
-    private String getFullClassName(String className) {
+    private String getFullClassName(String className)
+    {
         if (className.indexOf('.') == -1) {
             return defaultPackage + className;
         } else {
@@ -160,7 +164,8 @@ public class Swift2ThriftGenerator {
         }
     }
 
-    private boolean verify() {
+    private boolean verify()
+    {
         if (recursive) {
             // Call verifyStruct and verifyService until the lists of discovered types and services stop changing.
             // This populates the list with all transitive dependencies of the input types/services to be fed into the
@@ -190,10 +195,13 @@ public class Swift2ThriftGenerator {
 
     // verifies that all types are known (in thriftTypes or in include map)
     // and does a topological sort of thriftTypes in dependency order
-    private boolean verifyTypes() {
-        SuccessAndResult<ThriftType> output = topologicalSort(thriftTypes, new Predicate<ThriftType>() {
+    private boolean verifyTypes()
+    {
+        SuccessAndResult<ThriftType> output = topologicalSort(thriftTypes, new Predicate<ThriftType>()
+        {
             @Override
-            public boolean apply(@Nullable ThriftType t) {
+            public boolean apply(@Nullable ThriftType t)
+            {
                 ThriftProtocolType proto = checkNotNull(t).getProtocolType();
                 if (proto == ThriftProtocolType.ENUM || proto == ThriftProtocolType.STRUCT) {
                     return verifyStruct(t, true);
@@ -207,7 +215,7 @@ public class Swift2ThriftGenerator {
             thriftTypes = output.result;
             return true;
         } else {
-            for (ThriftType t : output.result) {
+            for (ThriftType t: output.result) {
                 // we know it's gonna fail, we just want the precise error message
                 verifyStruct(t, false);
             }
@@ -215,10 +223,13 @@ public class Swift2ThriftGenerator {
         }
     }
 
-    private boolean verifyServices() {
-        SuccessAndResult<ThriftServiceMetadata> output = topologicalSort(thriftServices, new Predicate<ThriftServiceMetadata>() {
+    private boolean verifyServices()
+    {
+        SuccessAndResult<ThriftServiceMetadata> output = topologicalSort(thriftServices, new Predicate<ThriftServiceMetadata>()
+        {
             @Override
-            public boolean apply(@Nullable ThriftServiceMetadata thriftServiceMetadata) {
+            public boolean apply(@Nullable ThriftServiceMetadata thriftServiceMetadata)
+            {
                 return verifyService(thriftServiceMetadata, true);
             }
         });
@@ -226,7 +237,7 @@ public class Swift2ThriftGenerator {
             thriftServices = output.result;
             return true;
         } else {
-            for (ThriftServiceMetadata s : output.result) {
+            for (ThriftServiceMetadata s: output.result) {
                 // we know it's gonna fail, we just want the precise error message
                 verifyService(s, false);
             }
@@ -234,27 +245,30 @@ public class Swift2ThriftGenerator {
         }
     }
 
-    private class SuccessAndResult<T> {
+    private class SuccessAndResult<T>
+    {
         public boolean success;
         public ArrayList<T> result;
-
-        SuccessAndResult(boolean success, ArrayList<T> result) {
+        SuccessAndResult(boolean success, ArrayList<T> result)
+        {
             this.success = success;
             this.result = result;
         }
     }
 
-    private <T> SuccessAndResult<T> topologicalSort(ArrayList<T> list, Predicate<T> isKnown) {
+    private <T> SuccessAndResult<T> topologicalSort(ArrayList<T> list, Predicate<T> isKnown)
+    {
         ArrayList<T> remaining = list;
         ArrayList<T> newList = Lists.newArrayList();
         int prevSize = 0;
         while (prevSize != remaining.size()) {
             prevSize = remaining.size();
             ArrayList<T> bad = Lists.newArrayList();
-            for (T t : remaining) {
+            for (T t: remaining) {
                 if (isKnown.apply(t)) {
                     newList.add(t);
-                } else {
+                }
+                else {
                     bad.add(t);
                 }
             }
@@ -267,7 +281,8 @@ public class Swift2ThriftGenerator {
         }
     }
 
-    private boolean verifyService(ThriftServiceMetadata service, boolean quiet) {
+    private boolean verifyService(ThriftServiceMetadata service, boolean quiet)
+    {
         boolean ok = true;
         List<ThriftServiceMetadata> parents = service.getParentServices();
 
@@ -331,7 +346,8 @@ public class Swift2ThriftGenerator {
         return ok;
     }
 
-    private boolean verifyField(ThriftType t) {
+    private boolean verifyField(ThriftType t)
+    {
         ThriftProtocolType proto = t.getProtocolType();
         if (proto == ThriftProtocolType.SET || proto == ThriftProtocolType.LIST) {
             return verifyField(t.getValueType());
@@ -357,22 +373,23 @@ public class Swift2ThriftGenerator {
         }
     }
 
-    private boolean verifyStruct(ThriftType t, boolean quiet) {
+    private boolean verifyStruct(ThriftType t, boolean quiet)
+    {
         if (t.getProtocolType() == ThriftProtocolType.ENUM) {
             knownTypes.add(t);
             return true;
         }
         ThriftStructMetadata metadata = t.getStructMetadata();
         boolean ok = true;
-        for (ThriftFieldMetadata fieldMetadata : metadata.getFields(FieldKind.THRIFT_FIELD)) {
+        for (ThriftFieldMetadata fieldMetadata: metadata.getFields(FieldKind.THRIFT_FIELD)) {
             boolean fieldOk = verifyField(fieldMetadata.getThriftType());
             if (!fieldOk) {
                 ok = false;
                 if (!quiet) {
                     LOG.error("Unknown type %s in %s.%s",
-                            thriftTypeRenderer.toString(fieldMetadata.getThriftType()),
-                            metadata.getStructName(),
-                            fieldMetadata.getName());
+                              thriftTypeRenderer.toString(fieldMetadata.getThriftType()),
+                              metadata.getStructName(),
+                              fieldMetadata.getName());
                 }
             }
         }
@@ -383,7 +400,8 @@ public class Swift2ThriftGenerator {
         return ok;
     }
 
-    private Class<?> load(String className) {
+    private Class<?> load(String className)
+    {
         className = getFullClassName(className);
         try {
             return getClassLoader().loadClass(className);
@@ -394,7 +412,8 @@ public class Swift2ThriftGenerator {
     }
 
     // returns ThriftType, ThriftServiceMetadata or null
-    private Object convertToThrift(Class<?> cls) {
+    private Object convertToThrift(Class<?> cls)
+    {
         Set<ThriftService> serviceAnnotations = ReflectionHelper.getEffectiveClassAnnotations(cls, ThriftService.class);
         if (!serviceAnnotations.isEmpty()) {
             // it's a service
@@ -413,17 +432,18 @@ public class Swift2ThriftGenerator {
         }
     }
 
-    private void gen() throws IOException {
+    private void gen() throws IOException
+    {
         ImmutableMap.Builder<ThriftType, String> typenameMap = ImmutableMap.builder();
         ImmutableMap.Builder<ThriftServiceMetadata, String> serviceMap = ImmutableMap.builder();
         ImmutableSet.Builder<String> includes = ImmutableSet.builder();
-        for (ThriftType t : usedIncludedTypes) {
+        for (ThriftType t: usedIncludedTypes) {
             String filename = includeMap.get(t);
             includes.add(filename);
             typenameMap.put(t, Files.getNameWithoutExtension(filename));
         }
 
-        for (ThriftServiceMetadata s : usedIncludedServices) {
+        for (ThriftServiceMetadata s: usedIncludedServices) {
             String filename = includeMap.get(s);
             includes.add(filename);
             serviceMap.put(s, Files.getNameWithoutExtension(filename));
@@ -443,7 +463,8 @@ public class Swift2ThriftGenerator {
         outputStreamWriter.flush();
     }
 
-    private ClassLoader getClassLoader() {
+    private ClassLoader getClassLoader()
+    {
         if (classLoader != null) {
             return classLoader;
         }

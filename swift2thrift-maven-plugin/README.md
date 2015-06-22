@@ -22,7 +22,7 @@ Add the plugin to the build plugins section of the pom.
                 </execution>
             </executions>
             <configuration>
-                <idlFile>mame-of-genenerated.idl</idlFile>
+                <idlFile>mame-of-generated.idl</idlFile>
                 <javaPackage>com.package.pojo.to.be.thrift</javaPackage>
                 <swiftClassNames>
                     <swiftClassName>com.package.pojo.long.package.ClassName</swiftClassName>

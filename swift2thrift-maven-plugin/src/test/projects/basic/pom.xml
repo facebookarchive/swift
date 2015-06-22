@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.facebook.swift.its</groupId>
+  <artifactId>basic</artifactId>
+  <version>1.0</version>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.facebook.swift</groupId>
+      <artifactId>swift-codec</artifactId>
+      <version>${it-plugin.version}</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.facebook.mojo</groupId>
+        <artifactId>swift2thrift-maven-plugin</artifactId>
+        <version>${it-plugin.version}</version>
+        <executions>
+          <execution>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <idlFile>swift2thrift-generated.thrift</idlFile>
+          <javaPackage>com.facebook.swift.service.scribe</javaPackage>
+          <swiftClassNames>
+            <swiftClassName>com.facebook.swift.service.scribe.Scribe</swiftClassName>
+          </swiftClassNames>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

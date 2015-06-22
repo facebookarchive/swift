@@ -46,7 +46,6 @@ public class Swift2ThriftMojo extends AbstractMojo {
     @Parameter(defaultValue = "false")
     private boolean skip = false;
 
-
     /**
      * IDL file to produce.
      */
@@ -76,7 +75,6 @@ public class Swift2ThriftMojo extends AbstractMojo {
         getLog().info("########################## Generating idl file #######################");
         try {
             if (!skip) {
-
                 ImmutableMap.Builder<String, String> mapBuilder = ImmutableMap.builder();
                 ImmutableMap.Builder<String, String> namespaceMapBuilder = ImmutableMap.builder();
                 namespaceMapBuilder.put("java", javaPackage);
