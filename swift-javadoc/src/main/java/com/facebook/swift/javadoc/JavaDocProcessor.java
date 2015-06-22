@@ -91,6 +91,13 @@ public class JavaDocProcessor extends AbstractProcessor
         }
     }
 
+    private void put(Map<String, Map<String, FieldOrMethodDoc>> doc, String key1, String key2, FieldOrMethodDoc value) {
+        if (!doc.containsKey(key1)) {
+            doc.put(key1, new LinkedHashMap<>());
+        }
+        doc.get(key1).put(key2, value);
+    }
+
     @SuppressWarnings("PMD.UselessParentheses")
     private void export(TypeElement typeElement)
     {
@@ -109,19 +116,8 @@ public class JavaDocProcessor extends AbstractProcessor
                 return;
         }
 
-        FileObject file;
-
-        try {
-            file = filer.createSourceFile(typeElement.getQualifiedName() + "$swift_meta", typeElement);
-        }
-        catch (IOException e) {
-            error("Failed to create %s$swift_meta file", typeElement);
-
-            return;
-        }
-
         List<String> serviceDocumentation = getComment(typeElement);
-        Map<String, FieldOrMethodDoc> documentation = new LinkedHashMap<>();
+        Map<String, Map<String, FieldOrMethodDoc>> documentation = new LinkedHashMap<>();
 
         // offset auto-generated order numbers so they don't collide with hand-written ones
         int orderCounter = 10000;
@@ -132,58 +128,68 @@ public class JavaDocProcessor extends AbstractProcessor
                 boolean isField = isAnnotatedWith(member, "com.facebook.swift.codec.ThriftField");
                 if (isMethod || isField) {
                     // service method or method accessor for a struct field
+                    String className = member.getEnclosingElement().toString();
                     String methodName = member.getSimpleName().toString();
-                    documentation.put(methodName, new FieldOrMethodDoc(FieldOrMethodDoc.FieldOrMethod.METHOD, getComment(member)));
+                    put(documentation, className, methodName,
+                            new FieldOrMethodDoc(FieldOrMethodDoc.FieldOrMethod.METHOD, getComment(member)));
                     if (isMethod) {
                         orderMap.put(methodName, orderCounter++);
                     }
                 }
             } else if ((member instanceof VariableElement &&
-                        isAnnotatedWith(member, "com.facebook.swift.codec.ThriftField")) ||
-                       member.getKind() == ElementKind.ENUM_CONSTANT) {
+                    isAnnotatedWith(member, "com.facebook.swift.codec.ThriftField")) ||
+                    member.getKind() == ElementKind.ENUM_CONSTANT) {
                 // field or enum constant
+                String className = member.getEnclosingElement().toString();
                 String fieldName = member.getSimpleName().toString();
-                documentation.put(fieldName, new FieldOrMethodDoc(FieldOrMethodDoc.FieldOrMethod.FIELD, getComment(member)));
+                put(documentation, className, fieldName,
+                        new FieldOrMethodDoc(FieldOrMethodDoc.FieldOrMethod.FIELD, getComment(member)));
             }
         }
 
-        try (PrintStream out = new PrintStream(file.openOutputStream())) {
-            // need to do the indexOf() stuff in order to handle nested classes properly
-            String binaryName = elementUtils.getBinaryName(typeElement).toString();
-            String className = binaryName.substring(binaryName.lastIndexOf('.') + 1);
+        for (Map.Entry<String, Map<String, FieldOrMethodDoc>> classMap : documentation.entrySet()) {
+            FileObject file;
+            try {
+                file = filer.createSourceFile(classMap.getKey() + "$swift_meta", typeElement);
+            } catch (IOException e) {
+                error("Failed to create %s$swift_meta file", classMap.getKey());
+                return;
+            }
 
-            out.printf("package %s;%n", elementUtils.getPackageOf(typeElement).getQualifiedName());
-            out.println();
-            out.println("import com.facebook.swift.codec.ThriftDocumentation;");
-            out.println("import com.facebook.swift.codec.ThriftOrder;");
-            out.println();
-
-            printDoc(out, serviceDocumentation, 0);
-
-            out.printf("class %s$swift_meta%n", className);
-            out.println("{");
-
-            for (Map.Entry<String, FieldOrMethodDoc> entry : documentation.entrySet()) {
-                String name = entry.getKey();
-                FieldOrMethodDoc docs = entry.getValue();
-
-                printDoc(out, docs.getDoc(), 1);
-                if (docs.getFieldOrMethod() == FieldOrMethodDoc.FieldOrMethod.METHOD) {
-                    Integer order = orderMap.get(name);
-                    if (order != null) {
-                        out.printf("    @ThriftOrder(%d)%n", order);
-                    }
-                    out.printf("    private void %s() {}%n", name);
-                } else if (docs.getFieldOrMethod() == FieldOrMethodDoc.FieldOrMethod.FIELD) {
-                    out.printf("    private int %s;%n", name);
-                }
+            try (PrintStream out = new PrintStream(file.openOutputStream())) {
+                // need to do the indexOf() stuff in order to handle nested classes properly
+                out.printf("package %s;%n", elementUtils.getPackageOf(typeElement).getQualifiedName());
                 out.println();
-            }
+                out.println("import com.facebook.swift.codec.ThriftDocumentation;");
+                out.println("import com.facebook.swift.codec.ThriftOrder;");
+                out.println();
 
-            out.println("}");
-        }
-        catch (IOException e) {
-            error("Failed to write to %s$swift_meta file", typeElement);
+                printDoc(out, serviceDocumentation, 0);
+
+                out.printf("class %s$swift_meta%n", classMap.getKey().substring(classMap.getKey().lastIndexOf('.') + 1));
+                out.println("{");
+
+                for (Map.Entry<String, FieldOrMethodDoc> entry : classMap.getValue().entrySet()) {
+                    String name = entry.getKey();
+                    FieldOrMethodDoc docs = entry.getValue();
+
+                    printDoc(out, docs.getDoc(), 1);
+                    if (docs.getFieldOrMethod() == FieldOrMethodDoc.FieldOrMethod.METHOD) {
+                        Integer order = orderMap.get(name);
+                        if (order != null) {
+                            out.printf("    @ThriftOrder(%d)%n", order);
+                        }
+                        out.printf("    private void %s() {}%n", name);
+                    } else if (docs.getFieldOrMethod() == FieldOrMethodDoc.FieldOrMethod.FIELD) {
+                        out.printf("    private int %s;%n", name);
+                    }
+                    out.println();
+                }
+
+                out.println("}");
+            } catch (IOException e) {
+                error("Failed to write to %s$swift_meta file", typeElement);
+            }
         }
     }
 
