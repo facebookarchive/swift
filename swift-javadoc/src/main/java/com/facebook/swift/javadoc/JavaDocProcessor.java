@@ -40,7 +40,7 @@ import java.util.Set;
                            "com.facebook.swift.codec.ThriftStruct",
                            "com.facebook.swift.codec.ThriftEnum"
 })
-@SupportedSourceVersion(SourceVersion.RELEASE_7)
+@SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class JavaDocProcessor extends AbstractProcessor
 {
     private Messager messager;
