@@ -339,4 +339,16 @@ public class TestThriftStructMetadataBuilder
         {
         }
     }
+
+    @Test
+    public void testNonFinalStructsOk()
+    {
+        ThriftStructMetadataBuilder builder = new ThriftStructMetadataBuilder(new ThriftCatalog(), NotFinalStruct.class);
+        builder.build();
+    }
+
+    @ThriftStruct
+    public static class NotFinalStruct
+    {
+    }
 }

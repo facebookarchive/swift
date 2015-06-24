@@ -67,7 +67,6 @@ import static com.google.common.collect.Iterables.transform;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Lists.newArrayListWithCapacity;
 import static com.google.common.collect.Sets.newTreeSet;
-
 import static java.util.Arrays.asList;
 
 @NotThreadSafe
@@ -177,9 +176,6 @@ public abstract class AbstractThriftMetadataBuilder
         // Verify struct class is public and final
         if (!Modifier.isPublic(getStructClass().getModifiers())) {
             metadataErrors.addError("%s class '%s' is not public", annotationName, structClassName);
-        }
-        if (!Modifier.isFinal(getStructClass().getModifiers())) {
-            metadataErrors.addError("%s class '%s' is not final (thrift does not support polymorphic data types)", annotationName, structClassName);
         }
 
         if (!getStructClass().isAnnotationPresent(annotation)) {

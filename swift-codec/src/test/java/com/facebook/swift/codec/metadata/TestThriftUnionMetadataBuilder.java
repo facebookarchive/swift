@@ -18,7 +18,6 @@ package com.facebook.swift.codec.metadata;
 import com.facebook.swift.codec.ThriftField;
 import com.facebook.swift.codec.ThriftUnion;
 import com.facebook.swift.codec.ThriftUnionId;
-
 import org.testng.annotations.Test;
 
 import java.util.concurrent.locks.Lock;
@@ -231,5 +230,18 @@ public class TestThriftUnionMetadataBuilder
         public void setFoo(short value)
         {
         }
+    }
+
+    @Test
+    public void testNonFinalUnionOk()
+    {
+        ThriftUnionMetadataBuilder builder = new ThriftUnionMetadataBuilder(new ThriftCatalog(), NotFinalUnion.class);
+        builder.build();
+    }
+
+    @ThriftUnion
+    public static class NotFinalUnion
+    {
+        @ThriftUnionId public short id;
     }
 }
