@@ -15,7 +15,6 @@
  */
 package com.facebook.swift.codec.metadata;
 
-import com.facebook.swift.codec.ThriftField;
 import com.facebook.swift.codec.ThriftUnion;
 import com.facebook.swift.codec.ThriftUnionId;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata.MetadataType;
@@ -198,6 +197,7 @@ public class ThriftUnionMetadataBuilder
     protected ThriftFieldMetadata buildField(Collection<FieldMetadata> input)
     {
         short id = -1;
+        boolean isLegacyId = false;
         String name = null;
         Requiredness requiredness = Requiredness.UNSPECIFIED;
         FieldKind fieldType = FieldKind.THRIFT_FIELD;
@@ -210,6 +210,7 @@ public class ThriftUnionMetadataBuilder
         ThriftExtraction extraction = null;
         for (FieldMetadata fieldMetadata : input) {
             id = fieldMetadata.getId();
+            isLegacyId = fieldMetadata.isLegacyId();
             name = fieldMetadata.getName();
             requiredness = fieldMetadata.getRequiredness();
             fieldType = fieldMetadata.getType();
@@ -274,6 +275,7 @@ public class ThriftUnionMetadataBuilder
 
         ThriftFieldMetadata thriftFieldMetadata = new ThriftFieldMetadata(
                 id,
+                isLegacyId,
                 requiredness,
                 thriftType,
                 name,

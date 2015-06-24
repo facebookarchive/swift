@@ -19,8 +19,6 @@ import com.facebook.swift.codec.ThriftField;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
-import com.google.inject.internal.asm.$AnnotationVisitor;
-
 import javax.annotation.Nullable;
 
 import java.lang.reflect.Type;
@@ -31,6 +29,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 abstract class FieldMetadata
 {
     private Short id;
+    private Boolean isLegacyId;
     private String name;
     private Requiredness requiredness;
     private final FieldKind type;
@@ -45,6 +44,7 @@ abstract class FieldMetadata
                     if (annotation.value() != Short.MIN_VALUE) {
                         id = annotation.value();
                     }
+                    isLegacyId = annotation.isLegacyId();
                     if (!annotation.name().isEmpty()) {
                         name = annotation.name();
                     }
@@ -52,7 +52,9 @@ abstract class FieldMetadata
                 }
                 break;
             case THRIFT_UNION_ID:
+                assert annotation == null : "ThriftStruct annotation shouldn't be present for THRIFT_UNION_ID";
                 id = Short.MIN_VALUE;
+                isLegacyId = true; // preserve `negative field ID <=> isLegacyId`
                 name = "_union_id";
                 break;
             default:
@@ -68,6 +70,16 @@ abstract class FieldMetadata
     public void setId(short id)
     {
         this.id = id;
+    }
+
+    public @Nullable Boolean isLegacyId()
+    {
+        return isLegacyId;
+    }
+
+    public void setIsLegacyId(Boolean isLegacyId)
+    {
+        this.isLegacyId = isLegacyId;
     }
 
     public String getName()
@@ -100,6 +112,60 @@ abstract class FieldMetadata
                     return Optional.absent();
                 }
                 Short value = input.getId();
+                return Optional.fromNullable(value);
+            }
+        };
+    }
+
+    /**
+     * Returns a Function which gets the `isLegacyId` setting from a FieldMetadata, if present,
+     * or {@link Optional#absent()} if not, ish.
+     *
+     * The semantics would ideally want are:
+     * <pre>
+     *     1   @ThriftField(id=X, isLegacyId=false)   => Optional.of(false)
+     *     2   @ThriftField(id=X, isLegacyId=true)    => Optional.of(true)
+     *     3   @ThriftField(isLegacyId=false)         => Optional.of(false)
+     *     4   @ThriftField(isLegacyId=true)          => Optional.of(true)
+     *     5   @ThriftField()                         => Optional.absent()
+     * </pre>
+     *
+     * Unfortunately, there is no way to tell cases 3 and 5 apart, because isLegacyId
+     * defaults to false. (There is no good way around this: making an enum is overkill,
+     * using a numeric/character/string/class type is pretty undesirable, and requiring
+     * isLegacyId to be specified explicitly on every ThriftField is unacceptable.)
+     * The best we can do is treat 3 and 5 the same (obviously needing the behavior
+     * of 5.) This ends up actually not making much of a difference: it would fail to
+     * detect cases like:
+     *
+     * <pre>
+     *   @ThriftField(id=-2, isLegacyId=true)
+     *   public boolean getBlah() { ... }
+     *
+     *   @ThriftField(isLegacyId=false)
+     *   public void setBlah(boolean v) { ...}
+     * </pre>
+     *
+     * but other than that, ends up working out fine.
+     */
+    static <T extends FieldMetadata> Function<T, Optional<Boolean>> getThriftFieldIsLegacyId()
+    {
+        return new Function<T, Optional<Boolean>>()
+        {
+            @Override
+            public Optional<Boolean> apply(@Nullable T input)
+            {
+                if (input == null) {
+                    return Optional.absent();
+                }
+                Boolean value = input.isLegacyId();
+
+                if (input.getId() == null || input.getId().shortValue() == Short.MIN_VALUE) {
+                    if (value != null && value.booleanValue() == false) {
+                        return Optional.absent();
+                    }
+                }
+
                 return Optional.fromNullable(value);
             }
         };

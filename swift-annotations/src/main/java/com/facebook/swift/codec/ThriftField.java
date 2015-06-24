@@ -34,6 +34,9 @@ public @interface ThriftField
 {
     short value() default Short.MIN_VALUE;
 
+    /** Indicates this ThriftField has a negative ID, which is deprecated. */
+    boolean isLegacyId() default false;
+
     String name() default "";
 
     Requiredness requiredness() default Requiredness.UNSPECIFIED;

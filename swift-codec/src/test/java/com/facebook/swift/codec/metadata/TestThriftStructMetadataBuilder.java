@@ -19,6 +19,7 @@ import com.facebook.swift.codec.ThriftConstructor;
 import com.facebook.swift.codec.ThriftField;
 import com.facebook.swift.codec.ThriftStruct;
 import com.google.common.reflect.TypeToken;
+
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Type;

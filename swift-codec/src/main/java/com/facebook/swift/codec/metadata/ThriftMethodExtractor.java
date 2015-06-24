@@ -44,7 +44,7 @@ public class ThriftMethodExtractor implements ThriftExtraction
 
         switch (fieldKind) {
             case THRIFT_FIELD:
-                checkArgument(fieldId >= 0, "fieldId is negative");
+                // Nothing to check
                 break;
             case THRIFT_UNION_ID:
                 checkArgument (fieldId == Short.MIN_VALUE, "fieldId must be Short.MIN_VALUE for thrift_union_id");
