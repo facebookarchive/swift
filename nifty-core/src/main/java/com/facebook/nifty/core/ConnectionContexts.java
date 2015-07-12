@@ -16,19 +16,18 @@
 package com.facebook.nifty.core;
 
 import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelLocal;
+
+import com.google.common.base.Preconditions;
 
 public class ConnectionContexts
 {
-    private static final ChannelLocal<ConnectionContext> context = new ChannelLocal<ConnectionContext>(true) {
-        @Override
-        protected ConnectionContext initialValue(Channel channel)
-        {
-            return new NiftyConnectionContext();
-        }
-    };
-
-    public static ConnectionContext getContext(Channel channel) {
-        return context.get(channel);
+    public static ConnectionContext getContext(Channel channel)
+    {
+        ConnectionContext context = (ConnectionContext)
+                channel.getPipeline()
+                .getContext(ConnectionContextHandler.class)
+                .getAttachment();
+        Preconditions.checkState(context != null, "Context not yet set on channel %s", channel);
+        return context;
     }
 }
