@@ -188,13 +188,13 @@ public class TestThriftFrameDecoder
                 }
         );
 
-        InetSocketAddress remoteAddress = new InetSocketAddress("localhost", 1234);
+        InetSocketAddress fakeRemoteAddress = new InetSocketAddress("localhost", 1234);
 
         exceptionsCaught = new AtomicInteger(0);
         messagesReceived = new AtomicInteger(0);
 
         channel = EasyMock.createMock(Channel.class);
-        EasyMock.expect(channel.getRemoteAddress()).andReturn(remoteAddress).anyTimes();
+        EasyMock.expect(channel.getRemoteAddress()).andReturn(fakeRemoteAddress).anyTimes();
         EasyMock.expect(channel.getPipeline()).andReturn(pipeline).anyTimes();
         EasyMock.expect(channel.getConfig()).andReturn(new DefaultChannelConfig()).anyTimes();
         EasyMock.replay(channel);

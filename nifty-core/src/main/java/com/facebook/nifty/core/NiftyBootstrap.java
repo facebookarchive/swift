@@ -83,6 +83,15 @@ public class NiftyBootstrap
         ShutdownUtil.shutdownChannelFactory(serverChannelFactory, bossExecutor, workerExecutor, allChannels);
     }
 
+    public Map<ThriftServerDef, Integer> getBoundPorts()
+    {
+        ImmutableMap.Builder<ThriftServerDef, Integer> builder = new ImmutableMap.Builder<>();
+        for (Map.Entry<ThriftServerDef, NettyServerTransport> entry : transports.entrySet()) {
+            builder.put(entry.getKey(), entry.getValue().getPort());
+        }
+        return builder.build();
+    }
+
     public Map<ThriftServerDef, NiftyMetrics> getNiftyMetrics()
     {
         ImmutableMap.Builder<ThriftServerDef, NiftyMetrics> builder = new ImmutableMap.Builder<>();
