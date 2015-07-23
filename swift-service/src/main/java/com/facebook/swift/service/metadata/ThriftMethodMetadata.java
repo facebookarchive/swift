@@ -103,10 +103,12 @@ public class ThriftMethodMetadata
             }
 
             short parameterId = Short.MIN_VALUE;
+            boolean isLegacyId = false;
             String parameterName = null;
             Requiredness parameterRequiredness = Requiredness.UNSPECIFIED;
             if (thriftField != null) {
                 parameterId = thriftField.value();
+                isLegacyId = thriftField.isLegacyId();
                 parameterRequiredness = thriftField.requiredness();
                 if (!thriftField.name().isEmpty()) {
                     parameterName = thriftField.name();
@@ -133,6 +135,7 @@ public class ThriftMethodMetadata
 
             ThriftFieldMetadata fieldMetadata = new ThriftFieldMetadata(
                     parameterId,
+                    isLegacyId,
                     parameterRequiredness,
                     thriftType,
                     parameterName,

@@ -15,7 +15,6 @@
  */
 package com.facebook.swift.codec.metadata;
 
-import com.facebook.swift.codec.ThriftField;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
@@ -51,6 +50,7 @@ public class ThriftFieldMetadata
 
     public ThriftFieldMetadata(
             short id,
+            boolean isLegacyId,
             Requiredness requiredness,
             ThriftType thriftType,
             String name,
@@ -75,9 +75,14 @@ public class ThriftFieldMetadata
 
         switch (fieldKind) {
             case THRIFT_FIELD:
-                checkArgument(id >= 0, "id is negative");
+                if (isLegacyId)  {
+                    checkArgument(id < 0, "isLegacyId should only be specified on fields with negative IDs");
+                } else {
+                    checkArgument(id >= 0, "isLegacyId must be specified on fields with negative IDs");
+                }
                 break;
             case THRIFT_UNION_ID:
+                checkArgument(isLegacyId, "isLegacyId should be implicitly set on ThriftUnionId fields");
                 checkArgument(id == Short.MIN_VALUE, "thrift union id must be Short.MIN_VALUE");
                 break;
         }

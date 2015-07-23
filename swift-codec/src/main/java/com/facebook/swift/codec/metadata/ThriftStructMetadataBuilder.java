@@ -139,6 +139,7 @@ public class ThriftStructMetadataBuilder
     protected ThriftFieldMetadata buildField(Collection<FieldMetadata> input)
     {
         short id = -1;
+        boolean isLegacyId = false;
         String name = null;
         Requiredness requiredness = Requiredness.UNSPECIFIED;
         ThriftType type = null;
@@ -148,6 +149,7 @@ public class ThriftStructMetadataBuilder
         ThriftExtraction extraction = null;
         for (FieldMetadata fieldMetadata : input) {
             id = fieldMetadata.getId();
+            isLegacyId = fieldMetadata.isLegacyId();
             name = fieldMetadata.getName();
             requiredness = fieldMetadata.getRequiredness();
             type = catalog.getThriftType(fieldMetadata.getJavaType());
@@ -183,6 +185,7 @@ public class ThriftStructMetadataBuilder
 
         ThriftFieldMetadata thriftFieldMetadata = new ThriftFieldMetadata(
                 id,
+                isLegacyId,
                 requiredness,
                 type,
                 name,

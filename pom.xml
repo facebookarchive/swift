@@ -79,7 +79,7 @@
     <dep.airlift.version>0.106</dep.airlift.version>
     <dep.antlr.version>3.5</dep.antlr.version>
     <dep.maven-api.version>3.2.5</dep.maven-api.version>
-    <dep.fb.nifty.version>0.15.0</dep.fb.nifty.version>
+    <dep.fb.nifty.version>0.15.1</dep.fb.nifty.version>
   </properties>
 
   <dependencyManagement>
@@ -123,7 +123,7 @@
       <dependency>
         <groupId>org.ow2.asm</groupId>
         <artifactId>asm-all</artifactId>
-        <version>4.1</version>
+        <version>5.0.4</version>
       </dependency>
 
       <dependency>
@@ -372,7 +372,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
-          <version>2.1</version>
+          <version>2.3</version>
           <executions>
             <execution>
               <phase>package</phase>

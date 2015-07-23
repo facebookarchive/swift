@@ -38,7 +38,7 @@ public class ThriftFieldInjection implements ThriftInjection
 
         switch (fieldKind) {
             case THRIFT_FIELD:
-                checkArgument(id >= 0, "fieldId is negative");
+                // Nothing to check
                 break;
             case THRIFT_UNION_ID:
                 checkArgument (id == Short.MIN_VALUE, "fieldId must be Short.MIN_VALUE for thrift_union_id");

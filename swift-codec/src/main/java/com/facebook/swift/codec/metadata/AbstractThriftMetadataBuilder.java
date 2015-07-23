@@ -19,6 +19,7 @@ import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_FIELD;
 import static com.facebook.swift.codec.metadata.FieldMetadata.extractThriftFieldName;
 import static com.facebook.swift.codec.metadata.FieldMetadata.getOrExtractThriftFieldName;
 import static com.facebook.swift.codec.metadata.FieldMetadata.getThriftFieldId;
+import static com.facebook.swift.codec.metadata.FieldMetadata.getThriftFieldIsLegacyId;
 import static com.facebook.swift.codec.metadata.FieldMetadata.getThriftFieldName;
 import static com.facebook.swift.codec.metadata.FieldMetadata.getThriftFieldRequiredness;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.extractParameterNames;
@@ -573,15 +574,26 @@ public abstract class AbstractThriftMetadataBuilder
 
             short fieldId = entry.getKey().get();
 
-            // assure all fields for this ID have the same name
+            // ensure all fields for this ID have the same name
             String fieldName = extractFieldName(fieldId, fields);
             for (FieldMetadata field : fields) {
                 field.setName(fieldName);
             }
 
+            // ensure all fields for this ID have the same requiredness
             Requiredness requiredness = extractFieldRequiredness(fieldId, fieldName, fields);
             for (FieldMetadata field : fields) {
                 field.setRequiredness(requiredness);
+            }
+
+            // We need to do the isLegacyId check in two places. We've already done this
+            // process for fields which had multiple `@ThriftField` annotations when we
+            // assigned them all the same ID. It doesn't hurt to do it again. On the other
+            // hand, we need to do it now to catch the fields which only had a single
+            // @ThriftAnnotation, because inferThriftFieldIds skipped them.
+            boolean isLegacyId = extractFieldIsLegacyId(fieldId, fieldName, fields);
+            for (FieldMetadata field : fields) {
+                field.setIsLegacyId(isLegacyId);
             }
 
             // verify fields have a supported java type and all fields
@@ -617,6 +629,7 @@ public abstract class AbstractThriftMetadataBuilder
         // for each name group, set the ids on the fields without ids
         for (Entry<String, Collection<FieldMetadata>> entry : fieldsByName.asMap().entrySet()) {
             Collection<FieldMetadata> fields = entry.getValue();
+            String fieldName = entry.getKey();
 
             // skip all entries without a name or singleton groups... we'll deal with these later
             if (fields.size() <= 1) {
@@ -628,7 +641,6 @@ public abstract class AbstractThriftMetadataBuilder
 
             // multiple conflicting ids
             if (ids.size() > 1) {
-                String fieldName = entry.getKey();
                 if (!fieldsWithConflictingIds.contains(fieldName)) {
                     metadataErrors.addError("Thrift class '%s' field '%s' has multiple ids: %s", structName, fieldName, ids.toString());
                     fieldsWithConflictingIds.add(fieldName);
@@ -636,15 +648,40 @@ public abstract class AbstractThriftMetadataBuilder
                 continue;
             }
 
-            // single id, so set on all fields in this group (groups with no id are handled later)
+            // single id, so set on all fields in this group (groups with no id are handled later),
+            // and validate isLegacyId is consistent and correct.
             if (ids.size() == 1) {
-                // propagate the id to all fields in this group
                 short id = Iterables.getOnlyElement(ids);
+
+                boolean isLegacyId = extractFieldIsLegacyId(id, fieldName, fields);
+
+                // propagate the id data to all fields in this group
                 for (FieldMetadata field : fields) {
                     field.setId(id);
+                    field.setIsLegacyId(isLegacyId);
                 }
             }
         }
+    }
+
+    protected final boolean extractFieldIsLegacyId(short id, String fieldName, Collection<FieldMetadata> fields)
+    {
+        Set<Boolean> isLegacyIds = ImmutableSet.copyOf(Optional.presentInstances(transform(fields, getThriftFieldIsLegacyId())));
+
+        if (isLegacyIds.size() > 1) {
+            metadataErrors.addError("Thrift class '%s' field '%s' has both isLegacyId=true and isLegacyId=false", structName, fieldName);
+        }
+        if (id < 0) {
+            if (! isLegacyIds.contains(true)) {
+                metadataErrors.addError("Thrift class '%s' field '%s' has a negative field id but not isLegacyId=true", structName, fieldName);
+            }
+        } else {
+            if (isLegacyIds.contains(true)) {
+                metadataErrors.addError("Thrift class '%s' field '%s' has isLegacyId=true but not a negative field id", structName, fieldName);
+            }
+        }
+
+        return id < 0;
     }
 
     protected final String extractFieldName(short id, Collection<FieldMetadata> fields)

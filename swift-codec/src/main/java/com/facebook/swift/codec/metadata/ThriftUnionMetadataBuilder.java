@@ -18,21 +18,21 @@ package com.facebook.swift.codec.metadata;
 import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_UNION_ID;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.findAnnotatedMethods;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.List;
-
-import javax.annotation.concurrent.NotThreadSafe;
-
 import com.facebook.swift.codec.ThriftField.Requiredness;
 import com.facebook.swift.codec.ThriftUnion;
 import com.facebook.swift.codec.ThriftUnionId;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata.MetadataType;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
+
+import javax.annotation.concurrent.NotThreadSafe;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
+import java.util.Collection;
+import java.util.List;
 
 @NotThreadSafe
 public class ThriftUnionMetadataBuilder
@@ -197,6 +197,7 @@ public class ThriftUnionMetadataBuilder
     protected ThriftFieldMetadata buildField(Collection<FieldMetadata> input)
     {
         short id = -1;
+        boolean isLegacyId = false;
         String name = null;
         Requiredness requiredness = Requiredness.UNSPECIFIED;
         FieldKind fieldType = FieldKind.THRIFT_FIELD;
@@ -209,6 +210,7 @@ public class ThriftUnionMetadataBuilder
         ThriftExtraction extraction = null;
         for (FieldMetadata fieldMetadata : input) {
             id = fieldMetadata.getId();
+            isLegacyId = fieldMetadata.isLegacyId();
             name = fieldMetadata.getName();
             requiredness = fieldMetadata.getRequiredness();
             fieldType = fieldMetadata.getType();
@@ -273,6 +275,7 @@ public class ThriftUnionMetadataBuilder
 
         ThriftFieldMetadata thriftFieldMetadata = new ThriftFieldMetadata(
                 id,
+                isLegacyId,
                 requiredness,
                 thriftType,
                 name,

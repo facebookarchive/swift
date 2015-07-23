@@ -37,7 +37,6 @@ public class ThriftParameterInjection implements ThriftInjection
             Type javaType)
     {
 
-        checkArgument(id >= 0, "fieldId is negative");
         checkArgument(parameterIndex >= 0, "parameterIndex is negative");
 
         this.javaType = checkNotNull(javaType, "javaType is null");
