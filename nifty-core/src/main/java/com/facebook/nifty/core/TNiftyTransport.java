@@ -29,7 +29,7 @@ public class TNiftyTransport extends TTransport
     private final Channel channel;
     private final ChannelBuffer in;
     private final ThriftTransportType thriftTransportType;
-    private final ChannelBuffer out;
+    private ChannelBuffer out;
     private static final int DEFAULT_OUTPUT_BUFFER_SIZE = 1024;
     private final int initialReaderIndex;
     private final int initialBufferPosition;
@@ -124,6 +124,10 @@ public class TNiftyTransport extends TTransport
     public ChannelBuffer getOutputBuffer()
     {
         return out;
+    }
+
+    public void setOutputBuffer(ChannelBuffer buf) {
+        out = buf;
     }
 
     public ThriftTransportType getTransportType() {
