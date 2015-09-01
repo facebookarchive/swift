@@ -34,6 +34,7 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -173,9 +174,8 @@ public abstract class AbstractThriftMetadataBuilder
         String annotationName = annotation.getSimpleName();
         String structClassName = getStructClass().getName();
 
-        // Verify struct class is public and final
-        if (!Modifier.isPublic(getStructClass().getModifiers())) {
-            metadataErrors.addError("%s class '%s' is not public", annotationName, structClassName);
+        if (Modifier.isPrivate(getStructClass().getModifiers())) {
+            metadataErrors.addError("%s class '%s' is private", annotationName, structClassName);
         }
 
         if (!getStructClass().isAnnotationPresent(annotation)) {
@@ -237,13 +237,14 @@ public abstract class AbstractThriftMetadataBuilder
         if (constructorInjections.isEmpty()) {
             try {
                 Constructor<?> constructor = clazz.getDeclaredConstructor();
-                if (!Modifier.isPublic(constructor.getModifiers())) {
-                    metadataErrors.addError("Default constructor '%s' is not public", constructor.toGenericString());
+                if (Modifier.isPrivate(constructor.getModifiers())) {
+                    metadataErrors.addError("Default constructor '%s' is private", constructor.toGenericString());
                 }
+                setAccessibleIfNeeded(constructor);
                 constructorInjections.add(new ConstructorInjection(constructor));
             }
             catch (NoSuchMethodException e) {
-                metadataErrors.addError("Struct class '%s' does not have a public no-arg constructor", clazz.getName());
+                metadataErrors.addError("Struct class '%s' does not have a public or protected no-arg constructor", clazz.getName());
             }
         }
 
@@ -262,7 +263,7 @@ public abstract class AbstractThriftMetadataBuilder
             // parameters are null if the method is misconfigured
             if (parameters != null) {
                 fields.addAll(parameters);
-                builderMethodInjections.add(new MethodInjection(method, parameters));
+                builderMethodInjections.add(new MethodInjection(implementingMethod(method), parameters));
             }
 
             if (!getStructClass().isAssignableFrom(method.getReturnType())) {
@@ -421,7 +422,7 @@ public abstract class AbstractThriftMetadataBuilder
                     parameters = ImmutableList.of(new ParameterInjection(type, 0, annotation, ReflectionHelper.extractFieldName(method), parameterType));
                 }
                 fields.addAll(parameters);
-                methodInjections.add(new MethodInjection(method, parameters));
+                methodInjections.add(new MethodInjection(implementingMethod(method), parameters));
             }
             else {
                 metadataErrors.addError("Inject method %s.%s is not allowed on struct class, since struct has a builder", clazz.getName(), method.getName());
@@ -737,6 +738,34 @@ public abstract class AbstractThriftMetadataBuilder
                 );
             }
         });
+    }
+
+    /**
+     * Constructors and methods must be accessible outside their package for reflective codec.
+     */
+    private void setAccessibleIfNeeded(AccessibleObject object)
+    {
+        if (builderType != null && !Modifier.isPublic(getBuilderClass().getModifiers())) {
+            object.setAccessible(true);
+        }
+    }
+
+    /**
+     * Swift-annotated methods may be on an interface. This returns the implementing method.
+     */
+    private Method implementingMethod(Method method)
+    {
+        if (!method.getDeclaringClass().isInterface()) {
+            return method;
+        }
+        try {
+            method = getBuilderClass().getMethod(method.getName(), method.getParameterTypes());
+            setAccessibleIfNeeded(method);
+            return method;
+        }
+        catch (NoSuchMethodException e) {
+            throw new AssertionError(e);
+        }
     }
 }
 

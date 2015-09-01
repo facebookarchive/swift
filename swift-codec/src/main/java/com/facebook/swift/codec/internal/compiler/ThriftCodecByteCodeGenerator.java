@@ -95,8 +95,6 @@ import static java.lang.String.format;
 @NotThreadSafe
 public class ThriftCodecByteCodeGenerator<T>
 {
-    private static final String PACKAGE = "$wift";
-
     private static final Map<ThriftProtocolType, Method> READ_METHODS;
     private static final Map<ThriftProtocolType, Method> WRITE_METHODS;
 
@@ -172,11 +170,11 @@ public class ThriftCodecByteCodeGenerator<T>
         // Run the asm verifier only in debug mode (prints a ton of info)
         if (debug) {
             ClassReader reader = new ClassReader(byteCode);
-            CheckClassAdapter.verify(reader, classLoader, true, new PrintWriter(System.out));
+            CheckClassAdapter.verify(reader, classLoader.delegate, true, new PrintWriter(System.out));
         }
 
         // load the class
-        Class<?> codecClass = classLoader.defineClass(codecType.getClassName().replace('/', '.'), byteCode);
+        Class<?> codecClass = classLoader.defineOrLoadClass(codecType.getClassName().replace('/', '.'), byteCode);
         try {
             Class<?>[] types = parameters.getTypes();
             Constructor<?> constructor = codecClass.getConstructor(types);
@@ -1091,7 +1089,7 @@ public class ThriftCodecByteCodeGenerator<T>
 
     private ParameterizedType toCodecType(ThriftStructMetadata metadata)
     {
-        return type(PACKAGE + "/" + type(metadata.getStructClass()).getClassName() + "Codec");
+        return type(type(metadata.getStructClass()).getClassName() + "Codec");
     }
 
     private static class ConstructorParameters
