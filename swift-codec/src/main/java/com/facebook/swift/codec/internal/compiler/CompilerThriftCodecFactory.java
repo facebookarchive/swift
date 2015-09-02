@@ -44,7 +44,7 @@ public class CompilerThriftCodecFactory implements ThriftCodecFactory
 
     public CompilerThriftCodecFactory(boolean debug)
     {
-        this(debug, getPriviledgedClassLoader(CompilerThriftCodecFactory.class.getClassLoader()));
+        this(debug, CompilerThriftCodecFactory.class.getClassLoader());
     }
 
     public CompilerThriftCodecFactory(boolean debug, ClassLoader parent)

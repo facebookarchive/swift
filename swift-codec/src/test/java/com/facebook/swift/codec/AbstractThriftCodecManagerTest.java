@@ -215,7 +215,15 @@ public abstract class AbstractThriftCodecManagerTest
             throws Exception
     {
         BonkBuilder bonkBuilder = new BonkBuilder("message", 42);
-        testRoundTripSerialize(bonkBuilder, new TCompactProtocol.Factory());
+        testRoundTripSerialize(TypeToken.of(BonkBuilder.class), bonkBuilder, new TCompactProtocol.Factory());
+    }
+
+    @Test
+    public void testGenerated()
+        throws Exception
+    {
+        BonkGenerated bonkGenerated = BonkGenerated.builder().message("message").type(42).build();
+        testRoundTripSerialize(TypeToken.of(BonkGenerated.class), bonkGenerated, new TCompactProtocol.Factory());
     }
 
     @Test
