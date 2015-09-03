@@ -280,7 +280,7 @@ public boolean equals(Object o) {
     <context.javaName> other = (<context.javaName>)o;
 
     return
-        <context.fields : { field |<_checkFieldEquality(field)>}; separator=" &&\n">;
+        <if(context.fields)><context.fields : { field |<_checkFieldEquality(field)>}; separator=" &&\n"><else>true<endif>;
 }
 >>
 
