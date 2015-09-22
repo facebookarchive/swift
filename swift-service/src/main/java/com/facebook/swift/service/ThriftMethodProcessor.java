@@ -191,6 +191,20 @@ public class ThriftMethodProcessor
                     contextChain.preWriteException(t);
                     if (!oneway) {
                         ExceptionProcessor exceptionCodec = exceptionCodecs.get(t.getClass());
+
+                        if (exceptionCodec == null) {
+                            // In case the method throws a subtype of one of its declared
+                            // exceptions, exact lookup will fail. We need to simulate it.
+                            // (This isn't a problem for normal returns because there the
+                            // output codec is decided in advance.)
+                            for (Map.Entry<Class<?>, ExceptionProcessor> entry : exceptionCodecs.entrySet()) {
+                                if (entry.getKey().isAssignableFrom(t.getClass())) {
+                                    exceptionCodec = entry.getValue();
+                                    break;
+                                }
+                            }
+                        }
+
                         if (exceptionCodec != null) {
                             // write expected exception response
                             writeResponse(

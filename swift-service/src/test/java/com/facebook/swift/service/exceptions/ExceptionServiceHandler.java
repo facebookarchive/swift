@@ -59,4 +59,15 @@ public class ExceptionServiceHandler implements ExceptionService
       throws TException {
         throw new NonThriftUncheckedException();
     }
+
+    @Override
+    public void throwSubclassableException() throws ThriftCheckedSubclassableException, TException {
+        throw new ThriftCheckedSubclassableException("not subclass");
+    }
+
+    @Override
+    public void throwSubclassOfSubclassableException() throws ThriftCheckedSubclassableException,
+            TException {
+        throw new ThriftCheckedSubclassableException.Subclass("is subclass");
+    }
 }

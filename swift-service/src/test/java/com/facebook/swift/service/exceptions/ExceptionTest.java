@@ -69,6 +69,38 @@ public class ExceptionTest extends SuiteBase<ExceptionService, ExceptionServiceC
     }
 
     @Test
+    public void testThrowSubclassableException() throws TException {
+        try {
+            getClient().throwSubclassableException();
+            fail("Expected a ThriftCheckedSubclassableException");
+        }
+        catch (ThriftCheckedSubclassableException e) {
+            assertEquals(
+                    e.getMessage(),
+                    "not subclass",
+                    "Expected a 'not subclass' ThriftCheckedSubclassableException");
+        }
+    }
+
+    @Test
+    public void testThrowSubclassOfSubclassableException() throws TException {
+        try {
+            getClient().throwSubclassOfSubclassableException();
+            fail("Expected a ThriftCheckedSubclassableException");
+        }
+        catch (ThriftCheckedSubclassableException e) {
+            assertEquals(
+                    e.getMessage(),
+                    "is subclass",
+                    "Expected a 'is subclass' ThriftCheckedSubclassableException");
+            assertEquals(
+                    e.getClass(),
+                    ThriftCheckedSubclassableException.class,
+                    "Expected TCSE.Subclass to get serialized as a TCSE");
+        }
+    }
+
+    @Test
     public void testMissingMethod() {
         try {
             getClient().missingMethod();
