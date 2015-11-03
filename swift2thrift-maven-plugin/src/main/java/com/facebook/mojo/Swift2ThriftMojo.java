@@ -25,6 +25,7 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
 
@@ -32,12 +33,13 @@ import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 /**
  * Process Java byte codes and generate IDL files.
  */
-@Mojo(name = "generate", defaultPhase = LifecyclePhase.GENERATE_SOURCES)
+@Mojo(name = "generate", defaultPhase = LifecyclePhase.GENERATE_SOURCES, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class Swift2ThriftMojo extends AbstractMojo {
 
     /**
@@ -80,15 +82,19 @@ public class Swift2ThriftMojo extends AbstractMojo {
                 namespaceMapBuilder.put("java", javaPackage);
 
                 List<String> classpathElements = project.getCompileClasspathElements();
+                classpathElements.addAll(project.getRuntimeClasspathElements());
                 classpathElements.add(project.getBuild().getOutputDirectory());
 
-                List<URL> classPathUrls = new ArrayList<>();
+                HashSet<URL> classPathUrls = new HashSet<>();
                 for (String s : classpathElements) {
                     classPathUrls.add(new File(s).toURI().toURL());
                 }
+
+
                 File outputFile = new File(outputFolder + File.separator + idlFile);
                 FileUtils.forceMkdir(new File(outputFolder));
-                Swift2ThriftGeneratorConfig.Builder configBuilder = Swift2ThriftGeneratorConfig.builder()
+                Swift2ThriftGeneratorConfig.Builder configBuilder = Swift2ThriftGeneratorConfig
+                        .builder()
                         .outputFile(outputFile)
                         .includeMap(mapBuilder.build())
                         .verbose(verbose)
