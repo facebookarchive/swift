@@ -31,7 +31,7 @@ import static java.nio.file.Files.readAllLines;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(MavenJUnitTestRunner.class)
-@MavenVersions({"3.2.3", "3.2.5", "3.3.1"})
+@MavenVersions({"3.2.5", "3.3.1"})
 @SuppressWarnings("JUnitTestNG")
 public class SwiftIntegrationTest
 {
