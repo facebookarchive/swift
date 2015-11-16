@@ -125,6 +125,23 @@
           </execution>
         </executions>
       </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <systemProperties>
+            <!-- Normally surefire tests run in an isolated environment, not carrying in any of the -->
+            <!-- default configuration, but integration tests for this plugin download a few versions -->
+            <!-- of maven to test the plugin against them. These downloads may need to use the network -->
+            <!-- settings from the user's environment. -->
+            <java.net.preferIPv6Addresses>${java.net.preferIPv6Addresses}</java.net.preferIPv6Addresses>
+            <http.proxyHost>${http.proxyHost}</http.proxyHost>
+            <http.proxyPort>${http.proxyPort}</http.proxyPort>
+            <http.nonProxyHosts>${http.nonProxyHosts}</http.nonProxyHosts>
+          </systemProperties>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 </project>
