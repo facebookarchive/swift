@@ -131,8 +131,8 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
         // responses.
         final int requestSequenceId = dispatcherSequenceId.incrementAndGet();
 
-        synchronized (responseMap)
-        {
+        if (DispatcherContext.isResponseOrderingRequired(ctx)) {
+          synchronized (responseMap) {
             // Limit the number of pending responses (responses which finished out of order, and are
             // waiting for previous requests to be finished so they can be written in order), by
             // blocking further channel reads. Due to the way Netty frame decoders work, this is more
@@ -140,10 +140,10 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
             // more requests that were in the latest read, even while further reads on the channel
             // have been blocked.
             if (requestSequenceId > lastResponseWrittenId.get() + queuedResponseLimit &&
-                !DispatcherContext.isChannelReadBlocked(ctx))
-            {
-                DispatcherContext.blockChannelReads(ctx);
+                !DispatcherContext.isChannelReadBlocked(ctx)) {
+              DispatcherContext.blockChannelReads(ctx);
             }
+          }
         }
 
         try {
