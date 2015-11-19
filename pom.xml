@@ -18,393 +18,401 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-  <modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <groupId>io.airlift</groupId>
-    <artifactId>airbase</artifactId>
-    <version>36</version>
-  </parent>
-
-  <groupId>com.facebook.swift</groupId>
-  <artifactId>swift-root</artifactId>
-  <version>0.16.0-SNAPSHOT</version>
-  <packaging>pom</packaging>
-  <name>${project.artifactId}</name>
-  <description>Annotation based Thrift implementation</description>
-
-  <scm>
-    <connection>scm:git:git://github.com/facebook/swift.git</connection>
-    <developerConnection>scm:git:git@github.com:facebook/swift.git</developerConnection>
-    <url>https://github.com/facebook/swift</url>
-    <tag>HEAD</tag>
-  </scm>
-
-  <distributionManagement>
-    <site>
-      <id>github-project-site</id>
-      <url>gitsite:git@github.com/facebook/swift.git</url>
-    </site>
-  </distributionManagement>
-
-  <modules>
-    <module>swift-annotations</module>
-    <module>swift-codec</module>
-    <module>swift-idl-parser</module>
-    <module>swift-javadoc</module>
-    <module>swift-service</module>
-    <module>swift-generator</module>
-    <module>swift-generator-cli</module>
-    <module>swift-maven-plugin</module>
-    <module>swift-load-generator</module>
-    <module>swift2thrift-generator-cli</module>
-  </modules>
-
-  <inceptionYear>2012</inceptionYear>
-
-  <developers>
-    <developer>
-      <id>dain</id>
-      <name>Dain Sundstrom</name>
-      <email>dain@fb.com</email>
-    </developer>
-  </developers>
-
-  <properties>
-    <!-- This actually wants to be fixed -->
-    <air.check.skip-findbugs>true</air.check.skip-findbugs>
-    <air.check.skip-pmd>true</air.check.skip-pmd>
-    <air.check.skip-jacoco>true</air.check.skip-jacoco>
-
-    <dep.airlift.version>0.106</dep.airlift.version>
-    <dep.antlr.version>3.5</dep.antlr.version>
-    <dep.maven-api.version>3.2.5</dep.maven-api.version>
-    <dep.fb.nifty.version>0.15.1</dep.fb.nifty.version>
-  </properties>
-
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>com.facebook.swift</groupId>
-        <artifactId>swift-annotations</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.facebook.swift</groupId>
-        <artifactId>swift-codec</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.facebook.swift</groupId>
-        <artifactId>swift-idl-parser</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.facebook.swift</groupId>
-        <artifactId>swift-service</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.facebook.swift</groupId>
-        <artifactId>swift-generator</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.thrift</groupId>
-        <artifactId>libthrift</artifactId>
-        <version>0.9.1</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.ow2.asm</groupId>
-        <artifactId>asm-all</artifactId>
-        <version>5.0.4</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.facebook.nifty</groupId>
-        <artifactId>nifty-core</artifactId>
-        <version>${dep.fb.nifty.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.facebook.nifty</groupId>
-        <artifactId>nifty-client</artifactId>
-        <version>${dep.fb.nifty.version}</version>
-      </dependency>
-
-      <dependency>
+    <parent>
         <groupId>io.airlift</groupId>
-        <artifactId>jmx</artifactId>
-        <version>${dep.airlift.version}</version>
-      </dependency>
+        <artifactId>airbase</artifactId>
+        <version>36</version>
+    </parent>
 
-      <dependency>
-        <groupId>io.airlift</groupId>
-        <artifactId>configuration</artifactId>
-        <version>${dep.airlift.version}</version>
-      </dependency>
+    <groupId>com.facebook.swift</groupId>
+    <artifactId>swift-root</artifactId>
+    <version>0.16.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>${project.artifactId}</name>
+    <description>Annotation based Thrift implementation</description>
 
-      <dependency>
-        <groupId>io.airlift</groupId>
-        <artifactId>stats</artifactId>
-        <version>${dep.airlift.version}</version>
-      </dependency>
+    <scm>
+        <connection>scm:git:git://github.com/facebook/swift.git</connection>
+        <developerConnection>scm:git:git@github.com:facebook/swift.git</developerConnection>
+        <url>https://github.com/facebook/swift</url>
+        <tag>HEAD</tag>
+    </scm>
 
-      <dependency>
-        <groupId>io.airlift</groupId>
-        <artifactId>units</artifactId>
-        <version>${dep.airlift.version}</version>
-      </dependency>
+    <distributionManagement>
+        <site>
+            <id>github-project-site</id>
+            <url>gitsite:git@github.com/facebook/swift.git</url>
+        </site>
+    </distributionManagement>
 
-      <dependency>
-        <groupId>io.airlift</groupId>
-        <artifactId>bootstrap</artifactId>
-        <version>${dep.airlift.version}</version>
-      </dependency>
+    <modules>
+        <module>swift-annotations</module>
+        <module>swift-codec</module>
+        <module>swift-idl-parser</module>
+        <module>swift-javadoc</module>
+        <module>swift-service</module>
+        <module>swift-generator</module>
+        <module>swift-generator-cli</module>
+        <module>swift-maven-plugin</module>
+        <module>swift-load-generator</module>
+        <module>swift2thrift-generator-cli</module>
+    </modules>
 
-      <dependency>
-        <groupId>io.airlift</groupId>
-        <artifactId>node</artifactId>
-        <version>${dep.airlift.version}</version>
-      </dependency>
+    <inceptionYear>2012</inceptionYear>
 
-      <dependency>
-        <groupId>io.airlift</groupId>
-        <artifactId>log</artifactId>
-        <version>${dep.airlift.version}</version>
-      </dependency>
+    <developers>
+        <developer>
+            <id>dain</id>
+            <name>Dain Sundstrom</name>
+            <email>dain@fb.com</email>
+        </developer>
+    </developers>
 
-      <dependency>
-        <groupId>io.airlift</groupId>
-        <artifactId>testing</artifactId>
-        <version>${dep.airlift.version}</version>
-      </dependency>
+    <properties>
+        <!-- This actually wants to be fixed -->
+        <air.check.skip-findbugs>true</air.check.skip-findbugs>
+        <air.check.skip-pmd>true</air.check.skip-pmd>
+        <air.check.skip-jacoco>true</air.check.skip-jacoco>
 
-      <dependency>
-        <groupId>io.netty</groupId>
-        <artifactId>netty</artifactId>
-        <version>3.7.0.Final</version>
-      </dependency>
+        <dep.airlift.version>0.106</dep.airlift.version>
+        <dep.antlr.version>3.5</dep.antlr.version>
+        <dep.maven-api.version>3.2.5</dep.maven-api.version>
+        <dep.fb.nifty.version>0.15.1</dep.fb.nifty.version>
+        <scala-major.version>2.11</scala-major.version>
+        <twitter-util.version>6.28.0</twitter-util.version>
+    </properties>
 
-      <dependency>
-        <groupId>com.thoughtworks.paranamer</groupId>
-        <artifactId>paranamer</artifactId>
-        <version>2.5.2</version>
-      </dependency>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.facebook.swift</groupId>
+                <artifactId>swift-annotations</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
-      <dependency>
-        <groupId>org.apache.httpcomponents</groupId>
-        <artifactId>httpclient</artifactId>
-        <version>4.2.5</version>
-      </dependency>
+            <dependency>
+                <groupId>com.facebook.swift</groupId>
+                <artifactId>swift-codec</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
-      <dependency>
-        <groupId>org.apache.httpcomponents</groupId>
-        <artifactId>httpcore</artifactId>
-        <version>4.2.4</version>
-      </dependency>
+            <dependency>
+                <groupId>com.facebook.swift</groupId>
+                <artifactId>swift-idl-parser</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
-      <dependency>
-        <groupId>org.antlr</groupId>
-        <artifactId>antlr-runtime</artifactId>
-        <version>${dep.antlr.version}</version>
-      </dependency>
+            <dependency>
+                <groupId>com.facebook.swift</groupId>
+                <artifactId>swift-service</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
-      <dependency>
-        <groupId>org.antlr</groupId>
-        <artifactId>stringtemplate</artifactId>
-        <version>4.0.2</version>
-      </dependency>
+            <dependency>
+                <groupId>com.facebook.swift</groupId>
+                <artifactId>swift-generator</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
-      <!-- maven -->
-      <dependency>
-        <groupId>org.apache.maven</groupId>
-        <artifactId>maven-plugin-api</artifactId>
-        <version>${dep.maven-api.version}</version>
-      </dependency>
+            <dependency>
+                <groupId>org.apache.thrift</groupId>
+                <artifactId>libthrift</artifactId>
+                <version>0.9.1</version>
+            </dependency>
 
-      <dependency>
-        <groupId>org.apache.maven</groupId>
-        <artifactId>maven-model</artifactId>
-        <version>${dep.maven-api.version}</version>
-      </dependency>
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm-all</artifactId>
+                <version>5.0.4</version>
+            </dependency>
 
-      <dependency>
-        <groupId>org.apache.maven</groupId>
-        <artifactId>maven-artifact</artifactId>
-        <version>${dep.maven-api.version}</version>
-      </dependency>
+            <dependency>
+                <groupId>com.facebook.nifty</groupId>
+                <artifactId>nifty-core</artifactId>
+                <version>${dep.fb.nifty.version}</version>
+            </dependency>
 
-      <dependency>
-        <groupId>org.apache.maven</groupId>
-        <artifactId>maven-core</artifactId>
-        <version>${dep.maven-api.version}</version>
-      </dependency>
+            <dependency>
+                <groupId>com.facebook.nifty</groupId>
+                <artifactId>nifty-client</artifactId>
+                <version>${dep.fb.nifty.version}</version>
+            </dependency>
 
-      <dependency>
-        <groupId>org.apache.maven.plugin-tools</groupId>
-        <artifactId>maven-plugin-annotations</artifactId>
-        <version>3.4</version>
-      </dependency>
+            <dependency>
+                <groupId>com.twitter</groupId>
+                <artifactId>util-core_${scala-major.version}</artifactId>
+                <version>${twitter-util.version}</version>
+            </dependency>
 
-      <dependency>
-        <groupId>org.codehaus.plexus</groupId>
-        <artifactId>plexus-utils</artifactId>
-        <version>3.0.22</version>
-      </dependency>
+            <dependency>
+                <groupId>io.airlift</groupId>
+                <artifactId>jmx</artifactId>
+                <version>${dep.airlift.version}</version>
+            </dependency>
 
-      <dependency>
-        <groupId>org.easytesting</groupId>
-        <artifactId>fest-assert</artifactId>
-        <version>1.4</version>
-      </dependency>
+            <dependency>
+                <groupId>io.airlift</groupId>
+                <artifactId>configuration</artifactId>
+                <version>${dep.airlift.version}</version>
+            </dependency>
 
-      <dependency>
-        <groupId>args4j</groupId>
-        <artifactId>args4j</artifactId>
-        <version>2.0.22</version>
-      </dependency>
+            <dependency>
+                <groupId>io.airlift</groupId>
+                <artifactId>stats</artifactId>
+                <version>${dep.airlift.version}</version>
+            </dependency>
 
-      <dependency>
-        <groupId>com.beust</groupId>
-        <artifactId>jcommander</artifactId>
-        <version>1.30</version>
-      </dependency>
+            <dependency>
+                <groupId>io.airlift</groupId>
+                <artifactId>units</artifactId>
+                <version>${dep.airlift.version}</version>
+            </dependency>
 
-      <dependency>
-        <groupId>io.takari.maven.plugins</groupId>
-        <artifactId>takari-plugin-testing</artifactId>
-        <version>2.2.0</version>
-      </dependency>
+            <dependency>
+                <groupId>io.airlift</groupId>
+                <artifactId>bootstrap</artifactId>
+                <version>${dep.airlift.version}</version>
+            </dependency>
 
-      <dependency>
-        <groupId>io.takari.maven.plugins</groupId>
-        <artifactId>takari-plugin-integration-testing</artifactId>
-        <version>2.2.0</version>
-        <type>pom</type>
-      </dependency>
+            <dependency>
+                <groupId>io.airlift</groupId>
+                <artifactId>node</artifactId>
+                <version>${dep.airlift.version}</version>
+            </dependency>
 
-      <dependency>
-        <groupId>junit</groupId>
-        <artifactId>junit</artifactId>
-        <version>4.12</version>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
+            <dependency>
+                <groupId>io.airlift</groupId>
+                <artifactId>log</artifactId>
+                <version>${dep.airlift.version}</version>
+            </dependency>
 
-  <build>
-    <pluginManagement>
-      <plugins>
-        <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
-        <plugin>
-          <groupId>org.eclipse.m2e</groupId>
-          <artifactId>lifecycle-mapping</artifactId>
-          <version>1.0.0</version>
-          <configuration>
-            <lifecycleMappingMetadata>
-              <pluginExecutions>
-                <pluginExecution>
-                  <pluginExecutionFilter>
+            <dependency>
+                <groupId>io.airlift</groupId>
+                <artifactId>testing</artifactId>
+                <version>${dep.airlift.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty</artifactId>
+                <version>3.7.0.Final</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.thoughtworks.paranamer</groupId>
+                <artifactId>paranamer</artifactId>
+                <version>2.5.2</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>4.2.5</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpcore</artifactId>
+                <version>4.2.4</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.antlr</groupId>
+                <artifactId>antlr-runtime</artifactId>
+                <version>${dep.antlr.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.antlr</groupId>
+                <artifactId>stringtemplate</artifactId>
+                <version>4.0.2</version>
+            </dependency>
+
+            <!-- maven -->
+            <dependency>
+                <groupId>org.apache.maven</groupId>
+                <artifactId>maven-plugin-api</artifactId>
+                <version>${dep.maven-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.maven</groupId>
+                <artifactId>maven-model</artifactId>
+                <version>${dep.maven-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.maven</groupId>
+                <artifactId>maven-artifact</artifactId>
+                <version>${dep.maven-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.maven</groupId>
+                <artifactId>maven-core</artifactId>
+                <version>${dep.maven-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.maven.plugin-tools</groupId>
+                <artifactId>maven-plugin-annotations</artifactId>
+                <version>3.4</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.codehaus.plexus</groupId>
+                <artifactId>plexus-utils</artifactId>
+                <version>3.0.22</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.easytesting</groupId>
+                <artifactId>fest-assert</artifactId>
+                <version>1.4</version>
+            </dependency>
+
+            <dependency>
+                <groupId>args4j</groupId>
+                <artifactId>args4j</artifactId>
+                <version>2.0.22</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.beust</groupId>
+                <artifactId>jcommander</artifactId>
+                <version>1.30</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.takari.maven.plugins</groupId>
+                <artifactId>takari-plugin-testing</artifactId>
+                <version>2.2.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.takari.maven.plugins</groupId>
+                <artifactId>takari-plugin-integration-testing</artifactId>
+                <version>2.2.0</version>
+                <type>pom</type>
+            </dependency>
+
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.12</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+                <plugin>
+                    <groupId>org.eclipse.m2e</groupId>
+                    <artifactId>lifecycle-mapping</artifactId>
+                    <version>1.0.0</version>
+                    <configuration>
+                        <lifecycleMappingMetadata>
+                            <pluginExecutions>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>org.codehaus.plexus</groupId>
+                                        <artifactId>plexus-maven-plugin</artifactId>
+                                        <versionRange>[0,)</versionRange>
+                                        <goals>
+                                            <goal>descriptor</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore/>
+                                    </action>
+                                </pluginExecution>
+                            </pluginExecutions>
+                        </lifecycleMappingMetadata>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.antlr</groupId>
+                    <artifactId>antlr3-maven-plugin</artifactId>
+                    <version>${dep.antlr.version}</version>
+                    <executions>
+                        <execution>
+                            <id>default</id>
+                            <phase>generate-sources</phase>
+                            <goals>
+                                <goal>antlr</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <plugin>
                     <groupId>org.codehaus.plexus</groupId>
                     <artifactId>plexus-maven-plugin</artifactId>
-                    <versionRange>[0,)</versionRange>
-                    <goals>
-                      <goal>descriptor</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <ignore />
-                  </action>
-                </pluginExecution>
-              </pluginExecutions>
-            </lifecycleMappingMetadata>
-          </configuration>
-        </plugin>
+                    <version>1.3.8</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>descriptor</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
 
-        <plugin>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr3-maven-plugin</artifactId>
-          <version>${dep.antlr.version}</version>
-          <executions>
-            <execution>
-              <id>default</id>
-              <phase>generate-sources</phase>
-              <goals>
-                <goal>antlr</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-plugin-plugin</artifactId>
+                    <version>3.4</version>
+                    <executions>
+                        <execution>
+                            <id>help-mojo</id>
+                            <goals>
+                                <goal>helpmojo</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
 
-        <plugin>
-          <groupId>org.codehaus.plexus</groupId>
-          <artifactId>plexus-maven-plugin</artifactId>
-          <version>1.3.8</version>
-          <executions>
-            <execution>
-              <goals>
-                <goal>descriptor</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>2.3</version>
+                    <executions>
+                        <execution>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>shade</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
 
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-plugin-plugin</artifactId>
-          <version>3.4</version>
-          <executions>
-            <execution>
-              <id>help-mojo</id>
-              <goals>
-                <goal>helpmojo</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
+                <plugin>
+                    <groupId>io.takari.maven.plugins</groupId>
+                    <artifactId>takari-lifecycle-plugin</artifactId>
+                    <version>1.11.3</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
 
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-shade-plugin</artifactId>
-          <version>2.3</version>
-          <executions>
-            <execution>
-              <phase>package</phase>
-              <goals>
-                <goal>shade</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
-
-        <plugin>
-          <groupId>io.takari.maven.plugins</groupId>
-          <artifactId>takari-lifecycle-plugin</artifactId>
-          <version>1.11.3</version>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-
-    <plugins>
-      <plugin>
-        <groupId>com.mycila</groupId>
-        <artifactId>license-maven-plugin</artifactId>
-        <configuration>
-          <properties>
-            <inceptionYear>${project.inceptionYear}</inceptionYear>
-            <year>2013</year>
-          </properties>
-          <excludes combine.children="append">
-            <exclude>**/*.g</exclude>
-          </excludes>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
+        <plugins>
+            <plugin>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <configuration>
+                    <properties>
+                        <inceptionYear>${project.inceptionYear}</inceptionYear>
+                        <year>2013</year>
+                    </properties>
+                    <excludes combine.children="append">
+                        <exclude>**/*.g</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

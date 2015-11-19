@@ -26,11 +26,11 @@ public class Swift2ThriftGeneratorConfig {
     private final Map<String, String> namespaceMap;
     private final String allowMultiplePackages;
     private final boolean recursive;
+    private final ClassLoader classLoader;
 
     private Swift2ThriftGeneratorConfig(final File outputFile, final Map<String, String> includeMap,
                                         boolean verbose, String defaultPackage, final Map<String, String> namespaceMap,
-                                        String allowMultiplePackages, boolean recursive)
-    {
+                                        String allowMultiplePackages, boolean recursive, ClassLoader classLoader) {
         this.outputFile = outputFile;
         this.includeMap = includeMap;
         this.verbose = verbose;
@@ -38,6 +38,7 @@ public class Swift2ThriftGeneratorConfig {
         this.namespaceMap = namespaceMap;
         this.allowMultiplePackages = allowMultiplePackages;
         this.recursive = recursive;
+        this.classLoader = classLoader;
     }
 
     public static Builder builder()
@@ -83,6 +84,10 @@ public class Swift2ThriftGeneratorConfig {
         return recursive;
     }
 
+    public ClassLoader getClassLoader() {
+        return classLoader;
+    }
+
     public static class Builder
     {
         private File outputFile = null;
@@ -92,6 +97,7 @@ public class Swift2ThriftGeneratorConfig {
         private Map<String, String> namespaceMap;
         private String allowMultiplePackages;
         private boolean recursive;
+        private ClassLoader classLoader;
 
         private Builder()
         {
@@ -100,7 +106,7 @@ public class Swift2ThriftGeneratorConfig {
         public Swift2ThriftGeneratorConfig build()
         {
             return new Swift2ThriftGeneratorConfig(outputFile, includeMap, verbose, defaultPackage,
-                    namespaceMap, allowMultiplePackages, recursive);
+                    namespaceMap, allowMultiplePackages, recursive, classLoader);
         }
 
         public Builder outputFile(final File outputFile)
@@ -142,6 +148,11 @@ public class Swift2ThriftGeneratorConfig {
         public Builder recursive(boolean recursive)
         {
             this.recursive = recursive;
+            return this;
+        }
+
+        public Builder classLoader(ClassLoader classLoader) {
+            this.classLoader = classLoader;
             return this;
         }
     }

@@ -68,6 +68,11 @@
     </dependency>
 
     <dependency>
+      <groupId>com.twitter</groupId>
+      <artifactId>util-core_${scala-major.version}</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>com.google.inject</groupId>
       <artifactId>guice</artifactId>
       <optional>true</optional>

@@ -18,11 +18,7 @@ package com.facebook.swift.generator.swift2thrift;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.codec.ThriftField.Requiredness;
 import com.facebook.swift.codec.ThriftProtocolType;
-import com.facebook.swift.codec.metadata.FieldKind;
-import com.facebook.swift.codec.metadata.ReflectionHelper;
-import com.facebook.swift.codec.metadata.ThriftFieldMetadata;
-import com.facebook.swift.codec.metadata.ThriftStructMetadata;
-import com.facebook.swift.codec.metadata.ThriftType;
+import com.facebook.swift.codec.metadata.*;
 import com.facebook.swift.generator.swift2thrift.template.FieldRequirednessRenderer;
 import com.facebook.swift.generator.swift2thrift.template.ThriftContext;
 import com.facebook.swift.generator.swift2thrift.template.ThriftServiceMetadataRenderer;
@@ -34,24 +30,14 @@ import com.facebook.swift.service.metadata.ThriftServiceMetadata;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import com.google.common.io.Files;
 import io.airlift.log.Logger;
 import org.stringtemplate.v4.AutoIndentWriter;
 import org.stringtemplate.v4.ST;
 
 import javax.annotation.Nullable;
-
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -64,6 +50,7 @@ public class Swift2ThriftGenerator
     private static final Logger LOG = Logger.get(Swift2ThriftGenerator.class);
     private final OutputStreamWriter outputStreamWriter;
     private final boolean verbose;
+    private ClassLoader classLoader;
     private final ThriftCodecManager codecManager = new ThriftCodecManager();
     private final String defaultPackage;
     private final String allowMultiplePackages;     // null means don't allow
@@ -118,6 +105,7 @@ public class Swift2ThriftGenerator
         this.namespaceMap = config.getNamespaceMap();
         this.allowMultiplePackages = config.isAllowMultiplePackages();
         this.recursive = config.isRecursive();
+        this.classLoader = config.getClassLoader();
     }
 
     @SuppressWarnings("PMD.CollapsibleIfStatements")
@@ -477,7 +465,6 @@ public class Swift2ThriftGenerator
 
     private ClassLoader getClassLoader()
     {
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         if (classLoader != null) {
             return classLoader;
         }

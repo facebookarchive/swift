@@ -50,6 +50,7 @@ import static com.facebook.swift.codec.metadata.ReflectionHelper.getFutureReturn
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getIterableType;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getMapKeyType;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getMapValueType;
+import static com.facebook.swift.codec.metadata.ReflectionHelper.getTwitterFutureReturnType;
 import static com.facebook.swift.codec.metadata.ThriftType.BINARY;
 import static com.facebook.swift.codec.metadata.ThriftType.BOOL;
 import static com.facebook.swift.codec.metadata.ThriftType.BYTE;
@@ -291,6 +292,11 @@ public class ThriftCatalog
 
         if (ListenableFuture.class.isAssignableFrom(rawType)) {
             Type returnType = getFutureReturnType(javaType);
+            return getThriftType(returnType);
+        }
+
+        if ("com.twitter.util.Future".equals(rawType.getCanonicalName())) {
+            Type returnType = getTwitterFutureReturnType(javaType);
             return getThriftType(returnType);
         }
 
