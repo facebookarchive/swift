@@ -95,6 +95,7 @@ public class AbstractLiveTest
                 new ThriftServerDefBuilder()
                 .withProcessor(processor)
                 .using(taskExecutor)
+                .listen(0)
                 .build();
 
             this.nifty = new NiftyBootstrap(
