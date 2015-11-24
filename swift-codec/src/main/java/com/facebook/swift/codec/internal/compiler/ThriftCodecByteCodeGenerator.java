@@ -361,7 +361,7 @@ public class ThriftCodecByteCodeGenerator<T>
             if (readMethod == null) {
                 throw new IllegalArgumentException("Unsupported field type " + field.getThriftType().getProtocolType());
             }
-            read.invokeVirtual(readMethod);
+            read.invokeMethod(readMethod);
 
             // todo this cast should be based on readMethod return type and fieldType (or coercion type)
             // add cast if necessary
@@ -559,7 +559,7 @@ public class ThriftCodecByteCodeGenerator<T>
             if (readMethod == null) {
                 throw new IllegalArgumentException("Unsupported field type " + field.getThriftType().getProtocolType());
             }
-            read.invokeVirtual(readMethod);
+            read.invokeMethod(readMethod);
 
             // todo this cast should be based on readMethod return type and fieldType (or coercion type)
             // add cast if necessary
@@ -750,7 +750,7 @@ public class ThriftCodecByteCodeGenerator<T>
         }
 
         // invoke the method
-        read.invokeVirtual(methodInjection.getMethod());
+        read.invokeMethod(methodInjection.getMethod());
 
         // if method has a return, we need to pop it off the stack
         if (methodInjection.getMethod().getReturnType() != void.class) {
@@ -776,7 +776,7 @@ public class ThriftCodecByteCodeGenerator<T>
             }
 
             // invoke the method
-            read.invokeVirtual(builderMethod.getMethod())
+            read.invokeMethod(builderMethod.getMethod())
                     .storeVariable(instance);
         }
     }
@@ -947,7 +947,7 @@ public class ThriftCodecByteCodeGenerator<T>
         if (writeMethod == null) {
             throw new IllegalArgumentException("Unsupported field type " + field.getThriftType().getProtocolType());
         }
-        write.invokeVirtual(writeMethod);
+        write.invokeMethod(writeMethod);
 
         //
         // If not written because of a null, clean-up the stack
@@ -989,7 +989,7 @@ public class ThriftCodecByteCodeGenerator<T>
             }
             else if (extraction instanceof ThriftMethodExtractor) {
                 ThriftMethodExtractor methodExtractor = (ThriftMethodExtractor) extraction;
-                write.invokeVirtual(methodExtractor.getMethod());
+                write.invokeMethod(methodExtractor.getMethod());
                 if (methodExtractor.isGeneric()) {
                   write.checkCast(type(methodExtractor.getType()));
                 }

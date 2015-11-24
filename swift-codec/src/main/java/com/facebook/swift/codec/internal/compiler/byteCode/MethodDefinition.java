@@ -40,6 +40,7 @@ import javax.annotation.concurrent.NotThreadSafe;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -78,6 +79,7 @@ import static org.objectweb.asm.Opcodes.IFEQ;
 import static org.objectweb.asm.Opcodes.IFNONNULL;
 import static org.objectweb.asm.Opcodes.IFNULL;
 import static org.objectweb.asm.Opcodes.ILOAD;
+import static org.objectweb.asm.Opcodes.INVOKEINTERFACE;
 import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
@@ -380,11 +382,13 @@ public class MethodDefinition
         return this;
     }
 
-    public MethodDefinition invokeVirtual(Method method)
+    public MethodDefinition invokeMethod(Method method)
     {
+        boolean isInterface = Modifier.isInterface(method.getDeclaringClass().getModifiers());
+        int opcode = isInterface ? INVOKEINTERFACE : INVOKEVIRTUAL;
         instructionList.add(
                 new MethodInsnNode(
-                        INVOKEVIRTUAL,
+                        opcode,
                         Type.getInternalName(method.getDeclaringClass()),
                         method.getName(),
                         Type.getMethodDescriptor(method)
