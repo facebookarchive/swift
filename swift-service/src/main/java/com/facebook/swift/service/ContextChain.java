@@ -16,6 +16,7 @@
 package com.facebook.swift.service;
 
 import com.facebook.nifty.core.RequestContext;
+import com.facebook.swift.codec.ThriftCodec;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,6 +76,20 @@ public class ContextChain
     {
         for (int i = 0; i < handlers.size(); i++) {
             handlers.get(i).postWriteException(contexts.get(i), methodName, t);
+        }
+    }
+
+    public void declaredUserException(Throwable t, ThriftCodec<?> exceptionCodec)
+    {
+        for (int i = 0; i < handlers.size(); i++) {
+            handlers.get(i).declaredUserException(contexts.get(i), methodName, t, exceptionCodec);
+        }
+    }
+
+    public void undeclaredUserException(Throwable t)
+    {
+        for (int i = 0; i < handlers.size(); i++) {
+            handlers.get(i).undeclaredUserException(contexts.get(i), methodName, t);
         }
     }
 

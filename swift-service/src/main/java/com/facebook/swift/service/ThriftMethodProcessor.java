@@ -206,6 +206,7 @@ public class ThriftMethodProcessor
                         }
 
                         if (exceptionCodec != null) {
+                            contextChain.declaredUserException(t, exceptionCodec.getCodec());
                             // write expected exception response
                             writeResponse(
                                     out,
@@ -217,6 +218,7 @@ public class ThriftMethodProcessor
                                     t);
                             contextChain.postWriteException(t);
                         } else {
+                            contextChain.undeclaredUserException(t);
                             // unexpected exception
                             TApplicationException applicationException =
                                     ThriftServiceProcessor.writeApplicationException(

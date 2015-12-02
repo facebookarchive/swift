@@ -16,6 +16,7 @@
 package com.facebook.swift.service;
 
 import com.facebook.nifty.core.RequestContext;
+import com.facebook.swift.codec.ThriftCodec;
 
 public abstract class ThriftEventHandler
 {
@@ -30,5 +31,7 @@ public abstract class ThriftEventHandler
     public void preWriteException(Object context, String methodName, Throwable t) {}
     public void postWrite(Object context, String methodName, Object result) {}
     public void postWriteException(Object context, String methodName, Throwable t) {}
+    public void declaredUserException(Object o, String methodName, Throwable t, ThriftCodec<?> exceptionCodec) {}
+    public void undeclaredUserException(Object o, String methodName, Throwable t) {}
     public void done(Object context, String methodName) {}
 }
