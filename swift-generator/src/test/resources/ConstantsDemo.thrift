@@ -50,7 +50,11 @@ const i32 int_const_zero = 0
 const i32 GEN_ME = -3523553
 const double GEn_DUB = 325.532
 const double GEn_DU = 085.2355
+const double GEn_DUB_i32 = 12345
 const string GEN_STRING = "asldkjasfd"
+
+typedef double myDoubleType
+const myDoubleType myDouble = 54321
 
 const bool bool_const_false = 0
 const bool bool_const_true = 1

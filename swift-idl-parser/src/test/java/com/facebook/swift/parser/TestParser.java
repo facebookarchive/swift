@@ -26,9 +26,9 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.Iterator;
 
-import static com.facebook.swift.parser.TestingUtils.getResourcePath;
-import static com.facebook.swift.parser.TestingUtils.listDataProvider;
-import static com.facebook.swift.parser.TestingUtils.listMatchingFiles;
+import static com.facebook.swift.testing.TestingUtils.getResourcePath;
+import static com.facebook.swift.testing.TestingUtils.listDataProvider;
+import static com.facebook.swift.testing.TestingUtils.listMatchingFiles;
 import static com.facebook.swift.parser.ThriftIdlParser.parseThriftIdl;
 
 public class TestParser

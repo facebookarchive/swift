@@ -93,5 +93,31 @@
       <groupId>io.airlift</groupId>
       <artifactId>log</artifactId>
     </dependency>
+    
+    <dependency>
+      <groupId>com.facebook.swift</groupId>
+      <artifactId>swift-test-utils</artifactId>
+      <scope>test</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.testng</groupId>
+      <artifactId>testng</artifactId>
+      <scope>test</scope>
+    </dependency>
+    
   </dependencies>
+  
+  <build>
+      <plugins>
+          <plugin>
+              <artifactId>maven-surefire-plugin</artifactId>
+              <configuration>
+                  <systemPropertyVariables>
+                      <test.output.directory>${project.build.directory}/swift-generated-files</test.output.directory>
+                  </systemPropertyVariables>
+              </configuration>
+          </plugin>
+      </plugins>
+  </build>
 </project>
