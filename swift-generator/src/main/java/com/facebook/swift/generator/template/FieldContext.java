@@ -57,6 +57,11 @@ public class FieldContext
     {
         return requiredness;
     }
+    
+    public boolean isLegacyId() 
+    {
+        return id < 0;
+    }
 
     public short getId()
     {
