@@ -223,7 +223,7 @@ _annotatedExceptions(method) ::= <<
 >>
 
 _fieldAnnotation(field) ::= <<
-@ThriftField(value=<field.id>, name="<field.name>"<if(field.requiredness)>, requiredness=Requiredness.<field.requiredness><endif>)
+@ThriftField(value=<field.id>, name="<field.name>"<if(field.requiredness)>, requiredness=Requiredness.<field.requiredness><endif><if(field.legacyId)>, isLegacyId=true<endif>)
 >>
 
 _params(parameters) ::= <<
