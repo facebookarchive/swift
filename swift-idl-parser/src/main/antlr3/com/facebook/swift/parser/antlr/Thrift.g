@@ -98,19 +98,19 @@ const_rule
     ;
 
 typedef
-    : 'typedef' field_type IDENTIFIER -> ^(TYPEDEF IDENTIFIER field_type)
+    : 'typedef' field_type IDENTIFIER type_annotations? -> ^(TYPEDEF IDENTIFIER field_type)
     ;
 
 enum_rule
-    : 'enum' IDENTIFIER '{' enum_field* '}' -> ^(ENUM IDENTIFIER enum_field*)
+    : 'enum' IDENTIFIER '{' enum_field* '}' type_annotations? -> ^(ENUM IDENTIFIER enum_field*)
     ;
 
 enum_field
-    : IDENTIFIER ('=' integer)? list_separator? -> ^(IDENTIFIER integer?)
+    : IDENTIFIER ('=' integer)? type_annotations? list_separator? -> ^(IDENTIFIER integer?)
     ;
 
 senum
-    : 'senum' IDENTIFIER '{' (LITERAL list_separator?)* '}' -> ^(SENUM IDENTIFIER LITERAL*)
+    : 'senum' IDENTIFIER '{' (LITERAL list_separator?)* '}' type_annotations? -> ^(SENUM IDENTIFIER LITERAL*)
     ;
 
 struct
