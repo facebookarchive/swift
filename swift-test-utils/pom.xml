@@ -26,67 +26,31 @@
     <version>0.17.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>swift-idl-parser</artifactId>
+  <artifactId>swift-test-utils</artifactId>
   <packaging>jar</packaging>
   <name>${project.artifactId}</name>
-  <description>Parser for Thrift IDL</description>
+  <description>Test utilities for use in Swift modules</description>
 
   <properties>
     <air.main.basedir>${project.parent.basedir}</air.main.basedir>
   </properties>
 
   <dependencies>
+      
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
     </dependency>
-
+    
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>annotations</artifactId>
     </dependency>
-
-    <dependency>
-      <groupId>org.antlr</groupId>
-      <artifactId>antlr-runtime</artifactId>
-    </dependency>
-
+    
     <dependency>
       <groupId>org.testng</groupId>
       <artifactId>testng</artifactId>
-      <scope>test</scope>
-    </dependency>
-    
-    <dependency>
-      <groupId>com.facebook.swift</groupId>
-      <artifactId>swift-test-utils</artifactId>
-      <scope>test</scope>
     </dependency>
   
   </dependencies>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.antlr</groupId>
-        <artifactId>antlr3-maven-plugin</artifactId>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <excludedGroups>sample</excludedGroups>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>findbugs-maven-plugin</artifactId>
-        <configuration>
-          <onlyAnalyze>com.facebook.swift.parser.model.*,com.facebook.swift.parser.ThriftIdParser</onlyAnalyze>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
 </project>

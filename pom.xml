@@ -48,6 +48,7 @@
   </distributionManagement>
 
   <modules>
+    <module>swift-test-utils</module>
     <module>swift-annotations</module>
     <module>swift-codec</module>
     <module>swift-idl-parser</module>
@@ -84,6 +85,13 @@
 
   <dependencyManagement>
     <dependencies>
+        
+      <dependency>
+        <groupId>com.facebook.swift</groupId>
+        <artifactId>swift-test-utils</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      
       <dependency>
         <groupId>com.facebook.swift</groupId>
         <artifactId>swift-annotations</artifactId>
