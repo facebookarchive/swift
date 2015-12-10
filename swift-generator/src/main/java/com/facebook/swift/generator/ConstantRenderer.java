@@ -172,7 +172,7 @@ public class ConstantRenderer
                 // Allow auto-promotion of integer types
                 checkArgument(value.value() instanceof Number);
                 return Double.toString(((Number) value.value()).doubleValue());
-
+                
             default:
                 throw new IllegalArgumentException();
         }
@@ -201,7 +201,7 @@ public class ConstantRenderer
 
             case I64:
                 return Long.toString(value.value()) + "L";
-                
+
             default:
                 throw new IllegalStateException();
         }

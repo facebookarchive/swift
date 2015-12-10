@@ -35,31 +35,27 @@ import java.util.Iterator;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import java.nio.file.Files;
 import static java.nio.file.Files.walkFileTree;
 
-public class TestingUtils
-{
-    public static Path getResourcePath(String resourceName)
-    {
+public class TestingUtils {
+
+    public static Path getResourcePath(String resourceName) {
         try {
             return Paths.get(Resources.getResource(resourceName).toURI());
-        }
-        catch (URISyntaxException e) {
+        } catch (URISyntaxException e) {
             throw new AssertionError(e);
         }
     }
 
     public static List<Path> listMatchingFiles(Path start, String glob)
-            throws IOException
-    {
+            throws IOException {
         final ImmutableList.Builder<Path> list = ImmutableList.builder();
         final PathMatcher matcher = start.getFileSystem().getPathMatcher("glob:" + glob);
-        walkFileTree(start, new SimpleFileVisitor<Path>()
-        {
+        walkFileTree(start, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
-                    throws IOException
-            {
+                    throws IOException {
                 if (matcher.matches(file)) {
                     list.add(file);
                 }
@@ -69,26 +65,53 @@ public class TestingUtils
         return list.build();
     }
 
-    public static String getTestParameter(ITestContext context, String parameterName)
-    {
+    public static String getTestParameter(ITestContext context, String parameterName) {
         String value = context.getCurrentXmlTest().getParameter(parameterName);
         return checkNotNull(value, "test parameter not set: %s", parameterName);
     }
 
-    public static Iterator<Object[]> listDataProvider(Object... list)
-    {
+    public static Iterator<Object[]> listDataProvider(Object... list) {
         return listDataProvider(Arrays.asList(list));
     }
 
-    public static Iterator<Object[]> listDataProvider(List<?> list)
-    {
-        return Lists.transform(list, new Function<Object, Object[]>()
-        {
+    public static Iterator<Object[]> listDataProvider(List<?> list) {
+        return Lists.transform(list, new Function<Object, Object[]>() {
             @Override
-            public Object[] apply(@Nullable Object input)
-            {
-                return new Object[] {input};
+            public Object[] apply(@Nullable Object input) {
+                return new Object[]{input};
             }
         }).iterator();
+    }
+
+    public static void deleteRecursively(Path path) throws IOException {
+
+        // Symbolic link friendly recursive delete
+        // Inspired by: http://stackoverflow.com/questions/779519/delete-directories-recursively-in-java/8685959#8685959
+        Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+                    throws IOException {
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                // Try to delete again anyway (see StackOverflow)
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                if (exc != null) {
+                    // Propagate the exception
+                    throw exc;
+                }
+
+                Files.delete(dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
     }
 }
