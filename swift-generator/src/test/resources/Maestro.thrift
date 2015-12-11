@@ -296,7 +296,7 @@ enum OdsAdHocAggTypeBitmapValues {
   ODS_ADHOC_AGG_MAX  = 4;
   ODS_ADHOC_AGG_MIN  = 8;
   ODS_ADHOC_AGG_MEDIAN  = 16;
-}
+} (bitmask = 1)
 
 enum OdsTopCriteria {
   ODS_TOP_N_MAX                 = 1,
