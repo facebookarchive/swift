@@ -50,7 +50,20 @@ public class SwiftIntegrationTest
     public void testBasic()
             throws Exception
     {
-        File basedir = resources.getBasedir("basic");
+       assertOutcomes("basic");
+    }
+    
+    @Test
+    public void testShortCircuit() 
+        throws Exception
+    {
+        assertOutcomes("shortcircuit");            
+    }
+    
+    private void assertOutcomes(String project) 
+        throws Exception
+    {
+        File basedir = resources.getBasedir(project);
         maven.forProject(basedir)
                 .execute("generate-sources")
                 .assertErrorFreeLog();
