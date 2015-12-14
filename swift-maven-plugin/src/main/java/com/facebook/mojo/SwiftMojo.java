@@ -46,7 +46,8 @@ import static java.lang.String.format;
  * Process IDL files and generates source code from the IDL files.
  */
 @Mojo(name = "generate", defaultPhase = LifecyclePhase.GENERATE_SOURCES)
-public class SwiftMojo extends AbstractMojo {
+public class SwiftMojo extends AbstractMojo
+{
 
     private static final Pattern scanRequiredPattern
             = Pattern.compile("^[/\\\\]|[*?]|\\.\\.|[/\\\\]$");
@@ -58,17 +59,17 @@ public class SwiftMojo extends AbstractMojo {
     private boolean skip = false;
 
     /**
-     * Override java package for the generated classes. If unset, the java
-     * namespace from the IDL files is used. If a value is set here, the java
-     * package definition from the IDL files is ignored.
+     * Override java package for the generated classes. If unset, the java namespace from
+     * the IDL files is used. If a value is set here, the java package definition from
+     * the IDL files is ignored.
      */
     @Parameter
     private String overridePackage = null;
 
     /**
-     * Give a default Java package for generated classes if the IDL files do not
-     * contain a java namespace definition. This package is only used if the IDL
-     * files do not contain a java namespace definition.
+     * Give a default Java package for generated classes if the IDL files do not contain
+     * a java namespace definition. This package is only used if the IDL files do not
+     * contain a java namespace definition.
      */
     @Parameter
     private String defaultPackage = null;
@@ -86,17 +87,16 @@ public class SwiftMojo extends AbstractMojo {
     private File outputFolder = null;
 
     /**
-     * Generate code for included IDL files. If true, generate Java code for all
-     * IDL files that are listed in the idlFiles set and all IDL files loaded
-     * through include statements. Default is false (generate only code for
-     * explicitly listed IDL files).
+     * Generate code for included IDL files. If true, generate Java code for all IDL
+     * files that are listed in the idlFiles set and all IDL files loaded through include
+     * statements. Default is false (generate only code for explicitly listed IDL files).
      */
     @Parameter(defaultValue = "false")
     private boolean generateIncludedCode = false;
 
     /**
-     * Add {@link org.apache.thrift.TException} to each method signature. This
-     * exception is thrown when a thrift internal error occurs.
+     * Add {@link org.apache.thrift.TException} to each method signature. This exception
+     * is thrown when a thrift internal error occurs.
      */
     @Parameter(defaultValue = "true")
     private boolean addThriftExceptions = true;
@@ -108,15 +108,13 @@ public class SwiftMojo extends AbstractMojo {
     private boolean addCloseableInterface = false;
 
     /**
-     * Generated exceptions extends {@link RuntimeException}, not
-     * {@link Exception}.
+     * Generated exceptions extends {@link RuntimeException}, not {@link Exception}.
      */
     @Parameter(defaultValue = "true")
     private boolean extendRuntimeException = true;
 
     /**
-     * Select the flavor of the generated source code. Default is
-     * "java-regular".
+     * Select the flavor of the generated source code. Default is "java-regular".
      */
     @Parameter(defaultValue = "java-regular")
     private String codeFlavor = "java-regular";
@@ -131,35 +129,42 @@ public class SwiftMojo extends AbstractMojo {
     private MavenProject project = null;
 
     @Override
-    public final void execute() throws MojoExecutionException, MojoFailureException {
-        try {
-            if (!skip) {
+    public final void execute() throws MojoExecutionException, MojoFailureException
+    {
+        try
+        {
+            if (!skip)
+            {
 
                 final File inputFolder = new File(idlFiles.getDirectory());
 
                 final List<File> files = getFiles(inputFolder);
 
                 final SwiftGeneratorConfig.Builder configBuilder = SwiftGeneratorConfig.builder()
-                        .inputBase(inputFolder.toURI())
-                        .outputFolder(outputFolder)
-                        .overridePackage(overridePackage)
-                        .defaultPackage(defaultPackage)
-                        .generateIncludedCode(generateIncludedCode)
-                        .codeFlavor(codeFlavor);
+                    .inputBase(inputFolder.toURI())
+                    .outputFolder(outputFolder)
+                    .overridePackage(overridePackage)
+                    .defaultPackage(defaultPackage)
+                    .generateIncludedCode(generateIncludedCode)
+                    .codeFlavor(codeFlavor);
 
-                if (usePlainJavaNamespace) {
+                if (usePlainJavaNamespace)
+                {
                     configBuilder.addTweak(SwiftGeneratorTweak.USE_PLAIN_JAVA_NAMESPACE);
                 }
 
-                if (addThriftExceptions) {
+                if (addThriftExceptions)
+                {
                     configBuilder.addTweak(SwiftGeneratorTweak.ADD_THRIFT_EXCEPTION);
                 }
 
-                if (addCloseableInterface) {
+                if (addCloseableInterface)
+                {
                     configBuilder.addTweak(SwiftGeneratorTweak.ADD_CLOSEABLE_INTERFACE);
                 }
 
-                if (extendRuntimeException) {
+                if (extendRuntimeException)
+                {
                     configBuilder.addTweak(SwiftGeneratorTweak.EXTEND_RUNTIME_EXCEPTION);
                 }
 
@@ -168,7 +173,9 @@ public class SwiftMojo extends AbstractMojo {
 
                 project.addCompileSourceRoot(outputFolder.getPath());
             }
-        } catch (Exception e) {
+        } 
+        catch (Exception e)
+        {
             Throwables.propagateIfInstanceOf(e, MojoExecutionException.class);
             Throwables.propagateIfInstanceOf(e, MojoFailureException.class);
 
@@ -177,7 +184,8 @@ public class SwiftMojo extends AbstractMojo {
         }
     }
 
-    private static boolean requiresScan(String pattern) {
+    private static boolean requiresScan(String pattern)
+    {
         Matcher matcher = scanRequiredPattern.matcher(pattern);
         return matcher.find();
     }
@@ -185,7 +193,8 @@ public class SwiftMojo extends AbstractMojo {
     @VisibleForTesting
     static boolean canBypassScan(
             List<String> includedFiles,
-            List<String> excludedFiles) {
+            List<String> excludedFiles)
+    {
         // The directory scan can be bypassed, IFF
         // 1) There are no excludes
         // 2) There is at least one include string
@@ -202,12 +211,14 @@ public class SwiftMojo extends AbstractMojo {
     }
 
     @SuppressWarnings("unchecked")
-    private List<File> getFiles(File inputFolder) throws IOException {
+    private List<File> getFiles(File inputFolder) throws IOException
+    {
         // On large source trees under the input folder, the directory
         // search can take a very long time. 
         if (canBypassScan(
                 idlFiles.getIncludes(),
-                idlFiles.getExcludes())) {
+                idlFiles.getExcludes()))
+        {
             return idlFiles.getIncludes()
                     .stream()
                     .map(s -> new File(inputFolder, s))
@@ -215,7 +226,7 @@ public class SwiftMojo extends AbstractMojo {
         }
 
         return FileUtils.getFiles(inputFolder,
-                Joiner.on(',').join(idlFiles.getIncludes()),
-                Joiner.on(',').join(idlFiles.getExcludes()));
+                                  Joiner.on(',').join(idlFiles.getIncludes()),
+                                  Joiner.on(',').join(idlFiles.getExcludes()));
     }
 }

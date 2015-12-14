@@ -17,20 +17,16 @@ package com.facebook.mojo;
 
 import java.util.Arrays;
 import java.util.Collections;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
-public class SwiftMojoTest {
+public class SwiftMojoTest
+{
 
     @Test
-    public void posixFormat() {
+    public void posixFormat()
+    {
         assertTrue(canBypassScan("foo", "bar", "bar/foo/coo"));
         assertTrue(canBypassScan("foo/bar/./bar"));
         assertFalse(canBypassScan());
@@ -42,7 +38,8 @@ public class SwiftMojoTest {
     }
 
     @Test
-    public void windowsFormat() {
+    public void windowsFormat()
+    {
         assertTrue(canBypassScan("foo", "bar", "bar\\foo\\coo"));
         assertTrue(canBypassScan("foo\\bar\\.\\bar"));
         assertFalse(canBypassScan());
@@ -53,7 +50,8 @@ public class SwiftMojoTest {
         assertFalse(canBypassScan("\\foo", "bar"));
     }
 
-    private boolean canBypassScan(String... pattern) {
+    private boolean canBypassScan(String... pattern)
+    {
         return SwiftMojo.canBypassScan(Arrays.asList(pattern), Collections.emptyList());
     }
 }
