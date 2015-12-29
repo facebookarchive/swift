@@ -32,13 +32,14 @@ import io.airlift.configuration.Config;
 import io.airlift.configuration.ConfigurationFactory;
 import io.airlift.configuration.ConfigurationLoader;
 import io.airlift.configuration.ConfigurationModule;
-import io.airlift.configuration.ConfigurationValidator;
 import io.airlift.configuration.ValidationErrorModule;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 
 import java.util.concurrent.Executors;
+
+import static io.airlift.configuration.Configuration.processConfiguration;
 
 public class NiftyLoadTester
 {
@@ -56,7 +57,7 @@ public class NiftyLoadTester
         };
         Guice.createInjector(Stage.PRODUCTION,
                              new ConfigurationModule(cf),
-                             new ValidationErrorModule(new ConfigurationValidator(cf, null).validate(exampleModule)),
+                             new ValidationErrorModule(processConfiguration(cf, null, exampleModule)),
                              new LifeCycleModule(),
                              exampleModule,
                              new NiftyModule()

@@ -22,7 +22,7 @@
     <parent>
         <groupId>io.airlift</groupId>
         <artifactId>airbase</artifactId>
-        <version>36</version>
+        <version>46</version>
     </parent>
 
     <groupId>com.facebook.nifty</groupId>
@@ -42,7 +42,7 @@
         <air.check.skip-pmd>true</air.check.skip-pmd>
         <air.check.skip-jacoco>true</air.check.skip-jacoco>
 
-        <dep.airlift.version>0.106</dep.airlift.version>
+        <dep.airlift.version>0.119</dep.airlift.version>
     </properties>
 
     <url>https://facebook.github.com/nifty</url>
