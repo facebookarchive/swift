@@ -78,20 +78,20 @@
     <air.check.skip-jacoco>true</air.check.skip-jacoco>
 
     <dep.airlift.version>0.119</dep.airlift.version>
-    <dep.antlr.version>3.5</dep.antlr.version>
+    <dep.antlr.version>3.5.2</dep.antlr.version>
     <dep.maven-api.version>3.2.5</dep.maven-api.version>
     <dep.fb.nifty.version>0.17.0-SNAPSHOT</dep.fb.nifty.version>
   </properties>
 
   <dependencyManagement>
     <dependencies>
-        
+
       <dependency>
         <groupId>com.facebook.swift</groupId>
         <artifactId>swift-test-utils</artifactId>
         <version>${project.version}</version>
       </dependency>
-      
+
       <dependency>
         <groupId>com.facebook.swift</groupId>
         <artifactId>swift-annotations</artifactId>
