@@ -23,6 +23,7 @@
         <groupId>io.airlift</groupId>
         <artifactId>airbase</artifactId>
         <version>46</version>
+        <relativePath/>
     </parent>
 
     <groupId>com.facebook.nifty</groupId>
