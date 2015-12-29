@@ -24,6 +24,7 @@
     <groupId>com.facebook.swift</groupId>
     <artifactId>swift-root</artifactId>
     <version>0.17.0-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
   </parent>
 
   <artifactId>swift-test-utils</artifactId>
@@ -36,21 +37,21 @@
   </properties>
 
   <dependencies>
-      
+
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>annotations</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>org.testng</groupId>
       <artifactId>testng</artifactId>
     </dependency>
-  
+
   </dependencies>
 </project>

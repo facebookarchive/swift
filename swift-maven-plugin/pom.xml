@@ -23,6 +23,7 @@
     <groupId>com.facebook.swift</groupId>
     <artifactId>swift-root</artifactId>
     <version>0.17.0-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
   </parent>
 
   <groupId>com.facebook.mojo</groupId>
