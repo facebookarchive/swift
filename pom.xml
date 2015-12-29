@@ -111,6 +111,24 @@
             </dependency>
 
             <dependency>
+                <groupId>commons-codec</groupId>
+                <artifactId>commons-codec</artifactId>
+                <version>1.9</version>
+            </dependency>
+
+            <dependency>
+                <groupId>commons-beanutils</groupId>
+                <artifactId>commons-beanutils</artifactId>
+                <version>1.9</version>
+            </dependency>
+
+            <dependency>
+                <groupId>commons-logging</groupId>
+                <artifactId>commons-logging</artifactId>
+                <version>1.2</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.apache.thrift</groupId>
                 <artifactId>libthrift</artifactId>
                 <version>0.9.1</version>
@@ -205,6 +223,40 @@
                         -->
                         <excludeFilterFile>src/findbugs/findbugs-exclude-filter.xml</excludeFilterFile>
                     </configuration>
+                </plugin>
+                <plugin>
+                  <groupId>com.ning.maven.plugins</groupId>
+                  <artifactId>maven-duplicate-finder-plugin</artifactId>
+                  <configuration>
+                    <exceptions>
+                      <exception>
+                        <conflictingDependencies>
+                          <dependency>
+                            <groupId>commons-beanutils</groupId>
+                            <artifactId>commons-beanutils</artifactId>
+                          </dependency>
+                          <dependency>
+                            <groupId>commons-beanutils</groupId>
+                            <artifactId>commons-beanutils-core</artifactId>
+                          </dependency>
+                          <dependency>
+                            <groupId>commons-collections</groupId>
+                            <artifactId>commons-collections</artifactId>
+                          </dependency>
+                        </conflictingDependencies>
+                        <!-- Well done, Apache! -->
+                        <classes>
+                          <class>org.apache.commons.collections.ArrayStack</class>
+                          <class>org.apache.commons.collections.Buffer</class>
+                          <class>org.apache.commons.collections.BufferUnderflowException</class>
+                          <class>org.apache.commons.collections.FastHashMap</class>
+                        </classes>
+                        <!-- <packages> -->
+                        <!--   <package>org.apache.commons.beanutils</package> -->
+                        <!-- </packages> -->
+                      </exception>
+                    </exceptions>
+                  </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
