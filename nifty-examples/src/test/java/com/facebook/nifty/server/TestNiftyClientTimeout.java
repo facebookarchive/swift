@@ -17,6 +17,7 @@ package com.facebook.nifty.server;
 
 import com.facebook.nifty.client.FramedClientChannel;
 import com.facebook.nifty.client.FramedClientConnector;
+import com.facebook.nifty.client.NettyClientConfigBuilder;
 import com.facebook.nifty.client.NiftyClient;
 import com.facebook.nifty.test.scribe;
 import com.google.common.base.Throwables;
@@ -65,7 +66,8 @@ public class TestNiftyClientTimeout
     {
         ServerSocket serverSocket = new ServerSocket(0);
         int port = serverSocket.getLocalPort();
-        final NiftyClient client = new NiftyClient();
+        NettyClientConfigBuilder builder = new NettyClientConfigBuilder().setBossThreadCount(1).setWorkerThreadCount(1);
+        final NiftyClient client = new NiftyClient(builder.build());
         try {
                 client.connectSync(scribe.Client.class,
                                    new FramedClientConnector(new InetSocketAddress(port)),

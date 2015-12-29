@@ -85,15 +85,15 @@ public class HttpClientChannel extends AbstractClientChannel {
         HttpRequest httpRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
                                                          endpointUri);
 
-        httpRequest.setHeader(HttpHeaders.HOST, hostName);
-        httpRequest.setHeader(HttpHeaders.CONTENT_LENGTH, request.readableBytes());
-        httpRequest.setHeader(HttpHeaders.CONTENT_TYPE, "application/x-thrift");
-        httpRequest.setHeader(HttpHeaders.ACCEPT, "application/x-thrift");
-        httpRequest.setHeader(HttpHeaders.USER_AGENT, "Java/Swift-HttpThriftClientChannel");
+        httpRequest.headers().add(HttpHeaders.HOST, hostName);
+        httpRequest.headers().add(HttpHeaders.CONTENT_LENGTH, request.readableBytes());
+        httpRequest.headers().add(HttpHeaders.CONTENT_TYPE, "application/x-thrift");
+        httpRequest.headers().add(HttpHeaders.ACCEPT, "application/x-thrift");
+        httpRequest.headers().add(HttpHeaders.USER_AGENT, "Java/Swift-HttpThriftClientChannel");
 
         if (headerDictionary != null) {
             for (Map.Entry<String, String> entry : headerDictionary.entrySet()) {
-                httpRequest.setHeader(entry.getKey(), entry.getValue());
+                httpRequest.headers().add(entry.getKey(), entry.getValue());
             }
         }
 
