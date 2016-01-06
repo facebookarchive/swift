@@ -99,7 +99,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
             messageBuffer.resetReaderIndex();
             return message.seqid;
         } catch (Throwable t) {
-            throw new TTransportException("Could not find sequenceId in Thrift message");
+            throw new TTransportException("Could not find sequenceId in Thrift message", t);
         }
     }
 
@@ -433,7 +433,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
                     sendTimeout = timer.newTimeout(sendTimeoutTask, sendTimeoutMs, TimeUnit.MILLISECONDS);
                 }
                 catch (IllegalStateException e) {
-                    throw new TTransportException("Unable to schedule send timeout");
+                    throw new TTransportException("Unable to schedule send timeout", e);
                 }
                 request.setSendTimeout(sendTimeout);
             }
@@ -457,7 +457,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
                     timeout = timer.newTimeout(receiveTimeoutTask, receiveTimeoutMs, TimeUnit.MILLISECONDS);
                 }
                 catch (IllegalStateException e) {
-                    throw new TTransportException("Unable to schedule request timeout");
+                    throw new TTransportException("Unable to schedule request timeout", e);
                 }
                 request.setReceiveTimeout(timeout);
             }
@@ -473,7 +473,7 @@ public abstract class AbstractClientChannel extends SimpleChannelHandler impleme
                     timeout = timer.newTimeout(readTimeoutTask, readTimeoutNanos, TimeUnit.NANOSECONDS);
                 }
                 catch (IllegalStateException e) {
-                    throw new TTransportException("Unable to schedule read timeout");
+                    throw new TTransportException("Unable to schedule read timeout", e);
                 }
                 request.setReadTimeout(timeout);
             }

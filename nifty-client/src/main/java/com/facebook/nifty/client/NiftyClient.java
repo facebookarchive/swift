@@ -343,7 +343,7 @@ public class NiftyClient implements Closeable
                 addr.getHostName(),
                 addr.getPort(),
                 socksProxyAddress == null ? "" : "via socks proxy at " + socksProxyAddress
-        ));
+        ), f.getCause());
     }
 
     @Override
