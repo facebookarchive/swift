@@ -31,7 +31,7 @@ public final class BonkBean
         this.type = type;
     }
 
-    @ThriftField(1)
+    @ThriftField(value = 1, idlAnnotations = { @ThriftIdlAnnotation(key = "testkey", value = "testvalue") })
     public String getMessage()
     {
         return message;

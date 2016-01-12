@@ -20,9 +20,12 @@ import com.facebook.swift.codec.BonkBuilder;
 import com.facebook.swift.codec.BonkConstructor;
 import com.facebook.swift.codec.BonkField;
 import com.facebook.swift.codec.BonkMethod;
+import com.facebook.swift.codec.ThriftIdlAnnotation;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata.MetadataType;
 
 import org.testng.annotations.Test;
+
+import java.util.Map;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
@@ -118,6 +121,15 @@ public class TestThriftStructMetadata
         verifyMethodExtraction(metadata, 1, "message", "getMessage");
         verifyParameterInjection(metadata, 2, "type", 0);
         verifyMethodExtraction(metadata, 2, "type", "getType");
+    }
+
+    @Test
+    public void testFieldIdlAnnotations()
+    {
+        ThriftStructMetadata metadata = testMetadataBuild(BonkBean.class, 0, 2);
+        Map<String, String> idlAnnotations = metadata.getField(1).getIdlAnnotations();
+        assertTrue(idlAnnotations.size() == 1);
+        assertTrue(idlAnnotations.get("testkey").equals("testvalue"));
     }
 
     private ThriftStructMetadata testMetadataBuild(Class<?> structClass, int expectedConstructorParameters, int expectedMethodInjections)
