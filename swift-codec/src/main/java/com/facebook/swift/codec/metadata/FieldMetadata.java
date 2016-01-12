@@ -16,12 +16,16 @@
 package com.facebook.swift.codec.metadata;
 
 import com.facebook.swift.codec.ThriftField;
+import com.facebook.swift.codec.ThriftIdlAnnotation;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableMap;
+
 import javax.annotation.Nullable;
 
 import java.lang.reflect.Type;
+import java.util.Map;
 
 import static com.facebook.swift.codec.ThriftField.Requiredness;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -32,6 +36,7 @@ abstract class FieldMetadata
     private Boolean isLegacyId;
     private String name;
     private Requiredness requiredness;
+    private Map<String, String> idlAnnotations;
     private final FieldKind type;
 
     protected FieldMetadata(ThriftField annotation, FieldKind type)
@@ -49,6 +54,12 @@ abstract class FieldMetadata
                         name = annotation.name();
                     }
                     requiredness = checkNotNull(annotation.requiredness());
+
+                    ImmutableMap.Builder<String, String> annotationMapBuilder = ImmutableMap.builder();
+                    for (ThriftIdlAnnotation idlAnnotation : annotation.idlAnnotations()) {
+                        annotationMapBuilder.put(idlAnnotation.key(), idlAnnotation.value());
+                    }
+                    idlAnnotations = annotationMapBuilder.build();
                 }
                 break;
             case THRIFT_UNION_ID:
@@ -90,6 +101,16 @@ abstract class FieldMetadata
     public void setName(String name)
     {
         this.name = name;
+    }
+
+    public Map<String, String> getIdlAnnotations()
+    {
+        return idlAnnotations;
+    }
+
+    public void setIdlAnnotations(Map<String, String> idlAnnotations)
+    {
+        this.idlAnnotations = idlAnnotations;
     }
 
     public FieldKind getType()
@@ -167,6 +188,21 @@ abstract class FieldMetadata
                 }
 
                 return Optional.fromNullable(value);
+            }
+        };
+    }
+
+    static <T extends FieldMetadata> Function<T, Map<String, String>> getThriftFieldIdlAnnotations()
+    {
+        return new Function<T, Map<String, String>>()
+        {
+            @Override
+            public Map<String, String> apply(@Nullable T input)
+            {
+                if (input == null) {
+                    return null;
+                }
+                return input.getIdlAnnotations();
             }
         };
     }

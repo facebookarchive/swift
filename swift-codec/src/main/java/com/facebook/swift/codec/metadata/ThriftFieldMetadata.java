@@ -19,10 +19,12 @@ import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 import javax.annotation.concurrent.Immutable;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static com.facebook.swift.codec.ThriftField.Requiredness;
@@ -41,6 +43,7 @@ public class ThriftFieldMetadata
     private final String name;
     private final FieldKind fieldKind;
     private final List<ThriftInjection> injections;
+    private final Map<String, String> idlAnnotations;
     private final Optional<ThriftConstructorInjection> constructorInjection;
     private final Optional<ThriftMethodInjection> methodInjection;
     private final Optional<ThriftExtraction> extraction;
@@ -52,6 +55,7 @@ public class ThriftFieldMetadata
             short id,
             boolean isLegacyId,
             Requiredness requiredness,
+            Map<String, String> idlAnnotations,
             ThriftType thriftType,
             String name,
             FieldKind fieldKind,
@@ -109,6 +113,8 @@ public class ThriftFieldMetadata
             // no extraction = no documentation
             this.documentation = ImmutableList.of();
         }
+
+        this.idlAnnotations = idlAnnotations;
     }
 
     public short getId()
@@ -131,6 +137,13 @@ public class ThriftFieldMetadata
     public FieldKind getType()
     {
         return fieldKind;
+    }
+
+    public Map<String, String> getIdlAnnotations()
+    {
+        ImmutableMap.Builder<String, String> annotationsBuilder = ImmutableMap.builder();
+        annotationsBuilder.putAll(idlAnnotations);
+        return annotationsBuilder.build();
     }
 
     public boolean isInternal()
