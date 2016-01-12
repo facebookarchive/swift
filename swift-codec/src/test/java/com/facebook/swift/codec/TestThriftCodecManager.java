@@ -39,7 +39,6 @@ import org.testng.annotations.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 
 import static com.facebook.swift.codec.metadata.ThriftType.BOOL;

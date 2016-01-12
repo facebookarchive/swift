@@ -418,7 +418,7 @@ public class Swift2ThriftGenerator
         try {
             return getClassLoader().loadClass(className);
         } catch (ClassNotFoundException e) {
-            LOG.warn("Couldn't load class %s", className);
+            LOG.warn("Couldn't load class %s (%s)", className, e);
         }
         return null;
     }

@@ -45,7 +45,7 @@ public @interface ThriftField
      * Indicates the behavior for a field when a value is not received, or when the value
      * of the field is not set when sending.
      */
-    public static enum Requiredness
+    enum Requiredness
     {
         /**
          * This is the default (unset) value for {@link ThriftField#requiredness()}. It will not

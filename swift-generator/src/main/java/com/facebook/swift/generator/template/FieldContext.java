@@ -57,8 +57,8 @@ public class FieldContext
     {
         return requiredness;
     }
-    
-    public boolean isLegacyId() 
+
+    public boolean isLegacyId()
     {
         return id < 0;
     }

@@ -39,7 +39,7 @@ public interface ThriftCodec<T>
      *
      * @param protocol the protocol to read from
      * @return the value; not null
-     * @throws Exception if any problems occurred when reading or coercing  the value
+     * @throws Exception if any problems occurred when reading or coercing the value
      */
     public T read(TProtocol protocol)
             throws Exception;
@@ -49,7 +49,7 @@ public interface ThriftCodec<T>
      *
      * @param value the value to write; not null
      * @param protocol the protocol to write to
-     * @throws Exception if any problems occurred when writing or coercing  the value
+     * @throws Exception if any problems occurred when writing or coercing the value
      */
     public void write(T value, TProtocol protocol)
             throws Exception;
