@@ -20,9 +20,15 @@ import com.facebook.swift.codec.BonkBuilder;
 import com.facebook.swift.codec.BonkConstructor;
 import com.facebook.swift.codec.BonkField;
 import com.facebook.swift.codec.BonkMethod;
+import com.facebook.swift.codec.ThriftIdlAnnotation;
+import com.facebook.swift.codec.idlannotations.BeanWIthConflictingIdlAnnotationMapsForField;
+import com.facebook.swift.codec.idlannotations.BeanWithMatchingIdlAnnotationsMapsForField;
+import com.facebook.swift.codec.idlannotations.BeanWithOneIdlAnnotationMapForField;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata.MetadataType;
 
 import org.testng.annotations.Test;
+
+import java.util.Map;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
@@ -118,6 +124,41 @@ public class TestThriftStructMetadata
         verifyMethodExtraction(metadata, 1, "message", "getMessage");
         verifyParameterInjection(metadata, 2, "type", 0);
         verifyMethodExtraction(metadata, 2, "type", "getType");
+    }
+
+    @Test
+    public void testFieldWithOneIdlAnnotationMap()
+    {
+        /**
+         * Single field with IDL annotation map on getter, but not on setter: should be okay
+         */
+        ThriftStructMetadata metadata = testMetadataBuild(BeanWithOneIdlAnnotationMapForField.class, 0, 1);
+        Map<String, String> idlAnnotations = metadata.getField(2).getIdlAnnotations();
+        assertEquals(idlAnnotations.size(), 2);
+        assertEquals(idlAnnotations.get("testkey1"), "testvalue1");
+        assertEquals(idlAnnotations.get("testkey2"), "testvalue2");
+    }
+
+    @Test
+    public void testFieldWithMatchingIdlAnnotationMaps()
+    {
+        /**
+         * Single field with matching IDL annotation maps on setter vs getter: should be okay
+         */
+        ThriftStructMetadata metadata = testMetadataBuild(BeanWithMatchingIdlAnnotationsMapsForField.class, 0, 1);
+        Map<String, String> idlAnnotations = metadata.getField(2).getIdlAnnotations();
+        assertEquals(idlAnnotations.size(), 2);
+        assertEquals(idlAnnotations.get("testkey1"), "testvalue1");
+        assertEquals(idlAnnotations.get("testkey2"), "testvalue2");
+    }
+
+    @Test(expectedExceptions = MetadataErrorException.class)
+    public void testFieldWithConflictingIdlAnnotationMap()
+    {
+        /**
+         * Single field with conflicting IDL annotation maps on setter vs getter: should fail
+         */
+        testMetadataBuild(BeanWIthConflictingIdlAnnotationMapsForField.class, 0, 1);
     }
 
     private ThriftStructMetadata testMetadataBuild(Class<?> structClass, int expectedConstructorParameters, int expectedMethodInjections)
