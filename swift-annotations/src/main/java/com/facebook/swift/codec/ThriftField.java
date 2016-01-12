@@ -41,6 +41,8 @@ public @interface ThriftField
 
     Requiredness requiredness() default Requiredness.UNSPECIFIED;
 
+    ThriftIdlAnnotation[] idlAnnotations() default {};
+
     /**
      * Indicates the behavior for a field when a value is not received, or when the value
      * of the field is not set when sending.

@@ -29,6 +29,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import static com.facebook.swift.codec.ThriftField.Requiredness;
 import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_UNION_ID;
@@ -200,6 +201,7 @@ public class ThriftUnionMetadataBuilder
         boolean isLegacyId = false;
         String name = null;
         Requiredness requiredness = Requiredness.UNSPECIFIED;
+        Map<String, String> idlAnnotations = null;
         FieldKind fieldType = FieldKind.THRIFT_FIELD;
         ThriftType thriftType = null;
         ThriftConstructorInjection thriftConstructorInjection = null;
@@ -213,6 +215,7 @@ public class ThriftUnionMetadataBuilder
             isLegacyId = fieldMetadata.isLegacyId();
             name = fieldMetadata.getName();
             requiredness = fieldMetadata.getRequiredness();
+            idlAnnotations = fieldMetadata.getIdlAnnotations();
             fieldType = fieldMetadata.getType();
             thriftType = catalog.getThriftType(fieldMetadata.getJavaType());
 
@@ -277,6 +280,7 @@ public class ThriftUnionMetadataBuilder
                 id,
                 isLegacyId,
                 requiredness,
+                idlAnnotations,
                 thriftType,
                 name,
                 fieldType,

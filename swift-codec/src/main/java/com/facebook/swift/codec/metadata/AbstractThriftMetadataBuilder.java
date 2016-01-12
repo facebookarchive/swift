@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.reflect.TypeToken;
@@ -43,6 +44,7 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -522,6 +524,11 @@ public abstract class AbstractThriftMetadataBuilder
                 field.setIsLegacyId(isLegacyId);
             }
 
+            Map<String, String> idlAnnotations = extractFieldIdlAnnotations(fieldId, fieldName, fields);
+            for (FieldMetadata field : fields) {
+                field.setIdlAnnotations(idlAnnotations);
+            }
+
             // verify fields have a supported java type and all fields
             // for this ID have the same thrift type
             verifyFieldType(fieldId, fieldName, fields, catalog);
@@ -588,6 +595,27 @@ public abstract class AbstractThriftMetadataBuilder
                 }
             }
         }
+    }
+
+    protected final Map<String, String> extractFieldIdlAnnotations(short fieldId, String fieldName, Collection<FieldMetadata> fields)
+    {
+        Set<Map<String, String>> idlAnnotationMaps = ImmutableSet.copyOf(filter(transform(fields, getThriftFieldIdlAnnotations()), new Predicate<Map<String, String>>()
+        {
+            @Override
+            public boolean apply(@Nullable Map<String, String> input)
+            {
+                return (input != null) && (!input.isEmpty());
+            }
+        }));
+
+        if (idlAnnotationMaps.isEmpty()) {
+            return Maps.newHashMap();
+        }
+
+        if (idlAnnotationMaps.size() > 1) {
+            metadataErrors.addError("Thrift class '%s' field '%s' has conflicting IDL annotation maps", structName, fieldId);
+        }
+        return idlAnnotationMaps.iterator().next();
     }
 
     protected final boolean extractFieldIsLegacyId(short id, String fieldName, Collection<FieldMetadata> fields)
