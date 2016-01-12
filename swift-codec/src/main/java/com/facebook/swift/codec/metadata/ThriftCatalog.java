@@ -119,9 +119,9 @@ public class ThriftCatalog
     }
 
     /**
-     * Add the @ToThrift and @FromThrift coercions in the specified class to this catalog.  All
-     * coercions must be symmetrical, so ever @ToThrift method must have a corresponding @FromThrift
-     * method.
+     * Add the @ToThrift and @FromThrift coercions in the specified class to this catalog.
+     * All coercions must be symmetrical, so every @ToThrift method must have a
+     * corresponding @FromThrift method.
      */
     public void addDefaultCoercions(Class<?> coercionsClass)
     {
@@ -291,6 +291,8 @@ public class ThriftCatalog
 
         if (ListenableFuture.class.isAssignableFrom(rawType)) {
             Type returnType = getFutureReturnType(javaType);
+            // TODO: check that we aren't recursing through multiple futures
+            // TODO: find a way to restrict this to return values only
             return getThriftType(returnType);
         }
 

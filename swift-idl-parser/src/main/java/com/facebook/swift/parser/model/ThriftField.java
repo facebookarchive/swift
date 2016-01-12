@@ -27,7 +27,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class ThriftField implements Visitable
 {
-    public static enum Requiredness
+    public enum Requiredness
     {
         REQUIRED, OPTIONAL, NONE
     }
