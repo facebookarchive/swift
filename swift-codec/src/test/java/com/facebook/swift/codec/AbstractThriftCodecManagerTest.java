@@ -27,10 +27,21 @@ import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
 import com.facebook.swift.codec.metadata.ThriftCatalog;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
 import com.facebook.swift.codec.metadata.ThriftType;
+import com.facebook.swift.codec.recursion.CoRecursive;
+import com.facebook.swift.codec.recursion.CoRecursiveHelper;
+import com.facebook.swift.codec.recursion.CoRecursiveTree;
+import com.facebook.swift.codec.recursion.CoRecursiveTreeHelper;
+import com.facebook.swift.codec.recursion.RecursiveUnion;
+import com.facebook.swift.codec.recursion.ViaListElementType;
+import com.facebook.swift.codec.recursion.ViaMapKeyAndValueTypes;
+import com.facebook.swift.codec.recursion.ViaNestedListElementType;
+import com.facebook.swift.codec.recursion.WithSwiftRecursiveAnnotation;
+import com.facebook.swift.codec.recursion.WithoutRecursiveAnnotation;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TJSONProtocol;
@@ -425,6 +436,138 @@ public abstract class AbstractThriftCodecManagerTest
         fieldObject.concreteField = "concreteValue";
 
         testRoundTripSerialize(fieldObject, new TCompactProtocol.Factory());
+    }
+
+    @Test
+    public void testRecursiveStructWithSwiftAnnotation()
+            throws Exception
+    {
+        WithSwiftRecursiveAnnotation recursiveObject = new WithSwiftRecursiveAnnotation();
+        recursiveObject.data = "parent";
+        recursiveObject.child = new WithSwiftRecursiveAnnotation();
+        recursiveObject.child.data = "child";
+        recursiveObject.child.child = new WithSwiftRecursiveAnnotation();
+        recursiveObject.child.child.data = "grandchild";
+        testRoundTripSerialize(recursiveObject, new TCompactProtocol.Factory());
+    }
+
+    @Test(expectedExceptions = {IllegalArgumentException.class})
+    public void testRecursiveStructWithoutRecursiveAnnotation()
+            throws Exception
+    {
+        WithoutRecursiveAnnotation recursiveObject = new WithoutRecursiveAnnotation();
+        recursiveObject.data = "parent";
+        recursiveObject.child = new WithoutRecursiveAnnotation();
+        recursiveObject.child.data = "child";
+        recursiveObject.child.child = new WithoutRecursiveAnnotation();
+        recursiveObject.child.child.data = "grandchild";
+        testRoundTripSerialize(recursiveObject, new TCompactProtocol.Factory());
+    }
+
+    @Test
+    public void testStructWithRecursionViaListElementTypes()
+            throws Exception
+    {
+        ViaListElementType recursiveObject = new ViaListElementType();
+        recursiveObject.data = "parent";
+        recursiveObject.children = Lists.newArrayList(new ViaListElementType());
+        recursiveObject.children.get(0).data = "child";
+        recursiveObject.children.get(0).children = Lists.newArrayList(new ViaListElementType());
+        recursiveObject.children.get(0).children.get(0).data = "grandchild";
+        testRoundTripSerialize(recursiveObject, new TCompactProtocol.Factory());
+    }
+
+    @Test
+    public void testStructWithRecursionViaNestedListElementTypes()
+            throws Exception
+    {
+        ViaNestedListElementType recursiveObject = new ViaNestedListElementType();
+        recursiveObject.data = "parent";
+        recursiveObject.children = ImmutableList.of(Lists.newArrayList());
+
+        ViaNestedListElementType child = new ViaNestedListElementType();
+        child.data = "child";
+        recursiveObject.children.get(0).add(child);
+        child.children = ImmutableList.of(Lists.newArrayList());
+
+        ViaNestedListElementType grandChild = new ViaNestedListElementType();
+        grandChild.data = "grandchild";
+        child.children.get(0).add(grandChild);
+
+        testRoundTripSerialize(recursiveObject, new TCompactProtocol.Factory());
+    }
+
+    @Test void testStructWithRecursionViaMapKeyAndValueTypes()
+            throws Exception
+    {
+        ViaMapKeyAndValueTypes recursiveObject = new ViaMapKeyAndValueTypes();
+        recursiveObject.data = "parent";
+        ViaMapKeyAndValueTypes keyChild = new ViaMapKeyAndValueTypes();
+        keyChild.data = "keychild";
+        ViaMapKeyAndValueTypes valueChild = new ViaMapKeyAndValueTypes();
+        valueChild.data = "valuechild";
+        recursiveObject.children = ImmutableMap.of(keyChild, valueChild);
+        testRoundTripSerialize(recursiveObject, new TCompactProtocol.Factory());
+    }
+
+    @Test void testCoRecursive()
+            throws Exception
+    {
+        CoRecursive recursiveObject = new CoRecursive();
+        recursiveObject.data = "parent";
+        recursiveObject.child = new CoRecursiveHelper();
+        recursiveObject.child.data = "child";
+        recursiveObject.child.child = new CoRecursive();
+        recursiveObject.child.child.data = "grandchild";
+        testRoundTripSerialize(recursiveObject, new TCompactProtocol.Factory());
+    }
+
+    @Test void testCoRecursiveStartingAtHelper()
+            throws Exception
+    {
+        CoRecursiveHelper recursiveObject = new CoRecursiveHelper();
+        recursiveObject.data = "parent";
+        recursiveObject.child = new CoRecursive();
+        recursiveObject.child.data = "child";
+        recursiveObject.child.child = new CoRecursiveHelper();
+        recursiveObject.child.child.data = "grandchild";
+        testRoundTripSerialize(recursiveObject, new TCompactProtocol.Factory());
+    }
+
+    @Test void testCoRecursiveTree()
+            throws Exception
+    {
+        {
+            CoRecursiveTree recursiveLeaf = new CoRecursiveTree();
+            recursiveLeaf.data = "grandchild";
+            CoRecursiveTreeHelper recursiveNode = new CoRecursiveTreeHelper();
+            recursiveNode.data = "child";
+            recursiveNode.child = recursiveLeaf;
+            CoRecursiveTree recursiveRoot = new CoRecursiveTree();
+            recursiveRoot.data = "root";
+            recursiveRoot.children = Lists.newArrayList(recursiveNode);
+            testRoundTripSerialize(recursiveRoot, new TCompactProtocol.Factory());
+        }
+
+        {
+            CoRecursiveTreeHelper recursiveLeaf = new CoRecursiveTreeHelper();
+            recursiveLeaf.data = "grandchild";
+            CoRecursiveTree recursiveNode = new CoRecursiveTree();
+            recursiveNode.data = "child";
+            recursiveNode.children = Lists.newArrayList(recursiveLeaf);
+            CoRecursiveTreeHelper recursiveRoot = new CoRecursiveTreeHelper();
+            recursiveRoot.data = "root";
+            recursiveRoot.child = recursiveNode;
+            testRoundTripSerialize(recursiveRoot, new TCompactProtocol.Factory());
+        }
+    }
+
+    @Test
+    public void testRecursiveUnion()
+            throws Exception
+    {
+        RecursiveUnion recursiveUnion = new RecursiveUnion(new RecursiveUnion("child"));
+        testRoundTripSerialize(recursiveUnion, new TCompactProtocol.Factory());
     }
 
     private void assertAllFieldsSet(IsSetBean isSetBean, boolean expected)
