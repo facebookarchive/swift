@@ -27,6 +27,7 @@ import javax.annotation.Nullable;
 import java.lang.reflect.Type;
 import java.util.Map;
 
+import static com.facebook.swift.codec.ThriftField.RECURSIVE_REFERENCE_ANNOTATION_NAME;
 import static com.facebook.swift.codec.ThriftField.Requiredness;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -73,6 +74,9 @@ abstract class FieldMetadata
                             default:
                                 throw new IllegalStateException("Unexpected get for isRecursive field");
                         }
+                    }
+                    else if (idlAnnotations.containsKey(RECURSIVE_REFERENCE_ANNOTATION_NAME)) {
+                        isRecursiveReference = "true".equalsIgnoreCase(idlAnnotations.getOrDefault(RECURSIVE_REFERENCE_ANNOTATION_NAME, "false"));
                     }
                 }
                 break;
