@@ -27,6 +27,7 @@ import com.facebook.swift.codec.internal.compiler.byteCode.LocalVariableDefiniti
 import com.facebook.swift.codec.internal.compiler.byteCode.MethodDefinition;
 import com.facebook.swift.codec.internal.compiler.byteCode.NamedParameterDefinition;
 import com.facebook.swift.codec.internal.compiler.byteCode.ParameterizedType;
+import com.facebook.swift.codec.metadata.DefaultThriftTypeReference;
 import com.facebook.swift.codec.metadata.FieldKind;
 import com.facebook.swift.codec.metadata.ReflectionHelper;
 import com.facebook.swift.codec.metadata.ThriftConstructorInjection;
@@ -40,6 +41,7 @@ import com.facebook.swift.codec.metadata.ThriftMethodInjection;
 import com.facebook.swift.codec.metadata.ThriftParameterInjection;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
 import com.facebook.swift.codec.metadata.ThriftType;
+import com.facebook.swift.codec.metadata.ThriftTypeReference;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -1142,11 +1144,16 @@ public class ThriftCodecByteCodeGenerator<T>
 
     public static ParameterizedType toParameterizedType(ThriftType type)
     {
-        if (ReflectionHelper.isArray(type.getJavaType())) {
-            return type((Class<?>) type.getJavaType());
+        return toParameterizedType(new DefaultThriftTypeReference(type));
+    }
+
+    public static ParameterizedType toParameterizedType(ThriftTypeReference typeRef)
+    {
+        if (ReflectionHelper.isArray(typeRef.getJavaType())) {
+            return type((Class<?>) typeRef.getJavaType());
         }
 
-        switch (type.getProtocolType()) {
+        switch (typeRef.getProtocolType()) {
             case BOOL:
             case BYTE:
             case DOUBLE:
@@ -1157,15 +1164,15 @@ public class ThriftCodecByteCodeGenerator<T>
             case BINARY:
             case STRUCT:
             case ENUM:
-                return type((Class<?>) type.getJavaType());
+                return type((Class<?>) typeRef.getJavaType());
             case MAP:
-                return type(Map.class, toParameterizedType(type.getKeyType()), toParameterizedType(type.getValueType()));
+                return type(Map.class, toParameterizedType(typeRef.get().getKeyTypeReference()), toParameterizedType(typeRef.get().getValueTypeReference()));
             case SET:
-                return type(Set.class, toParameterizedType(type.getValueType()));
+                return type(Set.class, toParameterizedType(typeRef.get().getValueTypeReference()));
             case LIST:
-                return type(List.class, toParameterizedType(type.getValueType()));
+                return type(List.class, toParameterizedType(typeRef.get().getValueTypeReference()));
             default:
-                throw new IllegalArgumentException("Unsupported thrift field type " + type);
+                throw new IllegalArgumentException("Unsupported thrift field type " + typeRef.getJavaType());
         }
     }
 

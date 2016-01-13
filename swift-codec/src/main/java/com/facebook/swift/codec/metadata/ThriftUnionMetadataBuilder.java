@@ -203,7 +203,7 @@ public class ThriftUnionMetadataBuilder
         Requiredness requiredness = Requiredness.UNSPECIFIED;
         Map<String, String> idlAnnotations = null;
         FieldKind fieldType = FieldKind.THRIFT_FIELD;
-        ThriftType thriftType = null;
+        ThriftTypeReference thriftTypeReference = null;
         ThriftConstructorInjection thriftConstructorInjection = null;
         ThriftMethodInjection thriftMethodInjection = null;
 
@@ -217,7 +217,7 @@ public class ThriftUnionMetadataBuilder
             requiredness = fieldMetadata.getRequiredness();
             idlAnnotations = fieldMetadata.getIdlAnnotations();
             fieldType = fieldMetadata.getType();
-            thriftType = catalog.getThriftType(fieldMetadata.getJavaType());
+            thriftTypeReference = catalog.getFieldThriftTypeReference(fieldMetadata);
 
             switch (requiredness) {
                 case REQUIRED:
@@ -272,8 +272,8 @@ public class ThriftUnionMetadataBuilder
 
         // add type coercion
         TypeCoercion coercion = null;
-        if (thriftType.isCoerced()) {
-            coercion = catalog.getDefaultCoercion(thriftType.getJavaType());
+        if (!thriftTypeReference.isRecursive() && thriftTypeReference.get().isCoerced()) {
+            coercion = catalog.getDefaultCoercion(thriftTypeReference.get().getJavaType());
         }
 
         ThriftFieldMetadata thriftFieldMetadata = new ThriftFieldMetadata(
@@ -281,7 +281,7 @@ public class ThriftUnionMetadataBuilder
                 isLegacyId,
                 requiredness,
                 idlAnnotations,
-                thriftType,
+                thriftTypeReference,
                 name,
                 fieldType,
                 injections.build(),

@@ -39,7 +39,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class ThriftFieldMetadata
 {
     private final short id;
-    private final ThriftType thriftType;
+    private final ThriftTypeReference thriftTypeReference;
     private final String name;
     private final FieldKind fieldKind;
     private final List<ThriftInjection> injections;
@@ -56,7 +56,7 @@ public class ThriftFieldMetadata
             boolean isLegacyId,
             Requiredness requiredness,
             Map<String, String> idlAnnotations,
-            ThriftType thriftType,
+            ThriftTypeReference thriftTypeReference,
             String name,
             FieldKind fieldKind,
             List<ThriftInjection> injections,
@@ -67,7 +67,7 @@ public class ThriftFieldMetadata
     )
     {
         this.requiredness = requiredness;
-        this.thriftType= checkNotNull(thriftType, "thriftType is null");
+        this.thriftTypeReference = checkNotNull(thriftTypeReference, "thriftType is null");
         this.fieldKind = checkNotNull(fieldKind, "type is null");
         this.name = checkNotNull(name, "name is null");
         this.injections = ImmutableList.copyOf(checkNotNull(injections, "injections is null"));
@@ -124,7 +124,7 @@ public class ThriftFieldMetadata
 
     public ThriftType getThriftType()
     {
-        return thriftType;
+        return thriftTypeReference.get();
     }
 
     public Requiredness getRequiredness() { return requiredness; }
@@ -206,7 +206,7 @@ public class ThriftFieldMetadata
         final StringBuilder sb = new StringBuilder();
         sb.append("ThriftFieldMetadata");
         sb.append("{id=").append(id);
-        sb.append(", thriftType=").append(thriftType);
+        sb.append(", thriftType=").append(thriftTypeReference);
         sb.append(", name='").append(name).append('\'');
         sb.append(", fieldKind=").append(fieldKind);
         sb.append(", injections=").append(injections);
@@ -221,7 +221,7 @@ public class ThriftFieldMetadata
     @Override
     public int hashCode()
     {
-        return Objects.hash(id, thriftType, name);
+        return Objects.hash(id, thriftTypeReference, name);
     }
 
     @Override
@@ -234,7 +234,7 @@ public class ThriftFieldMetadata
             return false;
         }
         final ThriftFieldMetadata other = (ThriftFieldMetadata) obj;
-        return Objects.equals(this.id, other.id) && Objects.equals(this.thriftType, other.thriftType) && Objects.equals(this.name, other.name);
+        return Objects.equals(this.id, other.id) && Objects.equals(this.thriftTypeReference, other.thriftTypeReference) && Objects.equals(this.name, other.name);
     }
 
     public static Function<ThriftFieldMetadata, Short> getIdGetter()

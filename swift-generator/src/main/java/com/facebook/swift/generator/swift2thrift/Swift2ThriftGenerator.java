@@ -362,10 +362,10 @@ public class Swift2ThriftGenerator
     {
         ThriftProtocolType proto = t.getProtocolType();
         if (proto == ThriftProtocolType.SET || proto == ThriftProtocolType.LIST) {
-            return verifyField(t.getValueType());
+            return verifyField(t.getValueTypeReference().get());
         } else if (proto == ThriftProtocolType.MAP) {
             // no short-circuit
-            return verifyField(t.getKeyType()) & verifyField(t.getValueType());
+            return verifyField(t.getKeyTypeReference().get()) & verifyField(t.getValueTypeReference().get());
         } else {
             if (knownTypes.contains(t)) {
                 return true;

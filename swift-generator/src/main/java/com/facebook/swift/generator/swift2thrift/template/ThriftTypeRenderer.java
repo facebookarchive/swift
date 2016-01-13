@@ -47,9 +47,9 @@ public class ThriftTypeRenderer implements AttributeRenderer
             case I32:       return "i32";
             case I64:       return "i64";
             case ENUM:      return prefix(t) + t.getEnumMetadata().getEnumName();
-            case MAP:       return "map<" + toString(t.getKeyType()) + ", " + toString(t.getValueType()) + ">";
-            case SET:       return "set<" + toString(t.getValueType()) + ">";
-            case LIST:      return "list<" + toString(t.getValueType()) + ">";
+            case MAP:       return "map<" + toString(t.getKeyTypeReference().get()) + ", " + toString(t.getValueTypeReference().get()) + ">";
+            case SET:       return "set<" + toString(t.getValueTypeReference().get()) + ">";
+            case LIST:      return "list<" + toString(t.getValueTypeReference().get()) + ">";
             // void is encoded as a struct
             case STRUCT:    return t.equals(ThriftType.VOID) ? "void" : prefix(t) + t.getStructMetadata().getStructName();
             case STRING:    return "string";

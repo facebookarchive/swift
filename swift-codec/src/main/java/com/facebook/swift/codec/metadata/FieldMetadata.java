@@ -34,6 +34,7 @@ abstract class FieldMetadata
 {
     private Short id;
     private Boolean isLegacyId;
+    private Boolean isRecursiveReference;
     private String name;
     private Requiredness requiredness;
     private Map<String, String> idlAnnotations;
@@ -60,6 +61,19 @@ abstract class FieldMetadata
                         annotationMapBuilder.put(idlAnnotation.key(), idlAnnotation.value());
                     }
                     idlAnnotations = annotationMapBuilder.build();
+
+                    if (annotation.isRecursive() != ThriftField.Recursiveness.UNSPECIFIED) {
+                        switch (annotation.isRecursive()) {
+                            case TRUE:
+                                isRecursiveReference = true;
+                                break;
+                            case FALSE:
+                                isRecursiveReference = false;
+                                break;
+                            default:
+                                throw new IllegalStateException("Unexpected get for isRecursive field");
+                        }
+                    }
                 }
                 break;
             case THRIFT_UNION_ID:
@@ -207,6 +221,21 @@ abstract class FieldMetadata
         };
     }
 
+    static <T extends FieldMetadata> Function<T, Boolean> getThriftFieldIsRecursiveReference()
+    {
+        return new Function<T, Boolean>()
+        {
+            @Override
+            public Boolean apply(@Nullable T input)
+            {
+                if (input == null) {
+                    return null;
+                }
+                return input.isRecursiveReference();
+            }
+        };
+    }
+
     static <T extends FieldMetadata> Function<T, String> getThriftFieldName()
     {
         return new Function<T, String>()
@@ -291,5 +320,15 @@ abstract class FieldMetadata
     public void setRequiredness(Requiredness requiredness)
     {
         this.requiredness = requiredness;
+    }
+
+    public @Nullable Boolean isRecursiveReference()
+    {
+        return isRecursiveReference;
+    }
+
+    public void setIsRecursiveReference(Boolean isRecursiveReference)
+    {
+        this.isRecursiveReference = isRecursiveReference;
     }
 }

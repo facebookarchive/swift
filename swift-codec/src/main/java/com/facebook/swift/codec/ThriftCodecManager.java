@@ -38,6 +38,7 @@ import com.facebook.swift.codec.internal.coercion.CoercionThriftCodec;
 import com.facebook.swift.codec.internal.compiler.CompilerThriftCodecFactory;
 import com.facebook.swift.codec.metadata.ThriftCatalog;
 import com.facebook.swift.codec.metadata.ThriftType;
+import com.facebook.swift.codec.metadata.ThriftTypeReference;
 import com.facebook.swift.codec.metadata.TypeCoercion;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -56,8 +57,12 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Type;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * ThriftCodecManager contains an index of all known ThriftCodec and can create codecs for
@@ -69,6 +74,14 @@ public class ThriftCodecManager
 {
     private final ThriftCatalog catalog;
     private final LoadingCache<ThriftType, ThriftCodec<?>> typeCodecs;
+    private final ThreadLocal<Deque<ThriftType>> stack = new ThreadLocal<Deque<ThriftType>>()
+    {
+        @Override
+        protected Deque<ThriftType> initialValue()
+        {
+            return new ArrayDeque<>();
+        }
+    };
 
     public ThriftCodecManager(ThriftCodec<?>... codecs)
     {
@@ -108,17 +121,13 @@ public class ThriftCodecManager
                         return factory.generateThriftTypeCodec(ThriftCodecManager.this, type.getStructMetadata());
                     }
                     case MAP: {
-                        ThriftCodec<?> keyCodec = typeCodecs.get(type.getKeyType());
-                        ThriftCodec<?> valueCodec = typeCodecs.get(type.getValueType());
-                        return new MapThriftCodec<>(type, keyCodec, valueCodec);
+                        return new MapThriftCodec<>(type, getElementCodec(type.getKeyTypeReference()), getElementCodec(type.getValueTypeReference()));
                     }
                     case SET: {
-                        ThriftCodec<?> elementCodec = typeCodecs.get(type.getValueType());
-                        return new SetThriftCodec<>(type, elementCodec);
+                        return new SetThriftCodec<>(type, getElementCodec(type.getValueTypeReference()));
                     }
                     case LIST: {
-                        ThriftCodec<?> elementCodec = typeCodecs.get(type.getValueType());
-                        return new ListThriftCodec<>(type, elementCodec);
+                        return new ListThriftCodec<>(type, getElementCodec(type.getValueTypeReference()));
                     }
                     case ENUM: {
                         return new EnumThriftCodec<>(type);
@@ -154,6 +163,17 @@ public class ThriftCodecManager
         }
     }
 
+    public ThriftCodec<?> getElementCodec(ThriftTypeReference thriftTypeReference)
+            throws Exception
+    {
+        if (!stack.get().contains(thriftTypeReference.get())) {
+            return typeCodecs.get(thriftTypeReference.get());
+        }
+        else {
+            return new DelegateCodec<>(this, thriftTypeReference.getJavaType());
+        }
+    }
+
     public ThriftCodec<?> getCodec(Type javaType)
     {
         ThriftType thriftType = catalog.getThriftType(javaType);
@@ -168,20 +188,32 @@ public class ThriftCodecManager
         return (ThriftCodec<T>) getCodec(thriftType);
     }
 
+    public <T> ThriftCodec<T> getCodec(TypeToken<T> type)
+    {
+        return (ThriftCodec<T>) getCodec(type.getType());
+    }
+
     public ThriftCodec<?> getCodec(ThriftType type)
     {
+        if (stack.get().contains(type)) {
+            return new DelegateCodec(this, type.getJavaType());
+        }
+
         try {
+            stack.get().push(type);
             ThriftCodec<?> thriftCodec = typeCodecs.get(type);
             return thriftCodec;
         }
         catch (ExecutionException e) {
             throw Throwables.propagate(e);
         }
-    }
-
-    public <T> ThriftCodec<T> getCodec(TypeToken<T> type)
-    {
-        return (ThriftCodec<T>) getCodec(type.getType());
+        finally {
+            ThriftType top = stack.get().pop();
+            checkState(type.equals(top),
+                       "ThriftCatalog circularity detection stack is corrupt: expected %s, but got %s",
+                       type,
+                       top);
+        }
     }
 
     /**

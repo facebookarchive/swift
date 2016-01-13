@@ -144,7 +144,7 @@ public class ThriftStructMetadataBuilder
         Map<String, String> idlAnnotations = null;
         String name = null;
         Requiredness requiredness = Requiredness.UNSPECIFIED;
-        ThriftType type = null;
+        ThriftTypeReference thriftTypeReference = null;
 
         // process field injections and extractions
         ImmutableList.Builder<ThriftInjection> injections = ImmutableList.builder();
@@ -155,7 +155,7 @@ public class ThriftStructMetadataBuilder
             name = fieldMetadata.getName();
             requiredness = fieldMetadata.getRequiredness();
             idlAnnotations = fieldMetadata.getIdlAnnotations();
-            type = catalog.getThriftType(fieldMetadata.getJavaType());
+            thriftTypeReference = catalog.getFieldThriftTypeReference(fieldMetadata);
 
             if (fieldMetadata instanceof FieldInjection) {
                 FieldInjection fieldInjection = (FieldInjection) fieldMetadata;
@@ -182,8 +182,8 @@ public class ThriftStructMetadataBuilder
 
         // add type coercion
         TypeCoercion coercion = null;
-        if (type.isCoerced()) {
-            coercion = catalog.getDefaultCoercion(type.getJavaType());
+        if (!thriftTypeReference.isRecursive() && thriftTypeReference.get().isCoerced()) {
+            coercion = catalog.getDefaultCoercion(thriftTypeReference.get().getJavaType());
         }
 
         ThriftFieldMetadata thriftFieldMetadata = new ThriftFieldMetadata(
@@ -191,7 +191,7 @@ public class ThriftStructMetadataBuilder
                 isLegacyId,
                 requiredness,
                 idlAnnotations,
-                type,
+                thriftTypeReference,
                 name,
                 THRIFT_FIELD,
                 injections.build(),
