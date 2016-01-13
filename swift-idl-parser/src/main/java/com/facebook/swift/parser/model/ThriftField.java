@@ -19,10 +19,13 @@ import com.facebook.swift.parser.visitor.DocumentVisitor;
 import com.facebook.swift.parser.visitor.Visitable;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
+import com.google.common.collect.Iterables;
 
 import java.io.IOException;
 import java.util.List;
+import com.google.common.base.Predicate;
 
+import static com.facebook.swift.codec.ThriftField.RECURSIVE_REFERENCE_ANNOTATION_NAME;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class ThriftField implements Visitable
@@ -38,6 +41,7 @@ public class ThriftField implements Visitable
     private final Requiredness requiredness;
     private final Optional<ConstValue> value;
     private final List<TypeAnnotation> annotations;
+    private final boolean isRecursiveReference;
 
     public ThriftField(
             String name,
@@ -53,6 +57,13 @@ public class ThriftField implements Visitable
         this.requiredness = checkNotNull(requiredness, "requiredness");
         this.value = Optional.fromNullable(value);
         this.annotations = checkNotNull(annotations, "annotations");
+
+        // Convert swift.recursive_reference annotations to isRecursive, and drop them
+        this.isRecursiveReference = Iterables.removeIf(
+                annotations,
+                annotation ->
+                        annotation.getName().equals(RECURSIVE_REFERENCE_ANNOTATION_NAME) &&
+                        annotation.getValue().equals("true"));
     }
 
     public String getName()
@@ -73,6 +84,11 @@ public class ThriftField implements Visitable
     public Requiredness getRequiredness()
     {
         return requiredness;
+    }
+
+    public boolean isRecursive()
+    {
+        return isRecursiveReference;
     }
 
     public Optional<ConstValue> getValue()

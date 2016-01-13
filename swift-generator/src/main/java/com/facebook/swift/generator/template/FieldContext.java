@@ -26,6 +26,7 @@ public class FieldContext
     private final String name;
     private final List<TypeAnnotation> annotations;
     private final Requiredness requiredness;
+    private final boolean isRecursive;
     private final short id;
     private final String javaType;
     private final String javaName;
@@ -37,6 +38,7 @@ public class FieldContext
             final String name,
             final List<TypeAnnotation> annotations,
             final Requiredness requiredness,
+            final boolean isRecursive,
             final short id,
             final String javaType,
             final String javaName,
@@ -47,6 +49,7 @@ public class FieldContext
         this.name = name;
         this.annotations = annotations;
         this.requiredness = requiredness;
+        this.isRecursive = isRecursive;
         this.id = id;
         this.javaType = javaType;
         this.javaName = javaName;
@@ -73,6 +76,11 @@ public class FieldContext
     public boolean isLegacyId()
     {
         return id < 0;
+    }
+
+    public boolean isRecursive()
+    {
+        return isRecursive;
     }
 
     public short getId()
