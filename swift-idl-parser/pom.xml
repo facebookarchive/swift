@@ -52,17 +52,24 @@
     </dependency>
 
     <dependency>
+      <groupId>com.facebook.swift</groupId>
+      <artifactId>swift-annotations</artifactId>
+      <!-- we only pull a static constant, so we don't need the dependency at runtime -->
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.testng</groupId>
       <artifactId>testng</artifactId>
       <scope>test</scope>
     </dependency>
-    
+
     <dependency>
       <groupId>com.facebook.swift</groupId>
       <artifactId>swift-test-utils</artifactId>
       <scope>test</scope>
     </dependency>
-  
+
   </dependencies>
 
   <build>

@@ -120,6 +120,7 @@ public class TemplateContextGenerator
 
         return new FieldContext(field.getName(),
                                 field.getRequiredness(),
+                                field.isRecursive(),
                                 field.getIdentifier().get().shortValue(),
                                 typeConverter.convert(field.getType(), !isOptional),
                                 mangleJavaMethodName(field.getName()),

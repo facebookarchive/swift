@@ -39,6 +39,7 @@ package <context.javaPackage>;
 
 import com.facebook.swift.codec.*;
 import com.facebook.swift.codec.ThriftField.Requiredness;
+import com.facebook.swift.codec.ThriftField.Recursiveness;
 import java.util.*;
 
 import static com.google.common.base.Objects.toStringHelper;
@@ -68,6 +69,7 @@ package <context.javaPackage>;
 
 import com.facebook.swift.codec.*;
 import com.facebook.swift.codec.ThriftField.Requiredness;
+import com.facebook.swift.codec.ThriftField.Recursiveness;
 import java.util.*;
 
 import static com.google.common.base.Objects.toStringHelper;
@@ -106,6 +108,7 @@ package <context.javaPackage>;
 
 import com.facebook.swift.codec.*;
 import com.facebook.swift.codec.ThriftField.Requiredness;
+import com.facebook.swift.codec.ThriftField.Recursiveness;
 import java.util.*;
 
 @ThriftStruct("<context.name>")
@@ -223,7 +226,7 @@ _annotatedExceptions(method) ::= <<
 >>
 
 _fieldAnnotation(field) ::= <<
-@ThriftField(value=<field.id>, name="<field.name>"<if(field.requiredness)>, requiredness=Requiredness.<field.requiredness><endif><if(field.legacyId)>, isLegacyId=true<endif>)
+@ThriftField(value=<field.id>, name="<field.name>"<if(field.requiredness)>, requiredness=Requiredness.<field.requiredness><endif><if(field.legacyId)>, isLegacyId=true<endif><if(field.recursive)>, isRecursive=Recursiveness.TRUE<endif>)
 >>
 
 _params(parameters) ::= <<

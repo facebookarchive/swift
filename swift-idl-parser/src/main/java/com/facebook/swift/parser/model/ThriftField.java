@@ -19,10 +19,13 @@ import com.facebook.swift.parser.visitor.DocumentVisitor;
 import com.facebook.swift.parser.visitor.Visitable;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
+import com.google.common.collect.Iterables;
 
 import java.io.IOException;
 import java.util.List;
+import com.google.common.base.Predicate;
 
+import static com.facebook.swift.codec.ThriftField.RECURSIVE_REFERENCE_ANNOTATION_NAME;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class ThriftField implements Visitable
@@ -73,6 +76,19 @@ public class ThriftField implements Visitable
     public Requiredness getRequiredness()
     {
         return requiredness;
+    }
+
+    public boolean isRecursive()
+    {
+        return Iterables.any(annotations, new Predicate<TypeAnnotation>()
+        {
+            @Override
+            public boolean apply(TypeAnnotation typeAnnotation)
+            {
+                return typeAnnotation.getName().equals(RECURSIVE_REFERENCE_ANNOTATION_NAME) &&
+                       typeAnnotation.getValue().equals("true");
+            }
+        });
     }
 
     public Optional<ConstValue> getValue()
