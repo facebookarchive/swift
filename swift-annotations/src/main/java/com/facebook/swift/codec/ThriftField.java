@@ -41,7 +41,16 @@ public @interface ThriftField
 
     Requiredness requiredness() default Requiredness.UNSPECIFIED;
 
+    Recursiveness isRecursive() default Recursiveness.UNSPECIFIED;
+
     ThriftIdlAnnotation[] idlAnnotations() default {};
+
+    enum Recursiveness
+    {
+        UNSPECIFIED,
+        FALSE,
+        TRUE,
+    }
 
     /**
      * Indicates the behavior for a field when a value is not received, or when the value

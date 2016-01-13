@@ -49,6 +49,16 @@ public class ThriftType
     public static final ThriftType BINARY = new ThriftType(ThriftProtocolType.BINARY, ByteBuffer.class);
     public static final ThriftType VOID = new ThriftType(ThriftProtocolType.STRUCT, void.class);
 
+    public static final ThriftTypeReference BOOL_REF = new DefaultThriftTypeReference(BOOL);
+    public static final ThriftTypeReference BYTE_REF = new DefaultThriftTypeReference(BYTE);
+    public static final ThriftTypeReference DOUBLE_REF = new DefaultThriftTypeReference(DOUBLE);
+    public static final ThriftTypeReference I16_REF = new DefaultThriftTypeReference(I16);
+    public static final ThriftTypeReference I32_REF = new DefaultThriftTypeReference(I32);
+    public static final ThriftTypeReference I64_REF = new DefaultThriftTypeReference(I64);
+    public static final ThriftTypeReference STRING_REF = new DefaultThriftTypeReference(STRING);
+    public static final ThriftTypeReference BINARY_REF = new DefaultThriftTypeReference(BINARY);
+    public static final ThriftTypeReference VOID_REF = new DefaultThriftTypeReference(VOID);
+
     public static ThriftType struct(ThriftStructMetadata structMetadata)
     {
         return new ThriftType(structMetadata);
@@ -59,41 +69,72 @@ public class ThriftType
         checkNotNull(keyType, "keyType is null");
         checkNotNull(valueType, "valueType is null");
 
+        return map(new DefaultThriftTypeReference(keyType), new DefaultThriftTypeReference(valueType));
+    }
+
+    public static <K, V> ThriftType map(ThriftTypeReference keyTypeReference,
+                                        ThriftTypeReference valueTypeReference)
+    {
+        checkNotNull(keyTypeReference, "keyTypeReference is null");
+        checkNotNull(valueTypeReference, "valueTypeReference is null");
+
         @SuppressWarnings("serial")
         Type javaType = new TypeToken<Map<K, V>>(){}
-                .where(new TypeParameter<K>(){}, (TypeToken<K>) TypeToken.of(keyType.getJavaType()))
-                .where(new TypeParameter<V>(){}, (TypeToken<V>) TypeToken.of(valueType.getJavaType()))
+                .where(new TypeParameter<K>(){}, (TypeToken<K>) TypeToken.of(keyTypeReference.getJavaType()))
+                .where(new TypeParameter<V>(){}, (TypeToken<V>) TypeToken.of(valueTypeReference.getJavaType()))
                 .getType();
-        return new ThriftType(ThriftProtocolType.MAP, javaType, keyType, valueType);
+        return new ThriftType(ThriftProtocolType.MAP, javaType, keyTypeReference, valueTypeReference);
     }
 
     public static <E> ThriftType set(ThriftType valueType)
     {
         Preconditions.checkNotNull(valueType, "valueType is null");
 
+        return set(new DefaultThriftTypeReference(valueType));
+    }
+
+    public static <E> ThriftType set(ThriftTypeReference valueTypeReference)
+    {
+        Preconditions.checkNotNull(valueTypeReference, "valueTypeReference is null");
+
         @SuppressWarnings("serial")
         Type javaType = new TypeToken<Set<E>>(){}
-                .where(new TypeParameter<E>(){}, (TypeToken<E>) TypeToken.of(valueType.getJavaType()))
+                .where(new TypeParameter<E>(){}, (TypeToken<E>) TypeToken.of(valueTypeReference.getJavaType()))
                 .getType();
-        return new ThriftType(ThriftProtocolType.SET, javaType, null, valueType);
+        return new ThriftType(ThriftProtocolType.SET, javaType, null, valueTypeReference);
     }
 
     public static <E> ThriftType list(ThriftType valueType)
     {
         checkNotNull(valueType, "valueType is null");
 
+        return list(new DefaultThriftTypeReference(valueType));
+    }
+
+    public static <E> ThriftType list(ThriftTypeReference valueTypeReference)
+    {
+        checkNotNull(valueTypeReference, "valueTypeReference is null");
+
         @SuppressWarnings("serial")
         Type javaType = new TypeToken<List<E>>(){}
-                .where(new TypeParameter<E>(){}, (TypeToken<E>) TypeToken.of(valueType.getJavaType()))
+                .where(new TypeParameter<E>(){}, (TypeToken<E>) TypeToken.of(valueTypeReference.getJavaType()))
                 .getType();
-        return new ThriftType(ThriftProtocolType.LIST, javaType, null, valueType);
+        return new ThriftType(ThriftProtocolType.LIST, javaType, null, valueTypeReference);
     }
 
     public static ThriftType array(ThriftType valueType)
     {
         checkNotNull(valueType, "valueType is null");
-        Class<?> javaType = ReflectionHelper.getArrayOfType(valueType.getJavaType());
-        return new ThriftType(ThriftProtocolType.LIST, javaType, null, valueType);
+
+        return array(new DefaultThriftTypeReference(valueType));
+    }
+
+    public static ThriftType array(ThriftTypeReference valueTypeReference)
+    {
+        checkNotNull(valueTypeReference, "valueTypeReference is null");
+
+        Class<?> javaType = ReflectionHelper.getArrayOfType(valueTypeReference.getJavaType());
+        return new ThriftType(ThriftProtocolType.LIST, javaType, null, valueTypeReference);
     }
 
     public static ThriftType enumType(ThriftEnumMetadata<?> enumMetadata)
@@ -104,8 +145,8 @@ public class ThriftType
 
     private final ThriftProtocolType protocolType;
     private final Type javaType;
-    private final ThriftType keyType;
-    private final ThriftType valueType;
+    private final ThriftTypeReference keyTypeReference;
+    private final ThriftTypeReference valueTypeReference;
     private final ThriftStructMetadata structMetadata;
     private final ThriftEnumMetadata<?> enumMetadata;
     private final ThriftType uncoercedType;
@@ -117,23 +158,26 @@ public class ThriftType
 
         this.protocolType = protocolType;
         this.javaType = javaType;
-        keyType = null;
-        valueType = null;
+        keyTypeReference = null;
+        valueTypeReference = null;
         structMetadata = null;
         enumMetadata = null;
         uncoercedType = null;
     }
 
-    private ThriftType(ThriftProtocolType protocolType, Type javaType, ThriftType keyType, ThriftType valueType)
+    private ThriftType(ThriftProtocolType protocolType,
+                       Type javaType,
+                       ThriftTypeReference keyTypeReference,
+                       ThriftTypeReference valueTypeReference)
     {
         Preconditions.checkNotNull(protocolType, "protocolType is null");
         Preconditions.checkNotNull(javaType, "javaType is null");
-        Preconditions.checkNotNull(valueType, "valueType is null");
+        Preconditions.checkNotNull(valueTypeReference, "valueTypeReference is null");
 
         this.protocolType = protocolType;
         this.javaType = javaType;
-        this.keyType = keyType;
-        this.valueType = valueType;
+        this.keyTypeReference = keyTypeReference;
+        this.valueTypeReference = valueTypeReference;
         this.structMetadata = null;
         this.enumMetadata = null;
         this.uncoercedType = null;
@@ -145,8 +189,8 @@ public class ThriftType
 
         this.protocolType = STRUCT;
         this.javaType = structMetadata.getStructClass();
-        keyType = null;
-        valueType = null;
+        keyTypeReference = null;
+        valueTypeReference = null;
         this.structMetadata = structMetadata;
         this.enumMetadata = null;
         this.uncoercedType = null;
@@ -158,8 +202,8 @@ public class ThriftType
 
         this.protocolType = ENUM;
         this.javaType = enumMetadata.getEnumClass();
-        keyType = null;
-        valueType = null;
+        keyTypeReference = null;
+        valueTypeReference = null;
         this.structMetadata = null;
         this.enumMetadata = enumMetadata;
         this.uncoercedType = null;
@@ -171,8 +215,8 @@ public class ThriftType
         this.uncoercedType = uncoercedType;
 
         this.protocolType = uncoercedType.getProtocolType();
-        keyType = null;
-        valueType = null;
+        keyTypeReference = null;
+        valueTypeReference = null;
         structMetadata = null;
         enumMetadata = null;
     }
@@ -187,16 +231,16 @@ public class ThriftType
         return protocolType;
     }
 
-    public ThriftType getKeyType()
+    public ThriftTypeReference getKeyTypeReference()
     {
-        checkState(keyType != null, "%s does not have a key", protocolType);
-        return keyType;
+        checkState(keyTypeReference != null, "%s does not have a key", protocolType);
+        return keyTypeReference;
     }
 
-    public ThriftType getValueType()
+    public ThriftTypeReference getValueTypeReference()
     {
-        checkState(valueType != null, "%s does not have a value", protocolType);
-        return valueType;
+        checkState(valueTypeReference != null, "%s does not have a get", protocolType);
+        return valueTypeReference;
     }
 
     public ThriftStructMetadata getStructMetadata()
@@ -275,14 +319,14 @@ public class ThriftType
         sb.append("{");
         sb.append(protocolType).append(" ").append(javaType);
         if (structMetadata != null) {
-            sb.append(" ").append(structMetadata.getStructClass().getName());
+            sb.append(" ").append(getStructMetadata().getStructClass().getName());
         }
-        else if (keyType != null) {
-            sb.append(" keyType=").append(keyType);
-            sb.append(", valueType=").append(valueType);
+        else if (keyTypeReference != null) {
+            sb.append(" keyTypeReference=").append(keyTypeReference);
+            sb.append(", valueTypeReference=").append(valueTypeReference);
         }
-        else if (valueType != null) {
-            sb.append(" valueType=").append(valueType);
+        else if (valueTypeReference != null) {
+            sb.append(" valueTypeReference=").append(valueTypeReference);
         }
         sb.append('}');
         return sb.toString();
