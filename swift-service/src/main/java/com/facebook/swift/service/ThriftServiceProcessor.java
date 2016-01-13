@@ -46,9 +46,7 @@ import static org.apache.thrift.TApplicationException.INVALID_MESSAGE_TYPE;
 import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
 
 /**
- * Example TProcessor that wraps a Thrift service.  This should only be considered an example, and
- * is not production ready.  For example, this class makes assumptions about the thrift id of
- * method parameters, and does not support Thrift exceptions properly.
+ * NiftyProcessor that wraps a Thrift service.
  */
 @ThreadSafe
 public class ThriftServiceProcessor implements NiftyProcessor

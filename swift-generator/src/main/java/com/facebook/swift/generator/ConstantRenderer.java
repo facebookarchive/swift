@@ -168,10 +168,11 @@ public class ConstantRenderer
                 checkArgument(value instanceof ConstString);
                 return "\"" + value.value() + "\"";
 
-            case DOUBLE:
-                checkArgument(value instanceof ConstDouble);
-                return Double.toString((Double) value.value());
-
+            case DOUBLE:           
+                // Allow auto-promotion of integer types
+                checkArgument(value.value() instanceof Number);
+                return Double.toString(((Number) value.value()).doubleValue());
+                
             default:
                 throw new IllegalArgumentException();
         }

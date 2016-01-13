@@ -27,20 +27,16 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>swift-generator-cli</artifactId>
+  <artifactId>swift-test-utils</artifactId>
   <packaging>jar</packaging>
   <name>${project.artifactId}</name>
-  <description>Command-line interface for swift-generator</description>
+  <description>Test utilities for use in Swift modules</description>
 
   <properties>
     <air.main.basedir>${project.parent.basedir}</air.main.basedir>
   </properties>
 
   <dependencies>
-    <dependency>
-      <groupId>com.facebook.swift</groupId>
-      <artifactId>swift-generator</artifactId>
-    </dependency>
 
     <dependency>
       <groupId>com.google.guava</groupId>
@@ -53,32 +49,9 @@
     </dependency>
 
     <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
-      <scope>runtime</scope>
+      <groupId>org.testng</groupId>
+      <artifactId>testng</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>com.beust</groupId>
-      <artifactId>jcommander</artifactId>
-    </dependency>
   </dependencies>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <configuration>
-          <transformers>
-            <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-              <mainClass>com.facebook.swift.generator.Main</mainClass>
-            </transformer>
-          </transformers>
-          <shadedArtifactAttached>true</shadedArtifactAttached>
-          <shadedClassifierName>standalone</shadedClassifierName>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
 </project>

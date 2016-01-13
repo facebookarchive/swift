@@ -223,7 +223,7 @@ _annotatedExceptions(method) ::= <<
 >>
 
 _fieldAnnotation(field) ::= <<
-@ThriftField(value=<field.id>, name="<field.name>"<if(field.requiredness)>, requiredness=Requiredness.<field.requiredness><endif>)
+@ThriftField(value=<field.id>, name="<field.name>"<if(field.requiredness)>, requiredness=Requiredness.<field.requiredness><endif><if(field.legacyId)>, isLegacyId=true<endif>)
 >>
 
 _params(parameters) ::= <<
@@ -280,7 +280,7 @@ public boolean equals(Object o) {
     <context.javaName> other = (<context.javaName>)o;
 
     return
-        <context.fields : { field |<_checkFieldEquality(field)>}; separator=" &&\n">;
+        <if(context.fields)><context.fields : { field |<_checkFieldEquality(field)>}; separator=" &&\n"><else>true<endif>;
 }
 >>
 
