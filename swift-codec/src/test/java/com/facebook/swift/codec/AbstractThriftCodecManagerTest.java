@@ -35,6 +35,7 @@ import com.facebook.swift.codec.recursion.RecursiveUnion;
 import com.facebook.swift.codec.recursion.ViaListElementType;
 import com.facebook.swift.codec.recursion.ViaMapKeyAndValueTypes;
 import com.facebook.swift.codec.recursion.ViaNestedListElementType;
+import com.facebook.swift.codec.recursion.WithIdlRecursiveAnnotation;
 import com.facebook.swift.codec.recursion.WithSwiftRecursiveAnnotation;
 import com.facebook.swift.codec.recursion.WithoutRecursiveAnnotation;
 import com.google.common.collect.HashBiMap;
@@ -447,6 +448,19 @@ public abstract class AbstractThriftCodecManagerTest
         recursiveObject.child = new WithSwiftRecursiveAnnotation();
         recursiveObject.child.data = "child";
         recursiveObject.child.child = new WithSwiftRecursiveAnnotation();
+        recursiveObject.child.child.data = "grandchild";
+        testRoundTripSerialize(recursiveObject, new TCompactProtocol.Factory());
+    }
+
+    @Test
+    public void testRecursiveStructWithIdlAnnotation()
+            throws Exception
+    {
+        WithIdlRecursiveAnnotation recursiveObject = new WithIdlRecursiveAnnotation();
+        recursiveObject.data = "parent";
+        recursiveObject.child = new WithIdlRecursiveAnnotation();
+        recursiveObject.child.data = "child";
+        recursiveObject.child.child = new WithIdlRecursiveAnnotation();
         recursiveObject.child.child.data = "grandchild";
         testRoundTripSerialize(recursiveObject, new TCompactProtocol.Factory());
     }
