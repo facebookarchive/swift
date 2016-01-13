@@ -44,7 +44,15 @@ _structkind(struct) ::= <<
 
 _field(field) ::= <<
 <_doc(field.documentation)><\\\>
-<field.id>: <_fieldRequiredness(field)><field.thriftType> <field.name>
+<field.id>: <_fieldRequiredness(field)><field.thriftType> <field.name><_fieldAnnotations(field.idlAnnotations)>
+>>
+
+_fieldAnnotations(annotations) ::= <<
+<if(annotations)> ( <annotations.keys : {key | <_fieldAnnotation(key, annotations.(key))>}; separator=", "> )<endif>
+>>
+
+_fieldAnnotation(annotationKey, annotationValue) ::= <<
+<annotationKey> = "<annotationValue>"
 >>
 
 _fieldRequiredness(field) ::= <<

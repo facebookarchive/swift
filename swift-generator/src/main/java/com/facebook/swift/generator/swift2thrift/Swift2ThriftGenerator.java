@@ -23,6 +23,7 @@ import com.facebook.swift.codec.metadata.ReflectionHelper;
 import com.facebook.swift.codec.metadata.ThriftFieldMetadata;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
 import com.facebook.swift.codec.metadata.ThriftType;
+import com.facebook.swift.codec.metadata.ThriftTypeReference;
 import com.facebook.swift.generator.swift2thrift.template.FieldRequirednessRenderer;
 import com.facebook.swift.generator.swift2thrift.template.ThriftContext;
 import com.facebook.swift.generator.swift2thrift.template.ThriftServiceMetadataRenderer;
@@ -358,14 +359,24 @@ public class Swift2ThriftGenerator
         return ok;
     }
 
+    private boolean verifyElementType(ThriftTypeReference t)
+    {
+        if (!recursive && t.isRecursive()) {
+            return true;
+        }
+        else {
+            return verifyField(t.get());
+        }
+    }
+
     private boolean verifyField(ThriftType t)
     {
         ThriftProtocolType proto = t.getProtocolType();
         if (proto == ThriftProtocolType.SET || proto == ThriftProtocolType.LIST) {
-            return verifyField(t.getValueTypeReference().get());
+            return verifyElementType(t.getValueTypeReference());
         } else if (proto == ThriftProtocolType.MAP) {
             // no short-circuit
-            return verifyField(t.getKeyTypeReference().get()) & verifyField(t.getValueTypeReference().get());
+            return verifyElementType(t.getKeyTypeReference()) & verifyElementType(t.getValueTypeReference());
         } else {
             if (knownTypes.contains(t)) {
                 return true;
@@ -393,7 +404,14 @@ public class Swift2ThriftGenerator
         }
         ThriftStructMetadata metadata = t.getStructMetadata();
         boolean ok = true;
+
+        knownTypes.add(t);
+
         for (ThriftFieldMetadata fieldMetadata: metadata.getFields(FieldKind.THRIFT_FIELD)) {
+            if (!recursive && fieldMetadata.isRecursive()) {
+                continue;
+            }
+
             boolean fieldOk = verifyField(fieldMetadata.getThriftType());
             if (!fieldOk) {
                 ok = false;
@@ -406,8 +424,8 @@ public class Swift2ThriftGenerator
             }
         }
 
-        if (ok) {
-            knownTypes.add(t);
+        if (!ok) {
+            knownTypes.remove(t);
         }
         return ok;
     }
