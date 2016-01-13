@@ -18,7 +18,6 @@ package com.facebook.swift.generator.swift2thrift.template;
 import com.facebook.swift.codec.metadata.ThriftType;
 import org.stringtemplate.v4.AttributeRenderer;
 
-import java.nio.ByteBuffer;
 import java.util.Locale;
 import java.util.Map;
 

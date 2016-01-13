@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import static com.facebook.swift.codec.ThriftField.RECURSIVE_REFERENCE_ANNOTATION_NAME;
 import static com.facebook.swift.codec.ThriftField.Requiredness;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -143,7 +144,17 @@ public class ThriftFieldMetadata
     {
         ImmutableMap.Builder<String, String> annotationsBuilder = ImmutableMap.builder();
         annotationsBuilder.putAll(idlAnnotations);
+
+        if (thriftTypeReference.isRecursive()) {
+            annotationsBuilder.put(RECURSIVE_REFERENCE_ANNOTATION_NAME, "true");
+        }
+
         return annotationsBuilder.build();
+    }
+
+    public boolean isRecursive()
+    {
+        return thriftTypeReference.isRecursive();
     }
 
     public boolean isInternal()
