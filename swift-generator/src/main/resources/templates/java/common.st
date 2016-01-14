@@ -108,12 +108,16 @@ import com.facebook.swift.codec.*;
 import com.facebook.swift.codec.ThriftField.Requiredness;
 import java.util.*;
 
+import static com.google.common.base.Objects.toStringHelper;
+
 @ThriftStruct("<context.name>")
 public final class <context.javaName> extends <if(tweaks.EXTEND_RUNTIME_EXCEPTION)>RuntimeException<else>Exception<endif>
 {
     private static final long serialVersionUID = 1L;
 
     <_structbody(context)>
+
+    <_toString(context)>
 }<\n>
 >>
 
