@@ -15,21 +15,22 @@
  */
 package com.facebook.swift.codec.metadata;
 
-import com.facebook.swift.codec.UnionBean;
-import com.facebook.swift.codec.UnionBuilder;
-import com.facebook.swift.codec.UnionConstructor;
-import com.facebook.swift.codec.UnionField;
-import com.facebook.swift.codec.UnionMethod;
-import com.facebook.swift.codec.metadata.ThriftStructMetadata.MetadataType;
-
-import org.testng.annotations.Test;
-
 import static org.fest.assertions.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
+
+import org.testng.annotations.Test;
+
+import com.facebook.swift.codec.UnionBean;
+import com.facebook.swift.codec.UnionBuilder;
+import com.facebook.swift.codec.UnionConstructor;
+import com.facebook.swift.codec.UnionField;
+import com.facebook.swift.codec.UnionInterface;
+import com.facebook.swift.codec.UnionMethod;
+import com.facebook.swift.codec.metadata.ThriftStructMetadata.MetadataType;
 
 public class TestThriftUnionMetadata
 {
@@ -88,6 +89,17 @@ public class TestThriftUnionMetadata
     public void testBuilder()
     {
         ThriftStructMetadata metadata = testMetadataBuild(UnionBuilder.class, 0, 3);
+        verifyParameterInjection(metadata, 1, "stringValue", 0);
+        verifyMethodExtraction(metadata, 1, "stringValue", "getStringValue");
+        verifyParameterInjection(metadata, 2, "longValue", 0);
+        verifyMethodExtraction(metadata, 2, "longValue", "getLongValue");
+        verifyParameterInjection(metadata, 3, "fruitValue", 0);
+        verifyMethodExtraction(metadata, 3, "fruitValue", "getFruitValue");
+    }
+    
+    @Test
+    public void testInterface() {
+        ThriftStructMetadata metadata = testMetadataBuild(UnionInterface.class, 0, 3);
         verifyParameterInjection(metadata, 1, "stringValue", 0);
         verifyMethodExtraction(metadata, 1, "stringValue", "getStringValue");
         verifyParameterInjection(metadata, 2, "longValue", 0);

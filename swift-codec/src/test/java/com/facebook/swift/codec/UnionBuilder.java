@@ -25,9 +25,9 @@ public final class UnionBuilder
     private final Object value;
 
     @ThriftUnionId
-    public final int type;
+    public final short type;
 
-    UnionBuilder(Object value, int type)
+    UnionBuilder(Object value, short type)
     {
         this.value = value;
         this.type = type;
@@ -101,7 +101,7 @@ public final class UnionBuilder
     public static class Builder
     {
         private Object value;
-        private int type;
+        private short type;
 
         @ThriftField
         public void setStringValue(String stringValue)

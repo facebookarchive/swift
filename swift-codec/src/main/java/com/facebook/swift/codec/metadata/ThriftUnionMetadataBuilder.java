@@ -15,6 +15,10 @@
  */
 package com.facebook.swift.codec.metadata;
 
+import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_UNION_ID;
+import static com.facebook.swift.codec.metadata.ReflectionHelper.findAnnotatedMethods;
+
+import com.facebook.swift.codec.ThriftField.Requiredness;
 import com.facebook.swift.codec.ThriftUnion;
 import com.facebook.swift.codec.ThriftUnionId;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata.MetadataType;
@@ -29,10 +33,6 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
-
-import static com.facebook.swift.codec.ThriftField.Requiredness;
-import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_UNION_ID;
-import static com.facebook.swift.codec.metadata.ReflectionHelper.findAnnotatedMethods;
 
 @NotThreadSafe
 public class ThriftUnionMetadataBuilder
@@ -287,5 +287,11 @@ public class ThriftUnionMetadataBuilder
                 Optional.fromNullable(coercion)
         );
         return thriftFieldMetadata;
+    }
+
+    @Override
+    protected MetadataType getMetadataType()
+    {
+        return MetadataType.UNION;
     }
 }

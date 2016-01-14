@@ -13,21 +13,15 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package com.facebook.swift.codec.internal.compiler;
+package com.facebook.swift.codec;
 
-/**
- * A ClassLoader that allows for loading of classes from an array of bytes.
- */
-public class DynamicClassLoader extends ClassLoader
-{
-    public DynamicClassLoader(ClassLoader parent)
-    {
-        super(parent);
-    }
+@ThriftStruct
+public interface ComponentWithSetterAndNoBuilder extends Component {
 
-    public Class<?> defineClass(String name, byte[] byteCode)
-            throws ClassFormatError
-    {
-        return defineClass(name, byteCode, 0, byteCode.length);
-    }
+    // this should fail because it has no builder, so it
+    // can't be deserialized
+    
+    @ThriftField
+    public void setName(String name);
+
 }

@@ -198,4 +198,10 @@ public class ThriftStructMetadataBuilder
         );
         return thriftFieldMetadata;
     }
+
+    @Override
+    protected MetadataType getMetadataType() 
+    {
+        return MetadataType.STRUCT;
+    }
 }

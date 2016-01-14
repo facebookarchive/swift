@@ -15,6 +15,8 @@
  */
 package com.facebook.swift.codec;
 
+import com.facebook.swift.codec.DiscreteComponent.BasicComponent;
+
 import com.facebook.swift.codec.generics.ConcreteDerivedFromGeneric;
 import com.facebook.swift.codec.generics.ConcreteDerivedFromGenericBean;
 import com.facebook.swift.codec.generics.ConcreteThriftStructDerivedFromGenericField;
@@ -32,6 +34,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
+
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TJSONProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -135,6 +138,35 @@ public abstract class AbstractThriftCodecManagerTest
 
         unionBean = new UnionBean();
         unionBean.setFruitValue(Fruit.CHERRY);
+        testRoundTripSerialize(unionBean, new TCompactProtocol.Factory());
+    }
+    
+    @Test
+    public void testUnionInterface()
+            throws Exception
+    {
+        UnionInterface unionBean = UnionInterface.Builder.createInstance("Hello, World");
+        testRoundTripSerialize(unionBean, new TCompactProtocol.Factory());
+
+        unionBean = UnionInterface.Builder.createInstance(8675309L);
+        testRoundTripSerialize(unionBean, new TCompactProtocol.Factory());
+
+        unionBean = UnionInterface.Builder.createInstance(Fruit.CHERRY);
+        testRoundTripSerialize(unionBean, new TCompactProtocol.Factory());
+    }
+
+    @Test
+    public void testUnionBuilder()
+            throws Exception
+    {
+        
+        UnionBuilder unionBean = new UnionBuilder("Hello, World", (short) 1);
+        testRoundTripSerialize(unionBean, new TCompactProtocol.Factory());
+
+        unionBean = new UnionBuilder(8675309L, (short) 2);
+        testRoundTripSerialize(unionBean, new TCompactProtocol.Factory());
+
+        unionBean = new UnionBuilder(Fruit.CHERRY, (short) 3);
         testRoundTripSerialize(unionBean, new TCompactProtocol.Factory());
     }
 
@@ -599,4 +631,57 @@ public abstract class AbstractThriftCodecManagerTest
 
         return one;
     }
+
+    @Test
+    public void testSerializeFieldsFromInterface() throws Exception {
+        DipSwitch ds = new DipSwitch();
+        ds.setName("Dip Switch");
+        testRoundTripSerialize(ds, new TCompactProtocol.Factory());
+    }
+
+    @Test
+    public void testSerializeInterfaceStructWithBuilder() throws Exception {
+        BasicComponent component = new BasicComponent("Resistor", "1KOhm", 47.);
+        testRoundTripSerialize(component, new TCompactProtocol.Factory());
+    }
+
+    @Test
+    public void testSerializeImmutableAnonymousInnerStruct() throws Exception {
+        final DiscreteComponent comp = new DiscreteComponent() {
+            @Override
+            public String getName() {
+                return "Toroidal Inductor";
+            }
+            @Override
+            public String getUnits() {
+                return "Henry";
+            }
+            @Override
+            public Double getValue() {
+                return 10.;
+            }
+            @Override
+            public int hashCode() {
+                return Utils.hashCode(this);
+            }
+            @Override
+            public boolean equals(Object obj) {
+                return Utils.areEqual(this, obj);
+            }
+            @Override
+            public String toString() {
+                return Utils.toString(this);
+            }
+            @Override
+            public void setUnits(String units) {
+                throw new UnsupportedOperationException();
+            }
+            @Override
+            public void setValue(Double value) {
+                throw new UnsupportedOperationException();
+            }
+        };
+        testRoundTripSerialize(comp, new TCompactProtocol.Factory());
+    }
+
 }

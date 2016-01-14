@@ -208,20 +208,29 @@ public class ReflectionThriftUnionCodec<T> extends AbstractReflectionThriftCodec
 
         if (data != null) {
             // inject id value
-            for (ThriftInjection injection : idField.getKey().getInjections()) {
-                if (injection instanceof ThriftFieldInjection) {
-                    ThriftFieldInjection fieldInjection = (ThriftFieldInjection) injection;
-                    fieldInjection.getField().set(instance, data.getKey());
+            if (!metadata.getBuilderMethod().isPresent()) {
+                for (ThriftInjection injection : idField.getKey().getInjections()) {
+                    if (injection instanceof ThriftFieldInjection) {
+                        ThriftFieldInjection fieldInjection = (ThriftFieldInjection) injection;
+                        fieldInjection.getField().set(instance, data.getKey());
+                    }
                 }
             }
 
             // builder method
             if (metadata.getBuilderMethod().isPresent()) {
                 ThriftMethodInjection builderMethod = metadata.getBuilderMethod().get();
-                Object[] parametersValues = new Object[] { data.getValue() };
+                final Object[] parameterValues;
+                if (builderMethod.getMethod().getParameterTypes().length == 0) {
+                    parameterValues = new Object[] {};
+                } else if (builderMethod.getMethod().getParameterTypes().length == 1) {
+                    parameterValues = new Object[] { data.getValue() };
+                } else {
+                    throw new IllegalStateException("Union builder method must take exactly 0 or 1 arguments.");
+                }
 
                 try {
-                    instance = builderMethod.getMethod().invoke(instance, parametersValues);
+                    instance = builderMethod.getMethod().invoke(instance, parameterValues);
                     checkState(instance != null, "Builder method returned a null instance");
                     checkState(metadata.getStructClass().isInstance(instance),
                                "Builder method returned instance of type %s, but an instance of %s is required",
