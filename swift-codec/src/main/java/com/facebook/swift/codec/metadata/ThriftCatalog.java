@@ -614,7 +614,8 @@ public class ThriftCatalog
                     return TypeToken.of(input).getRawType().getName();
                 }
             }));
-            throw new IllegalArgumentException("Circular references are not allowed: " + path);
+            throw new IllegalArgumentException(
+                "Circular references must be qualified with 'isRecursive' on a @ThriftField annotation in the cycle: " + path);
         }
         else {
             stack.push(structType);
@@ -648,7 +649,8 @@ public class ThriftCatalog
                     return TypeToken.of(input).getRawType().getName();
                 }
             }));
-            throw new IllegalArgumentException("Circular references must be qualified by setting 'isRecursive' on the @ThriftField annotation: " + path);
+            throw new IllegalArgumentException(
+                "Circular references must be qualified with 'isRecursive' on a @ThriftField annotation in the cycle: " + path);
         }
 
         stack.push(unionType);
