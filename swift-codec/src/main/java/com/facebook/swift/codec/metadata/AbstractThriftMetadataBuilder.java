@@ -22,10 +22,10 @@ import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.reflect.TypeToken;
@@ -615,7 +615,7 @@ public abstract class AbstractThriftMetadataBuilder
         }));
 
         if (idlAnnotationMaps.isEmpty()) {
-            return Maps.newHashMap();
+            return ImmutableMap.<String, String>of();
         }
 
         if (idlAnnotationMaps.size() > 1) {
