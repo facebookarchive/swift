@@ -29,6 +29,8 @@ import com.facebook.swift.codec.metadata.ThriftStructMetadata;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.facebook.swift.codec.recursion.CoRecursive;
 import com.facebook.swift.codec.recursion.CoRecursiveHelper;
+import com.facebook.swift.codec.recursion.CoRecursiveTree;
+import com.facebook.swift.codec.recursion.CoRecursiveTreeHelper;
 import com.facebook.swift.codec.recursion.RecursiveUnion;
 import com.facebook.swift.codec.recursion.ViaListElementType;
 import com.facebook.swift.codec.recursion.ViaMapKeyAndValueTypes;
@@ -532,6 +534,46 @@ public abstract class AbstractThriftCodecManagerTest
         recursiveObject.child.child = new CoRecursive();
         recursiveObject.child.child.data = "grandchild";
         testRoundTripSerialize(recursiveObject, new TCompactProtocol.Factory());
+    }
+
+    @Test void testCoRecursiveStartingAtHelper()
+            throws Exception
+    {
+        CoRecursiveHelper recursiveObject = new CoRecursiveHelper();
+        recursiveObject.data = "parent";
+        recursiveObject.child = new CoRecursive();
+        recursiveObject.child.data = "child";
+        recursiveObject.child.child = new CoRecursiveHelper();
+        recursiveObject.child.child.data = "grandchild";
+        testRoundTripSerialize(recursiveObject, new TCompactProtocol.Factory());
+    }
+
+    @Test void testCoRecursiveTree()
+            throws Exception
+    {
+        {
+            CoRecursiveTree recursiveLeaf = new CoRecursiveTree();
+            recursiveLeaf.data = "grandchild";
+            CoRecursiveTreeHelper recursiveNode = new CoRecursiveTreeHelper();
+            recursiveNode.data = "child";
+            recursiveNode.child = recursiveLeaf;
+            CoRecursiveTree recursiveRoot = new CoRecursiveTree();
+            recursiveRoot.data = "root";
+            recursiveRoot.children = Lists.newArrayList(recursiveNode);
+            testRoundTripSerialize(recursiveRoot, new TCompactProtocol.Factory());
+        }
+
+        {
+            CoRecursiveTreeHelper recursiveLeaf = new CoRecursiveTreeHelper();
+            recursiveLeaf.data = "grandchild";
+            CoRecursiveTree recursiveNode = new CoRecursiveTree();
+            recursiveNode.data = "child";
+            recursiveNode.children = Lists.newArrayList(recursiveLeaf);
+            CoRecursiveTreeHelper recursiveRoot = new CoRecursiveTreeHelper();
+            recursiveRoot.data = "root";
+            recursiveRoot.child = recursiveNode;
+            testRoundTripSerialize(recursiveRoot, new TCompactProtocol.Factory());
+        }
     }
 
     @Test
