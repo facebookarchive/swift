@@ -41,6 +41,7 @@ public class ThriftField implements Visitable
     private final Requiredness requiredness;
     private final Optional<ConstValue> value;
     private final List<TypeAnnotation> annotations;
+    private final boolean isRecursiveReference;
 
     public ThriftField(
             String name,
@@ -56,6 +57,23 @@ public class ThriftField implements Visitable
         this.requiredness = checkNotNull(requiredness, "requiredness");
         this.value = Optional.fromNullable(value);
         this.annotations = checkNotNull(annotations, "annotations");
+
+        // Convert swift.recursive_reference annotations to isRecursive, then drop them
+        this.isRecursiveReference = Iterables.any(annotations, getRecursiveReferencePredicate());
+        Iterables.removeIf(annotations, getRecursiveReferencePredicate());
+    }
+
+    private Predicate<TypeAnnotation> getRecursiveReferencePredicate()
+    {
+        return new Predicate<TypeAnnotation>()
+        {
+            @Override
+            public boolean apply(TypeAnnotation typeAnnotation)
+            {
+                return typeAnnotation.getName().equals(RECURSIVE_REFERENCE_ANNOTATION_NAME) &&
+                       typeAnnotation.getValue().equals("true");
+            }
+        };
     }
 
     public String getName()
@@ -80,15 +98,7 @@ public class ThriftField implements Visitable
 
     public boolean isRecursive()
     {
-        return Iterables.any(annotations, new Predicate<TypeAnnotation>()
-        {
-            @Override
-            public boolean apply(TypeAnnotation typeAnnotation)
-            {
-                return typeAnnotation.getName().equals(RECURSIVE_REFERENCE_ANNOTATION_NAME) &&
-                       typeAnnotation.getValue().equals("true");
-            }
-        });
+        return isRecursiveReference;
     }
 
     public Optional<ConstValue> getValue()
