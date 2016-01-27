@@ -226,7 +226,15 @@ _annotatedExceptions(method) ::= <<
 >>
 
 _fieldAnnotation(field) ::= <<
-@ThriftField(value=<field.id>, name="<field.name>"<if(field.requiredness)>, requiredness=Requiredness.<field.requiredness><endif><if(field.legacyId)>, isLegacyId=true<endif><if(field.recursive)>, isRecursive=Recursiveness.TRUE<endif>)
+@ThriftField(value=<field.id>, name="<field.name>"<if(field.requiredness)>, requiredness=Requiredness.<field.requiredness><endif><if(field.legacyId)>, isLegacyId=true<endif><_idlAnnotations(field)><if(field.recursive)>, isRecursive=Recursiveness.TRUE<endif>)
+>>
+
+_idlAnnotations(field) ::= <<
+<if(field.annotations)>, idlAnnotations = { <field.annotations : { annotation |<_idlAnnotation(annotation)>}; separator=", "> }<endif>
+>>
+
+_idlAnnotation(annotation) ::= <<
+@ThriftIdlAnnotation(key = "<annotation.name>", value = "<annotation.value>")
 >>
 
 _params(parameters) ::= <<

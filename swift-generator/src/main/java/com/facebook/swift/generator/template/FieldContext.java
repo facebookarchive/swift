@@ -15,11 +15,16 @@
  */
 package com.facebook.swift.generator.template;
 
+import com.facebook.swift.parser.model.TypeAnnotation;
+
+import java.util.List;
+
 import static com.facebook.swift.parser.model.ThriftField.Requiredness;
 
 public class FieldContext
 {
     private final String name;
+    private final List<TypeAnnotation> annotations;
     private final Requiredness requiredness;
     private final boolean isRecursive;
     private final short id;
@@ -31,6 +36,7 @@ public class FieldContext
 
     FieldContext(
             final String name,
+            final List<TypeAnnotation> annotations,
             final Requiredness requiredness,
             final boolean isRecursive,
             final short id,
@@ -41,6 +47,7 @@ public class FieldContext
             final String javaTestPresenceName)
     {
         this.name = name;
+        this.annotations = annotations;
         this.requiredness = requiredness;
         this.isRecursive = isRecursive;
         this.id = id;
@@ -54,6 +61,11 @@ public class FieldContext
     public String getName()
     {
         return name;
+    }
+
+    public List<TypeAnnotation> getAnnotations()
+    {
+        return annotations;
     }
 
     public Requiredness getRequiredness()
