@@ -42,18 +42,29 @@ public class DelegateCodec<T> implements ThriftCodec<T>
     @Override
     public ThriftType getType()
     {
-        return codecManager.getCodec(typeToken).getType();
+        return getCodec().getType();
     }
 
     @Override
     public T read(TProtocol protocol) throws Exception
     {
-        return codecManager.getCodec(typeToken).read(protocol);
+        return getCodec().read(protocol);
     }
 
     @Override
     public void write(T value, TProtocol protocol) throws Exception
     {
-        codecManager.getCodec(typeToken).write(value, protocol);
+        getCodec().write(value, protocol);
+    }
+
+    private ThriftCodec<T> getCodec()
+    {
+        ThriftCodec<T> codec = codecManager.getCachedCodecIfPresent(typeToken);
+        if (codec == null) {
+            throw new IllegalStateException(
+                "Tried to encodec/decode using a DelegateCodec before the target codec was " +
+                "built (likely a bug in recursive type support)");
+        }
+        return codec;
     }
 }
