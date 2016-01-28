@@ -70,6 +70,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Lists.newArrayListWithCapacity;
 import static com.google.common.collect.Sets.newTreeSet;
 import static java.util.Arrays.asList;
+import static jp.skypencil.guava.stream.GuavaCollectors.toImmutableSet;
 
 @NotThreadSafe
 public abstract class AbstractThriftMetadataBuilder
@@ -524,13 +525,13 @@ public abstract class AbstractThriftMetadataBuilder
                 field.setIsLegacyId(isLegacyId);
             }
 
-            Map<String, String> idlAnnotations = extractFieldIdlAnnotations(fieldId, fieldName, fields);
+            Map<String, String> idlAnnotations = extractFieldIdlAnnotations(fieldId, fields);
             for (FieldMetadata field : fields) {
                 field.setIdlAnnotations(idlAnnotations);
             }
 
             // ensure all fields for this ID have the same non-null get for isRecursiveReference
-            boolean isRecursiveReference = extractFieldIsRecursiveReference(fieldId, fieldName, fields);
+            boolean isRecursiveReference = extractFieldIsRecursiveReference(fieldId, fields);
             for (FieldMetadata field : fields) {
                 field.setIsRecursiveReference(isRecursiveReference);
             }
@@ -603,19 +604,16 @@ public abstract class AbstractThriftMetadataBuilder
         }
     }
 
-    protected final Map<String, String> extractFieldIdlAnnotations(short fieldId, String fieldName, Collection<FieldMetadata> fields)
+    protected final Map<String, String> extractFieldIdlAnnotations(short fieldId, Collection<FieldMetadata> fields)
     {
-        Set<Map<String, String>> idlAnnotationMaps = ImmutableSet.copyOf(filter(transform(fields, getThriftFieldIdlAnnotations()), new Predicate<Map<String, String>>()
-        {
-            @Override
-            public boolean apply(@Nullable Map<String, String> input)
-            {
-                return (input != null) && (!input.isEmpty());
-            }
-        }));
+        Set<Map<String, String>> idlAnnotationMaps =
+            fields.stream()
+                  .map(field -> field == null ? null : field.getIdlAnnotations())
+                  .filter(annotationMap -> annotationMap != null && !annotationMap.isEmpty())
+                  .collect(toImmutableSet());
 
         if (idlAnnotationMaps.isEmpty()) {
-            return ImmutableMap.<String, String>of();
+            return ImmutableMap.of();
         }
 
         if (idlAnnotationMaps.size() > 1) {
@@ -624,16 +622,20 @@ public abstract class AbstractThriftMetadataBuilder
         return idlAnnotationMaps.iterator().next();
     }
 
-    protected final boolean extractFieldIsRecursiveReference(short fieldId, String fieldName, Collection<FieldMetadata> fields)
+    protected final boolean extractFieldIsRecursiveReference(short fieldId, Collection<FieldMetadata> fields)
     {
-        Set<Boolean> isRecursiveReferences = ImmutableSet.copyOf(filter(transform(fields, getThriftFieldIsRecursiveReference()), notNull()));
+        Set<Boolean> isRecursiveReferences =
+            fields.stream()
+                  .map(FieldMetadata::isRecursiveReference)
+                  .filter(value -> value != null)
+                  .collect(toImmutableSet());
 
         if (isRecursiveReferences.isEmpty()) {
             return false;
         }
 
         if (isRecursiveReferences.size() > 1) {
-            metadataErrors.addError("Thrift class '%s' field '%s' has both isRecursiveReference=TRUE and isRecursiveReference=FALSE", structName, fieldName);
+            metadataErrors.addError("Thrift class '%s' field '%s' has both isRecursiveReference=TRUE and isRecursiveReference=FALSE", structName, fieldId);
         }
         return isRecursiveReferences.iterator().next();
     }

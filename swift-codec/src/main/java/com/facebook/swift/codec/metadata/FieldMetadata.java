@@ -19,7 +19,6 @@ import com.facebook.swift.codec.ThriftField;
 import com.facebook.swift.codec.ThriftIdlAnnotation;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 
 import javax.annotation.Nullable;
@@ -210,35 +209,6 @@ abstract class FieldMetadata
         };
     }
 
-    static <T extends FieldMetadata> Function<T, Map<String, String>> getThriftFieldIdlAnnotations()
-    {
-        return new Function<T, Map<String, String>>()
-        {
-            @Override
-            public Map<String, String> apply(@Nullable T input)
-            {
-                if (input == null) {
-                    return null;
-                }
-                return input.getIdlAnnotations();
-            }
-        };
-    }
-
-    static <T extends FieldMetadata> Function<T, Boolean> getThriftFieldIsRecursiveReference()
-    {
-        return new Function<T, Boolean>()
-        {
-            @Override
-            public Boolean apply(@Nullable T input)
-            {
-                if (input == null) {
-                    return null;
-                }
-                return input.isRecursiveReference();
-            }
-        };
-    }
 
     static <T extends FieldMetadata> Function<T, String> getThriftFieldName()
     {
@@ -301,17 +271,6 @@ abstract class FieldMetadata
             public Requiredness apply(@Nullable T input)
             {
                 return input.getRequiredness();
-            }
-        };
-    }
-
-    public static Predicate<FieldMetadata> isType(final FieldKind type)
-    {
-        return new Predicate<FieldMetadata>() {
-            @Override
-            public boolean apply(FieldMetadata fieldMetadata)
-            {
-                return fieldMetadata.getType() == type;
             }
         };
     }
