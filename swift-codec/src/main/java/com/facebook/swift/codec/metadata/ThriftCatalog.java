@@ -87,7 +87,25 @@ public class ThriftCatalog
     private final ConcurrentMap<Class<?>, ThriftType> manualTypes = new ConcurrentHashMap<>();
     private final ConcurrentMap<Type, ThriftType> typeCache = new ConcurrentHashMap<>();
 
+    /**
+     * This stack tracks the java Types for which building a ThriftType is in progress (used to
+     * detect recursion)
+     */
     private final ThreadLocal<Deque<Type>> stack = new ThreadLocal<Deque<Type>>()
+    {
+        @Override
+        protected Deque<Type> initialValue()
+        {
+            return new ArrayDeque<>();
+        }
+    };
+
+    /**
+     * This queue tracks the Types for which resolution was deferred in order to allow for
+     * recursive type structures. ThriftTypes for these types will be built after the originally
+     * requested ThriftType is built and cached.
+     */
+    private final ThreadLocal<Deque<Type>> deferredTypesWorkList = new ThreadLocal<Deque<Type>>()
     {
         @Override
         protected Deque<Type> initialValue()
@@ -213,8 +231,7 @@ public class ThriftCatalog
     {
         ThriftType thriftType = getThriftTypeFromCache(javaType);
         if (thriftType == null) {
-            thriftType = getThriftTypeUncached(javaType);
-            typeCache.putIfAbsent(javaType, thriftType);
+            thriftType = buildThriftType(javaType);
         }
         return thriftType;
     }
@@ -224,7 +241,34 @@ public class ThriftCatalog
         return typeCache.get(javaType);
     }
 
-    private ThriftType getThriftTypeUncached(Type javaType)
+    private ThriftType buildThriftType(Type javaType)
+    {
+        ThriftType thriftType = buildThriftTypeInternal(javaType);
+        typeCache.putIfAbsent(javaType, thriftType);
+
+        if (stack.get().isEmpty()) {
+            /**
+             * The stack represents the processing of nested types, so when the stack is empty
+             * at this point, we've just finished processing and caching the originally requested
+             * type. There may be some unresolved type references we should revisit now.
+             */
+            Deque<Type> unresolvedJavaTypes = deferredTypesWorkList.get();
+            do {
+                if (unresolvedJavaTypes.isEmpty()) {
+                    break;
+                }
+                Type unresolvedJavaType = unresolvedJavaTypes.pop();
+                if (!typeCache.containsKey(unresolvedJavaType)) {
+                    ThriftType resolvedThriftType = buildThriftTypeInternal(deferredTypesWorkList.get().pop());
+                    typeCache.putIfAbsent(unresolvedJavaType, resolvedThriftType);
+                }
+            } while (true);
+        }
+        return thriftType;
+    }
+
+    // This should ONLY be called from buildThriftType()
+    private ThriftType buildThriftTypeInternal(Type javaType)
             throws IllegalArgumentException
     {
         Class<?> rawType = TypeToken.of(javaType).getRawType();
@@ -322,19 +366,52 @@ public class ThriftCatalog
     public ThriftTypeReference getCollectionElementThriftTypeReference(Type javaType)
     {
         // Collection element types are always allowed to be recursive links
-        return getThriftTypeReference(javaType, Recursiveness.ALLOWED);
+        if (isStructType(javaType)) {
+            /**
+             * TODO: This gets things working, but is only necessary when this collection is
+             * involved in a recursive chain. Otherwise, it's just introducing unnecessary
+             * references. We should see if we can clean this up.
+             */
+            deferredTypesWorkList.get().add(javaType);
+            return getThriftTypeReference(javaType, Recursiveness.FORCED);
+        }
+        else {
+            return getThriftTypeReference(javaType, Recursiveness.NOT_ALLOWED);
+        }
     }
 
     public ThriftTypeReference getMapKeyThriftTypeReference(Type javaType)
     {
         // Maps key types are always allowed to be recursive links
-        return getThriftTypeReference(javaType, Recursiveness.ALLOWED);
+        if (isStructType(javaType)) {
+            /**
+             * TODO: This gets things working, but is only necessary when this collection is
+             * involved in a recursive chain. Otherwise, it's just introducing unnecessary
+             * references. We should see if we can clean this up.
+             */
+            deferredTypesWorkList.get().add(javaType);
+            return getThriftTypeReference(javaType, Recursiveness.FORCED);
+        }
+        else {
+            return getThriftTypeReference(javaType, Recursiveness.NOT_ALLOWED);
+        }
     }
 
     public ThriftTypeReference getMapValueThriftTypeReference(Type javaType)
     {
         // Maps value types are always allowed to be recursive links
-        return getThriftTypeReference(javaType, Recursiveness.ALLOWED);
+        if (isStructType(javaType)) {
+            /**
+             * TODO: This gets things working, but is only necessary when this collection is
+             * involved in a recursive chain. Otherwise, it's just introducing unnecessary
+             * references. We should see if we can clean this up.
+             */
+            deferredTypesWorkList.get().add(javaType);
+            return getThriftTypeReference(javaType, Recursiveness.FORCED);
+        }
+        else {
+            return getThriftTypeReference(javaType, Recursiveness.NOT_ALLOWED);
+        }
     }
 
     private ThriftTypeReference getThriftTypeReference(Type javaType, Recursiveness recursiveness)
@@ -344,11 +421,12 @@ public class ThriftCatalog
             if (recursiveness == Recursiveness.FORCED ||
                 (recursiveness == Recursiveness.ALLOWED && stack.get().contains(javaType))) {
                 // recursion: return an unresolved ThriftTypeReference
+                deferredTypesWorkList.get().add(javaType);
                 return new RecursiveThriftTypeReference(this, javaType);
             }
             else
             {
-                thriftType = getThriftTypeUncached(javaType);
+                thriftType = buildThriftType(javaType);
                 typeCache.putIfAbsent(javaType, thriftType);
             }
         }

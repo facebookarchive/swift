@@ -74,7 +74,26 @@ public class ThriftCodecManager
 {
     private final ThriftCatalog catalog;
     private final LoadingCache<ThriftType, ThriftCodec<?>> typeCodecs;
+
+    /**
+     * This stack tracks the java Types for which building a ThriftCodec is in progress (used to
+     * detect recursion)
+     */
     private final ThreadLocal<Deque<ThriftType>> stack = new ThreadLocal<Deque<ThriftType>>()
+    {
+        @Override
+        protected Deque<ThriftType> initialValue()
+        {
+            return new ArrayDeque<>();
+        }
+    };
+
+    /**
+     * Tracks the Types for which building a ThriftCodec was deferred to allow for recursive type
+     * structures. These will be handled immediately after the originally requested ThriftCodec is
+     * built and cached.
+     */
+    private final ThreadLocal<Deque<ThriftType>> deferredTypesWorkList = new ThreadLocal<Deque<ThriftType>>()
     {
         @Override
         protected Deque<ThriftType> initialValue()
@@ -116,30 +135,45 @@ public class ThriftCodecManager
             public ThriftCodec<?> load(ThriftType type)
                     throws Exception
             {
-                switch (type.getProtocolType()) {
-                    case STRUCT: {
-                        return factory.generateThriftTypeCodec(ThriftCodecManager.this, type.getStructMetadata());
-                    }
-                    case MAP: {
-                        return new MapThriftCodec<>(type, getElementCodec(type.getKeyTypeReference()), getElementCodec(type.getValueTypeReference()));
-                    }
-                    case SET: {
-                        return new SetThriftCodec<>(type, getElementCodec(type.getValueTypeReference()));
-                    }
-                    case LIST: {
-                        return new ListThriftCodec<>(type, getElementCodec(type.getValueTypeReference()));
-                    }
-                    case ENUM: {
-                        return new EnumThriftCodec<>(type);
-                    }
-                    default:
-                        if (type.isCoerced()) {
-                            ThriftCodec<?> codec = getCodec(type.getUncoercedType());
-                            TypeCoercion coercion = catalog.getDefaultCoercion(type.getJavaType());
-                            return new CoercionThriftCodec<>(codec, coercion);
+                try {
+                    // When we need to load a codec for a type the first time, we push it on the
+                    // thread-local stack before starting the load, and pop it off afterwards,
+                    // so that we can detect recursive loads.
+                    stack.get().push(type);
+
+                    switch (type.getProtocolType()) {
+                        case STRUCT: {
+                            return factory.generateThriftTypeCodec(ThriftCodecManager.this, type.getStructMetadata());
                         }
-                        throw new IllegalArgumentException("Unsupported Thrift type " + type);
+                        case MAP: {
+                            return new MapThriftCodec<>(type, getElementCodec(type.getKeyTypeReference()), getElementCodec(type.getValueTypeReference()));
+                        }
+                        case SET: {
+                            return new SetThriftCodec<>(type, getElementCodec(type.getValueTypeReference()));
+                        }
+                        case LIST: {
+                            return new ListThriftCodec<>(type, getElementCodec(type.getValueTypeReference()));
+                        }
+                        case ENUM: {
+                            return new EnumThriftCodec<>(type);
+                        }
+                        default:
+                            if (type.isCoerced()) {
+                                ThriftCodec<?> codec = getCodec(type.getUncoercedType());
+                                TypeCoercion coercion = catalog.getDefaultCoercion(type.getJavaType());
+                                return new CoercionThriftCodec<>(codec, coercion);
+                            }
+                            throw new IllegalArgumentException("Unsupported Thrift type " + type);
+                    }
                 }
+                finally {
+                    ThriftType top = stack.get().pop();
+                    checkState(type.equals(top),
+                               "ThriftCatalog circularity detection stack is corrupt: expected %s, but got %s",
+                               type,
+                               top);
+                }
+
             }
         });
 
@@ -166,12 +200,7 @@ public class ThriftCodecManager
     public ThriftCodec<?> getElementCodec(ThriftTypeReference thriftTypeReference)
             throws Exception
     {
-        if (!stack.get().contains(thriftTypeReference.get())) {
-            return typeCodecs.get(thriftTypeReference.get());
-        }
-        else {
-            return new DelegateCodec<>(this, thriftTypeReference.getJavaType());
-        }
+        return getCodec(thriftTypeReference.get());
     }
 
     public ThriftCodec<?> getCodec(Type javaType)
@@ -195,25 +224,55 @@ public class ThriftCodecManager
 
     public ThriftCodec<?> getCodec(ThriftType type)
     {
+        // The loading function pushes types before they are loaded and pops them afterwards in
+        // order to detect recursive loading (which will would otherwise fail in the LoadingCache).
+        // In this case, to avoid the cycle, we return a DelegateCodec that points back to this
+        // ThriftCodecManager and references the type. When used, the DelegateCodec will require
+        // that our cache contain an actual ThriftCodec, but this should not be a problem as
+        // it won't be used while we are loading types, and by the time we're done loading the
+        // type at the top of the stack, *all* types on the stack should have been loaded and
+        // cached.
         if (stack.get().contains(type)) {
             return new DelegateCodec(this, type.getJavaType());
         }
 
         try {
-            stack.get().push(type);
             ThriftCodec<?> thriftCodec = typeCodecs.get(type);
+
+            while (!deferredTypesWorkList.get().isEmpty()) {
+                getCodec(deferredTypesWorkList.get().pop());
+            }
+
             return thriftCodec;
         }
         catch (ExecutionException e) {
             throw Throwables.propagate(e);
         }
-        finally {
-            ThriftType top = stack.get().pop();
-            checkState(type.equals(top),
-                       "ThriftCatalog circularity detection stack is corrupt: expected %s, but got %s",
-                       type,
-                       top);
-        }
+    }
+
+    public ThriftCodec<?> getCachedCodecIfPresent(Type javaType)
+    {
+        ThriftType thriftType = catalog.getThriftType(javaType);
+        Preconditions.checkArgument(thriftType != null, "Unsupported java type %s", javaType);
+        return getCachedCodecIfPresent(thriftType);
+    }
+
+    public <T> ThriftCodec<T> getCachedCodecIfPresent(Class<T> javaType)
+    {
+        ThriftType thriftType = catalog.getThriftType(javaType);
+        Preconditions.checkArgument(thriftType != null, "Unsupported java type %s", javaType.getName());
+        return (ThriftCodec<T>) getCachedCodecIfPresent(thriftType);
+    }
+
+    public <T> ThriftCodec<T> getCachedCodecIfPresent(TypeToken<T> type)
+    {
+        return (ThriftCodec<T>) getCachedCodecIfPresent(type.getType());
+    }
+
+    public ThriftCodec<?> getCachedCodecIfPresent(ThriftType type)
+    {
+        ThriftCodec<?> thriftCodec = typeCodecs.getIfPresent(type);
+        return thriftCodec;
     }
 
     /**
