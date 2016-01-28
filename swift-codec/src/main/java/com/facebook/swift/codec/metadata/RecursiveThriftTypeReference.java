@@ -54,7 +54,7 @@ public class RecursiveThriftTypeReference implements ThriftTypeReference
     @Override
     public ThriftType get()
     {
-        ThriftType resolvedType = catalog.getThriftTypeCached(javaType);
+        ThriftType resolvedType = catalog.getThriftTypeFromCache(javaType);
         if (resolvedType == null) {
             throw new UnsupportedOperationException(
                 String.format(
@@ -100,6 +100,6 @@ public class RecursiveThriftTypeReference implements ThriftTypeReference
 
     private boolean isResolved()
     {
-        return catalog.getThriftTypeCached(javaType) != null;
+        return catalog.getThriftTypeFromCache(javaType) != null;
     }
 }

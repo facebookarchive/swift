@@ -211,7 +211,7 @@ public class ThriftCatalog
     public ThriftType getThriftType(Type javaType)
             throws IllegalArgumentException
     {
-        ThriftType thriftType = getThriftTypeCached(javaType);
+        ThriftType thriftType = getThriftTypeFromCache(javaType);
         if (thriftType == null) {
             thriftType = getThriftTypeUncached(javaType);
             typeCache.putIfAbsent(javaType, thriftType);
@@ -219,7 +219,7 @@ public class ThriftCatalog
         return thriftType;
     }
 
-    public ThriftType getThriftTypeCached(Type javaType)
+    public ThriftType getThriftTypeFromCache(Type javaType)
     {
         return typeCache.get(javaType);
     }
@@ -339,7 +339,7 @@ public class ThriftCatalog
 
     private ThriftTypeReference getThriftTypeReference(Type javaType, Recursiveness recursiveness)
     {
-        ThriftType thriftType = getThriftTypeCached(javaType);
+        ThriftType thriftType = getThriftTypeFromCache(javaType);
         if (thriftType == null) {
             if (recursiveness == Recursiveness.FORCED ||
                 (recursiveness == Recursiveness.ALLOWED && stack.get().contains(javaType))) {
