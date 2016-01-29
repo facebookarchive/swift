@@ -34,6 +34,10 @@
   <name>${project.artifactId}</name>
   <description>Annotation based Thrift implementation</description>
 
+  <organization>
+    <name>Facebook, Inc.</name>
+  </organization>
+
   <scm>
     <connection>scm:git:git://github.com/facebook/swift.git</connection>
     <developerConnection>scm:git:git@github.com:facebook/swift.git</developerConnection>
