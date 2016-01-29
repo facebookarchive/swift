@@ -20,12 +20,12 @@ import com.facebook.swift.codec.ThriftStruct;
 
 import java.util.Objects;
 
-import static com.facebook.swift.codec.ThriftField.Recursiveness.TRUE;
+import static com.facebook.swift.codec.ThriftField.*;
 
 @ThriftStruct
 public class CoRecursiveHelper
 {
-    @ThriftField(value = 1, isRecursive = TRUE)
+    @ThriftField(value = 1, requiredness = Requiredness.OPTIONAL, isRecursive = Recursiveness.TRUE)
     public CoRecursive child;
 
     @ThriftField(2)

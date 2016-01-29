@@ -21,12 +21,16 @@ import com.facebook.swift.codec.ThriftStruct;
 
 import java.util.Objects;
 
+import static com.facebook.swift.codec.ThriftField.*;
 import static com.facebook.swift.codec.ThriftField.RECURSIVE_REFERENCE_ANNOTATION_NAME;
 
 @ThriftStruct
 public class WithIdlRecursiveAnnotation
 {
-    @ThriftField(value = 1, idlAnnotations = { @ThriftIdlAnnotation(key = RECURSIVE_REFERENCE_ANNOTATION_NAME, value = "true") })
+    @ThriftField(
+            value = 1,
+            requiredness = Requiredness.OPTIONAL,
+            idlAnnotations = { @ThriftIdlAnnotation(key = RECURSIVE_REFERENCE_ANNOTATION_NAME, value = "true") })
     public WithIdlRecursiveAnnotation child;
 
     @ThriftField(2)

@@ -22,7 +22,7 @@ import com.facebook.swift.codec.ThriftUnionId;
 
 import java.util.Objects;
 
-import static com.facebook.swift.codec.ThriftField.Recursiveness;
+import static com.facebook.swift.codec.ThriftField.*;
 
 @ThriftUnion
 public class RecursiveUnion
@@ -46,7 +46,7 @@ public class RecursiveUnion
         this.value = data;
     }
 
-    @ThriftField(value = 1, isRecursive = Recursiveness.TRUE)
+    @ThriftField(value = 1, requiredness = Requiredness.OPTIONAL, isRecursive = Recursiveness.TRUE)
     public RecursiveUnion getChild()
     {
         return (RecursiveUnion)value;
