@@ -58,22 +58,12 @@ public class ThriftField implements Visitable
         this.value = Optional.fromNullable(value);
         this.annotations = checkNotNull(annotations, "annotations");
 
-        // Convert swift.recursive_reference annotations to isRecursive, then drop them
-        this.isRecursiveReference = Iterables.any(annotations, getRecursiveReferencePredicate());
-        Iterables.removeIf(annotations, getRecursiveReferencePredicate());
-    }
-
-    private Predicate<TypeAnnotation> getRecursiveReferencePredicate()
-    {
-        return new Predicate<TypeAnnotation>()
-        {
-            @Override
-            public boolean apply(TypeAnnotation typeAnnotation)
-            {
-                return typeAnnotation.getName().equals(RECURSIVE_REFERENCE_ANNOTATION_NAME) &&
-                       typeAnnotation.getValue().equals("true");
-            }
-        };
+        // Convert swift.recursive_reference annotations to isRecursive, and drop them
+        this.isRecursiveReference = Iterables.removeIf(
+                annotations,
+                annotation ->
+                        annotation.getName().equals(RECURSIVE_REFERENCE_ANNOTATION_NAME) &&
+                        annotation.getValue().equals("true"));
     }
 
     public String getName()
