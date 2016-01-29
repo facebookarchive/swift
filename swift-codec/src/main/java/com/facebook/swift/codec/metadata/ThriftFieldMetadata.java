@@ -50,11 +50,13 @@ public class ThriftFieldMetadata
     private final Optional<ThriftExtraction> extraction;
     private final Optional<TypeCoercion> coercion;
     private final ImmutableList<String> documentation;
+    private final boolean isRecursiveReference;
     private final Requiredness requiredness;
 
     public ThriftFieldMetadata(
             short id,
             boolean isLegacyId,
+            boolean isRecursiveReference,
             Requiredness requiredness,
             Map<String, String> idlAnnotations,
             ThriftTypeReference thriftTypeReference,
@@ -67,6 +69,7 @@ public class ThriftFieldMetadata
             Optional<TypeCoercion> coercion
     )
     {
+        this.isRecursiveReference = isRecursiveReference;
         this.requiredness = requiredness;
         this.thriftTypeReference = checkNotNull(thriftTypeReference, "thriftType is null");
         this.fieldKind = checkNotNull(fieldKind, "type is null");
@@ -145,16 +148,21 @@ public class ThriftFieldMetadata
         ImmutableMap.Builder<String, String> annotationsBuilder = ImmutableMap.builder();
         annotationsBuilder.putAll(idlAnnotations);
 
-        if (thriftTypeReference.isRecursive()) {
+        if (isRecursiveReference()) {
             annotationsBuilder.put(RECURSIVE_REFERENCE_ANNOTATION_NAME, "true");
         }
 
         return annotationsBuilder.build();
     }
 
-    public boolean isRecursive()
+    public boolean isTypeReferenceRecursive()
     {
         return thriftTypeReference.isRecursive();
+    }
+
+    public boolean isRecursiveReference()
+    {
+        return isRecursiveReference;
     }
 
     public boolean isInternal()

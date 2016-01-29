@@ -147,6 +147,7 @@ public class ThriftMethodMetadata
             ThriftFieldMetadata fieldMetadata = new ThriftFieldMetadata(
                     parameterId,
                     isLegacyId,
+                    false /* recursiveness */,
                     parameterRequiredness,
                     parameterIdlAnnotations,
                     new DefaultThriftTypeReference(thriftType),

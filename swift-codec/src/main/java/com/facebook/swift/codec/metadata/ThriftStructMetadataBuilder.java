@@ -144,6 +144,7 @@ public class ThriftStructMetadataBuilder
         Map<String, String> idlAnnotations = null;
         String name = null;
         Requiredness requiredness = Requiredness.UNSPECIFIED;
+        boolean recursive = false;
         ThriftTypeReference thriftTypeReference = null;
 
         // process field injections and extractions
@@ -153,6 +154,7 @@ public class ThriftStructMetadataBuilder
             id = fieldMetadata.getId();
             isLegacyId = fieldMetadata.isLegacyId();
             name = fieldMetadata.getName();
+            recursive = fieldMetadata.isRecursiveReference();
             requiredness = fieldMetadata.getRequiredness();
             idlAnnotations = fieldMetadata.getIdlAnnotations();
             thriftTypeReference = catalog.getFieldThriftTypeReference(fieldMetadata);
@@ -189,6 +191,7 @@ public class ThriftStructMetadataBuilder
         ThriftFieldMetadata thriftFieldMetadata = new ThriftFieldMetadata(
                 id,
                 isLegacyId,
+                recursive,
                 requiredness,
                 idlAnnotations,
                 thriftTypeReference,

@@ -408,7 +408,7 @@ public class Swift2ThriftGenerator
         knownTypes.add(t);
 
         for (ThriftFieldMetadata fieldMetadata: metadata.getFields(FieldKind.THRIFT_FIELD)) {
-            if (!recursive && fieldMetadata.isRecursive()) {
+            if (!recursive && fieldMetadata.isTypeReferenceRecursive()) {
                 continue;
             }
 

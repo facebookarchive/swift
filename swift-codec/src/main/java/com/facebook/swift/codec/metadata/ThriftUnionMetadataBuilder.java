@@ -200,6 +200,7 @@ public class ThriftUnionMetadataBuilder
         short id = -1;
         boolean isLegacyId = false;
         String name = null;
+        boolean recursiveness = false;
         Requiredness requiredness = Requiredness.UNSPECIFIED;
         Map<String, String> idlAnnotations = null;
         FieldKind fieldType = FieldKind.THRIFT_FIELD;
@@ -214,6 +215,7 @@ public class ThriftUnionMetadataBuilder
             id = fieldMetadata.getId();
             isLegacyId = fieldMetadata.isLegacyId();
             name = fieldMetadata.getName();
+            recursiveness = fieldMetadata.isRecursiveReference();
             requiredness = fieldMetadata.getRequiredness();
             idlAnnotations = fieldMetadata.getIdlAnnotations();
             fieldType = fieldMetadata.getType();
@@ -279,6 +281,7 @@ public class ThriftUnionMetadataBuilder
         ThriftFieldMetadata thriftFieldMetadata = new ThriftFieldMetadata(
                 id,
                 isLegacyId,
+                recursiveness,
                 requiredness,
                 idlAnnotations,
                 thriftTypeReference,
