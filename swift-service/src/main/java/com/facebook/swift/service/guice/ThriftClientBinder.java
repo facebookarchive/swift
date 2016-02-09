@@ -43,7 +43,7 @@ import java.util.UUID;
 
 import static com.facebook.swift.service.ThriftClientManager.DEFAULT_NAME;
 import static com.facebook.swift.service.metadata.ThriftServiceMetadata.getThriftServiceAnnotation;
-import static io.airlift.configuration.ConfigurationModule.bindConfig;
+import static io.airlift.configuration.ConfigBinder.configBinder;
 import static java.lang.String.format;
 
 public class ThriftClientBinder
@@ -71,7 +71,7 @@ public class ThriftClientBinder
         // ThriftClientConfig bindings collapse to a single instance which is shared by all
         // clients.
         Named thriftClientConfigKey = Names.named(typeName + "-" + UUID.randomUUID().toString());
-        bindConfig(binder).annotatedWith(thriftClientConfigKey).prefixedWith(typeName).to(ThriftClientConfig.class);
+        configBinder(binder).bindConfig(ThriftClientConfig.class, thriftClientConfigKey, typeName);
 
         // Bind ThriftClient to a provider which knows how to find the ThriftClientConfig using
         // the random @Named annotation
@@ -106,7 +106,7 @@ public class ThriftClientBinder
         // see comment on random Named annotation above
         Named thriftClientConfigKey = Names.named(typeName + "-" + UUID.randomUUID().toString());
         String prefix = String.format("%s.%s", typeName, name);
-        bindConfig(binder).annotatedWith(thriftClientConfigKey).prefixedWith(prefix).to(ThriftClientConfig.class);
+        configBinder(binder).bindConfig(ThriftClientConfig.class, thriftClientConfigKey, prefix);
 
         // Bind ThriftClient to a provider which knows how to find the ThriftClientConfig using
         // the random @Named annotation

@@ -23,14 +23,14 @@ import com.facebook.swift.service.ThriftClientManagerConfig;
 import com.google.inject.*;
 
 import static com.facebook.swift.service.guice.ClientEventHandlersBinder.clientEventHandlersBinder;
-import static io.airlift.configuration.ConfigurationModule.bindConfig;
+import static io.airlift.configuration.ConfigBinder.configBinder;
 
 public class ThriftClientModule implements Module
 {
     @Override
     public void configure(Binder binder)
     {
-        bindConfig(binder).to(ThriftClientManagerConfig.class);
+        configBinder(binder).bindConfig(ThriftClientManagerConfig.class);
 
         binder.bind(NiftyClient.class).toProvider(NiftyClientProvider.class).in(Scopes.SINGLETON);
 

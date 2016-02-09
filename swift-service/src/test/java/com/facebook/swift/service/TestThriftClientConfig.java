@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
 
 import java.util.Map;
 
-import static io.airlift.configuration.ConfigurationModule.bindConfig;
+import static io.airlift.configuration.ConfigBinder.configBinder;
 
 public class TestThriftClientConfig
 {
@@ -78,7 +78,7 @@ public class TestThriftClientConfig
             @Override
             public void configure(Binder binder)
             {
-                bindConfig(binder).to(ThriftClientConfig.class);
+                configBinder(binder).bindConfig(ThriftClientConfig.class);
             }
         });
 
