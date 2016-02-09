@@ -46,8 +46,7 @@ import java.util.concurrent.ExecutorService;
 
 import static com.google.inject.multibindings.MapBinder.newMapBinder;
 import static com.google.inject.multibindings.Multibinder.newSetBinder;
-
-import static io.airlift.configuration.ConfigurationModule.bindConfig;
+import static io.airlift.configuration.ConfigBinder.configBinder;
 
 public class ThriftServerModule implements Module
 {
@@ -78,7 +77,7 @@ public class ThriftServerModule implements Module
         binder.bind(ThriftServiceProcessor.class).toProvider(ThriftServiceProcessorProvider.class).in(Scopes.SINGLETON);
         binder.bind(NiftyProcessor.class).to(Key.get(ThriftServiceProcessor.class)).in(Scopes.SINGLETON);
 
-        bindConfig(binder).to(ThriftServerConfig.class);
+        configBinder(binder).bindConfig(ThriftServerConfig.class);
         binder.bind(ThriftServer.NiftySecurityFactoryHolder.class);
         binder.bind(ThriftServer.class).in(Scopes.SINGLETON);
     }

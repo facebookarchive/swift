@@ -23,6 +23,7 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.util.Modules;
 import io.airlift.bootstrap.Bootstrap;
+import io.airlift.configuration.ConfigBinder;
 import io.airlift.configuration.testing.ConfigAssertions;
 import io.airlift.units.DataSize;
 import io.airlift.units.Duration;
@@ -36,7 +37,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import static com.facebook.swift.service.guice.ThriftServerModule.bindWorkerExecutor;
 import static com.facebook.swift.service.guice.ThriftServiceExporter.thriftServerBinder;
-import static io.airlift.configuration.ConfigurationModule.bindConfig;
+import static io.airlift.configuration.ConfigBinder.configBinder;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
@@ -115,7 +116,7 @@ public class TestThriftServerConfig
             @Override
             protected void configure()
             {
-                bindConfig(binder()).to(ThriftServerConfig.class);
+                configBinder(binder()).bindConfig(ThriftServerConfig.class);
             }
         });
 
