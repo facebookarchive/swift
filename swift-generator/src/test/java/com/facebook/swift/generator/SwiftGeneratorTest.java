@@ -121,7 +121,7 @@ public class SwiftGeneratorTest {
         DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
         StandardJavaFileManager fileManager = compiler.
                 getStandardFileManager(diagnostics, null, null);
-        
+
         // Make sure the output directory exists
         outputDirectory.toFile().mkdirs();
 
@@ -137,10 +137,10 @@ public class SwiftGeneratorTest {
                 getJavaFileObjectsFromFiles(files));
 
         task.call();
-        
+
         // Make sure no errors
         assertEquals(
-                0, 
+                0,
                 diagnostics.getDiagnostics()
                 .stream()
                 .filter(e -> e.getKind() == Kind.ERROR)
