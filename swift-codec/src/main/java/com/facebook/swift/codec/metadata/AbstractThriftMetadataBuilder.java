@@ -49,13 +49,13 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import static com.facebook.swift.codec.ThriftField.Requiredness;
+import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_FIELD;
 import static com.facebook.swift.codec.metadata.FieldMetadata.extractThriftFieldName;
 import static com.facebook.swift.codec.metadata.FieldMetadata.getOrExtractThriftFieldName;
 import static com.facebook.swift.codec.metadata.FieldMetadata.getThriftFieldId;
 import static com.facebook.swift.codec.metadata.FieldMetadata.getThriftFieldIsLegacyId;
 import static com.facebook.swift.codec.metadata.FieldMetadata.getThriftFieldName;
-import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_FIELD;
-import static com.facebook.swift.codec.metadata.FieldMetadata.*;
+import static com.facebook.swift.codec.metadata.FieldMetadata.getThriftFieldRequiredness;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.extractParameterNames;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.findAnnotatedMethods;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.getAllDeclaredFields;

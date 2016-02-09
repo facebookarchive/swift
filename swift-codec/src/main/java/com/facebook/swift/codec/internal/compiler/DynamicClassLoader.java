@@ -15,8 +15,6 @@
  */
 package com.facebook.swift.codec.internal.compiler;
 
-import com.facebook.swift.codec.ThriftCodec;
-
 /**
  * A ClassLoader that allows for loading of classes from an array of bytes.
  */

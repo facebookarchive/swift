@@ -15,7 +15,6 @@
  */
 package com.facebook.swift.generator;
 
-import com.facebook.swift.generator.template.TemplateContextGenerator;
 import com.facebook.swift.parser.model.BaseType;
 import com.facebook.swift.parser.model.IdentifierType;
 import com.facebook.swift.parser.model.ListType;

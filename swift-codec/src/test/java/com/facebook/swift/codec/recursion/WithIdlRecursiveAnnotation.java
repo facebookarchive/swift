@@ -21,7 +21,7 @@ import com.facebook.swift.codec.ThriftStruct;
 
 import java.util.Objects;
 
-import static com.facebook.swift.codec.ThriftField.*;
+import static com.facebook.swift.codec.ThriftField.Requiredness;
 import static com.facebook.swift.codec.ThriftField.RECURSIVE_REFERENCE_ANNOTATION_NAME;
 
 @ThriftStruct

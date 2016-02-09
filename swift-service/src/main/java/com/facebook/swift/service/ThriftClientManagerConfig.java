@@ -15,7 +15,6 @@
  */
 package com.facebook.swift.service;
 
-import com.google.common.base.Optional;
 import com.google.common.net.HostAndPort;
 import io.airlift.configuration.Config;
 

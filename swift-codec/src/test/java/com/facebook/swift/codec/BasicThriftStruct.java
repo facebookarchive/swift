@@ -15,8 +15,6 @@
  */
 package com.facebook.swift.codec;
 
-import com.facebook.swift.codec.*;
-
 import static com.google.common.base.Objects.toStringHelper;
 
 @ThriftStruct("ThriftStructForTesting")

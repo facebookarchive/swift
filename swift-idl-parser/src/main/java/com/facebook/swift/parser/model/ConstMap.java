@@ -22,8 +22,6 @@ import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import static java.lang.String.format;
-
 public class ConstMap
         extends ConstValue
 {

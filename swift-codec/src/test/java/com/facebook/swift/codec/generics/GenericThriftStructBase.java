@@ -15,7 +15,6 @@
  */
 package com.facebook.swift.codec.generics;
 
-import com.facebook.swift.codec.ThriftConstructor;
 import com.facebook.swift.codec.ThriftField;
 
 import java.util.Objects;

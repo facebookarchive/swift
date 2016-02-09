@@ -18,8 +18,6 @@ package com.facebook.swift.codec.internal.coercion;
 import javax.annotation.concurrent.Immutable;
 import java.nio.ByteBuffer;
 
-import static com.google.common.base.Charsets.UTF_8;
-
 @Immutable
 public final class DefaultJavaCoercions
 {

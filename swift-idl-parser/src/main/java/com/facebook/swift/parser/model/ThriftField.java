@@ -23,7 +23,6 @@ import com.google.common.collect.Iterables;
 
 import java.io.IOException;
 import java.util.List;
-import com.google.common.base.Predicate;
 
 import static com.facebook.swift.codec.ThriftField.RECURSIVE_REFERENCE_ANNOTATION_NAME;
 import static com.google.common.base.Preconditions.checkNotNull;

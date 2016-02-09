@@ -32,7 +32,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TMessage;
@@ -44,7 +43,6 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executor;
 
 import static org.apache.thrift.TApplicationException.BAD_SEQUENCE_ID;
 import static org.apache.thrift.TApplicationException.INVALID_MESSAGE_TYPE;
@@ -63,7 +61,6 @@ public class ThriftMethodHandler
     private final ThriftCodec<Object> successCodec;
     private final Map<Short, ThriftCodec<Object>> exceptionCodecs;
     private final boolean oneway;
-    private static final Executor SAME_THREAD_EXECUTOR = MoreExecutors.sameThreadExecutor();
 
     private final boolean invokeAsynchronously;
 

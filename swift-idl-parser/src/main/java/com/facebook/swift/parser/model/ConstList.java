@@ -22,8 +22,6 @@ import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import static java.lang.String.format;
-
 public class ConstList
         extends ConstValue
 {

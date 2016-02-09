@@ -30,7 +30,6 @@ import io.airlift.units.Duration;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.channel.Channel;
-import org.jboss.netty.util.Timer;
 
 import java.net.URI;
 import java.util.concurrent.ExecutionException;

@@ -17,7 +17,6 @@ package com.facebook.swift.generator;
 
 import com.facebook.swift.parser.model.BaseType;
 import com.facebook.swift.parser.model.Const;
-import com.facebook.swift.parser.model.ConstDouble;
 import com.facebook.swift.parser.model.ConstIdentifier;
 import com.facebook.swift.parser.model.ConstInteger;
 import com.facebook.swift.parser.model.ConstList;
@@ -37,7 +36,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
 
