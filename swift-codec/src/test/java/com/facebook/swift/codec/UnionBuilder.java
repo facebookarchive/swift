@@ -16,8 +16,9 @@
 package com.facebook.swift.codec;
 
 import com.facebook.swift.codec.UnionBuilder.Builder;
+import com.google.common.base.MoreObjects;
+import com.google.common.base.MoreObjects.ToStringHelper;
 import com.google.common.base.Objects;
-import com.google.common.base.Objects.ToStringHelper;
 
 @ThriftUnion(value = "Union", builder = Builder.class)
 public final class UnionBuilder
@@ -84,7 +85,7 @@ public final class UnionBuilder
     @Override
     public String toString()
     {
-        ToStringHelper helper = Objects.toStringHelper(this);
+        ToStringHelper helper = MoreObjects.toStringHelper(this);
 
         if (type == 1) {
             helper.add("stringValue", (String) value);

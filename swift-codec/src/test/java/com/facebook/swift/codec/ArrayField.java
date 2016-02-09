@@ -16,6 +16,7 @@
 package com.facebook.swift.codec;
 
 import com.google.common.base.Function;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Booleans;
@@ -188,19 +189,19 @@ public final class ArrayField
     @Override
     public String toString()
     {
-        return Objects.toStringHelper(this)
-                .add("booleanArray", Arrays.toString(booleanArray))
-                .add("shortArray", Arrays.toString(shortArray))
-                .add("intArray", Arrays.toString(intArray))
-                .add("longArray", Arrays.toString(longArray))
-                .add("doubleArray", Arrays.toString(doubleArray))
-                .add("byteArray", Arrays.toString(byteArray))
-                .add("mapBooleanArray", getMapBooleanList())
-                .add("mapShortArray", getMapShortList())
-                .add("mapIntArray", getMapIntegerList())
-                .add("mapLongArray", getMapLongList())
-                .add("mapDoubleArray", getMapDoubleList())
-                .toString();
+        return MoreObjects.toStringHelper(this)
+                          .add("booleanArray", Arrays.toString(booleanArray))
+                          .add("shortArray", Arrays.toString(shortArray))
+                          .add("intArray", Arrays.toString(intArray))
+                          .add("longArray", Arrays.toString(longArray))
+                          .add("doubleArray", Arrays.toString(doubleArray))
+                          .add("byteArray", Arrays.toString(byteArray))
+                          .add("mapBooleanArray", getMapBooleanList())
+                          .add("mapShortArray", getMapShortList())
+                          .add("mapIntArray", getMapIntegerList())
+                          .add("mapLongArray", getMapLongList())
+                          .add("mapDoubleArray", getMapDoubleList())
+                          .toString();
     }
 
     private static Function<boolean[], List<Boolean>> booleanArrayAsList()

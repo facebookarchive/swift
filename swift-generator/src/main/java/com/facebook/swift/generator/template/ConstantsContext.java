@@ -15,6 +15,7 @@
  */
 package com.facebook.swift.generator.template;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 
 import java.util.Set;
@@ -91,10 +92,10 @@ public class ConstantsContext implements JavaContext
     @Override
     public String toString()
     {
-        return Objects.toStringHelper(this)
-            .add("name", name)
-            .add("javaName", javaName)
-            .add("javaPackage", javaPackage)
-            .toString();
+        return MoreObjects.toStringHelper(this)
+                          .add("name", name)
+                          .add("javaName", javaName)
+                          .add("javaPackage", javaPackage)
+                          .toString();
     }
 }

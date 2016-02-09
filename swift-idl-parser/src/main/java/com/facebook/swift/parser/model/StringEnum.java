@@ -15,7 +15,7 @@
  */
 package com.facebook.swift.parser.model;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
@@ -48,9 +48,9 @@ public class StringEnum
     @Override
     public String toString()
     {
-        return Objects.toStringHelper(this)
-                .add("name", name)
-                .add("values", values)
-                .toString();
+        return MoreObjects.toStringHelper(this)
+                          .add("name", name)
+                          .add("values", values)
+                          .toString();
     }
 }
