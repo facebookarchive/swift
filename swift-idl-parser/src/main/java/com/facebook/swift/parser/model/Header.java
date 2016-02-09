@@ -15,7 +15,7 @@
  */
 package com.facebook.swift.parser.model;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
@@ -71,11 +71,11 @@ public class Header
     @Override
     public String toString()
     {
-        return Objects.toStringHelper(this)
-                .add("includes", includes)
-                .add("cppIncludes", cppIncludes)
-                .add("defaultNamespace", defaultNamespace)
-                .add("namespaces", namespaces)
-                .toString();
+        return MoreObjects.toStringHelper(this)
+                          .add("includes", includes)
+                          .add("cppIncludes", cppIncludes)
+                          .add("defaultNamespace", defaultNamespace)
+                          .add("namespaces", namespaces)
+                          .toString();
     }
 }

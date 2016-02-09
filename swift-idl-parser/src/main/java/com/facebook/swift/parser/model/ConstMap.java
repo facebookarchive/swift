@@ -15,7 +15,7 @@
  */
 package com.facebook.swift.parser.model;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
@@ -41,8 +41,8 @@ public class ConstMap
     @Override
     public String toString()
     {
-        return Objects.toStringHelper(this)
-                .add("values", values)
-                .toString();
+        return MoreObjects.toStringHelper(this)
+                          .add("values", values)
+                          .toString();
     }
 }

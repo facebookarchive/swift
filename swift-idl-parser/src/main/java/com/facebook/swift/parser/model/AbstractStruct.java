@@ -17,7 +17,7 @@ package com.facebook.swift.parser.model;
 
 import com.facebook.swift.parser.visitor.DocumentVisitor;
 import com.facebook.swift.parser.visitor.Visitable;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
@@ -67,10 +67,10 @@ public abstract class AbstractStruct
     @Override
     public String toString()
     {
-        return Objects.toStringHelper(this)
-                .add("name", name)
-                .add("fields", fields)
-                .add("annotations", annotations)
-                .toString();
+        return MoreObjects.toStringHelper(this)
+                          .add("name", name)
+                          .add("fields", fields)
+                          .add("annotations", annotations)
+                          .toString();
     }
 }

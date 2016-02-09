@@ -15,7 +15,7 @@
  */
 package com.facebook.swift.parser.model;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 
 import java.util.List;
 
@@ -40,10 +40,10 @@ public class ListType
     @Override
     public String toString()
     {
-        return Objects.toStringHelper(this)
-                .add("type", type)
-                .add("cppType", cppType)
-                .add("annotations", annotations)
-                .toString();
+        return MoreObjects.toStringHelper(this)
+                          .add("type", type)
+                          .add("cppType", cppType)
+                          .add("annotations", annotations)
+                          .toString();
     }
 }

@@ -15,6 +15,7 @@
  */
 package com.facebook.swift.generator.template;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 
 public class ConstantContext
@@ -85,12 +86,12 @@ public class ConstantContext
     @Override
     public String toString()
     {
-        return Objects.toStringHelper(this)
-            .add("name", name)
-            .add("javaType", javaType)
-            .add("javaName", javaName)
-            .add("javaValue", javaValue)
-            .toString();
+        return MoreObjects.toStringHelper(this)
+                          .add("name", name)
+                          .add("javaType", javaType)
+                          .add("javaName", javaName)
+                          .add("javaValue", javaValue)
+                          .toString();
     }
 
     @Override

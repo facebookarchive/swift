@@ -16,7 +16,7 @@
 package com.facebook.swift.parser.model;
 
 import com.facebook.swift.parser.visitor.DocumentVisitor;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
@@ -64,10 +64,10 @@ public class Document
     @Override
     public String toString()
     {
-        return Objects.toStringHelper(this)
-                .add("header", header)
-                .add("definitions", definitions)
-                .toString();
+        return MoreObjects.toStringHelper(this)
+                          .add("header", header)
+                          .add("definitions", definitions)
+                          .toString();
     }
 
     public static Document emptyDocument()

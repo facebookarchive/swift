@@ -15,7 +15,7 @@
  */
 package com.facebook.swift.parser.model;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 
 public class ConstDouble
         extends ConstValue
@@ -36,8 +36,8 @@ public class ConstDouble
     @Override
     public String toString()
     {
-        return Objects.toStringHelper(this)
-                .add("value", value)
-                .toString();
+        return MoreObjects.toStringHelper(this)
+                          .add("value", value)
+                          .toString();
     }
 }

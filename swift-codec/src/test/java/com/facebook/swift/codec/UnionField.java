@@ -15,6 +15,7 @@
  */
 package com.facebook.swift.codec;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 
 @ThriftUnion("Union")
@@ -80,11 +81,11 @@ public final class UnionField
     @Override
     public String toString()
     {
-        return Objects.toStringHelper(this)
-            .add("_id", _id)
-            .add("stringValue", stringValue)
-            .add("longValue", longValue)
-            .add("fruitValue", fruitValue)
-            .toString();
+        return MoreObjects.toStringHelper(this)
+                          .add("_id", _id)
+                          .add("stringValue", stringValue)
+                          .add("longValue", longValue)
+                          .add("fruitValue", fruitValue)
+                          .toString();
     }
 }
