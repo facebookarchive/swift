@@ -33,12 +33,30 @@ public class ThriftClientConfig
     // Default max frame size of 16 MB
     public static final int DEFAULT_MAX_FRAME_SIZE = 16777216;
 
-    private int maxFrameSize = DEFAULT_MAX_FRAME_SIZE;
-    private Duration connectTimeout = DEFAULT_CONNECT_TIMEOUT;
-    private Duration receiveTimeout = DEFAULT_RECEIVE_TIMEOUT;
-    private Duration readTimeout = DEFAULT_READ_TIMEOUT;
-    private Duration writeTimeout = DEFAULT_WRITE_TIMEOUT;
+    private int maxFrameSize;
+    private Duration connectTimeout;
+    private Duration receiveTimeout;
+    private Duration readTimeout;
+    private Duration writeTimeout;
     private HostAndPort socksProxy;
+
+    public ThriftClientConfig() {
+        maxFrameSize = DEFAULT_MAX_FRAME_SIZE;
+        connectTimeout = DEFAULT_CONNECT_TIMEOUT;
+        receiveTimeout = DEFAULT_RECEIVE_TIMEOUT;
+        readTimeout = DEFAULT_READ_TIMEOUT;
+        writeTimeout = DEFAULT_WRITE_TIMEOUT;
+        socksProxy = null;
+    }
+
+    public ThriftClientConfig(ThriftClientConfig config) {
+        maxFrameSize = config.getMaxFrameSize();
+        connectTimeout = config.getConnectTimeout();
+        receiveTimeout = config.getReceiveTimeout();
+        readTimeout = config.getReadTimeout();
+        writeTimeout = config.getWriteTimeout();
+        socksProxy = config.getSocksProxy();
+    }
 
     @MinDuration("1ms")
     public Duration getConnectTimeout()
