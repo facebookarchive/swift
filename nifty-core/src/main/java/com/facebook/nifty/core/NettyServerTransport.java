@@ -219,12 +219,10 @@ public class NettyServerTransport implements ExternalResourceReleasable
         @SuppressWarnings("PMD.CollapsibleIfStatements")
         public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception
         {
-            if (maxConnections > 0) {
-                if (numConnections.incrementAndGet() > maxConnections) {
-                    ctx.getChannel().close();
-                    // numConnections will be decremented in channelClosed
-                    log.info("Accepted connection above limit (%s). Dropping.", maxConnections);
-                }
+            if (maxConnections > 0 && numConnections.incrementAndGet() > maxConnections) {
+                ctx.getChannel().close();
+                // numConnections will be decremented in channelClosed
+                log.info("Accepted connection above limit (%s). Dropping.", maxConnections);
             }
             super.channelOpen(ctx, e);
         }
@@ -233,10 +231,8 @@ public class NettyServerTransport implements ExternalResourceReleasable
         @SuppressWarnings("PMD.CollapsibleIfStatements")
         public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception
         {
-            if (maxConnections > 0) {
-                if (numConnections.decrementAndGet() < 0) {
-                    log.error("BUG in ConnectionLimiter");
-                }
+            if (maxConnections > 0 && numConnections.decrementAndGet() < 0) {
+                log.error("BUG in ConnectionLimiter");
             }
             super.channelClosed(ctx, e);
         }

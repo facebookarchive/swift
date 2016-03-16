@@ -106,9 +106,9 @@ public class HttpClientConnector extends AbstractClientConnector<HttpClientChann
     private static int getPortFromURI(URI uri)
     {
         URI uriNN = checkNotNull(uri);
-        if (uri.getScheme().toLowerCase().equals("http")) {
+        if (uri.getScheme().equalsIgnoreCase("http")) {
             return uriNN.getPort() == -1 ? 80 : uriNN.getPort();
-        } else if (uri.getScheme().toLowerCase().equals("https")) {
+        } else if (uri.getScheme().equalsIgnoreCase("https")) {
             return uriNN.getPort() == -1 ? 443 : uriNN.getPort();
         } else {
             throw new IllegalArgumentException("HttpClientConnector only connects to HTTP/HTTPS " +
