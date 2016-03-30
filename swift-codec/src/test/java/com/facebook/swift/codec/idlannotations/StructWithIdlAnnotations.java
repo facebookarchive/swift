@@ -13,23 +13,23 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package com.facebook.swift.codec;
+package com.facebook.swift.codec.idlannotations;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import com.facebook.swift.codec.ThriftField;
+import com.facebook.swift.codec.ThriftIdlAnnotation;
+import com.facebook.swift.codec.ThriftStruct;
 
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
-@Documented
-@Retention(RUNTIME)
-@Target({TYPE})
-public @interface ThriftUnion
+@ThriftStruct(
+        idlAnnotations = {
+                @ThriftIdlAnnotation(key = "testkey1", value = "testvalue1"),
+                @ThriftIdlAnnotation(key = "testkey2", value = "testvalue2"),
+        }
+)
+public class StructWithIdlAnnotations
 {
-    String value() default "";
+    @ThriftField(1)
+    public String message;
 
-    Class<?> builder() default void.class;
-
-    ThriftIdlAnnotation[] idlAnnotations() default {};
+    @ThriftField(2)
+    public int type;
 }

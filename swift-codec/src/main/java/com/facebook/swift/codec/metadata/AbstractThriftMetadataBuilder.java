@@ -118,6 +118,8 @@ public abstract class AbstractThriftMetadataBuilder
 
     protected abstract String extractName();
 
+    protected abstract Map<String, String> extractStructIdlAnnotations();
+
     protected abstract Class<?> extractBuilderClass();
 
     protected abstract void validateConstructors();

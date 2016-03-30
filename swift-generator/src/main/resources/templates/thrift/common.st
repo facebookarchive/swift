@@ -33,9 +33,17 @@ _maybeEnumValue(enum, enumElem) ::= <<
 
 _struct(struct) ::= <<
 <_doc(struct.documentation)><\\\>
-<_structkind(struct)> <struct.structName> {
+<_structkind(struct)> <struct.structName><_structAnnotations(struct.idlAnnotations)> {
   <struct.fields : {f | <if(!f.internal)><_field(f)>;<endif>}; separator="\n">
 }
+>>
+
+_structAnnotations(annotations) ::= <<
+<if(annotations)> ( <annotations.keys : {key | <_structAnnotation(key, annotations.(key))>}; separator=", "> )<endif>
+>>
+
+_structAnnotation(annotationKey, annotationValue) ::= <<
+<annotationKey> = "<annotationValue>"
 >>
 
 _structkind(struct) ::= <<

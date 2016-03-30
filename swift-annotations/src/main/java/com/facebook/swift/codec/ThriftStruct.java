@@ -30,4 +30,6 @@ public @interface ThriftStruct
     String value() default "";
 
     Class<?> builder() default void.class;
+
+    ThriftIdlAnnotation[] idlAnnotations() default {};
 }
