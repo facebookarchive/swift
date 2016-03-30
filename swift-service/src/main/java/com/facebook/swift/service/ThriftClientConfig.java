@@ -22,7 +22,10 @@ import io.airlift.units.MinDuration;
 
 import java.util.concurrent.TimeUnit;
 
+import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 public class ThriftClientConfig
 {
@@ -105,6 +108,7 @@ public class ThriftClientConfig
     }
 
     @Min(0)
+    @Max(0x3FFFFFFF)
     public int getMaxFrameSize()
     {
         return maxFrameSize;
@@ -113,6 +117,7 @@ public class ThriftClientConfig
     @Config("thrift.client.max-frame-size")
     public ThriftClientConfig setMaxFrameSize(int maxFrameSize)
     {
+        checkArgument(maxFrameSize <= 0x3FFFFFFF);
         this.maxFrameSize = maxFrameSize;
         return this;
     }
