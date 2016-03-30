@@ -17,10 +17,10 @@ package com.facebook.swift.codec.idlannotations;
 
 import com.facebook.swift.codec.ThriftField;
 import com.facebook.swift.codec.ThriftIdlAnnotation;
-import com.facebook.swift.codec.ThriftStruct;
+import com.facebook.swift.codec.ThriftUnion;
 import com.facebook.swift.codec.ThriftUnionId;
 
-@ThriftStruct(
+@ThriftUnion(
         idlAnnotations = {
                 @ThriftIdlAnnotation(key = "testkey1", value = "testvalue1"),
                 @ThriftIdlAnnotation(key = "testkey2", value = "testvalue2"),
