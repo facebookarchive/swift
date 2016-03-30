@@ -20,7 +20,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.airlift.configuration.Config;
 import io.airlift.units.DataSize;
 import io.airlift.units.Duration;
-import io.airlift.units.MaxDataSize;
 
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -62,8 +61,8 @@ public class ThriftServerConfig
     private String protocolName = "binary";
     /**
      * The default maximum allowable size for a single incoming thrift request or outgoing thrift
-     * response. A server can configure the actual maximum to be much higher (up to 0x3FFFFFFF or
-     * almost 1 GB). This default could also be safely bumped up, but 64MB is chosen simply
+     * response. A server can configure the actual maximum to be much higher (up to 0x7FFFFFFF or
+     * almost 2 GB). This default could also be safely bumped up, but 64MB is chosen simply
      * because it seems reasonable that if you are sending requests or responses larger than
      * that, it should be a conscious decision (something you must manually configure).
      */
@@ -95,7 +94,6 @@ public class ThriftServerConfig
         return this;
     }
 
-    @MaxDataSize("1073741823B")
     public DataSize getMaxFrameSize()
     {
         return maxFrameSize;
