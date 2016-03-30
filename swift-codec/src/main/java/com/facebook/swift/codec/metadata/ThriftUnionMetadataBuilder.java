@@ -15,11 +15,13 @@
  */
 package com.facebook.swift.codec.metadata;
 
+import com.facebook.swift.codec.ThriftIdlAnnotation;
 import com.facebook.swift.codec.ThriftUnion;
 import com.facebook.swift.codec.ThriftUnionId;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata.MetadataType;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -65,6 +67,22 @@ public class ThriftUnionMetadataBuilder
         }
         else {
             return getStructClass().getSimpleName();
+        }
+    }
+
+    @Override
+    protected Map<String, String> extractStructIdlAnnotations()
+    {
+        ThriftUnion annotation = getStructClass().getAnnotation(ThriftUnion.class);
+        if (annotation == null) {
+            return ImmutableMap.of();
+        }
+        else {
+            ImmutableMap.Builder<String, String> builder = ImmutableMap.<String, String>builder();
+            for (ThriftIdlAnnotation idlAnnotation : annotation.idlAnnotations()) {
+                builder.put(idlAnnotation.key(), idlAnnotation.value());
+            }
+            return builder.build();
         }
     }
 
@@ -171,6 +189,7 @@ public class ThriftUnionMetadataBuilder
 
         return new ThriftStructMetadata(
                 structName,
+                extractStructIdlAnnotations(),
                 structType,
                 builderType,
                 MetadataType.UNION,

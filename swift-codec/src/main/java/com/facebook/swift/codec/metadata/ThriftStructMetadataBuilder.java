@@ -15,11 +15,13 @@
  */
 package com.facebook.swift.codec.metadata;
 
+import com.facebook.swift.codec.ThriftIdlAnnotation;
 import com.facebook.swift.codec.ThriftStruct;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata.MetadataType;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
@@ -61,6 +63,22 @@ public class ThriftStructMetadataBuilder
         }
         else {
             return getStructClass().getSimpleName();
+        }
+    }
+
+    @Override
+    protected Map<String, String> extractStructIdlAnnotations()
+    {
+        ThriftStruct annotation = getStructClass().getAnnotation(ThriftStruct.class);
+        if (annotation == null) {
+            return ImmutableMap.of();
+        }
+        else {
+            ImmutableMap.Builder<String, String> builder = ImmutableMap.<String, String>builder();
+            for (ThriftIdlAnnotation idlAnnotation : annotation.idlAnnotations()) {
+                builder.put(idlAnnotation.key(), idlAnnotation.value());
+            }
+            return builder.build();
         }
     }
 
@@ -113,6 +131,7 @@ public class ThriftStructMetadataBuilder
 
         return new ThriftStructMetadata(
                 structName,
+                extractStructIdlAnnotations(),
                 structType,
                 builderType,
                 MetadataType.STRUCT,

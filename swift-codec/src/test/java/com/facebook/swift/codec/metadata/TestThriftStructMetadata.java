@@ -20,10 +20,12 @@ import com.facebook.swift.codec.BonkBuilder;
 import com.facebook.swift.codec.BonkConstructor;
 import com.facebook.swift.codec.BonkField;
 import com.facebook.swift.codec.BonkMethod;
-import com.facebook.swift.codec.ThriftIdlAnnotation;
 import com.facebook.swift.codec.idlannotations.BeanWIthConflictingIdlAnnotationMapsForField;
 import com.facebook.swift.codec.idlannotations.BeanWithMatchingIdlAnnotationsMapsForField;
 import com.facebook.swift.codec.idlannotations.BeanWithOneIdlAnnotationMapForField;
+import com.facebook.swift.codec.idlannotations.ExceptionWithIdlAnnotations;
+import com.facebook.swift.codec.idlannotations.StructWithIdlAnnotations;
+import com.facebook.swift.codec.idlannotations.UnionWithIdlAnnotations;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata.MetadataType;
 
 import org.testng.annotations.Test;
@@ -161,6 +163,35 @@ public class TestThriftStructMetadata
         testMetadataBuild(BeanWIthConflictingIdlAnnotationMapsForField.class, 0, 1);
     }
 
+    @Test
+    public void testStructWithIdlAnnotationsMap()
+    {
+        ThriftStructMetadata metadata = testMetadataBuild(StructWithIdlAnnotations.class, 0, 0);
+        Map<String, String> idlAnnotations = metadata.getIdlAnnotations();
+        assertEquals(idlAnnotations.size(), 2);
+        assertEquals(idlAnnotations.get("testkey1"), "testvalue1");
+        assertEquals(idlAnnotations.get("testkey2"), "testvalue2");
+    }
+
+    @Test
+    public void testUnionWithIdlAnnotationsMap()
+    {
+        ThriftStructMetadata metadata = testMetadataBuild(UnionWithIdlAnnotations.class, 0, 2);
+        Map<String, String> idlAnnotations = metadata.getIdlAnnotations();
+        assertEquals(idlAnnotations.size(), 2);
+        assertEquals(idlAnnotations.get("testkey1"), "testvalue1");
+        assertEquals(idlAnnotations.get("testkey2"), "testvalue2");
+    }
+
+    @Test
+    public void testExceptionWithIdlAnnotationsMap()
+    {
+        ThriftStructMetadata metadata = testMetadataBuild(ExceptionWithIdlAnnotations.class, 2, 0);
+        Map<String, String> idlAnnotations = metadata.getIdlAnnotations();
+        assertEquals(idlAnnotations.size(), 1);
+        assertEquals(idlAnnotations.get("message"), "message");
+    }
+
     private ThriftStructMetadata testMetadataBuild(Class<?> structClass, int expectedConstructorParameters, int expectedMethodInjections)
     {
         ThriftCatalog catalog = new ThriftCatalog();
@@ -190,7 +221,7 @@ public class TestThriftStructMetadata
     private <T> void verifyField(ThriftStructMetadata metadata, int id, String name)
     {
         ThriftFieldMetadata messageField = metadata.getField(id);
-        assertNotNull(messageField, "messageField is null");
+        assertNotNull(messageField, "field '" + name + "' is null");
         assertEquals(messageField.getId(), id);
         assertEquals(messageField.getName(), name);
         assertFalse(messageField.isReadOnly());

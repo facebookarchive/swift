@@ -27,6 +27,7 @@ import javax.annotation.concurrent.Immutable;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedMap;
 
 import static com.facebook.swift.codec.metadata.ThriftFieldMetadata.isTypePredicate;
@@ -38,10 +39,11 @@ public class ThriftStructMetadata
 {
     public static enum MetadataType {
         STRUCT, UNION;
-    }
 
+    }
     private final String structName;
 
+    private final Map<String, String> idlAnnotations;
     private final MetadataType metadataType;
     private final Optional<ThriftMethodInjection> builderMethod;
     private final ImmutableList<String> documentation;
@@ -56,6 +58,7 @@ public class ThriftStructMetadata
 
     public ThriftStructMetadata(
             String structName,
+            Map<String, String> idlAnnotations,
             Type structType,
             Type builderType,
             MetadataType metadataType,
@@ -68,6 +71,7 @@ public class ThriftStructMetadata
         this.builderType = builderType;
         this.builderMethod = checkNotNull(builderMethod, "builderMethod is null");
         this.structName = checkNotNull(structName, "structName is null");
+        this.idlAnnotations = checkNotNull(idlAnnotations, "idlAnnotations is null");
         this.metadataType = checkNotNull(metadataType, "metadataType is null");
         this.structType = checkNotNull(structType, "structType is null");
         this.constructorInjection = checkNotNull(constructorInjection, "constructorInjection is null");
@@ -116,6 +120,11 @@ public class ThriftStructMetadata
     public Optional<ThriftMethodInjection> getBuilderMethod()
     {
         return builderMethod;
+    }
+
+    public Map<String, String> getIdlAnnotations()
+    {
+        return idlAnnotations;
     }
 
     public ThriftFieldMetadata getField(int id)
