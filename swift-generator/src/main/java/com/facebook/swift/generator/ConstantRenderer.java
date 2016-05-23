@@ -110,6 +110,12 @@ public class ConstantRenderer
 
         Set<Map.Entry<ConstValue, ConstValue>> entries = value.value().entrySet();
         for (Map.Entry<ConstValue, ConstValue> entry : entries) {
+            if (entry.getKey() instanceof ConstIdentifier) {
+                throw new IllegalStateException("Not yet implemented");
+            }
+            if (entry.getValue() instanceof ConstIdentifier) {
+                throw new IllegalStateException("Not yet implemented");
+            }
             sb.append(format("    .put(%s, %s)\n",
                              render(mapType.getKeyType(), entry.getKey()),
                              render(mapType.getValueType(), entry.getValue())));
@@ -129,6 +135,9 @@ public class ConstantRenderer
 
         List<ConstValue> elements = value.value();
         for (ConstValue element : elements) {
+            if (element instanceof ConstIdentifier) {
+                throw new IllegalStateException("Not yet implemented");
+            }
             sb.append(format("    .add(%s)\n", render(listType.getElementType(), element)));
         }
         sb.append("    .build()");
@@ -146,6 +155,9 @@ public class ConstantRenderer
 
         List<ConstValue> elements = value.value();
         for (ConstValue element : elements) {
+            if (element instanceof ConstIdentifier) {
+                throw new IllegalStateException("Not yet implemented");
+            }
             sb.append(format("    .add(%s)\n", render(setType.getElementType(), element)));
         }
         sb.append("    .build()");

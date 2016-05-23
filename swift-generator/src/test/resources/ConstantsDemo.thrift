@@ -37,7 +37,7 @@ struct thing2 {
 typedef i32 myIntType
 const myIntType myInt = 3
 
-//const map<enumconstants,string> GEN_ENUM_NAMES = {ONE : "HOWDY", TWO: "PARTNER"}
+const map<enumconstants,string> GEN_ENUM_NAMES = {ONE : "HOWDY", TWO: "PARTNER"}
 
 const i32 hex_const = 0x0001F
 
@@ -69,8 +69,8 @@ const map<i32, map<i32, i32>> GEN_MAPMAP = { 235 : { 532 : 53255, 235:235}}
 const map<string,i32> GEN_MAP2 = { "hello" : 233, "lkj98d" : 853, 'lkjsdf' : 98325 }
 
 // swift-generator doesn't support struct constants yet
-//const thing GEN_THING = { 'hello' : 325, 'goodbye' : 325352 }
-//const map<i32,thing> GEN_WHAT = { 35 : { 'hello' : 325, 'goodbye' : 325352 } }
+const thing GEN_THING = { 'hello' : 325, 'goodbye' : 325352 }
+const map<i32,thing> GEN_WHAT = { 35 : { 'hello' : 325, 'goodbye' : 325352 } }
 
 const set<i32> GEN_SET = [ 235, 235, 53235 ]
 
@@ -83,3 +83,9 @@ service yowza {
   void blingity(),
   i32 blangity() throws (1: Blah hoot )
 }
+
+const set<string> GEN_SET_CONTAINING_CONSTANT = [ GEN_STRING ]
+const list<string> GEN_LIST_CONTAINING_CONSTANT = [ GEN_STRING ]
+const map<string, i32> GEN_MAP_CONTAINING_CONSTANT_KEY = { GEN_STRING: 235 }
+const map<string, i32> GEN_MAP_CONTAINING_CONSTANT_VALUE = { "hello": int_const_single_d }
+const map<string, i32> GEN_MAP_CONTAINING_CONSTANT_ENTRY = { GEN_STRING: int_const_single_d }
