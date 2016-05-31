@@ -60,6 +60,7 @@ public abstract class ThriftServerDefBuilderBase<T extends ThriftServerDefBuilde
     private String name = "nifty-" + ID.getAndIncrement();
     private Duration clientIdleTimeout;
     private Duration taskTimeout;
+    private Duration queueTimeout;
     private NiftySecurityFactory securityFactory;
 
     /**
@@ -91,6 +92,7 @@ public abstract class ThriftServerDefBuilderBase<T extends ThriftServerDefBuilde
         };
         this.clientIdleTimeout = null;
         this.taskTimeout = null;
+        this.queueTimeout = null;
         this.thriftFrameCodecFactory = new DefaultThriftFrameCodecFactory();
         this.securityFactory = new NiftyNoOpSecurityFactory();
     }
@@ -216,6 +218,16 @@ public abstract class ThriftServerDefBuilderBase<T extends ThriftServerDefBuilde
         return (T) this;
     }
 
+    /**
+     * Specify timeout during which if a task remains on the executor queue, server will cancel the
+     *    task when it is dispatched.  The timeout is the minimum of taskTimeout and queueTimeout
+     */
+    public T queueTimeout(Duration queueTimeout)
+    {
+        this.queueTimeout = queueTimeout;
+        return (T) this;
+    }
+
     public T thriftFrameCodecFactory(ThriftFrameCodecFactory thriftFrameCodecFactory)
     {
         this.thriftFrameCodecFactory = thriftFrameCodecFactory;
@@ -265,6 +277,7 @@ public abstract class ThriftServerDefBuilderBase<T extends ThriftServerDefBuilde
                 duplexProtocolFactory,
                 clientIdleTimeout,
                 taskTimeout,
+                queueTimeout,
                 thriftFrameCodecFactory,
                 executor,
                 securityFactory);

@@ -63,6 +63,7 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
     private final Executor exe;
     private final long taskTimeoutMillis;
     private final Timer taskTimeoutTimer;
+    private final long queueTimeoutMillis;
     private final int queuedResponseLimit;
     private final Map<Integer, ThriftMessage> responseMap = new HashMap<>();
     private final AtomicInteger dispatcherSequenceId = new AtomicInteger(0);
@@ -77,6 +78,7 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
         this.exe = def.getExecutor();
         this.taskTimeoutMillis = (def.getTaskTimeout() == null ? 0 : def.getTaskTimeout().toMillis());
         this.taskTimeoutTimer = (def.getTaskTimeout() == null ? null : timer);
+        this.queueTimeoutMillis = (def.getQueueTimeout() == null ? 0 : def.getQueueTimeout().toMillis());
     }
 
     @Override
@@ -85,9 +87,7 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
     {
         if (e.getMessage() instanceof ThriftMessage) {
             ThriftMessage message = (ThriftMessage) e.getMessage();
-            if (taskTimeoutMillis > 0) {
-                message.setProcessStartTimeMillis(System.currentTimeMillis());
-            }
+            message.setProcessStartTimeMillis(System.currentTimeMillis());
             checkResponseOrderingRequirements(ctx, message);
 
             TNiftyTransport messageTransport = new TNiftyTransport(ctx.getChannel(), message);
@@ -160,8 +160,20 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
                     try {
                         try {
                             long timeRemaining = 0;
-                            if (taskTimeoutMillis > 0) {
-                                long timeElapsed = System.currentTimeMillis() - message.getProcessStartTimeMillis();
+                            long timeElapsed = System.currentTimeMillis() - message.getProcessStartTimeMillis();
+                            if (queueTimeoutMillis > 0) {
+                                if (timeElapsed >= queueTimeoutMillis) {
+                                    TApplicationException taskTimeoutException = new TApplicationException(
+                                            TApplicationException.INTERNAL_ERROR,
+                                            "Task stayed on the queue for " + timeElapsed +
+                                                    " milliseconds, exceeding configured queue timeout of " + queueTimeoutMillis +
+                                                    " milliseconds."
+                                    );
+                                    sendTApplicationException(taskTimeoutException, ctx, message, requestSequenceId, messageTransport,
+                                        inProtocol, outProtocol);
+                                    return;
+                                }
+                            } else if (taskTimeoutMillis > 0) {
                                 if (timeElapsed >= taskTimeoutMillis) {
                                     TApplicationException taskTimeoutException = new TApplicationException(
                                             TApplicationException.INTERNAL_ERROR,

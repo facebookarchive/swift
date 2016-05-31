@@ -36,6 +36,7 @@ public class ThriftServerDef
 
     private final Duration clientIdleTimeout;
     private final Duration taskTimeout;
+    private final Duration queueTimeout;
 
     private final ThriftFrameCodecFactory thriftFrameCodecFactory;
     private final Executor executor;
@@ -52,6 +53,7 @@ public class ThriftServerDef
             TDuplexProtocolFactory duplexProtocolFactory,
             Duration clientIdleTimeout,
             Duration taskTimeout,
+            Duration queueTimeout,
             ThriftFrameCodecFactory thriftFrameCodecFactory,
             Executor executor,
             NiftySecurityFactory securityFactory)
@@ -65,6 +67,7 @@ public class ThriftServerDef
         this.duplexProtocolFactory = duplexProtocolFactory;
         this.clientIdleTimeout = clientIdleTimeout;
         this.taskTimeout = taskTimeout;
+        this.queueTimeout = queueTimeout;
         this.thriftFrameCodecFactory = thriftFrameCodecFactory;
         this.executor = executor;
         this.securityFactory = securityFactory;
@@ -110,6 +113,8 @@ public class ThriftServerDef
     }
 
     public Duration getTaskTimeout() { return taskTimeout; }
+
+    public Duration getQueueTimeout() { return queueTimeout; }
 
     public Executor getExecutor()
     {
