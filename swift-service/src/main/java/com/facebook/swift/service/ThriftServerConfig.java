@@ -55,6 +55,7 @@ public class ThriftServerConfig
     private int ioThreadCount = DEFAULT_IO_WORKER_THREAD_COUNT;
     private Duration idleConnectionTimeout = Duration.valueOf("60s");
     private Duration taskExpirationTimeout = Duration.valueOf("5s");
+    private Duration queueTimeout = Duration.valueOf("5s");
     private Optional<Integer> workerThreads = Optional.absent();
     private Optional<Integer> maxQueuedRequests = Optional.absent();
     private Optional<ExecutorService> workerExecutor = Optional.absent();
@@ -189,6 +190,26 @@ public class ThriftServerConfig
     public ThriftServerConfig setIdleConnectionTimeout(Duration idleConnectionTimeout)
     {
         this.idleConnectionTimeout = idleConnectionTimeout;
+        return this;
+    }
+
+    public Duration getQueueTimeout()
+    {
+        return queueTimeout;
+    }
+
+    /**
+     * Sets a timeout period between receiving a request and the pulling the request off the queue.
+     * If the timeout expires before the request reaches the front of the queue and begins
+     * processing, the server will discard the request instead of processing it.
+     *
+     * @param queueTimeout The timeout
+     * @return This {@link ThriftServerConfig} instance
+     */
+    @Config("thrift.queue-timeout")
+    public ThriftServerConfig setQueueTimeout(Duration queueTimeout)
+    {
+        this.queueTimeout = queueTimeout;
         return this;
     }
 

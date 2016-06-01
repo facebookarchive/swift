@@ -182,6 +182,7 @@ public class ThriftServer implements Closeable
                                                          .withSecurityFactory(securityFactoryHolder.niftySecurityFactory)
                                                          .using(workerExecutor)
                                                          .taskTimeout(config.getTaskExpirationTimeout())
+                                                         .queueTimeout(config.getQueueTimeout())
                                                          .build();
 
         NettyServerConfigBuilder nettyServerConfigBuilder = NettyServerConfig.newBuilder();
