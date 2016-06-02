@@ -55,7 +55,7 @@ public class ThriftServerConfig
     private int ioThreadCount = DEFAULT_IO_WORKER_THREAD_COUNT;
     private Duration idleConnectionTimeout = Duration.valueOf("60s");
     private Duration taskExpirationTimeout = Duration.valueOf("5s");
-    private Duration queueTimeout = Duration.valueOf("5s");
+    private Duration queueTimeout = null;
     private Optional<Integer> workerThreads = Optional.absent();
     private Optional<Integer> maxQueuedRequests = Optional.absent();
     private Optional<ExecutorService> workerExecutor = Optional.absent();
