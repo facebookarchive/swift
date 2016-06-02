@@ -28,7 +28,7 @@
 
     <groupId>com.facebook.nifty</groupId>
     <artifactId>nifty-parent</artifactId>
-    <version>0.19.0-SNAPSHOT</version>
+    <version>0.19.0</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -66,7 +66,7 @@
         <connection>scm:git:git@github.com:facebook/nifty.git</connection>
         <developerConnection>scm:git:git@github.com:facebook/nifty.git</developerConnection>
         <url>https://github.com/facebook/nifty</url>
-        <tag>HEAD</tag>
+        <tag>nifty-parent-0.19.0</tag>
     </scm>
 
     <distributionManagement>
