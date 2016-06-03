@@ -259,7 +259,7 @@ public class ThriftCatalog
                 }
                 Type unresolvedJavaType = unresolvedJavaTypes.pop();
                 if (!typeCache.containsKey(unresolvedJavaType)) {
-                    ThriftType resolvedThriftType = buildThriftTypeInternal(deferredTypesWorkList.get().pop());
+                    ThriftType resolvedThriftType = buildThriftTypeInternal(unresolvedJavaType);
                     typeCache.putIfAbsent(unresolvedJavaType, resolvedThriftType);
                 }
             } while (true);
@@ -372,7 +372,6 @@ public class ThriftCatalog
              * involved in a recursive chain. Otherwise, it's just introducing unnecessary
              * references. We should see if we can clean this up.
              */
-            deferredTypesWorkList.get().add(javaType);
             return getThriftTypeReference(javaType, Recursiveness.FORCED);
         }
         else {
@@ -389,7 +388,6 @@ public class ThriftCatalog
              * involved in a recursive chain. Otherwise, it's just introducing unnecessary
              * references. We should see if we can clean this up.
              */
-            deferredTypesWorkList.get().add(javaType);
             return getThriftTypeReference(javaType, Recursiveness.FORCED);
         }
         else {
@@ -406,7 +404,6 @@ public class ThriftCatalog
              * involved in a recursive chain. Otherwise, it's just introducing unnecessary
              * references. We should see if we can clean this up.
              */
-            deferredTypesWorkList.get().add(javaType);
             return getThriftTypeReference(javaType, Recursiveness.FORCED);
         }
         else {
