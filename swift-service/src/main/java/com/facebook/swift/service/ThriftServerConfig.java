@@ -53,6 +53,7 @@ public class ThriftServerConfig
     private int maxQueuedResponsesPerConnection = DEFAULT_PER_CONNECTION_QUEUED_RESPONSE_LIMIT;
     private int acceptorThreadCount = DEFAULT_BOSS_THREAD_COUNT;
     private int ioThreadCount = DEFAULT_IO_WORKER_THREAD_COUNT;
+    private int trafficClass = 0;
     private Duration idleConnectionTimeout = Duration.valueOf("60s");
     private Duration taskExpirationTimeout = Duration.valueOf("5s");
     private Duration queueTimeout = null;
@@ -168,6 +169,18 @@ public class ThriftServerConfig
     public ThriftServerConfig setIoThreadCount(int ioThreadCount)
     {
         this.ioThreadCount = ioThreadCount;
+        return this;
+    }
+
+    public int getTrafficClass()
+    {
+        return trafficClass;
+    }
+
+    @Config("thrift.traffic-class")
+    public ThriftServerConfig setTrafficClass(int trafficClass)
+    {
+        this.trafficClass = trafficClass;
         return this;
     }
 

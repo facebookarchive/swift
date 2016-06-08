@@ -191,6 +191,9 @@ public class ThriftServer implements Closeable
         nettyServerConfigBuilder.setBossThreadCount(config.getAcceptorThreadCount());
         nettyServerConfigBuilder.setWorkerThreadCount(config.getIoThreadCount());
         nettyServerConfigBuilder.setTimer(timer);
+        if (config.getTrafficClass() != 0) {
+            nettyServerConfigBuilder.getSocketChannelConfig().setTrafficClass(config.getTrafficClass());
+        }
 
         NettyServerConfig nettyServerConfig = nettyServerConfigBuilder.build();
 
