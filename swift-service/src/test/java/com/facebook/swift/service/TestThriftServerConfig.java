@@ -65,6 +65,7 @@ public class TestThriftServerConfig
                         .setQueueTimeout(null)
                         .setMaxQueuedRequests(null)
                         .setMaxQueuedResponsesPerConnection(16)
+                        .setTrafficClass(0)
         );
     }
 
@@ -88,6 +89,7 @@ public class TestThriftServerConfig
                 .put("thrift.max-queued-requests", "1000")
                 .put("thrift.max-queued-responses-per-connection", "32")
                 .put("thrift.queue-timeout", "167ms")
+                .put("thrift.traffic-class", "35")
                 .build();
 
         ThriftServerConfig expected = new ThriftServerConfig()
@@ -106,7 +108,8 @@ public class TestThriftServerConfig
                 .setTaskExpirationTimeout(Duration.valueOf("10s"))
                 .setMaxQueuedRequests(1000)
                 .setMaxQueuedResponsesPerConnection(32)
-                .setQueueTimeout(Duration.valueOf("167ms"));
+                .setQueueTimeout(Duration.valueOf("167ms"))
+                .setTrafficClass(35);
 
         ConfigAssertions.assertFullMapping(properties, expected);
     }
