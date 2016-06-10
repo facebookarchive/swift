@@ -20,6 +20,7 @@ import com.facebook.nifty.core.NettyServerConfigBuilder;
 import com.facebook.nifty.core.NiftyBootstrap;
 import com.facebook.nifty.core.ThriftServerDefBuilder;
 import com.facebook.nifty.guice.NiftyModule;
+import com.facebook.nifty.ssl.SSLServerConfiguration;
 import com.facebook.nifty.test.LogEntry;
 import com.facebook.nifty.test.ResultCode;
 import com.facebook.nifty.test.scribe;
@@ -30,6 +31,7 @@ import org.apache.thrift.TException;
 
 import javax.inject.Provider;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -50,21 +52,22 @@ public class Plain
                     protected void configureNifty()
                     {
                         bind().toInstance(new ThriftServerDefBuilder()
-                                                  .listen(8080)
-                                                  .withProcessor(new scribe.Processor<scribe
-                                                          .Iface>(new scribe.Iface()
-                                                  {
-                                                      @Override
-                                                      public ResultCode Log(List<LogEntry> messages)
-                                                              throws TException
-                                                      {
-                                                          for (LogEntry message : messages) {
-                                                              log.info("%s: %s", message.getCategory(), message.getMessage());
-                                                          }
-                                                          return ResultCode.OK;
-                                                      }
-                                                  }))
-                                                  .build()
+                                        .listen(8080)
+                                        .withProcessor(new scribe.Processor<scribe.Iface>(new scribe.Iface() {
+                                            @Override
+                                            public ResultCode Log(List<LogEntry> messages)
+                                                    throws TException {
+                                                for (LogEntry message : messages) {
+                                                    log.info("%s: %s", message.getCategory(), message.getMessage());
+                                                }
+                                                return ResultCode.OK;
+                                            }
+                                        })).withSSLConfiguration(
+                                                new SSLServerConfiguration.Builder()
+                                                        .certFile(new File(getClass().getResource("/rsa.crt").getFile()))
+                                                        .keyFile(new File(getClass().getResource("/rsa.key").getFile()))
+                                                        .build())
+                                        .build()
                         );
                         withNettyServerConfig(NettyConfigProvider.class);
                     }
@@ -73,11 +76,9 @@ public class Plain
 
         bootstrap.start();
 
-        Runtime.getRuntime().addShutdownHook(new Thread()
-        {
+        Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
-            public void run()
-            {
+            public void run() {
                 bootstrap.stop();
             }
         });

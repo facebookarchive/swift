@@ -15,6 +15,7 @@
  */
 package com.facebook.nifty.client;
 
+import com.facebook.nifty.ssl.SSLClientConfiguration;
 import com.google.common.net.HostAndPort;
 import org.jboss.netty.util.Timer;
 
@@ -30,6 +31,7 @@ public class NettyClientConfig
     private final int bossThreadCount;
     private final ExecutorService workerExecutor;
     private final int workerThreadCount;
+    private final SSLClientConfiguration sslClientConfiguration;
 
     public NettyClientConfig(Map<String, Object> bootstrapOptions,
                              HostAndPort defaultSocksProxyAddress,
@@ -37,7 +39,8 @@ public class NettyClientConfig
                              ExecutorService bossExecutor,
                              int bossThreadCount,
                              ExecutorService workerExecutor,
-                             int workerThreadCount)
+                             int workerThreadCount,
+                             SSLClientConfiguration sslClientConfiguration)
 
     {
         this.bootstrapOptions = bootstrapOptions;
@@ -47,6 +50,7 @@ public class NettyClientConfig
         this.bossThreadCount = bossThreadCount;
         this.workerExecutor = workerExecutor;
         this.workerThreadCount = workerThreadCount;
+        this.sslClientConfiguration = sslClientConfiguration;
     }
 
     public Map<String, Object> getBootstrapOptions()
@@ -88,4 +92,6 @@ public class NettyClientConfig
     {
         return new NettyClientConfigBuilder();
     }
+
+    public SSLClientConfiguration sslClientConfiguration() { return sslClientConfiguration; }
 }

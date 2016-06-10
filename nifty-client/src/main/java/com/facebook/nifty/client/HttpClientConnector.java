@@ -92,6 +92,9 @@ public class HttpClientConnector extends AbstractClientConnector<HttpClientChann
                 ChannelPipeline cp = Channels.pipeline();
                 cp.addLast("httpClientCodec", new HttpClientCodec());
                 cp.addLast("chunkAggregator", new HttpChunkAggregator(maxFrameSize));
+                if (clientConfig.sslClientConfiguration() != null) {
+                    cp.addFirst("ssl", clientConfig.sslClientConfiguration().createHandler());
+                }
                 return cp;
             }
         };

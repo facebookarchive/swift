@@ -17,6 +17,7 @@ package com.facebook.nifty.client;
 
 import com.facebook.nifty.core.NettyConfigBuilderBase;
 import com.facebook.nifty.core.NiftyTimer;
+import com.facebook.nifty.ssl.SSLClientConfiguration;
 import com.google.common.base.Strings;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -36,6 +37,7 @@ import static java.util.concurrent.Executors.newCachedThreadPool;
 public class NettyClientConfigBuilder extends NettyConfigBuilderBase<NettyClientConfigBuilder>
 {
     private HostAndPort defaultSocksProxyAddress = null;
+    private SSLClientConfiguration sslClientConfiguration;
 
     private final NioSocketChannelConfig socketChannelConfig = (NioSocketChannelConfig) Proxy.newProxyInstance(
             getClass().getClassLoader(),
@@ -77,6 +79,11 @@ public class NettyClientConfigBuilder extends NettyConfigBuilderBase<NettyClient
         return this;
     }
 
+    public NettyClientConfigBuilder setSSLClientConfiguration(SSLClientConfiguration sslClientConfiguration) {
+        this.sslClientConfiguration = sslClientConfiguration;
+        return this;
+    }
+
     public NettyClientConfig build()
     {
         Timer timer = getTimer();
@@ -92,7 +99,8 @@ public class NettyClientConfigBuilder extends NettyConfigBuilderBase<NettyClient
                 bossExecutor != null ? bossExecutor : buildDefaultBossExecutor(),
                 bossThreadCount,
                 workerExecutor != null ? workerExecutor : buildDefaultWorkerExecutor(),
-                workerThreadCount
+                workerThreadCount,
+                sslClientConfiguration
         );
     }
 

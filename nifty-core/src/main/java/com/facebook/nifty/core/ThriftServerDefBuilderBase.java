@@ -20,6 +20,7 @@ import com.facebook.nifty.codec.ThriftFrameCodecFactory;
 import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.facebook.nifty.processor.NiftyProcessor;
 import com.facebook.nifty.processor.NiftyProcessorFactory;
+import com.facebook.nifty.ssl.SSLServerConfiguration;
 import io.airlift.units.Duration;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.TProcessorFactory;
@@ -62,6 +63,7 @@ public abstract class ThriftServerDefBuilderBase<T extends ThriftServerDefBuilde
     private Duration taskTimeout;
     private Duration queueTimeout;
     private NiftySecurityFactory securityFactory;
+    private SSLServerConfiguration sslConfiguration;
 
     /**
      * The default maximum allowable size for a single incoming thrift request or outgoing thrift
@@ -251,6 +253,11 @@ public abstract class ThriftServerDefBuilderBase<T extends ThriftServerDefBuilde
         return (T) this;
     }
 
+    public T withSSLConfiguration(SSLServerConfiguration sslConfiguration) {
+        this.sslConfiguration = sslConfiguration;
+        return (T) this;
+    }
+
     /**
      * Build the ThriftServerDef
      */
@@ -280,6 +287,7 @@ public abstract class ThriftServerDefBuilderBase<T extends ThriftServerDefBuilde
                 queueTimeout,
                 thriftFrameCodecFactory,
                 executor,
-                securityFactory);
+                securityFactory,
+                sslConfiguration);
     }
 }

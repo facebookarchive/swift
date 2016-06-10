@@ -24,7 +24,6 @@ import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
 import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
 import org.jboss.netty.handler.codec.frame.LengthFieldPrepender;
-import org.jboss.netty.util.Timer;
 
 import java.net.InetSocketAddress;
 
@@ -84,6 +83,7 @@ public class FramedClientConnector extends AbstractClientConnector<FramedClientC
                     throws Exception {
                 ChannelPipeline cp = Channels.pipeline();
                 TimeoutHandler.addToPipeline(cp);
+
                 cp.addLast("frameEncoder", new LengthFieldPrepender(LENGTH_FIELD_LENGTH));
                 cp.addLast(
                         "frameDecoder",
@@ -93,6 +93,9 @@ public class FramedClientConnector extends AbstractClientConnector<FramedClientC
                                 LENGTH_FIELD_LENGTH,
                                 LENGTH_ADJUSTMENT,
                                 INITIAL_BYTES_TO_STRIP));
+                if (clientConfig.sslClientConfiguration() != null) {
+                    cp.addFirst("ssl", clientConfig.sslClientConfiguration().createHandler());
+                }
                 return cp;
             }
         };

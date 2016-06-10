@@ -119,6 +119,9 @@ public class NettyServerTransport implements ExternalResourceReleasable
                 cp.addLast("authHandler", securityHandlers.getAuthenticationHandler());
                 cp.addLast("dispatcher", new NiftyDispatcher(def, nettyServerConfig.getTimer()));
                 cp.addLast("exceptionLogger", new NiftyExceptionLogger());
+                if (def.getSslConfiguration() != null) {
+                    cp.addFirst("ssl", def.getSslConfiguration().createHandler());
+                }
                 return cp;
             }
         };

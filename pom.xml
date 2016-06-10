@@ -36,6 +36,7 @@
         <module>nifty-client</module>
         <module>nifty-examples</module>
         <module>nifty-load-tester</module>
+        <module>nifty-ssl</module>
     </modules>
 
     <properties>
@@ -96,6 +97,11 @@
             <dependency>
                 <groupId>com.facebook.nifty</groupId>
                 <artifactId>nifty-load-tester</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.facebook.nifty</groupId>
+                <artifactId>nifty-ssl</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

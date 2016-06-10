@@ -22,7 +22,6 @@ import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
-import org.jboss.netty.util.Timer;
 
 import java.net.InetSocketAddress;
 
@@ -67,6 +66,9 @@ public class UnframedClientConnector extends AbstractClientConnector<UnframedCli
                 ChannelPipeline cp = Channels.pipeline();
                 TimeoutHandler.addToPipeline(cp);
                 cp.addLast("thriftUnframedDecoder", new ThriftUnframedDecoder());
+                if (clientConfig.sslClientConfiguration() != null) {
+                    cp.addFirst("ssl", clientConfig.sslClientConfiguration().createHandler());
+                }
                 return cp;
             }
         };

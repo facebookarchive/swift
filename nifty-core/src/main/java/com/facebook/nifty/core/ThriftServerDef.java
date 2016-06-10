@@ -18,6 +18,7 @@ package com.facebook.nifty.core;
 import com.facebook.nifty.codec.ThriftFrameCodecFactory;
 import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.facebook.nifty.processor.NiftyProcessorFactory;
+import com.facebook.nifty.ssl.SSLServerConfiguration;
 import io.airlift.units.Duration;
 
 import java.util.concurrent.Executor;
@@ -42,6 +43,7 @@ public class ThriftServerDef
     private final Executor executor;
     private final String name;
     private final NiftySecurityFactory securityFactory;
+    private final SSLServerConfiguration sslConfiguration;
 
     public ThriftServerDef(
             String name,
@@ -56,7 +58,8 @@ public class ThriftServerDef
             Duration queueTimeout,
             ThriftFrameCodecFactory thriftFrameCodecFactory,
             Executor executor,
-            NiftySecurityFactory securityFactory)
+            NiftySecurityFactory securityFactory,
+            SSLServerConfiguration sslConfiguration)
     {
         this.name = name;
         this.serverPort = serverPort;
@@ -71,6 +74,7 @@ public class ThriftServerDef
         this.thriftFrameCodecFactory = thriftFrameCodecFactory;
         this.executor = executor;
         this.securityFactory = securityFactory;
+        this.sslConfiguration = sslConfiguration;
     }
 
     public static ThriftServerDefBuilder newBuilder()
@@ -135,4 +139,6 @@ public class ThriftServerDef
     {
         return securityFactory;
     }
+
+    public SSLServerConfiguration getSslConfiguration() { return sslConfiguration; }
 }
