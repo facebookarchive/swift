@@ -29,6 +29,7 @@ public class SSLServerConfiguration {
         public File certFile;
         public Iterable<String> ciphers;
         public SSLImplProvider sslProvider = new JDKSSLImplProvider();
+        boolean allowPlaintext;
 
         public Builder ciphers(Iterable<String> ciphers) {
             this.ciphers = ciphers;
@@ -50,6 +51,14 @@ public class SSLServerConfiguration {
             return this;
         }
 
+        /**
+         * Whether or not to allow plaintext traffic on a secure port.
+         */
+        public Builder allowPlaintext(boolean allowPlaintext) {
+            this.allowPlaintext = allowPlaintext;
+            return this;
+        }
+
         public SSLServerConfiguration build() {
             Preconditions.checkNotNull(keyFile);
             Preconditions.checkNotNull(certFile);
@@ -62,12 +71,14 @@ public class SSLServerConfiguration {
     public final File keyFile;
     public final File certFile;
     public final SSLImplProvider sslProvider;
+    public final boolean allowPlaintext;
 
     public SSLServerConfiguration(Builder builder) {
         this.ciphers = builder.ciphers;
         this.keyFile = builder.keyFile;
         this.certFile = builder.certFile;
         this.sslProvider = builder.sslProvider;
+        this.allowPlaintext = builder.allowPlaintext;
 
         sslProvider.initializeProvider();
     }

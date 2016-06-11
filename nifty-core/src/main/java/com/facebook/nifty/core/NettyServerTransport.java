@@ -15,6 +15,8 @@
  */
 package com.facebook.nifty.core;
 
+import com.facebook.nifty.ssl.SSLPlaintextHandler;
+import com.facebook.nifty.ssl.SSLServerConfiguration;
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 import io.airlift.log.Logger;
 import org.apache.thrift.protocol.TProtocolFactory;
@@ -34,6 +36,7 @@ import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerBossPool;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioWorkerPool;
+import org.jboss.netty.handler.ssl.SslHandler;
 import org.jboss.netty.handler.timeout.IdleStateHandler;
 import org.jboss.netty.util.ExternalResourceReleasable;
 import org.jboss.netty.util.ThreadNameDeterminer;
@@ -120,7 +123,13 @@ public class NettyServerTransport implements ExternalResourceReleasable
                 cp.addLast("dispatcher", new NiftyDispatcher(def, nettyServerConfig.getTimer()));
                 cp.addLast("exceptionLogger", new NiftyExceptionLogger());
                 if (def.getSslConfiguration() != null) {
-                    cp.addFirst("ssl", def.getSslConfiguration().createHandler());
+                    SSLServerConfiguration sslConfig = def.getSslConfiguration();
+                    SslHandler handler = sslConfig.createHandler();
+                    if (sslConfig.allowPlaintext) {
+                        cp.addFirst("ssl_plaintext", new SSLPlaintextHandler(handler, "ssl"));
+                    } else {
+                        cp.addFirst("ssl", handler);
+                    }
                 }
                 return cp;
             }

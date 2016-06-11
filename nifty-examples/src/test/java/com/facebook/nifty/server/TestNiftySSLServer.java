@@ -64,7 +64,7 @@ public class TestNiftySSLServer
     }
     private void startServer()
     {
-        startServer(getThriftServerDefBuilder());
+        startServer(getThriftServerDefBuilder(false));
     }
 
     private void startServer(final ThriftServerDefBuilder thriftServerDefBuilder)
@@ -76,7 +76,7 @@ public class TestNiftySSLServer
         port = ((InetSocketAddress)server.getServerChannel().getLocalAddress()).getPort();
     }
 
-    private ThriftServerDefBuilder getThriftServerDefBuilder()
+    private ThriftServerDefBuilder getThriftServerDefBuilder(boolean allowPlaintext)
     {
         return new ThriftServerDefBuilder()
                 .listen(8080)
@@ -85,6 +85,7 @@ public class TestNiftySSLServer
                                 .certFile(new File(Plain.class.getResource("/rsa.crt").getFile()))
                                 .keyFile(new File(Plain.class.getResource("/rsa.key").getFile()))
                                 .sslProvider(new OpensslImplProvider())
+                                .allowPlaintext(allowPlaintext)
                                 .build())
                 .withProcessor(new scribe.Processor<>(new scribe.Iface() {
                     @Override
@@ -132,9 +133,20 @@ public class TestNiftySSLServer
     }
 
     @Test
-    public void testBasic() throws InterruptedException, TException
+    public void testSSL() throws InterruptedException, TException
     {
         startServer();
+        scribe.Client client1 = makeNiftyClient();
+        Assert.assertEquals(client1.Log(Arrays.asList(new LogEntry("client1", "aaa"))), ResultCode.OK);
+        Assert.assertEquals(client1.Log(Arrays.asList(new LogEntry("client1", "bbb"))), ResultCode.OK);
+        scribe.Client client2 = makeNiftyClient();
+        Assert.assertEquals(client2.Log(Arrays.asList(new LogEntry("client2", "ccc"))), ResultCode.OK);
+    }
+
+    @Test
+    public void testSSLWithPlaintextAllowedServer() throws InterruptedException, TException
+    {
+        startServer(getThriftServerDefBuilder(true));
         scribe.Client client1 = makeNiftyClient();
         Assert.assertEquals(client1.Log(Arrays.asList(new LogEntry("client1", "aaa"))), ResultCode.OK);
         Assert.assertEquals(client1.Log(Arrays.asList(new LogEntry("client1", "bbb"))), ResultCode.OK);
@@ -145,8 +157,20 @@ public class TestNiftySSLServer
     @Test(expectedExceptions = TTransportException.class)
     public void testUnencryptedClient() throws InterruptedException, TException
     {
-        startServer(getThriftServerDefBuilder());
+        startServer();
         scribe.Client client = makeNiftyPlaintextClient();
+        client.Log(Arrays.asList(new LogEntry("client2", "aaa")));
+        client.Log(Arrays.asList(new LogEntry("client2", "bbb")));
+        client.Log(Arrays.asList(new LogEntry("client2", "ccc")));
+    }
+
+    @Test
+    public void testUnencryptedClientWithAllowPlaintextServer() throws InterruptedException, TException
+    {
+        startServer(getThriftServerDefBuilder(true));
+        scribe.Client client = makeNiftyPlaintextClient();
+        client.Log(Arrays.asList(new LogEntry("client2", "aaa")));
+        client.Log(Arrays.asList(new LogEntry("client2", "bbb")));
         client.Log(Arrays.asList(new LogEntry("client2", "ccc")));
     }
 }
