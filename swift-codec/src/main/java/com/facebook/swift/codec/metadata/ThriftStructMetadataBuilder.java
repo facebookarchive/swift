@@ -35,6 +35,7 @@ import java.util.Map;
 
 import static com.facebook.swift.codec.ThriftField.Requiredness;
 import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_FIELD;
+import static com.google.common.base.Preconditions.checkState;
 
 @NotThreadSafe
 public class ThriftStructMetadataBuilder
@@ -128,6 +129,9 @@ public class ThriftStructMetadataBuilder
 
         // methods injections
         List<ThriftMethodInjection> methodInjections = buildMethodInjections();
+
+        checkState(metadataErrors.getErrors().isEmpty() && metadataErrors.getWarnings().isEmpty(),
+                   "metadata errors and warnings should only be added before the build stage");
 
         return new ThriftStructMetadata(
                 structName,

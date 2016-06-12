@@ -38,6 +38,7 @@ import java.util.Set;
 import static com.facebook.swift.codec.ThriftField.Requiredness;
 import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_UNION_ID;
 import static com.facebook.swift.codec.metadata.ReflectionHelper.findAnnotatedMethods;
+import static com.google.common.base.Preconditions.checkState;
 
 @NotThreadSafe
 public class ThriftUnionMetadataBuilder
@@ -109,16 +110,24 @@ public class ThriftUnionMetadataBuilder
 
         if (idFields.size() + idMethods.size() != 1) {
             if (idFields.size() + idMethods.size() == 0) {
-                metadataErrors.addError("Neither a field nor a method is annotated with @ThriftUnionId");
+                metadataErrors.addError(
+                    "Neither a field nor a method is annotated with @ThriftUnionId in '%s'",
+                    structName);
             }
             else  if (idFields.size() > 1) {
-                metadataErrors.addError("More than one @ThriftUnionId field present");
+                metadataErrors.addError(
+                    "More than one @ThriftUnionId field present in '%s'",
+                    structName);
             }
             else if (idMethods.size() > 1) {
-                metadataErrors.addError("More than one @ThriftUnionId method present");
+                metadataErrors.addError(
+                    "More than one @ThriftUnionId method present in '%s'",
+                    structName);
             }
             else {
-                metadataErrors.addError("Both fields and methods annotated with @ThriftUnionId");
+                metadataErrors.addError(
+                    "Both fields and methods annotated with @ThriftUnionId in '%s'",
+                    structName);
             }
             return;
         }
@@ -218,6 +227,9 @@ public class ThriftUnionMetadataBuilder
 
         // methods injections
         List<ThriftMethodInjection> methodInjections = buildMethodInjections();
+
+        checkState(metadataErrors.getErrors().isEmpty() && metadataErrors.getWarnings().isEmpty(),
+                   "metadata errors and warnings should only be added before the build stage");
 
         return new ThriftStructMetadata(
                 structName,
