@@ -46,7 +46,7 @@ public class RecursiveUnion
         this.value = data;
     }
 
-    @ThriftField(value = 1, requiredness = Requiredness.OPTIONAL, isRecursive = Recursiveness.TRUE)
+    @ThriftField(value = 1, isRecursive = Recursiveness.TRUE)
     public RecursiveUnion getChild()
     {
         return (RecursiveUnion)value;
