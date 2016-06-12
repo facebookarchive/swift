@@ -95,10 +95,6 @@ public class ThriftFieldMetadata
                 break;
         }
 
-        checkArgument(!isRecursiveReference
-                      || requiredness == Requiredness.OPTIONAL,
-                      "Fields marked as recursive references must always be optional");
-
         checkArgument(!injections.isEmpty()
                       || extraction.isPresent()
                       || constructorInjection.isPresent()
