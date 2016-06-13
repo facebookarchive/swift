@@ -16,14 +16,19 @@
 package com.facebook.swift.generator;
 
 import com.facebook.swift.testing.TestingUtils;
+
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.Iterator;
+
+import com.google.common.collect.Lists;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static com.facebook.swift.testing.TestingUtils.getResourcePath;
 import static com.facebook.swift.testing.TestingUtils.listDataProvider;
 import static com.facebook.swift.testing.TestingUtils.listMatchingFiles;
-import com.google.common.io.Resources;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -41,7 +46,6 @@ import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.FileAssert.fail;
-import org.testng.annotations.BeforeClass;
 
 public class SwiftGeneratorTest {
 
@@ -70,15 +74,34 @@ public class SwiftGeneratorTest {
     @DataProvider
     public Iterator<Object[]> thriftProvider()
             throws Exception {
-        return listDataProvider(listMatchingFiles(getResourcePath(""), "**/*.thrift"));
+        Path inputBase;
+        List<GenerationPaths> testFiles = Lists.newArrayList();
+        inputBase = getResourcePath("").resolve("basic");
+        for (Path input: listMatchingFiles(inputBase, "**/*.thrift")) {
+            testFiles.add(new GenerationPaths(input.toUri(), inputBase.toUri(), new URI[] {}));
+        }
+        inputBase = getResourcePath("").resolve("include_path_tests");
+        for (Path input: listMatchingFiles(inputBase, "**/*.thrift")) {
+            testFiles.add(
+                new GenerationPaths(
+                    input.toUri(),
+                    inputBase.toUri(),
+                    new URI[] {
+                        // Generate an absolute URI include path
+                        getResourcePath("").resolve("include_path_1").toUri(),
+                        // as well as a relative URI include path
+                        URI.create("../include_path_2/"),
+                    }));
+        }
+        return listDataProvider(testFiles);
     }
 
     @Test(dataProvider = "thriftProvider")
-    public void testGenerate(Path path) throws Exception {
+    public void testGenerate(GenerationPaths paths) throws Exception {
 
         // Create a nice output directory for these generated files
         Path rootPath = getResourcePath("");
-        Path relativePath = rootPath.relativize(path);
+        Path relativePath = rootPath.relativize(Paths.get(paths.getInputFile()));
         String testPath = relativePath.toString().replace(
                 relativePath.getFileSystem().getSeparator(),
                 "_");
@@ -87,7 +110,8 @@ public class SwiftGeneratorTest {
         File classesDirectory = new File(outputDirectory, "classes");
 
         final SwiftGeneratorConfig config = SwiftGeneratorConfig.builder()
-                .inputBase(Resources.getResource(getClass(), "/").toURI())
+                .inputBase(paths.getInputBase())
+                .includeSearchPaths(Arrays.asList(paths.getIncludeSearchPaths()))
                 .outputFolder(sourceDirectory)
                 .generateIncludedCode(true)
                 .codeFlavor("java-immutable")
@@ -99,7 +123,7 @@ public class SwiftGeneratorTest {
                 .build();
 
         final SwiftGenerator generator = new SwiftGenerator(config);
-        generator.parse(Collections.singletonList(path.toUri()));
+        generator.parse(Collections.singletonList(paths.getInputFile()));
 
         assertCompilation(
                 sourceDirectory.toPath(),
@@ -146,4 +170,32 @@ public class SwiftGeneratorTest {
                 .count());
     }
 
+    private static class GenerationPaths
+    {
+        private final URI inputFile;
+        private final URI inputBase;
+        private final URI[] includeSearchPaths;
+
+        private GenerationPaths(URI inputFile, URI inputBase, URI[] includeSearchPaths)
+        {
+            this.inputFile = inputFile;
+            this.inputBase = inputBase;
+            this.includeSearchPaths = includeSearchPaths;
+        }
+
+        public URI[] getIncludeSearchPaths()
+        {
+            return includeSearchPaths;
+        }
+
+        public URI getInputBase()
+        {
+            return inputBase;
+        }
+
+        public URI getInputFile()
+        {
+            return inputFile;
+        }
+    }
 }

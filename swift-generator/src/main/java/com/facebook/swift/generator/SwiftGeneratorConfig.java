@@ -16,6 +16,7 @@
 package com.facebook.swift.generator;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 
 import java.io.File;
 import java.net.URI;
@@ -25,6 +26,7 @@ import java.util.Set;
 public class SwiftGeneratorConfig
 {
     private final URI inputBase;
+    private final Iterable<URI> includeSearchPaths;
     private final File outputFolder;
     private final String overridePackage;
     private final String defaultPackage;
@@ -34,7 +36,7 @@ public class SwiftGeneratorConfig
 
     private SwiftGeneratorConfig(
             final URI inputBase,
-            final File outputFolder,
+            Iterable<URI> includeSearchPaths, final File outputFolder,
             final String overridePackage,
             final String defaultPackage,
             final Set<SwiftGeneratorTweak> generatorTweaks,
@@ -42,6 +44,7 @@ public class SwiftGeneratorConfig
             final String codeFlavor)
     {
         this.inputBase = inputBase;
+        this.includeSearchPaths = includeSearchPaths;
         this.outputFolder = outputFolder;
         this.overridePackage = overridePackage;
         this.defaultPackage = defaultPackage;
@@ -61,6 +64,14 @@ public class SwiftGeneratorConfig
     public URI getInputBase()
     {
         return inputBase;
+    }
+
+    /**
+     * Returns the list of URIs used as prefixes to search for include files.
+     */
+    public Iterable<URI> getIncludeSearchPaths()
+    {
+        return includeSearchPaths;
     }
 
     /**
@@ -115,6 +126,7 @@ public class SwiftGeneratorConfig
     public static class Builder
     {
         private URI inputBase = null;
+        private Iterable<URI> includeSearchPaths = null;
         private File outputFolder = null;
         private String overridePackage = null;
         private String defaultPackage = null;
@@ -133,19 +145,30 @@ public class SwiftGeneratorConfig
             Preconditions.checkState(inputBase != null, "input base uri must be set to load includes!");
             Preconditions.checkState(codeFlavor != null, "no code flavor selected!");
 
+            if (includeSearchPaths == null) {
+                includeSearchPaths = Lists.newArrayList();
+            }
+
             return new SwiftGeneratorConfig(
-                inputBase,
-                outputFolder,
-                overridePackage,
-                defaultPackage,
-                generatorTweaks,
-                generateIncludedCode,
-                codeFlavor);
+                    inputBase,
+                    includeSearchPaths,
+                    outputFolder,
+                    overridePackage,
+                    defaultPackage,
+                    generatorTweaks,
+                    generateIncludedCode,
+                    codeFlavor);
         }
 
         public Builder inputBase(final URI inputBase)
         {
             this.inputBase = inputBase;
+            return this;
+        }
+
+        public Builder includeSearchPaths(final Iterable<URI> includeSearchPaths)
+        {
+            this.includeSearchPaths = includeSearchPaths;
             return this;
         }
 

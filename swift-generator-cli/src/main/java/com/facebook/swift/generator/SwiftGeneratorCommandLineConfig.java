@@ -16,6 +16,8 @@
 package com.facebook.swift.generator;
 
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.internal.Lists;
+import com.facebook.swift.generator.util.ColonParameterSplitter;
 import com.google.common.collect.Sets;
 
 import java.io.File;
@@ -26,6 +28,13 @@ public class SwiftGeneratorCommandLineConfig
 {
     @Parameter(description = "Thrift IDL input files")
     public List<File> inputFiles;
+
+    @Parameter(
+            names = "-include_paths",
+            description = "Colon-separated list of paths to search for include files",
+            splitter = ColonParameterSplitter.class
+    )
+    public List<File> includePaths = Lists.newArrayList();
 
     @Parameter(names = "-out", description = "Output directory")
     public File outputDirectory = new File(System.getProperty("user.dir") + "/gen-swift");
@@ -64,5 +73,5 @@ public class SwiftGeneratorCommandLineConfig
             names = "-use_java_namespace",
             description = "Use 'java' namespace instead of 'java.swift' namespace"
     )
-    public boolean usePlainJavaNamespace;
+    public boolean usePlainJavaNamespace = false;
 }
