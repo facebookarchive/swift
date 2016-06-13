@@ -191,6 +191,12 @@ public class ThriftUnionMetadataBuilder
             switch (field.getRequiredness()) {
                 case REQUIRED:
                 case OPTIONAL:
+                    // TODO:
+                    // required for a union field definitely is wrong, but "optional" shouldn't
+                    // really be a problem, but currently it is an error in fbcode thrift compiler
+                    // as well. So allowing this could lead to incompatible exports. Once it is
+                    // not, we could stop erroring here, and either ignore it, or override it with
+                    // the default state.
                     if (!visitedInvalidFields.contains(field.getId())) {
                         metadataErrors.addError(
                                 "Thrift union '%s' field '%s(%s)' should not be marked required or optional",
