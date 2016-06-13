@@ -27,7 +27,7 @@ import java.net.SocketAddress;
 public abstract class AbstractClientConnector<T extends NiftyClientChannel>
         implements NiftyClientConnector<T>
 {
-    private final SocketAddress address;
+    protected final SocketAddress address;
     private final TDuplexProtocolFactory protocolFactory;
 
     public AbstractClientConnector(SocketAddress address, TDuplexProtocolFactory protocolFactory)

@@ -21,80 +21,72 @@ import org.jboss.netty.handler.ssl.SslHandler;
 
 import java.io.File;
 
-public class SSLServerConfiguration {
+public abstract class SSLServerConfiguration {
 
-    public static class Builder {
+    public abstract static class BuilderBase<T> {
 
         public File keyFile;
         public File certFile;
         public Iterable<String> ciphers;
-        public SSLImplProvider sslProvider = new JDKSSLImplProvider();
         boolean allowPlaintext;
 
-        public Builder ciphers(Iterable<String> ciphers) {
+        public T ciphers(Iterable<String> ciphers) {
             this.ciphers = ciphers;
-            return this;
+            return (T) this;
         }
 
-        public Builder keyFile(File keyFile) {
+        public T keyFile(File keyFile) {
             this.keyFile = keyFile;
-            return this;
+            return (T) this;
         }
 
-        public Builder certFile(File certFile) {
+        public T certFile(File certFile) {
             this.certFile = certFile;
-            return this;
-        }
-
-        public Builder sslProvider(SSLImplProvider sslProvider) {
-            this.sslProvider = sslProvider;
-            return this;
+            return (T) this;
         }
 
         /**
          * Whether or not to allow plaintext traffic on a secure port.
          */
-        public Builder allowPlaintext(boolean allowPlaintext) {
+        public T allowPlaintext(boolean allowPlaintext) {
             this.allowPlaintext = allowPlaintext;
-            return this;
+            return (T) this;
         }
 
+        protected abstract SSLServerConfiguration createServerConfiguration();
+
+        /**
+         * Builds a server configuration
+         * @throws RuntimeException if parameters are not valid.
+         */
         public SSLServerConfiguration build() {
             Preconditions.checkNotNull(keyFile);
             Preconditions.checkNotNull(certFile);
-
-            return new SSLServerConfiguration(this);
+            return createServerConfiguration();
         }
     }
 
     public final Iterable<String> ciphers;
     public final File keyFile;
     public final File certFile;
-    public final SSLImplProvider sslProvider;
     public final boolean allowPlaintext;
 
-    public SSLServerConfiguration(Builder builder) {
+    private SslContext serverContext;
+
+    protected SSLServerConfiguration(BuilderBase builder) {
         this.ciphers = builder.ciphers;
         this.keyFile = builder.keyFile;
         this.certFile = builder.certFile;
-        this.sslProvider = builder.sslProvider;
         this.allowPlaintext = builder.allowPlaintext;
-
-        sslProvider.initializeProvider();
     }
 
+    protected final void initializeServerContext() {
+        serverContext = createServerContext();
+    }
+
+    protected abstract SslContext createServerContext();
+
     public SslHandler createHandler() throws Exception {
-        SslContext serverContext =
-                SslContext.newServerContext(
-                        sslProvider.getSSLProvider(),
-                        null,
-                        certFile,
-                        keyFile,
-                        null,
-                        ciphers,
-                        null,
-                        0,
-                        0);
         return serverContext.newHandler();
     }
 }

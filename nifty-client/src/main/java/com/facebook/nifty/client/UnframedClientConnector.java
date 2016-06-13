@@ -67,7 +67,7 @@ public class UnframedClientConnector extends AbstractClientConnector<UnframedCli
                 TimeoutHandler.addToPipeline(cp);
                 cp.addLast("thriftUnframedDecoder", new ThriftUnframedDecoder());
                 if (clientConfig.sslClientConfiguration() != null) {
-                    cp.addFirst("ssl", clientConfig.sslClientConfiguration().createHandler());
+                    cp.addFirst("ssl", clientConfig.sslClientConfiguration().createHandler(address));
                 }
                 return cp;
             }

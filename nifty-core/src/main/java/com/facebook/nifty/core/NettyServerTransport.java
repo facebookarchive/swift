@@ -50,6 +50,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A core channel the decode framed Thrift message, dispatches to the TProcessor given
@@ -74,6 +75,9 @@ public class NettyServerTransport implements ExternalResourceReleasable
     private final NettyServerConfig nettyServerConfig;
     private final ChannelStatistics channelStatistics;
 
+    private final AtomicReference<SSLServerConfiguration> sslConfiguration =
+            new AtomicReference<SSLServerConfiguration>();
+
     public NettyServerTransport(final ThriftServerDef def)
     {
         this(def, NettyServerConfig.newBuilder().build(), new DefaultChannelGroup());
@@ -93,6 +97,8 @@ public class NettyServerTransport implements ExternalResourceReleasable
         final ConnectionLimiter connectionLimiter = new ConnectionLimiter(def.getMaxConnections());
 
         this.channelStatistics = new ChannelStatistics(allChannels);
+
+        this.sslConfiguration.set(this.def.getSslConfiguration());
 
         this.pipelineFactory = new ChannelPipelineFactory()
         {
@@ -122,10 +128,11 @@ public class NettyServerTransport implements ExternalResourceReleasable
                 cp.addLast("authHandler", securityHandlers.getAuthenticationHandler());
                 cp.addLast("dispatcher", new NiftyDispatcher(def, nettyServerConfig.getTimer()));
                 cp.addLast("exceptionLogger", new NiftyExceptionLogger());
-                if (def.getSslConfiguration() != null) {
-                    SSLServerConfiguration sslConfig = def.getSslConfiguration();
-                    SslHandler handler = sslConfig.createHandler();
-                    if (sslConfig.allowPlaintext) {
+
+                SSLServerConfiguration serverConfiguration = sslConfiguration.get();
+                if (serverConfiguration != null) {
+                    SslHandler handler = serverConfiguration.createHandler();
+                    if (serverConfiguration.allowPlaintext) {
                         cp.addFirst("ssl_plaintext", new SSLPlaintextHandler(handler, "ssl"));
                     } else {
                         cp.addFirst("ssl", handler);
@@ -253,5 +260,9 @@ public class NettyServerTransport implements ExternalResourceReleasable
     public NiftyMetrics getMetrics()
     {
         return channelStatistics;
+    }
+
+    public void updateSSLConfiguration(SSLServerConfiguration sslServerConfiguration) {
+        sslConfiguration.set(sslServerConfiguration);
     }
 }

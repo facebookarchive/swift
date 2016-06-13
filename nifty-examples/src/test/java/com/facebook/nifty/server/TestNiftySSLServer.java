@@ -18,8 +18,9 @@ package com.facebook.nifty.server;
 import com.facebook.nifty.client.FramedClientConnector;
 import com.facebook.nifty.client.NettyClientConfig;
 import com.facebook.nifty.client.NiftyClient;
+import com.facebook.nifty.client.TNiftyClientChannelTransport;
 import com.facebook.nifty.core.*;
-import com.facebook.nifty.ssl.OpensslImplProvider;
+import com.facebook.nifty.ssl.OpenSSLServerConfiguration;
 import com.facebook.nifty.ssl.SSLClientConfiguration;
 import com.facebook.nifty.ssl.SSLServerConfiguration;
 import com.facebook.nifty.test.LogEntry;
@@ -31,14 +32,19 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
+import org.apache.tomcat.jni.SessionTicketKey;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
+import org.jboss.netty.handler.ssl.SslHandler;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.File;
+import javax.net.ssl.SSLSession;
+import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.List;
 
@@ -64,7 +70,7 @@ public class TestNiftySSLServer
     }
     private void startServer()
     {
-        startServer(getThriftServerDefBuilder(false));
+        startServer(getThriftServerDefBuilder(createSSLServerConfiguration(false, null)));
     }
 
     private void startServer(final ThriftServerDefBuilder thriftServerDefBuilder)
@@ -76,17 +82,20 @@ public class TestNiftySSLServer
         port = ((InetSocketAddress)server.getServerChannel().getLocalAddress()).getPort();
     }
 
-    private ThriftServerDefBuilder getThriftServerDefBuilder(boolean allowPlaintext)
+    SSLServerConfiguration createSSLServerConfiguration(boolean allowPlaintext, SessionTicketKey[] ticketKeys) {
+        return OpenSSLServerConfiguration.newBuilder()
+                .certFile(new File(Plain.class.getResource("/rsa.crt").getFile()))
+                .keyFile(new File(Plain.class.getResource("/rsa.key").getFile()))
+                .allowPlaintext(allowPlaintext)
+                .ticketKeys(ticketKeys)
+                .build();
+    }
+
+    private ThriftServerDefBuilder getThriftServerDefBuilder(SSLServerConfiguration sslServerConfiguration)
     {
         return new ThriftServerDefBuilder()
                 .listen(8080)
-                .withSSLConfiguration(
-                        new SSLServerConfiguration.Builder()
-                                .certFile(new File(Plain.class.getResource("/rsa.crt").getFile()))
-                                .keyFile(new File(Plain.class.getResource("/rsa.key").getFile()))
-                                .sslProvider(new OpensslImplProvider())
-                                .allowPlaintext(allowPlaintext)
-                                .build())
+                .withSSLConfiguration(sslServerConfiguration)
                 .withProcessor(new scribe.Processor<>(new scribe.Iface() {
                     @Override
                     public ResultCode Log(List<LogEntry> messages)
@@ -104,15 +113,20 @@ public class TestNiftySSLServer
                 }));
     }
 
-    private scribe.Client makeNiftyClient()
+    private static SSLClientConfiguration getClientSSLConfiguration() {
+        return new SSLClientConfiguration.Builder()
+                .caFile(new File(Plain.class.getResource("/rsa.crt").getFile()))
+                .sessionCacheSize(10000)
+                .sessionTimeoutSeconds(10000)
+                .build();
+    }
+
+    private scribe.Client makeNiftyClient(SSLClientConfiguration clientSSLConfiguration)
             throws TTransportException, InterruptedException
     {
         NettyClientConfig config =
                 NettyClientConfig.newBuilder()
-                        .setSSLClientConfiguration(
-                                new SSLClientConfiguration.Builder()
-                                        .caFile(new File(Plain.class.getResource("/rsa.crt").getFile()))
-                                        .build()).build();
+                        .setSSLClientConfiguration(clientSSLConfiguration).build();
         InetSocketAddress address = new InetSocketAddress("localhost", port);
         TTransport transport = new NiftyClient(config)
                 .connectSync(scribe.Client.class, new FramedClientConnector(address));
@@ -136,21 +150,21 @@ public class TestNiftySSLServer
     public void testSSL() throws InterruptedException, TException
     {
         startServer();
-        scribe.Client client1 = makeNiftyClient();
+        scribe.Client client1 = makeNiftyClient(getClientSSLConfiguration());
         Assert.assertEquals(client1.Log(Arrays.asList(new LogEntry("client1", "aaa"))), ResultCode.OK);
         Assert.assertEquals(client1.Log(Arrays.asList(new LogEntry("client1", "bbb"))), ResultCode.OK);
-        scribe.Client client2 = makeNiftyClient();
+        scribe.Client client2 = makeNiftyClient(getClientSSLConfiguration());
         Assert.assertEquals(client2.Log(Arrays.asList(new LogEntry("client2", "ccc"))), ResultCode.OK);
     }
 
     @Test
     public void testSSLWithPlaintextAllowedServer() throws InterruptedException, TException
     {
-        startServer(getThriftServerDefBuilder(true));
-        scribe.Client client1 = makeNiftyClient();
+        startServer(getThriftServerDefBuilder(createSSLServerConfiguration(true, null)));
+        scribe.Client client1 = makeNiftyClient(getClientSSLConfiguration());
         Assert.assertEquals(client1.Log(Arrays.asList(new LogEntry("client1", "aaa"))), ResultCode.OK);
         Assert.assertEquals(client1.Log(Arrays.asList(new LogEntry("client1", "bbb"))), ResultCode.OK);
-        scribe.Client client2 = makeNiftyClient();
+        scribe.Client client2 = makeNiftyClient(getClientSSLConfiguration());
         Assert.assertEquals(client2.Log(Arrays.asList(new LogEntry("client2", "ccc"))), ResultCode.OK);
     }
 
@@ -167,10 +181,69 @@ public class TestNiftySSLServer
     @Test
     public void testUnencryptedClientWithAllowPlaintextServer() throws InterruptedException, TException
     {
-        startServer(getThriftServerDefBuilder(true));
+        startServer(getThriftServerDefBuilder(createSSLServerConfiguration(true, null)));
         scribe.Client client = makeNiftyPlaintextClient();
         client.Log(Arrays.asList(new LogEntry("client2", "aaa")));
         client.Log(Arrays.asList(new LogEntry("client2", "bbb")));
         client.Log(Arrays.asList(new LogEntry("client2", "ccc")));
+    }
+
+    @Test
+    public void testSSLSessionResumption() throws Exception {
+        // Ticket resumes are not supported by nifty client, so we test stateful session resumption
+        // only.
+        SessionTicketKey[] keys = { createSessionTicketKey() };
+        SSLServerConfiguration sslServerConfiguration = createSSLServerConfiguration(true, keys);
+        startServer(getThriftServerDefBuilder(sslServerConfiguration));
+
+        SSLClientConfiguration sslClientConfiguration = getClientSSLConfiguration();
+
+        scribe.Client client1 = makeNiftyClient(sslClientConfiguration);
+        client1.Log(Arrays.asList(new LogEntry("client1", "aaa")));
+        Assert.assertFalse(isSessionResumed(getSSLSession(client1)));
+
+        scribe.Client client2 = makeNiftyClient(sslClientConfiguration);
+        client2.Log(Arrays.asList(new LogEntry("client2", "aaa")));
+        Assert.assertTrue(isSessionResumed(getSSLSession(client2)));
+
+        client2.Log(Arrays.asList(new LogEntry("client2", "bbb")));
+        Assert.assertTrue(isSessionResumed(getSSLSession(client2)));
+
+        SessionTicketKey[] keys2 = { createSessionTicketKey() };
+        SSLServerConfiguration sslServerConfiguration2 = createSSLServerConfiguration(true, keys2);
+        server.updateSSLConfiguration(sslServerConfiguration2);
+
+        scribe.Client client3 = makeNiftyClient(sslClientConfiguration);
+        client3.Log(Arrays.asList(new LogEntry("client3", "aaa")));
+        Assert.assertFalse(isSessionResumed(getSSLSession(client3)));
+
+        scribe.Client client4 = makeNiftyClient(sslClientConfiguration);
+        client4.Log(Arrays.asList(new LogEntry("client4", "aaa")));
+        Assert.assertTrue(isSessionResumed(getSSLSession(client4)));
+    }
+
+    private static SessionTicketKey createSessionTicketKey() {
+        SecureRandom secureRandom = new SecureRandom();
+        byte[] name = new byte[SessionTicketKey.NAME_SIZE];
+        byte[] hmac = new byte[SessionTicketKey.HMAC_KEY_SIZE];
+        byte[] aes = new byte[SessionTicketKey.AES_KEY_SIZE];
+        secureRandom.nextBytes(name);
+        secureRandom.nextBytes(hmac);
+        secureRandom.nextBytes(aes);
+
+        return new SessionTicketKey(name, hmac, aes);
+    }
+
+    private static SSLSession getSSLSession(scribe.Client client) {
+        TNiftyClientChannelTransport clientTransport =
+                (TNiftyClientChannelTransport) client.getInputProtocol().getTransport();
+        SslHandler sslHandler = (SslHandler) clientTransport.getChannel().getNettyChannel().getPipeline().get("ssl");
+        return sslHandler.getEngine().getSession();
+    }
+
+    private static boolean isSessionResumed(SSLSession sslSession) throws NoSuchFieldException, IllegalAccessException {
+        Field sslResumedField =  sslSession.getClass().getDeclaredField("isSessionResumption");
+        sslResumedField.setAccessible(true);
+        return sslResumedField.getBoolean(sslSession);
     }
 }

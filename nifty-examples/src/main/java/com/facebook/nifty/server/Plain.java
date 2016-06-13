@@ -20,6 +20,7 @@ import com.facebook.nifty.core.NettyServerConfigBuilder;
 import com.facebook.nifty.core.NiftyBootstrap;
 import com.facebook.nifty.core.ThriftServerDefBuilder;
 import com.facebook.nifty.guice.NiftyModule;
+import com.facebook.nifty.ssl.OpenSSLServerConfiguration;
 import com.facebook.nifty.ssl.SSLServerConfiguration;
 import com.facebook.nifty.test.LogEntry;
 import com.facebook.nifty.test.ResultCode;
@@ -28,10 +29,12 @@ import com.google.inject.Guice;
 import com.google.inject.Stage;
 import io.airlift.log.Logger;
 import org.apache.thrift.TException;
+import org.apache.tomcat.jni.SessionTicketKey;
 
 import javax.inject.Provider;
 
 import java.io.File;
+import java.security.SecureRandom;
 import java.util.List;
 
 /**
@@ -51,6 +54,7 @@ public class Plain
                     @Override
                     protected void configureNifty()
                     {
+                        SessionTicketKey[] keys = { createFakeSessionTicketKey() };
                         bind().toInstance(new ThriftServerDefBuilder()
                                         .listen(8080)
                                         .withProcessor(new scribe.Processor<scribe.Iface>(new scribe.Iface() {
@@ -63,9 +67,11 @@ public class Plain
                                                 return ResultCode.OK;
                                             }
                                         })).withSSLConfiguration(
-                                                new SSLServerConfiguration.Builder()
+                                                OpenSSLServerConfiguration.newBuilder()
                                                         .certFile(new File(getClass().getResource("/rsa.crt").getFile()))
                                                         .keyFile(new File(getClass().getResource("/rsa.key").getFile()))
+                                                        .allowPlaintext(true)
+                                                        .ticketKeys(keys)
                                                         .build())
                                         .build()
                         );
@@ -95,5 +101,17 @@ public class Plain
             nettyConfigBuilder.getSocketChannelConfig().setTcpNoDelay(true);
             return nettyConfigBuilder.build();
         }
+    }
+
+    private static SessionTicketKey createFakeSessionTicketKey() {
+        byte[] name = new byte[SessionTicketKey.NAME_SIZE];
+        byte[] aesKey = new byte[SessionTicketKey.AES_KEY_SIZE];
+        byte[] hmacKey = new byte[SessionTicketKey.HMAC_KEY_SIZE];
+
+        SecureRandom random = new SecureRandom();
+        random.nextBytes(name);
+        random.nextBytes(aesKey);
+        random.nextBytes(hmacKey);
+        return new SessionTicketKey(name, aesKey, hmacKey);
     }
 }

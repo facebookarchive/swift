@@ -140,6 +140,10 @@ public class TNiftyClientChannelTransport extends TTransport
         }
     }
 
+    public NiftyClientChannel getChannel() {
+        return channel;
+    }
+
     private boolean inOneWayRequest()
             throws TException
     {

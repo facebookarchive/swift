@@ -94,7 +94,7 @@ public class FramedClientConnector extends AbstractClientConnector<FramedClientC
                                 LENGTH_ADJUSTMENT,
                                 INITIAL_BYTES_TO_STRIP));
                 if (clientConfig.sslClientConfiguration() != null) {
-                    cp.addFirst("ssl", clientConfig.sslClientConfiguration().createHandler());
+                    cp.addFirst("ssl", clientConfig.sslClientConfiguration().createHandler(address));
                 }
                 return cp;
             }

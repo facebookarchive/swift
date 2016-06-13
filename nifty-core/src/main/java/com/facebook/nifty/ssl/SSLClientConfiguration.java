@@ -15,10 +15,14 @@
  */
 package com.facebook.nifty.ssl;
 
+import com.google.common.base.Throwables;
 import org.jboss.netty.handler.ssl.SslContext;
 import org.jboss.netty.handler.ssl.SslHandler;
 
+import javax.net.ssl.SSLException;
 import java.io.File;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 
 public class SSLClientConfiguration {
 
@@ -26,7 +30,7 @@ public class SSLClientConfiguration {
         Iterable<String> ciphers;
         File caFile;
         long sessionCacheSize = 10000;
-        long sessionTimeout = 86400;
+        long sessionTimeoutSeconds = 86400;
 
         public Builder ciphers(Iterable<String> ciphers) {
             this.ciphers = ciphers;
@@ -43,8 +47,8 @@ public class SSLClientConfiguration {
             return this;
         }
 
-        public Builder sessionTimeout(long sessionTimeout) {
-            this.sessionTimeout = sessionTimeout;
+        public Builder sessionTimeoutSeconds(long sessionTimeoutSeconds) {
+            this.sessionTimeoutSeconds = sessionTimeoutSeconds;
             return this;
         }
 
@@ -56,26 +60,45 @@ public class SSLClientConfiguration {
     public final Iterable<String> ciphers;
     public final File caFile;
     public final long sessionCacheSize;
-    public final long sessionTimeout;
+    public final long sessionTimeoutSeconds;
+
+    private SslContext clientContext;
 
     public SSLClientConfiguration(Builder builder) {
         this.ciphers = builder.ciphers;
         this.caFile = builder.caFile;
         this.sessionCacheSize = builder.sessionCacheSize;
-        this.sessionTimeout = builder.sessionTimeout;
+        this.sessionTimeoutSeconds = builder.sessionTimeoutSeconds;
+        try {
+            clientContext =
+                    SslContext.newClientContext(
+                            null,
+                            null,
+                            caFile,
+                            null,
+                            ciphers,
+                            null,
+                            sessionCacheSize,
+                            sessionTimeoutSeconds);
+        } catch (SSLException e) {
+            Throwables.propagate(e);
+        }
     }
 
     public SslHandler createHandler() throws Exception {
-        SslContext clientContext =
-                SslContext.newClientContext(
-                        null,
-                        null,
-                        caFile,
-                        null,
-                        ciphers,
-                        null,
-                        sessionCacheSize,
-                        sessionTimeout);
         return clientContext.newHandler();
+    }
+
+    public SslHandler createHandler(SocketAddress address) throws Exception {
+        if (!(address instanceof InetSocketAddress)) {
+            return createHandler();
+        }
+        InetSocketAddress netAddress = (InetSocketAddress) address;
+        String host = netAddress.getHostString();
+        if (host == null) {
+            return createHandler();
+        }
+
+        return clientContext.newHandler(host, netAddress.getPort());
     }
 }
