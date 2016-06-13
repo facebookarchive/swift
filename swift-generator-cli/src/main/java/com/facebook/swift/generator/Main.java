@@ -18,8 +18,10 @@ package com.facebook.swift.generator;
 import com.beust.jcommander.JCommander;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import java.io.File;
 import java.net.URI;
@@ -50,8 +52,12 @@ public class Main
             return;
         }
 
+        Iterable<URI> includeSearchPaths =
+                Iterables.transform(cliConfig.includePaths, FILE_TO_URI_TRANSFORM);
+
         SwiftGeneratorConfig.Builder configBuilder = SwiftGeneratorConfig.builder()
                 .inputBase(workingDirectory)
+                .includeSearchPaths(includeSearchPaths)
                 .outputFolder(cliConfig.outputDirectory)
                 .overridePackage(cliConfig.overridePackage)
                 .defaultPackage(cliConfig.defaultPackage)
