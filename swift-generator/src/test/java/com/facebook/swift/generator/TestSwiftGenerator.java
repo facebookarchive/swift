@@ -43,8 +43,8 @@ public class TestSwiftGenerator
         final SwiftGenerator generator = new SwiftGenerator(config);
         generator.parse(
                 Lists.newArrayList(
-                        Resources.getResource(TestSwiftGenerator.class, "/hive/metastore.thrift").toURI(),
-                        Resources.getResource(TestSwiftGenerator.class, "/Maestro.thrift").toURI()
+                        Resources.getResource(TestSwiftGenerator.class, "/basic/hive/metastore.thrift").toURI(),
+                        Resources.getResource(TestSwiftGenerator.class, "/basic/Maestro.thrift").toURI()
                 )
         );
     }

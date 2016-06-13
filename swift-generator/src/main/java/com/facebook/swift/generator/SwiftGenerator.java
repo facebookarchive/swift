@@ -35,13 +35,16 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.io.Resources;
 import io.airlift.log.Logger;
 
 import javax.annotation.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
+import java.net.URL;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -148,9 +151,33 @@ public class SwiftGenerator
 
         try {
             for (final String include : header.getIncludes()) {
-                final URI includeUri = swiftGeneratorConfig.getInputBase().resolve(include);
-                LOG.debug("Found %s included from %s.", includeUri, thriftUri);
-                parseDocument(includeUri,
+                URI foundIncludeUri = null;
+
+                for (URI includeSearchPath : swiftGeneratorConfig.getIncludeSearchPaths()) {
+                    if (includeSearchPath.isAbsolute()) {
+                        URI candidateIncludeUri = includeSearchPath.resolve(include);
+                        if (uriExists(candidateIncludeUri)) {
+                            foundIncludeUri = candidateIncludeUri;
+                            break;
+                        }
+                    }
+                    else {
+                        URI candidateIncludeUri = swiftGeneratorConfig.getInputBase()
+                                                                      .resolve(includeSearchPath)
+                                                                      .resolve(include);
+                        if (uriExists(candidateIncludeUri)) {
+                            foundIncludeUri = candidateIncludeUri;
+                            break;
+                        }
+                    }
+                }
+
+                if (foundIncludeUri == null) {
+                    foundIncludeUri = swiftGeneratorConfig.getInputBase().resolve(include);
+                }
+
+                LOG.debug("Found %s included from %s.", foundIncludeUri, thriftUri);
+                parseDocument(foundIncludeUri,
                               // If the includes should also generate code, pass the list of
                               // contexts down to the include parser, otherwise pass a null in
                               swiftGeneratorConfig.isGenerateIncludedCode() ? contexts : null,
@@ -170,6 +197,17 @@ public class SwiftGenerator
 
         if (contexts != null && contexts.put(context.getNamespace(), context) != null) {
             LOG.info("Thrift Namespace %s included multiple times!", context.getNamespace());
+        }
+    }
+
+    private boolean uriExists(final URI uri)
+    {
+        try (InputStream stream = Resources.asByteSource(uri.toURL()).openStream()) {
+            stream.close();
+            return true;
+        }
+        catch (IOException e) {
+            return false;
         }
     }
 
