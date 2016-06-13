@@ -165,6 +165,9 @@ public class NettyServerTransport implements ExternalResourceReleasable
         actualPort = actualSocket.getPort();
         Preconditions.checkState(actualPort != 0 && (actualPort == requestedPort || requestedPort == 0));
         log.info("started transport %s:%s", def.getName(), actualPort);
+        if (def.getTransportAttachObserver() != null) {
+            def.getTransportAttachObserver().attachTransport(this);
+        }
     }
 
     public void stop()
@@ -200,6 +203,10 @@ public class NettyServerTransport implements ExternalResourceReleasable
                                                 bossExecutor,
                                                 ioWorkerExecutor,
                                                 allChannels);
+        }
+
+        if (def.getTransportAttachObserver() != null) {
+            def.getTransportAttachObserver().detachTransport();
         }
     }
 

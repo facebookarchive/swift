@@ -22,6 +22,7 @@ import com.facebook.nifty.client.TNiftyClientChannelTransport;
 import com.facebook.nifty.core.*;
 import com.facebook.nifty.ssl.OpenSSLServerConfiguration;
 import com.facebook.nifty.ssl.SSLClientConfiguration;
+import com.facebook.nifty.ssl.TransportAttachObserver;
 import com.facebook.nifty.ssl.SSLServerConfiguration;
 import com.facebook.nifty.test.LogEntry;
 import com.facebook.nifty.test.ResultCode;
@@ -70,7 +71,7 @@ public class TestNiftySSLServer
     }
     private void startServer()
     {
-        startServer(getThriftServerDefBuilder(createSSLServerConfiguration(false, null)));
+        startServer(getThriftServerDefBuilder(createSSLServerConfiguration(false, null), null));
     }
 
     private void startServer(final ThriftServerDefBuilder thriftServerDefBuilder)
@@ -91,11 +92,14 @@ public class TestNiftySSLServer
                 .build();
     }
 
-    private ThriftServerDefBuilder getThriftServerDefBuilder(SSLServerConfiguration sslServerConfiguration)
+    private ThriftServerDefBuilder getThriftServerDefBuilder(
+            SSLServerConfiguration sslServerConfiguration,
+            TransportAttachObserver configUpdater)
     {
         return new ThriftServerDefBuilder()
                 .listen(8080)
                 .withSSLConfiguration(sslServerConfiguration)
+                .withTransportAttachObserver(configUpdater)
                 .withProcessor(new scribe.Processor<>(new scribe.Iface() {
                     @Override
                     public ResultCode Log(List<LogEntry> messages)
@@ -160,7 +164,7 @@ public class TestNiftySSLServer
     @Test
     public void testSSLWithPlaintextAllowedServer() throws InterruptedException, TException
     {
-        startServer(getThriftServerDefBuilder(createSSLServerConfiguration(true, null)));
+        startServer(getThriftServerDefBuilder(createSSLServerConfiguration(true, null), null));
         scribe.Client client1 = makeNiftyClient(getClientSSLConfiguration());
         Assert.assertEquals(client1.Log(Arrays.asList(new LogEntry("client1", "aaa"))), ResultCode.OK);
         Assert.assertEquals(client1.Log(Arrays.asList(new LogEntry("client1", "bbb"))), ResultCode.OK);
@@ -181,7 +185,7 @@ public class TestNiftySSLServer
     @Test
     public void testUnencryptedClientWithAllowPlaintextServer() throws InterruptedException, TException
     {
-        startServer(getThriftServerDefBuilder(createSSLServerConfiguration(true, null)));
+        startServer(getThriftServerDefBuilder(createSSLServerConfiguration(true, null), null));
         scribe.Client client = makeNiftyPlaintextClient();
         client.Log(Arrays.asList(new LogEntry("client2", "aaa")));
         client.Log(Arrays.asList(new LogEntry("client2", "bbb")));
@@ -194,7 +198,7 @@ public class TestNiftySSLServer
         // only.
         SessionTicketKey[] keys = { createSessionTicketKey() };
         SSLServerConfiguration sslServerConfiguration = createSSLServerConfiguration(true, keys);
-        startServer(getThriftServerDefBuilder(sslServerConfiguration));
+        startServer(getThriftServerDefBuilder(sslServerConfiguration, null));
 
         SSLClientConfiguration sslClientConfiguration = getClientSSLConfiguration();
 
@@ -220,6 +224,42 @@ public class TestNiftySSLServer
         scribe.Client client4 = makeNiftyClient(sslClientConfiguration);
         client4.Log(Arrays.asList(new LogEntry("client4", "aaa")));
         Assert.assertTrue(isSessionResumed(getSSLSession(client4)));
+    }
+
+    class TestConfigUpdater implements TransportAttachObserver {
+
+        public NettyServerTransport attachedTransport;
+
+        @Override
+        public void attachTransport(NettyServerTransport transport) {
+            attachedTransport = transport;
+        }
+
+        @Override
+        public void detachTransport() {
+            attachedTransport = null;
+        }
+
+        void updateSSLConfig(SSLServerConfiguration newConfig) {
+            attachedTransport.updateSSLConfiguration(newConfig);
+        }
+    };
+
+    @Test
+    public void testAttachTransportToUpdater() throws InterruptedException {
+        TestConfigUpdater configUpdater = new TestConfigUpdater();
+        SessionTicketKey[] keys = { createSessionTicketKey() };
+        SSLServerConfiguration sslServerConfiguration = createSSLServerConfiguration(true, keys);
+        startServer(getThriftServerDefBuilder(sslServerConfiguration, configUpdater));
+        Assert.assertNotNull(configUpdater.attachedTransport);
+
+        SessionTicketKey[] newKeys = { createSessionTicketKey() };
+        SSLServerConfiguration newConfig = createSSLServerConfiguration(true, newKeys);
+        configUpdater.updateSSLConfig(newConfig);
+
+        server.stop();
+        server = null;
+        Assert.assertNull(configUpdater.attachedTransport);
     }
 
     private static SessionTicketKey createSessionTicketKey() {

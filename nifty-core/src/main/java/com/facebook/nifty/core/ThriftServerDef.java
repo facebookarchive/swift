@@ -18,6 +18,7 @@ package com.facebook.nifty.core;
 import com.facebook.nifty.codec.ThriftFrameCodecFactory;
 import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.facebook.nifty.processor.NiftyProcessorFactory;
+import com.facebook.nifty.ssl.TransportAttachObserver;
 import com.facebook.nifty.ssl.SSLServerConfiguration;
 import io.airlift.units.Duration;
 
@@ -44,6 +45,7 @@ public class ThriftServerDef
     private final String name;
     private final NiftySecurityFactory securityFactory;
     private final SSLServerConfiguration sslConfiguration;
+    private final TransportAttachObserver transportAttachObserver;
 
     public ThriftServerDef(
             String name,
@@ -59,7 +61,8 @@ public class ThriftServerDef
             ThriftFrameCodecFactory thriftFrameCodecFactory,
             Executor executor,
             NiftySecurityFactory securityFactory,
-            SSLServerConfiguration sslConfiguration)
+            SSLServerConfiguration sslConfiguration,
+            TransportAttachObserver transportAttachObserver)
     {
         this.name = name;
         this.serverPort = serverPort;
@@ -75,6 +78,7 @@ public class ThriftServerDef
         this.executor = executor;
         this.securityFactory = securityFactory;
         this.sslConfiguration = sslConfiguration;
+        this.transportAttachObserver = transportAttachObserver;
     }
 
     public static ThriftServerDefBuilder newBuilder()
@@ -141,4 +145,6 @@ public class ThriftServerDef
     }
 
     public SSLServerConfiguration getSslConfiguration() { return sslConfiguration; }
+
+    public TransportAttachObserver getTransportAttachObserver() { return transportAttachObserver; }
 }
