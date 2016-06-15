@@ -22,11 +22,10 @@ import org.jboss.netty.handler.ssl.SslContext;
 import org.jboss.netty.handler.ssl.SslProvider;
 
 import javax.net.ssl.SSLException;
-import java.io.File;
 
-public class OpenSSLServerConfiguration extends SSLServerConfiguration {
+public class OpenSslServerConfiguration extends SslServerConfiguration {
 
-    public static class Builder extends SSLServerConfiguration.BuilderBase<Builder> {
+    public static class Builder extends SslServerConfiguration.BuilderBase<Builder> {
 
         public SessionTicketKey[] ticketKeys;
         // A string that can be used to separate tickets from different entities.
@@ -34,7 +33,7 @@ public class OpenSSLServerConfiguration extends SSLServerConfiguration {
         public long sessionTimeoutSeconds = 86400;
 
         public Builder() {
-            this.ciphers = SSLDefaults.SERVER_DEFAULTS;
+            this.ciphers = SslDefaults.SERVER_DEFAULTS;
         }
 
         /**
@@ -62,8 +61,8 @@ public class OpenSSLServerConfiguration extends SSLServerConfiguration {
         }
 
         @Override
-        protected SSLServerConfiguration createServerConfiguration() {
-            OpenSSLServerConfiguration sslServerConfiguration = new OpenSSLServerConfiguration(this);
+        protected SslServerConfiguration createServerConfiguration() {
+            OpenSslServerConfiguration sslServerConfiguration = new OpenSslServerConfiguration(this);
             sslServerConfiguration.initializeServerContext();
             return sslServerConfiguration;
         }
@@ -74,15 +73,15 @@ public class OpenSSLServerConfiguration extends SSLServerConfiguration {
     public final byte[] sessionContext;
     public final long sessionTimeoutSeconds;
 
-    private OpenSSLServerConfiguration(Builder builder) {
+    private OpenSslServerConfiguration(Builder builder) {
         super(builder);
         this.ticketKeys = builder.ticketKeys;
         this.sessionContext = builder.sessionContext.getBytes();
         this.sessionTimeoutSeconds = builder.sessionTimeoutSeconds;
     }
 
-    public static OpenSSLServerConfiguration.Builder newBuilder() {
-        return new OpenSSLServerConfiguration.Builder();
+    public static OpenSslServerConfiguration.Builder newBuilder() {
+        return new OpenSslServerConfiguration.Builder();
     }
 
     @Override
@@ -101,7 +100,8 @@ public class OpenSSLServerConfiguration extends SSLServerConfiguration {
                             null,
                             0,
                             0);
-        } catch (SSLException e) {
+        }
+        catch (SSLException e) {
             throw Throwables.propagate(e);
         }
         if (serverContext instanceof OpenSslServerContext) {

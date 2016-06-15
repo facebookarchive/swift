@@ -21,7 +21,7 @@ import org.jboss.netty.handler.ssl.SslHandler;
 
 import java.io.File;
 
-public abstract class SSLServerConfiguration {
+public abstract class SslServerConfiguration {
 
     public abstract static class BuilderBase<T> {
 
@@ -53,13 +53,14 @@ public abstract class SSLServerConfiguration {
             return (T) this;
         }
 
-        protected abstract SSLServerConfiguration createServerConfiguration();
+        protected abstract SslServerConfiguration createServerConfiguration();
 
         /**
          * Builds a server configuration
+         *
          * @throws RuntimeException if parameters are not valid.
          */
-        public SSLServerConfiguration build() {
+        public SslServerConfiguration build() {
             Preconditions.checkNotNull(keyFile);
             Preconditions.checkNotNull(certFile);
             return createServerConfiguration();
@@ -73,7 +74,7 @@ public abstract class SSLServerConfiguration {
 
     private SslContext serverContext;
 
-    protected SSLServerConfiguration(BuilderBase builder) {
+    protected SslServerConfiguration(BuilderBase builder) {
         this.ciphers = builder.ciphers;
         this.keyFile = builder.keyFile;
         this.certFile = builder.certFile;

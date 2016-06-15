@@ -15,8 +15,8 @@
  */
 package com.facebook.nifty.core;
 
-import com.facebook.nifty.ssl.SSLPlaintextHandler;
-import com.facebook.nifty.ssl.SSLServerConfiguration;
+import com.facebook.nifty.ssl.SslPlaintextHandler;
+import com.facebook.nifty.ssl.SslServerConfiguration;
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 import io.airlift.log.Logger;
 import org.apache.thrift.protocol.TProtocolFactory;
@@ -75,8 +75,7 @@ public class NettyServerTransport implements ExternalResourceReleasable
     private final NettyServerConfig nettyServerConfig;
     private final ChannelStatistics channelStatistics;
 
-    private final AtomicReference<SSLServerConfiguration> sslConfiguration =
-            new AtomicReference<SSLServerConfiguration>();
+    private AtomicReference<SslServerConfiguration> sslConfiguration = new AtomicReference<>();
 
     public NettyServerTransport(final ThriftServerDef def)
     {
@@ -129,11 +128,11 @@ public class NettyServerTransport implements ExternalResourceReleasable
                 cp.addLast("dispatcher", new NiftyDispatcher(def, nettyServerConfig.getTimer()));
                 cp.addLast("exceptionLogger", new NiftyExceptionLogger());
 
-                SSLServerConfiguration serverConfiguration = sslConfiguration.get();
+                SslServerConfiguration serverConfiguration = sslConfiguration.get();
                 if (serverConfiguration != null) {
                     SslHandler handler = serverConfiguration.createHandler();
                     if (serverConfiguration.allowPlaintext) {
-                        cp.addFirst("ssl_plaintext", new SSLPlaintextHandler(handler, "ssl"));
+                        cp.addFirst("ssl_plaintext", new SslPlaintextHandler(handler, "ssl"));
                     } else {
                         cp.addFirst("ssl", handler);
                     }
@@ -269,7 +268,7 @@ public class NettyServerTransport implements ExternalResourceReleasable
         return channelStatistics;
     }
 
-    public void updateSSLConfiguration(SSLServerConfiguration sslServerConfiguration) {
+    public void updateSSLConfiguration(SslServerConfiguration sslServerConfiguration) {
         sslConfiguration.set(sslServerConfiguration);
     }
 }

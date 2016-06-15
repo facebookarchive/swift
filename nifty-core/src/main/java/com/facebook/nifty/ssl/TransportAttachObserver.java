@@ -22,5 +22,6 @@ import com.facebook.nifty.core.NettyServerTransport;
  */
 public interface TransportAttachObserver {
     void attachTransport(NettyServerTransport transport);
+
     void detachTransport();
 }

@@ -20,12 +20,12 @@ import org.jboss.netty.channel.*;
 import org.jboss.netty.handler.codec.frame.FrameDecoder;
 import org.jboss.netty.handler.ssl.SslHandler;
 
-public class SSLPlaintextHandler extends FrameDecoder {
+public class SslPlaintextHandler extends FrameDecoder {
 
     private final SslHandler sslHandler;
     private final String sslHandlerName;
 
-    public SSLPlaintextHandler(SslHandler sslHandler, String sslHandlerName) {
+    public SslPlaintextHandler(SslHandler sslHandler, String sslHandlerName) {
         this.sslHandler = sslHandler;
         this.sslHandlerName = sslHandlerName;
     }

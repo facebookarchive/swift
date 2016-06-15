@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class SSLDefaults {
+public class SslDefaults {
     public static final ImmutableList<String> SERVER_DEFAULTS = ImmutableList.of(
             "ECDHE-ECDSA-AES128-GCM-SHA256",
             "ECDHE-ECDSA-AES256-GCM-SHA256",

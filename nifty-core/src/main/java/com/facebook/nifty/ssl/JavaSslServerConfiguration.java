@@ -20,40 +20,40 @@ import org.jboss.netty.handler.ssl.SslContext;
 import org.jboss.netty.handler.ssl.SslProvider;
 
 import javax.net.ssl.SSLException;
-import java.io.File;
 
-public class JDKSSLServerConfiguration extends SSLServerConfiguration {
+public class JavaSslServerConfiguration extends SslServerConfiguration {
 
-    private JDKSSLServerConfiguration(BuilderBase builder) {
+    private JavaSslServerConfiguration(BuilderBase builder) {
         super(builder);
     }
 
     public static class Builder extends BuilderBase<Builder> {
         @Override
-        protected SSLServerConfiguration createServerConfiguration() {
-            SSLServerConfiguration sslServerConfiguration = new JDKSSLServerConfiguration(this);
+        protected SslServerConfiguration createServerConfiguration() {
+            SslServerConfiguration sslServerConfiguration = new JavaSslServerConfiguration(this);
             sslServerConfiguration.initializeServerContext();
             return sslServerConfiguration;
         }
     }
 
-    public static JDKSSLServerConfiguration.Builder newBuilder() {
-        return new JDKSSLServerConfiguration.Builder();
+    public static JavaSslServerConfiguration.Builder newBuilder() {
+        return new JavaSslServerConfiguration.Builder();
     }
 
     protected SslContext createServerContext() {
         try {
             return SslContext.newServerContext(
-                            SslProvider.JDK,
-                            null,
-                            certFile,
-                            keyFile,
-                            null,
-                            ciphers,
-                            null,
-                            0,
-                            0);
-        } catch (SSLException e) {
+                    SslProvider.JDK,
+                    null,
+                    certFile,
+                    keyFile,
+                    null,
+                    ciphers,
+                    null,
+                    0,
+                    0);
+        }
+        catch (SSLException e) {
             throw Throwables.propagate(e);
         }
     }

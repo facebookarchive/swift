@@ -20,8 +20,7 @@ import com.facebook.nifty.core.NettyServerConfigBuilder;
 import com.facebook.nifty.core.NiftyBootstrap;
 import com.facebook.nifty.core.ThriftServerDefBuilder;
 import com.facebook.nifty.guice.NiftyModule;
-import com.facebook.nifty.ssl.OpenSSLServerConfiguration;
-import com.facebook.nifty.ssl.SSLServerConfiguration;
+import com.facebook.nifty.ssl.OpenSslServerConfiguration;
 import com.facebook.nifty.test.LogEntry;
 import com.facebook.nifty.test.ResultCode;
 import com.facebook.nifty.test.scribe;
@@ -67,7 +66,7 @@ public class Plain
                                                 return ResultCode.OK;
                                             }
                                         })).withSSLConfiguration(
-                                                OpenSSLServerConfiguration.newBuilder()
+                                                OpenSslServerConfiguration.newBuilder()
                                                         .certFile(new File(getClass().getResource("/rsa.crt").getFile()))
                                                         .keyFile(new File(getClass().getResource("/rsa.key").getFile()))
                                                         .allowPlaintext(true)

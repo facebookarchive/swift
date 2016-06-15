@@ -30,7 +30,7 @@ import java.util.Set;
 /**
  * Adds support for the Netty-tcnative uber jar. The current version of netty nifty runs with does not support the
  * uber jar. This should be removed when we move to new version of netty.
- *
+ * <p></p>
  * Most of this code is taken from
  * https://github.com/netty/netty/blob/379ad2c02ed0c0ae9f94e4081e3f910ece6380b7/handler/src/main/java/io/netty/handler/ssl/OpenSsl.java
  */
@@ -45,7 +45,8 @@ public class NettyTcNativeLoader {
         Throwable cause = null;
         try {
             loadTcNative();
-        } catch (Throwable t) {
+        }
+        catch (Throwable t) {
             cause = t;
         }
         UNAVAILABILITY_CAUSE = cause;
@@ -80,7 +81,8 @@ public class NettyTcNativeLoader {
                 NativeLibraryLoader.load(libName, SSL.class.getClassLoader());
                 loaded = true;
                 break;
-            } catch (Throwable t) {
+            }
+            catch (Throwable t) {
                 lastException = t;
                 continue;
             }
@@ -94,7 +96,8 @@ public class NettyTcNativeLoader {
             overrideExceptionValue();
             Library.initialize("provided");
             SSL.initialize(null);
-        } catch (Throwable t) {
+        }
+        catch (Throwable t) {
             throw Throwables.propagate(t);
         }
     }
@@ -121,14 +124,17 @@ public class NettyTcNativeLoader {
             // Override the default value. This will trigger the static block to run which tries to load the libs,
             // however we know that will fail.
             exceptionField.set(null, null);
-        } catch (Throwable t) {
+        }
+        catch (Throwable t) {
             throw Throwables.propagate(t);
-        } finally {
+        }
+        finally {
             // Restore the fields to their original values
             if (exceptionField != null && modifiersField != null & setModifiers) {
                 try {
                     modifiersField.setInt(exceptionField, originalModifiers);
-                } catch (IllegalAccessException e) {
+                }
+                catch (IllegalAccessException e) {
                     // Allow the original exception to propagate instead.
                     return;
                 }

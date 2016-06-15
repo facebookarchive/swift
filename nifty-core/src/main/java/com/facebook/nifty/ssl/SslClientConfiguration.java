@@ -24,7 +24,7 @@ import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
-public class SSLClientConfiguration {
+public class SslClientConfiguration {
 
     public static class Builder {
         Iterable<String> ciphers;
@@ -52,8 +52,8 @@ public class SSLClientConfiguration {
             return this;
         }
 
-        public SSLClientConfiguration build() {
-            return new SSLClientConfiguration(this);
+        public SslClientConfiguration build() {
+            return new SslClientConfiguration(this);
         }
     }
 
@@ -64,7 +64,7 @@ public class SSLClientConfiguration {
 
     private SslContext clientContext;
 
-    public SSLClientConfiguration(Builder builder) {
+    public SslClientConfiguration(Builder builder) {
         this.ciphers = builder.ciphers;
         this.caFile = builder.caFile;
         this.sessionCacheSize = builder.sessionCacheSize;
@@ -80,7 +80,8 @@ public class SSLClientConfiguration {
                             null,
                             sessionCacheSize,
                             sessionTimeoutSeconds);
-        } catch (SSLException e) {
+        }
+        catch (SSLException e) {
             Throwables.propagate(e);
         }
     }

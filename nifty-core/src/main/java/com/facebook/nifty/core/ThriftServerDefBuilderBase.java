@@ -21,7 +21,7 @@ import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.facebook.nifty.processor.NiftyProcessor;
 import com.facebook.nifty.processor.NiftyProcessorFactory;
 import com.facebook.nifty.ssl.TransportAttachObserver;
-import com.facebook.nifty.ssl.SSLServerConfiguration;
+import com.facebook.nifty.ssl.SslServerConfiguration;
 import io.airlift.units.Duration;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.TProcessorFactory;
@@ -64,7 +64,7 @@ public abstract class ThriftServerDefBuilderBase<T extends ThriftServerDefBuilde
     private Duration taskTimeout;
     private Duration queueTimeout;
     private NiftySecurityFactory securityFactory;
-    private SSLServerConfiguration sslConfiguration;
+    private SslServerConfiguration sslConfiguration;
     private TransportAttachObserver transportAttachObserver;
 
     /**
@@ -255,7 +255,7 @@ public abstract class ThriftServerDefBuilderBase<T extends ThriftServerDefBuilde
         return (T) this;
     }
 
-    public T withSSLConfiguration(SSLServerConfiguration sslConfiguration) {
+    public T withSSLConfiguration(SslServerConfiguration sslConfiguration) {
         this.sslConfiguration = sslConfiguration;
         return (T) this;
     }
