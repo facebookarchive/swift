@@ -62,6 +62,10 @@ public class ThriftClientModule implements Module
                 builder.setWorkerThreadCount(clientManagerConfig.getWorkerThreadCount());
             }
 
+            if (clientManagerConfig.getSslClientConfiguration() != null) {
+                builder.setSSLClientConfiguration(clientManagerConfig.getSslClientConfiguration());
+            }
+
             return new NiftyClient(builder.build());
         }
     }

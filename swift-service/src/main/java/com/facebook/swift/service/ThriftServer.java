@@ -27,6 +27,7 @@ import com.facebook.nifty.core.ThriftServerDef;
 import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.facebook.nifty.processor.NiftyProcessor;
 import com.facebook.nifty.processor.NiftyProcessorFactory;
+import com.facebook.nifty.ssl.SslServerConfiguration;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
@@ -74,6 +75,8 @@ public class ThriftServer implements Closeable
     );
     public static final ImmutableMap<String, ExecutorService> DEFAULT_WORKER_EXECUTORS = ImmutableMap.of();
     public static final NiftySecurityFactoryHolder DEFAULT_SECURITY_FACTORY = new NiftySecurityFactoryHolder();
+    public static final SslServerConfigurationHolder DEFAULT_SSL_SERVER_CONFIGURATION =
+            new SslServerConfigurationHolder();
 
     private enum State {
         NOT_STARTED,
@@ -93,6 +96,8 @@ public class ThriftServer implements Closeable
 
     private final ServerChannelFactory serverChannelFactory;
 
+    private final SslServerConfiguration sslServerConfiguration;
+
     private State state = State.NOT_STARTED;
 
     public ThriftServer(NiftyProcessor processor)
@@ -107,7 +112,7 @@ public class ThriftServer implements Closeable
 
     public ThriftServer(NiftyProcessor processor, ThriftServerConfig config, Timer timer)
     {
-        this(processor, config, timer, DEFAULT_FRAME_CODEC_FACTORIES, DEFAULT_PROTOCOL_FACTORIES, DEFAULT_WORKER_EXECUTORS, DEFAULT_SECURITY_FACTORY);
+        this(processor, config, timer, DEFAULT_FRAME_CODEC_FACTORIES, DEFAULT_PROTOCOL_FACTORIES, DEFAULT_WORKER_EXECUTORS, DEFAULT_SECURITY_FACTORY, DEFAULT_SSL_SERVER_CONFIGURATION);
     }
 
     public ThriftServer(
@@ -117,7 +122,8 @@ public class ThriftServer implements Closeable
             Map<String, ThriftFrameCodecFactory> availableFrameCodecFactories,
             Map<String, TDuplexProtocolFactory> availableProtocolFactories,
             Map<String, ExecutorService> availableWorkerExecutors,
-            NiftySecurityFactory securityFactory)
+            NiftySecurityFactory securityFactory,
+            SslServerConfiguration sslServerConfiguration)
     {
         this(
             processor,
@@ -126,7 +132,8 @@ public class ThriftServer implements Closeable
             availableFrameCodecFactories,
             availableProtocolFactories,
             availableWorkerExecutors,
-            new NiftySecurityFactoryHolder(securityFactory));
+            new NiftySecurityFactoryHolder(securityFactory),
+            new SslServerConfigurationHolder(sslServerConfiguration));
     }
 
     @Inject
@@ -137,7 +144,8 @@ public class ThriftServer implements Closeable
             Map<String, ThriftFrameCodecFactory> availableFrameCodecFactories,
             Map<String, TDuplexProtocolFactory> availableProtocolFactories,
             @ThriftServerWorkerExecutor Map<String, ExecutorService> availableWorkerExecutors,
-            NiftySecurityFactoryHolder securityFactoryHolder)
+            NiftySecurityFactoryHolder securityFactoryHolder,
+            SslServerConfigurationHolder sslServerConfigurationHolder)
     {
         checkNotNull(availableFrameCodecFactories, "availableFrameCodecFactories cannot be null");
         checkNotNull(availableProtocolFactories, "availableProtocolFactories cannot be null");
@@ -166,6 +174,8 @@ public class ThriftServer implements Closeable
         ioExecutor = newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("thrift-io-%s").build());
         ioThreads = config.getIoThreadCount();
 
+        sslServerConfiguration = sslServerConfigurationHolder.sslServerConfiguration;
+
         serverChannelFactory = new NioServerSocketChannelFactory(new NioServerBossPool(acceptorExecutor, acceptorThreads, ThreadNameDeterminer.CURRENT),
                                                                  new NioWorkerPool(ioExecutor, ioThreads, ThreadNameDeterminer.CURRENT));
 
@@ -183,6 +193,7 @@ public class ThriftServer implements Closeable
                                                          .using(workerExecutor)
                                                          .taskTimeout(config.getTaskExpirationTimeout())
                                                          .queueTimeout(config.getQueueTimeout())
+                                                         .withSSLConfiguration(sslServerConfiguration)
                                                          .build();
 
         NettyServerConfigBuilder nettyServerConfigBuilder = NettyServerConfig.newBuilder();
@@ -211,6 +222,7 @@ public class ThriftServer implements Closeable
         acceptorThreads = nettyServerConfig.getBossThreadCount();
         ioExecutor = nettyServerConfig.getWorkerExecutor();
         ioThreads = nettyServerConfig.getWorkerThreadCount();
+        sslServerConfiguration = thriftServerDef.getSslConfiguration();
         serverChannelFactory = new NioServerSocketChannelFactory(new NioServerBossPool(acceptorExecutor, acceptorThreads, ThreadNameDeterminer.CURRENT),
                                                                  new NioWorkerPool(ioExecutor, ioThreads, ThreadNameDeterminer.CURRENT));
         transport = new NettyServerTransport(thriftServerDef, nettyServerConfig, allChannels);
@@ -333,6 +345,24 @@ public class ThriftServer implements Closeable
         public NiftySecurityFactoryHolder(NiftySecurityFactory niftySecurityFactory)
         {
             this.niftySecurityFactory = niftySecurityFactory;
+        }
+    }
+
+    /**
+     * Do not use this class. It is only used to workaround Guice not having @Inject(optional=true) for constructor
+     * arguments. The class is public because it's used in ThriftServerModule, which is in a different package.
+     */
+    public static class SslServerConfigurationHolder
+    {
+        @Inject(optional = true) public SslServerConfiguration sslServerConfiguration = null;
+
+        @Inject
+        public SslServerConfigurationHolder()
+        {
+        }
+
+        public SslServerConfigurationHolder(SslServerConfiguration sslServerConfiguration) {
+            this.sslServerConfiguration = sslServerConfiguration;
         }
     }
 }

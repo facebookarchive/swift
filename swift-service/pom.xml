@@ -68,6 +68,11 @@
     </dependency>
 
     <dependency>
+      <groupId>com.facebook.nifty</groupId>
+      <artifactId>nifty-ssl</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>io.airlift</groupId>
       <artifactId>jmx</artifactId>
       <scope>test</scope>

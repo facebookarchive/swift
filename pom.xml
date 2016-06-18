@@ -147,6 +147,12 @@
 
       <dependency>
         <groupId>com.facebook.nifty</groupId>
+        <artifactId>nifty-ssl</artifactId>
+        <version>${dep.fb.nifty.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.facebook.nifty</groupId>
         <artifactId>nifty-client</artifactId>
         <version>${dep.fb.nifty.version}</version>
       </dependency>
