@@ -71,6 +71,7 @@ public class Plain
                                                         .keyFile(new File(getClass().getResource("/rsa.key").getFile()))
                                                         .allowPlaintext(true)
                                                         .ticketKeys(keys)
+                                                        .sslVersion(OpenSslServerConfiguration.SSLVersion.TLS1_2)
                                                         .build())
                                         .build()
                         );

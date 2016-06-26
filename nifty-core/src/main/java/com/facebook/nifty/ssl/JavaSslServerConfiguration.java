@@ -17,6 +17,7 @@ package com.facebook.nifty.ssl;
 
 import com.google.common.base.Throwables;
 import org.jboss.netty.handler.ssl.SslContext;
+import org.jboss.netty.handler.ssl.SslHandler;
 import org.jboss.netty.handler.ssl.SslProvider;
 
 import javax.net.ssl.SSLException;
@@ -40,9 +41,10 @@ public class JavaSslServerConfiguration extends SslServerConfiguration {
         return new JavaSslServerConfiguration.Builder();
     }
 
-    protected SslContext createServerContext() {
+    protected SslHandlerFactory createSslHandlerFactory() {
         try {
-            return SslContext.newServerContext(
+            SslContext sslHandler =
+                    SslContext.newServerContext(
                     SslProvider.JDK,
                     null,
                     certFile,
@@ -52,6 +54,12 @@ public class JavaSslServerConfiguration extends SslServerConfiguration {
                     null,
                     0,
                     0);
+            return new SslHandlerFactory() {
+                @Override
+                public SslHandler newHandler() {
+                    return sslHandler.newHandler();
+                }
+            };
         }
         catch (SSLException e) {
             throw Throwables.propagate(e);

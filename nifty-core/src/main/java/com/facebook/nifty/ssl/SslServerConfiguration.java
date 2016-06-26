@@ -16,7 +16,6 @@
 package com.facebook.nifty.ssl;
 
 import com.google.common.base.Preconditions;
-import org.jboss.netty.handler.ssl.SslContext;
 import org.jboss.netty.handler.ssl.SslHandler;
 
 import java.io.File;
@@ -72,7 +71,7 @@ public abstract class SslServerConfiguration {
     public final File certFile;
     public final boolean allowPlaintext;
 
-    private SslContext serverContext;
+    private SslHandlerFactory serverContext;
 
     protected SslServerConfiguration(BuilderBase builder) {
         this.ciphers = builder.ciphers;
@@ -82,10 +81,10 @@ public abstract class SslServerConfiguration {
     }
 
     protected final void initializeServerContext() {
-        serverContext = createServerContext();
+        serverContext = createSslHandlerFactory();
     }
 
-    protected abstract SslContext createServerContext();
+    protected abstract SslHandlerFactory createSslHandlerFactory();
 
     public SslHandler createHandler() throws Exception {
         return serverContext.newHandler();

@@ -16,14 +16,17 @@
 package com.facebook.nifty.ssl;
 
 import com.google.common.base.Throwables;
+import org.apache.tomcat.jni.SSL;
 import org.apache.tomcat.jni.SessionTicketKey;
-import org.jboss.netty.handler.ssl.OpenSslServerContext;
-import org.jboss.netty.handler.ssl.SslContext;
-import org.jboss.netty.handler.ssl.SslProvider;
 
 import javax.net.ssl.SSLException;
 
 public class OpenSslServerConfiguration extends SslServerConfiguration {
+
+    public enum SSLVersion {
+        TLS, // Server will accept all TLS versions
+        TLS1_2, // Server will accept only TLS1.2.
+    };
 
     public static class Builder extends SslServerConfiguration.BuilderBase<Builder> {
 
@@ -31,6 +34,7 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
         // A string that can be used to separate tickets from different entities.
         public String sessionContext = "thrift";
         public long sessionTimeoutSeconds = 86400;
+        public SSLVersion sslVersion = SSLVersion.TLS1_2;
 
         public Builder() {
             this.ciphers = SslDefaults.SERVER_DEFAULTS;
@@ -60,6 +64,11 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
             return this;
         }
 
+        public Builder sslVersion(SSLVersion sslVersion) {
+            this.sslVersion = sslVersion;
+            return this;
+        }
+
         @Override
         protected SslServerConfiguration createServerConfiguration() {
             OpenSslServerConfiguration sslServerConfiguration = new OpenSslServerConfiguration(this);
@@ -72,12 +81,14 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
     // A string that can be used to separate tickets from different entities.
     public final byte[] sessionContext;
     public final long sessionTimeoutSeconds;
+    public final SSLVersion sslVersion;
 
     private OpenSslServerConfiguration(Builder builder) {
         super(builder);
         this.ticketKeys = builder.ticketKeys;
         this.sessionContext = builder.sessionContext.getBytes();
         this.sessionTimeoutSeconds = builder.sessionTimeoutSeconds;
+        this.sslVersion = builder.sslVersion;
     }
 
     public static OpenSslServerConfiguration.Builder newBuilder() {
@@ -85,34 +96,31 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
     }
 
     @Override
-    protected SslContext createServerContext() {
+    protected SslHandlerFactory createSslHandlerFactory() {
         NettyTcNativeLoader.ensureAvailable();
-        SslContext serverContext = null;
         try {
-            serverContext =
-                    SslContext.newServerContext(
-                            SslProvider.OPENSSL,
-                            null,
-                            certFile,
-                            keyFile,
-                            null,
-                            ciphers,
-                            null,
-                            0,
-                            0);
+            int sslVersionInt = SSL.SSL_PROTOCOL_TLS;
+            if (sslVersion == SSLVersion.TLS1_2) {
+                sslVersionInt = SSL.SSL_PROTOCOL_TLSV1_2;
+            }
+            NiftyOpenSslServerContext serverContext = new NiftyOpenSslServerContext(
+                    certFile,
+                    keyFile,
+                    null,
+                    ciphers,
+                    sslVersionInt,
+                    null,
+                    0,
+                    0);
+            if (this.ticketKeys != null) {
+                serverContext.setTicketKeys(this.ticketKeys);
+            }
+            serverContext.setSessionIdContext(this.sessionContext);
+            serverContext.setSessionCacheTimeout(this.sessionTimeoutSeconds);
+            return serverContext;
         }
         catch (SSLException e) {
             throw Throwables.propagate(e);
         }
-        if (serverContext instanceof OpenSslServerContext) {
-            OpenSslServerContext opensslCtx = (OpenSslServerContext) serverContext;
-            long ctxPtr = opensslCtx.context();
-            if (this.ticketKeys != null) {
-                org.apache.tomcat.jni.SSLContext.setSessionTicketKeys(ctxPtr, this.ticketKeys);
-            }
-            org.apache.tomcat.jni.SSLContext.setSessionIdContext(ctxPtr, this.sessionContext);
-            org.apache.tomcat.jni.SSLContext.setSessionCacheTimeout(ctxPtr, this.sessionTimeoutSeconds);
-        }
-        return serverContext;
     }
 }
