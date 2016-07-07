@@ -93,7 +93,7 @@ public class TestNiftyJavaSslServer
     private ThriftServerDefBuilder getThriftServerDefBuilder(SslServerConfiguration sslServerConfiguration)
     {
         return new ThriftServerDefBuilder()
-                .listen(8080)
+                .listen(0)
                 .withSSLConfiguration(sslServerConfiguration)
                 .withProcessor(new scribe.Processor<>(new scribe.Iface() {
                     @Override
