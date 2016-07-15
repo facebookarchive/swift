@@ -46,9 +46,6 @@ public class ThriftCodecModule implements Module
     @Override
     public void configure(Binder binder)
     {
-        binder.disableCircularProxies();
-        binder.requireExplicitBindings();
-
         binder.bind(ThriftCodecFactory.class).to(CompilerThriftCodecFactory.class).in(Scopes.SINGLETON);
         binder.bind(ThriftCatalog.class).in(Scopes.SINGLETON);
         binder.bind(ThriftCodecManager.class).in(Scopes.SINGLETON);
