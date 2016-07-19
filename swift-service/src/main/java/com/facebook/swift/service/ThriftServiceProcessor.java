@@ -15,7 +15,9 @@
  */
 package com.facebook.swift.service;
 
+import com.facebook.nifty.core.NiftyRequestContext;
 import com.facebook.nifty.core.RequestContext;
+import com.facebook.nifty.core.TNiftyTransport;
 import com.facebook.nifty.processor.NiftyProcessor;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.metadata.ThriftMethodMetadata;
@@ -103,11 +105,13 @@ public class ThriftServiceProcessor implements NiftyProcessor
             String methodName = message.name;
             int sequenceId = message.seqid;
 
+            TNiftyTransport requestTransport = requestContext instanceof NiftyRequestContext ? ((NiftyRequestContext)requestContext).getNiftyTransport() : null;
+
             // lookup method
             ThriftMethodProcessor method = methods.get(methodName);
             if (method == null) {
                 TProtocolUtil.skip(in, TType.STRUCT);
-                writeApplicationException(out, methodName, sequenceId, UNKNOWN_METHOD, "Invalid method name: '" + methodName + "'", null);
+                writeApplicationException(out, requestTransport, methodName, sequenceId, UNKNOWN_METHOD, "Invalid method name: '" + methodName + "'", null);
                 return Futures.immediateFuture(true);
             }
 
@@ -123,7 +127,7 @@ public class ThriftServiceProcessor implements NiftyProcessor
 
                 default:
                     TProtocolUtil.skip(in, TType.STRUCT);
-                    writeApplicationException(out, methodName, sequenceId, INVALID_MESSAGE_TYPE, "Received invalid message type " + message.type + " from client", null);
+                    writeApplicationException(out, requestTransport, methodName, sequenceId, INVALID_MESSAGE_TYPE, "Received invalid message type " + message.type + " from client", null);
                     return Futures.immediateFuture(true);
             }
 
@@ -159,6 +163,7 @@ public class ThriftServiceProcessor implements NiftyProcessor
 
     public static TApplicationException writeApplicationException(
             TProtocol outputProtocol,
+            TNiftyTransport requestTransport,
             String methodName,
             int sequenceId,
             int errorCode,
@@ -178,6 +183,9 @@ public class ThriftServiceProcessor implements NiftyProcessor
         outputProtocol.writeMessageBegin(new TMessage(methodName, TMessageType.EXCEPTION, sequenceId));
         applicationException.write(outputProtocol);
         outputProtocol.writeMessageEnd();
+        if (requestTransport != null) {
+            requestTransport.setTApplicationException(applicationException);
+        }
         outputProtocol.getTransport().flush();
 
         return applicationException;

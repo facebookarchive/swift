@@ -15,8 +15,10 @@
  */
 package com.facebook.swift.service;
 
+import com.facebook.nifty.core.NiftyRequestContext;
 import com.facebook.nifty.core.RequestContext;
 import com.facebook.nifty.core.RequestContexts;
+import com.facebook.nifty.core.TNiftyTransport;
 import com.facebook.swift.codec.ThriftCodec;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.codec.internal.TProtocolReader;
@@ -220,9 +222,11 @@ public class ThriftMethodProcessor
                         } else {
                             contextChain.undeclaredUserException(t);
                             // unexpected exception
+                            TNiftyTransport requestTransport = requestContext instanceof NiftyRequestContext ? ((NiftyRequestContext)requestContext).getNiftyTransport() : null;
                             TApplicationException applicationException =
                                     ThriftServiceProcessor.writeApplicationException(
                                             out,
+                                            requestTransport,
                                             method.getName(),
                                             sequenceId,
                                             INTERNAL_ERROR,
