@@ -15,6 +15,7 @@
  */
 package com.facebook.nifty.core;
 
+import org.apache.thrift.TApplicationException;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -36,6 +37,7 @@ public class TNiftyTransport extends TTransport
     private int bufferPosition;
     private int bufferEnd;
     private final byte[] buffer;
+    private TApplicationException tApplicationException;
 
     public TNiftyTransport(Channel channel,
                            ChannelBuffer in,
@@ -180,5 +182,13 @@ public class TNiftyTransport extends TTransport
     public int getWrittenByteCount()
     {
         return getOutputBuffer().writerIndex();
+    }
+
+    public void setTApplicationException(TApplicationException e) {
+        tApplicationException = e;
+    }
+
+    public TApplicationException getTApplicationException() {
+        return tApplicationException;
     }
 }

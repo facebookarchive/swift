@@ -295,6 +295,7 @@ public class NiftyDispatcher extends SimpleChannelUpstreamHandler
                 outProtocol.writeMessageBegin(new TMessage(message.name, TMessageType.EXCEPTION, message.seqid));
                 x.write(outProtocol);
                 outProtocol.writeMessageEnd();
+                requestTransport.setTApplicationException(x);
                 outProtocol.getTransport().flush();
 
                 ThriftMessage response = request.getMessageFactory().create(requestTransport.getOutputBuffer());
