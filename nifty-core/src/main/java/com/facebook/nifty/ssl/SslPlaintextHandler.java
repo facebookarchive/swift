@@ -38,6 +38,10 @@ public class SslPlaintextHandler extends FrameDecoder {
 
         if (looksLikeTLS(buffer)) {
             ctx.getPipeline().addAfter(ctx.getName(), sslHandlerName, sslHandler);
+        } else {
+            // If the SSL handler is not used, close the ssl engine. This will clean up any native structures
+            // that the ssl engine holds on to.
+            sslHandler.getEngine().closeOutbound();
         }
 
         ctx.getPipeline().remove(this);
