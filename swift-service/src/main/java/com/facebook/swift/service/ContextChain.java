@@ -21,6 +21,8 @@ import com.facebook.swift.codec.ThriftCodec;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.thrift.TException;
+
 public class ContextChain
 {
     private final List<ThriftEventHandler> handlers;
@@ -37,56 +39,56 @@ public class ContextChain
         }
     }
 
-    public void preRead()
+    public void preRead() throws TException
     {
         for (int i = 0; i < handlers.size(); i++) {
             handlers.get(i).preRead(contexts.get(i), methodName);
         }
     }
 
-    public void postRead(Object[] args)
+    public void postRead(Object[] args) throws TException
     {
         for (int i = 0; i < handlers.size(); i++) {
             handlers.get(i).postRead(contexts.get(i), methodName, args);
         }
     }
 
-    public void preWrite(Object result)
+    public void preWrite(Object result) throws TException
     {
         for (int i = 0; i < handlers.size(); i++) {
             handlers.get(i).preWrite(contexts.get(i), methodName, result);
         }
     }
 
-    public void preWriteException(Throwable t)
+    public void preWriteException(Throwable t) throws TException
     {
         for (int i = 0; i < handlers.size(); i++) {
             handlers.get(i).preWriteException(contexts.get(i), methodName, t);
         }
     }
 
-    public void postWrite(Object result)
+    public void postWrite(Object result) throws TException
     {
         for (int i = 0; i < handlers.size(); i++) {
             handlers.get(i).postWrite(contexts.get(i), methodName, result);
         }
     }
 
-    public void postWriteException(Throwable t)
+    public void postWriteException(Throwable t) throws TException
     {
         for (int i = 0; i < handlers.size(); i++) {
             handlers.get(i).postWriteException(contexts.get(i), methodName, t);
         }
     }
 
-    public void declaredUserException(Throwable t, ThriftCodec<?> exceptionCodec)
+    public void declaredUserException(Throwable t, ThriftCodec<?> exceptionCodec) throws TException
     {
         for (int i = 0; i < handlers.size(); i++) {
             handlers.get(i).declaredUserException(contexts.get(i), methodName, t, exceptionCodec);
         }
     }
 
-    public void undeclaredUserException(Throwable t)
+    public void undeclaredUserException(Throwable t) throws TException
     {
         for (int i = 0; i < handlers.size(); i++) {
             handlers.get(i).undeclaredUserException(contexts.get(i), methodName, t);

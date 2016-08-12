@@ -18,6 +18,8 @@ package com.facebook.swift.service;
 import com.facebook.nifty.core.RequestContext;
 import com.facebook.swift.codec.ThriftCodec;
 
+import org.apache.thrift.TException;
+
 public abstract class ThriftEventHandler
 {
     public Object getContext(String methodName, RequestContext requestContext)
@@ -25,13 +27,14 @@ public abstract class ThriftEventHandler
         return null;
     }
 
-    public void preRead(Object context, String methodName) {}
-    public void postRead(Object context, String methodName, Object[] args) {}
-    public void preWrite(Object context, String methodName, Object result) {}
-    public void preWriteException(Object context, String methodName, Throwable t) {}
-    public void postWrite(Object context, String methodName, Object result) {}
-    public void postWriteException(Object context, String methodName, Throwable t) {}
-    public void declaredUserException(Object o, String methodName, Throwable t, ThriftCodec<?> exceptionCodec) {}
-    public void undeclaredUserException(Object o, String methodName, Throwable t) {}
+    public void preRead(Object context, String methodName) throws TException {}
+    public void postRead(Object context, String methodName, Object[] args) throws TException {}
+    public void preWrite(Object context, String methodName, Object result) throws TException {}
+    public void preWriteException(Object context, String methodName, Throwable t) throws TException {}
+    public void postWrite(Object context, String methodName, Object result) throws TException {}
+    public void postWriteException(Object context, String methodName, Throwable t) throws TException {}
+    public void declaredUserException(Object o, String methodName, Throwable t, ThriftCodec<?> exceptionCodec)
+        throws TException {}
+    public void undeclaredUserException(Object o, String methodName, Throwable t) throws TException {}
     public void done(Object context, String methodName) {}
 }
