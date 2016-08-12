@@ -16,6 +16,7 @@
 package com.facebook.nifty.ssl;
 
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import org.apache.tomcat.jni.SSL;
 import org.apache.tomcat.jni.SessionTicketKey;
 
@@ -35,6 +36,7 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
         public String sessionContext = "thrift";
         public long sessionTimeoutSeconds = 86400;
         public SSLVersion sslVersion = SSLVersion.TLS1_2;
+        public Iterable<String> nextProtocols = ImmutableList.of("thrift");
 
         public Builder() {
             this.ciphers = SslDefaults.SERVER_DEFAULTS;
@@ -47,6 +49,14 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
          */
         public Builder ticketKeys(SessionTicketKey[] ticketKeys) {
             this.ticketKeys = ticketKeys;
+            return this;
+        }
+
+        /**
+         * Sets the next protocols which will be set to both ALPN as well as NPN.
+         */
+        public Builder nextProtocols(Iterable<String> nextProtocols) {
+            this.nextProtocols = nextProtocols;
             return this;
         }
 
@@ -82,6 +92,7 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
     public final byte[] sessionContext;
     public final long sessionTimeoutSeconds;
     public final SSLVersion sslVersion;
+    public final Iterable<String> nextProtocols;
 
     private OpenSslServerConfiguration(Builder builder) {
         super(builder);
@@ -89,6 +100,7 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
         this.sessionContext = builder.sessionContext.getBytes();
         this.sessionTimeoutSeconds = builder.sessionTimeoutSeconds;
         this.sslVersion = builder.sslVersion;
+        this.nextProtocols = builder.nextProtocols;
     }
 
     public static OpenSslServerConfiguration.Builder newBuilder() {
@@ -109,7 +121,7 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
                     null,
                     ciphers,
                     sslVersionInt,
-                    null,
+                    nextProtocols,
                     0,
                     0);
             if (this.ticketKeys != null) {

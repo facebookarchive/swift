@@ -207,6 +207,10 @@ public final class NiftyOpenSslServerContext implements SslHandlerFactory {
 
                     SSLContext.setNextProtos(ctx, nextProtocolBuf.toString());
                 }
+                if (this.nextProtocols != null && !this.nextProtocols.isEmpty()) {
+                    String[] alpnArray = this.nextProtocols.toArray(new String[0]);
+                    SSLContext.setAlpnProtos(ctx, alpnArray, SSL.SSL_SELECTOR_FAILURE_CHOOSE_MY_LAST_PROTOCOL);
+                }
 
                 /* Set session cache size, if specified */
                 if (sessionCacheSize > 0) {
