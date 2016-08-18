@@ -40,6 +40,7 @@ import java.util.List;
 public final class NiftyOpenSslServerContext implements SslHandlerFactory {
 
     private static final String IGNORABLE_ERROR_PREFIX = "error:00000000:";
+    private static final int DEFAULT_CERT_DEPTH = 3;
 
     private final long aprPool;
 
@@ -68,6 +69,8 @@ public final class NiftyOpenSslServerContext implements SslHandlerFactory {
      * @param sslVersion       The version of SSL to support, for example {@code SSL.SSL_PROTOCOL_ALL}
      * @param nextProtocols    the application layer protocols to accept, in the order of preference.
      *                         {@code null} to disable TLS NPN/ALPN extension.
+     * @param clientCAFile     CA file to use for client authentication. Null if not specified.
+     * @param sslVerification  SSL verification options.
      * @param sessionCacheSize the size of the cache used for storing SSL session objects.
      *                         {@code 0} to use the default value.
      * @param sessionTimeout   the timeout for the cached SSL session objects, in seconds.
@@ -80,8 +83,10 @@ public final class NiftyOpenSslServerContext implements SslHandlerFactory {
             Iterable<String> ciphers,
             int sslVersion,
             Iterable<String> nextProtocols,
+            File clientCAFile,
+            OpenSslServerConfiguration.SSLVerification sslVerification,
             long sessionCacheSize,
-            long sessionTimeout) throws SSLException {
+            long sessionTimeout) throws Exception {
 
         if (certChainFile == null) {
             throw new NullPointerException("certChainFile");
@@ -104,6 +109,9 @@ public final class NiftyOpenSslServerContext implements SslHandlerFactory {
         }
         if (nextProtocols == null) {
             nextProtocols = Collections.emptyList();
+        }
+        if (clientCAFile != null && !clientCAFile.isFile()) {
+            throw new IllegalArgumentException("clientCAFile is not a file " + clientCAFile);
         }
 
         for (String c : ciphers) {
@@ -143,6 +151,7 @@ public final class NiftyOpenSslServerContext implements SslHandlerFactory {
                 SSLContext.setOptions(ctx, SSL.SSL_OP_SINGLE_ECDH_USE);
                 SSLContext.setOptions(ctx, SSL.SSL_OP_SINGLE_DH_USE);
                 SSLContext.setOptions(ctx, SSL.SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION);
+                SSLContext.setOptions(ctx, SSL.SSL_OP_NO_COMPRESSION);
 
                 // We need to enable SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER as the memory address may change between
                 // calling OpenSSLEngine.wrap(...).
@@ -168,9 +177,6 @@ public final class NiftyOpenSslServerContext implements SslHandlerFactory {
                     throw new SSLException("failed to set cipher suite: " + this.ciphers, e);
                 }
 
-                /* Set certificate verification policy. */
-                SSLContext.setVerify(ctx, SSL.SSL_CVERIFY_NONE, 10);
-
                 /* Load the certificate file and private key. */
                 try {
                     if (!SSLContext.setCertificate(
@@ -194,6 +200,17 @@ public final class NiftyOpenSslServerContext implements SslHandlerFactory {
                                 "failed to set certificate chain: " + certChainFile + " (" + SSL.getLastError() + ')');
                     }
                 }
+
+                if (clientCAFile != null &&
+                    !SSLContext.setCACertificate(ctx, clientCAFile.getPath(), null)) {
+                    String error = SSL.getLastError();
+                    if (!error.startsWith(IGNORABLE_ERROR_PREFIX)) {
+                        throw new SSLException(
+                                "failed to set ca cert: " + clientCAFile + " (" + SSL.getLastError() + ')');
+                    }
+                }
+
+                SSLContext.setVerify(ctx, sslVerification.getValue(), DEFAULT_CERT_DEPTH);
 
                 /* Set next protocols for next protocol negotiation extension, if specified */
                 if (!nextProtoList.isEmpty()) {

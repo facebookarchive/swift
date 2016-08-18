@@ -21,12 +21,27 @@ import org.apache.tomcat.jni.SSL;
 import org.apache.tomcat.jni.SessionTicketKey;
 
 import javax.net.ssl.SSLException;
+import java.io.File;
 
 public class OpenSslServerConfiguration extends SslServerConfiguration {
 
     public enum SSLVersion {
         TLS, // Server will accept all TLS versions
         TLS1_2, // Server will accept only TLS1.2.
+    };
+
+    public enum SSLVerification {
+        VERIFY_NONE(0), // No client Certificate is required
+        VERIFY_OPTIONAL(1), // The client may present a valid Certificate
+        VERIFY_REQUIRE(2), // The client has to present a valid Certificate
+        VERIFY_OPTIONAL_NO_CA(3); // The client's cert does not need to be verifiable.
+
+        private final int id;
+
+        SSLVerification(int id) {
+            this.id = id;
+        }
+        public int getValue() { return id; }
     };
 
     public static class Builder extends SslServerConfiguration.BuilderBase<Builder> {
@@ -37,6 +52,8 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
         public long sessionTimeoutSeconds = 86400;
         public SSLVersion sslVersion = SSLVersion.TLS1_2;
         public Iterable<String> nextProtocols = ImmutableList.of("thrift");
+        public File clientCAFile;
+        public SSLVerification sslVerification = SSLVerification.VERIFY_OPTIONAL;
 
         public Builder() {
             this.ciphers = SslDefaults.SERVER_DEFAULTS;
@@ -79,6 +96,16 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
             return this;
         }
 
+        public Builder clientCAFile(File clientCAFile) {
+            this.clientCAFile = clientCAFile;
+            return this;
+        }
+
+        public Builder sslVerification(SSLVerification sslVerification) {
+            this.sslVerification = sslVerification;
+            return this;
+        }
+
         @Override
         protected SslServerConfiguration createServerConfiguration() {
             OpenSslServerConfiguration sslServerConfiguration = new OpenSslServerConfiguration(this);
@@ -93,6 +120,8 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
     public final long sessionTimeoutSeconds;
     public final SSLVersion sslVersion;
     public final Iterable<String> nextProtocols;
+    public final File clientCAFile;
+    public final SSLVerification sslVerification;
 
     private OpenSslServerConfiguration(Builder builder) {
         super(builder);
@@ -101,6 +130,8 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
         this.sessionTimeoutSeconds = builder.sessionTimeoutSeconds;
         this.sslVersion = builder.sslVersion;
         this.nextProtocols = builder.nextProtocols;
+        this.clientCAFile = builder.clientCAFile;
+        this.sslVerification = builder.sslVerification;
     }
 
     public static OpenSslServerConfiguration.Builder newBuilder() {
@@ -122,6 +153,8 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
                     ciphers,
                     sslVersionInt,
                     nextProtocols,
+                    clientCAFile,
+                    sslVerification,
                     0,
                     0);
             if (this.ticketKeys != null) {
@@ -131,7 +164,7 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
             serverContext.setSessionCacheTimeout(this.sessionTimeoutSeconds);
             return serverContext;
         }
-        catch (SSLException e) {
+        catch (Exception e) {
             throw Throwables.propagate(e);
         }
     }
