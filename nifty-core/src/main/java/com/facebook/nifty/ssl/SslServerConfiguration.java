@@ -18,6 +18,8 @@ package com.facebook.nifty.ssl;
 import com.google.common.base.Preconditions;
 import org.jboss.netty.handler.ssl.SslHandler;
 
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLException;
 import java.io.File;
 
 public abstract class SslServerConfiguration {
@@ -89,4 +91,6 @@ public abstract class SslServerConfiguration {
     public SslHandler createHandler() throws Exception {
         return serverContext.newHandler();
     }
+
+    public abstract SslSession getSession(SSLEngine engine) throws SSLException;
 }
