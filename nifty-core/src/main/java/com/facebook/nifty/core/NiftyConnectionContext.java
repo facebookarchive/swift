@@ -15,6 +15,7 @@
  */
 package com.facebook.nifty.core;
 
+import com.facebook.nifty.ssl.SslSession;
 import com.google.common.base.Preconditions;
 
 import java.net.SocketAddress;
@@ -26,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class NiftyConnectionContext implements ConnectionContext
 {
     private SocketAddress remoteAddress;
+    private SslSession sslSession;
     private Map<String, Object> attributes = new ConcurrentHashMap<>();
 
     @Override
@@ -34,9 +36,18 @@ public class NiftyConnectionContext implements ConnectionContext
         return remoteAddress;
     }
 
+    @Override
+    public SslSession getSslSession() {
+        return sslSession;
+    }
+
     public void setRemoteAddress(SocketAddress remoteAddress)
     {
         this.remoteAddress = remoteAddress;
+    }
+
+    public void setSslSession(SslSession sslSession) {
+        this.sslSession = sslSession;
     }
 
     @Override
