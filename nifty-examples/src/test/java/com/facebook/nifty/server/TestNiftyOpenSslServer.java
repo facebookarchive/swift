@@ -24,8 +24,8 @@ import com.facebook.nifty.ssl.*;
 import com.facebook.nifty.test.LogEntry;
 import com.facebook.nifty.test.ResultCode;
 import com.facebook.nifty.test.scribe;
-import com.google.common.base.Throwables;
 import io.airlift.log.Logger;
+import io.airlift.units.Duration;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -43,6 +43,7 @@ import org.testng.annotations.Test;
 import javax.net.ssl.*;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
@@ -50,6 +51,7 @@ import java.net.Socket;
 import java.security.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class TestNiftyOpenSslServer
 {
@@ -194,30 +196,38 @@ public class TestNiftyOpenSslServer
         client.Log(Arrays.asList(new LogEntry("client2", "ccc")));
     }
 
-    private void startClientWithCerts() {
+    private void startRawSSLClient(boolean useCerts, long delay) throws SSLException {
         try {
             KeyStore keyStore = KeyStore.getInstance("PKCS12");
             InputStream keyInput = new FileInputStream(Plain.class.getResource("/rsa.p12").getFile());
             keyStore.load(keyInput, "12345".toCharArray());
             keyInput.close();
 
-            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            keyManagerFactory.init(keyStore, "12345".toCharArray());
+            KeyManager[] keyManagers = null;
+            if (useCerts) {
+                KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                keyManagerFactory.init(keyStore, "12345".toCharArray());
+                keyManagers = keyManagerFactory.getKeyManagers();
+            }
 
             TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             factory.init(keyStore);
             SSLContext context = SSLContext.getInstance("TLS");
-            context.init(keyManagerFactory.getKeyManagers(), factory.getTrustManagers(), null);
+            context.init(keyManagers, factory.getTrustManagers(), null);
 
             Socket sock = new Socket();
             sock.connect(new InetSocketAddress("localhost", port));
+            if (delay != 0) {
+                Thread.sleep(delay);
+            }
+
             SSLSocket sslSocket = (SSLSocket) context.getSocketFactory().createSocket(sock, "localhost", port, true);
             sslSocket.startHandshake();
             SSLSession session = sslSocket.getSession();
             Assert.assertTrue(session.isValid());
             sslSocket.close();
         } catch (Throwable t) {
-            throw Throwables.propagate(t);
+            throw new SSLException(t);
         }
     }
 
@@ -255,7 +265,7 @@ public class TestNiftyOpenSslServer
     }
 
     @Test
-    public void testDefaultServerWithClientCert() throws InterruptedException {
+    public void testDefaultServerWithClientCert() throws InterruptedException, SSLException {
         SslServerConfiguration serverConfig = OpenSslServerConfiguration.newBuilder()
                 .certFile(new File(Plain.class.getResource("/rsa.crt").getFile()))
                 .keyFile(new File(Plain.class.getResource("/rsa.key").getFile()))
@@ -265,7 +275,7 @@ public class TestNiftyOpenSslServer
         ThriftServerDefBuilder builder = getThriftServerDefBuilder(serverConfig, null);
         SslSession[] session = addAuthentication(builder, serverConfig);
         startServer(builder);
-        startClientWithCerts();
+        startRawSSLClient(true, 0);
         synchronized (this) {
             if (session[0] == null) {
                 wait(100);
@@ -275,7 +285,7 @@ public class TestNiftyOpenSslServer
     }
 
     @Test
-    public void testClientAuthenticatingServer() throws InterruptedException {
+    public void testClientAuthenticatingServer() throws InterruptedException, SSLException {
         SslServerConfiguration serverConfig = OpenSslServerConfiguration.newBuilder()
                 .certFile(new File(Plain.class.getResource("/rsa.crt").getFile()))
                 .keyFile(new File(Plain.class.getResource("/rsa.key").getFile()))
@@ -287,7 +297,7 @@ public class TestNiftyOpenSslServer
         ThriftServerDefBuilder builder = getThriftServerDefBuilder(serverConfig, null);
         SslSession[] session = addAuthentication(builder, serverConfig);
         startServer(builder);
-        startClientWithCerts();
+        startRawSSLClient(true, 0);
         // Waits for max of 100ms for the server thread to process the cert
         synchronized (this) {
             if (session[0] == null) {
@@ -298,7 +308,7 @@ public class TestNiftyOpenSslServer
     }
 
     @Test
-    public void testClientAuthenticatingServerAllowPlaintext() throws InterruptedException {
+    public void testClientAuthenticatingServerAllowPlaintext() throws InterruptedException, SSLException {
         SslServerConfiguration serverConfig = OpenSslServerConfiguration.newBuilder()
                 .certFile(new File(Plain.class.getResource("/rsa.crt").getFile()))
                 .keyFile(new File(Plain.class.getResource("/rsa.key").getFile()))
@@ -310,7 +320,7 @@ public class TestNiftyOpenSslServer
         ThriftServerDefBuilder builder = getThriftServerDefBuilder(serverConfig, null);
         SslSession[] session = addAuthentication(builder, serverConfig);
         startServer(builder);
-        startClientWithCerts();
+        startRawSSLClient(true, 0);
         // Waits for max of 100ms for the server thread to process the cert
         synchronized (this) {
             if (session[0] == null) {
@@ -320,8 +330,8 @@ public class TestNiftyOpenSslServer
         Assert.assertEquals(session[0].peerCert.getSubjectDN().toString(), "CN=RSA, OU=RSA, O=RSA, L=Default City, C=XX");
     }
 
-    @Test(expectedExceptions = TTransportException.class)
-    public void testClientWithoutCerts() throws InterruptedException, TException {
+    @Test(expectedExceptions = SSLException.class)
+    public void testClientWithoutCerts() throws InterruptedException, TException, SSLException {
         SslServerConfiguration serverConfig = OpenSslServerConfiguration.newBuilder()
                 .certFile(new File(Plain.class.getResource("/rsa.crt").getFile()))
                 .keyFile(new File(Plain.class.getResource("/rsa.key").getFile()))
@@ -331,10 +341,23 @@ public class TestNiftyOpenSslServer
                 .build();
 
         startServer(getThriftServerDefBuilder(serverConfig, null));
-        SslClientConfiguration sslClientConfiguration = getClientSSLConfiguration();
+        startRawSSLClient(false, 0);
+    }
 
-        scribe.Client client1 = makeNiftyClient(sslClientConfiguration);
-        client1.Log(Arrays.asList(new LogEntry("client1", "aaa")));
+    @Test(expectedExceptions = SSLException.class)
+    public void testWithServerIdleTimeout()
+            throws TException, InterruptedException, IOException, NoSuchAlgorithmException {
+        startServer(getThriftServerDefBuilder(createSSLServerConfiguration(false, null), null)
+                .clientIdleTimeout(Duration.succinctDuration(1, TimeUnit.MILLISECONDS)));
+        startRawSSLClient(true, 200);
+    }
+
+    @Test(expectedExceptions = SSLException.class)
+    public void testWithServerIdleTimeoutAllowPlaintext()
+            throws TException, InterruptedException, IOException, NoSuchAlgorithmException {
+        startServer(getThriftServerDefBuilder(createSSLServerConfiguration(true, null), null)
+                .clientIdleTimeout(Duration.succinctDuration(1, TimeUnit.MILLISECONDS)));
+        startRawSSLClient(true, 200);
     }
 
     @Test
