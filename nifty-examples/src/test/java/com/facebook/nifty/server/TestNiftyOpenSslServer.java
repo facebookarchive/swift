@@ -231,15 +231,19 @@ public class TestNiftyOpenSslServer
                     public ChannelHandler getAuthenticationHandler() {
                         return new SimpleChannelHandler() {
                             @Override
-                            public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-                                if (!(e.getMessage() instanceof SslSession)) {
-                                    super.messageReceived(ctx, e);
-                                    return;
-                                }
-                                synchronized (TestNiftyOpenSslServer.this) {
-                                    sslSession[0] = (SslSession) e.getMessage();
-                                    TestNiftyOpenSslServer.this.notify();
-                                }
+                            public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+                                super.channelOpen(ctx, e);
+                                SslHandler handler = (SslHandler) ctx.getPipeline().get("ssl");
+                                handler.handshake().addListener(new ChannelFutureListener() {
+                                    @Override
+                                    public void operationComplete(ChannelFuture future) throws Exception {
+                                        synchronized (TestNiftyOpenSslServer.this) {
+                                            sslSession[0] = configuration.getSession(handler.getEngine());
+                                            TestNiftyOpenSslServer.this.notify();
+                                        }
+                                    }
+                                });
+                                ctx.getPipeline().remove(this);
                             }
                         };
                     }
@@ -280,29 +284,6 @@ public class TestNiftyOpenSslServer
                 .certFile(new File(Plain.class.getResource("/rsa.crt").getFile()))
                 .keyFile(new File(Plain.class.getResource("/rsa.key").getFile()))
                 .allowPlaintext(false)
-                .sslVerification(OpenSslServerConfiguration.SSLVerification.VERIFY_REQUIRE)
-                .clientCAFile(new File(Plain.class.getResource("/rsa.crt").getFile()))
-                .build();
-
-        ThriftServerDefBuilder builder = getThriftServerDefBuilder(serverConfig, null);
-        SslSession[] session = addAuthentication(builder, serverConfig);
-        startServer(builder);
-        startClientWithCerts();
-        // Waits for max of 100ms for the server thread to process the cert
-        synchronized (this) {
-            if (session[0] == null) {
-                wait(100);
-            }
-        }
-        Assert.assertEquals(session[0].peerCert.getSubjectDN().toString(), "CN=RSA, OU=RSA, O=RSA, L=Default City, C=XX");
-    }
-
-    @Test
-    public void testClientAuthenticatingServerAllowPlaintext() throws InterruptedException {
-        SslServerConfiguration serverConfig = OpenSslServerConfiguration.newBuilder()
-                .certFile(new File(Plain.class.getResource("/rsa.crt").getFile()))
-                .keyFile(new File(Plain.class.getResource("/rsa.key").getFile()))
-                .allowPlaintext(true)
                 .sslVerification(OpenSslServerConfiguration.SSLVerification.VERIFY_REQUIRE)
                 .clientCAFile(new File(Plain.class.getResource("/rsa.crt").getFile()))
                 .build();

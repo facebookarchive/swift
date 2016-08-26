@@ -131,8 +131,6 @@ public class NettyServerTransport implements ExternalResourceReleasable
                 SslServerConfiguration serverConfiguration = sslConfiguration.get();
                 if (serverConfiguration != null) {
                     SslHandler handler = serverConfiguration.createHandler();
-                    // This will delay channel connected upstream events until the channel is actually connected.
-                    handler.setIssueHandshake(true);
                     if (serverConfiguration.allowPlaintext) {
                         cp.addFirst("ssl_plaintext", new SslPlaintextHandler(handler, "ssl"));
                     } else {

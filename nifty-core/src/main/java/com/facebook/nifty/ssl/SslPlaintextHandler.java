@@ -31,11 +31,6 @@ public class SslPlaintextHandler extends FrameDecoder {
     }
 
     @Override
-    public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        // delay channel connects until we know what kind of transport we have.
-    }
-
-    @Override
     protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
         if (buffer.readableBytes() < 9) {
             return null;
@@ -50,7 +45,6 @@ public class SslPlaintextHandler extends FrameDecoder {
         }
 
         ctx.getPipeline().remove(this);
-        Channels.fireChannelConnected(ctx, ctx.getPipeline().getChannel().getRemoteAddress());
         Channels.fireMessageReceived(ctx, buffer, ctx.getPipeline().getChannel().getRemoteAddress());
         return null;
     }

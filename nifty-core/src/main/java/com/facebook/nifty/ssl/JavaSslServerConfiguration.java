@@ -47,7 +47,7 @@ public class JavaSslServerConfiguration extends SslServerConfiguration {
 
     protected SslHandlerFactory createSslHandlerFactory() {
         try {
-            SslContext sslContext =
+            SslContext sslHandler =
                     SslContext.newServerContext(
                     SslProvider.JDK,
                     null,
@@ -61,13 +61,7 @@ public class JavaSslServerConfiguration extends SslServerConfiguration {
             return new SslHandlerFactory() {
                 @Override
                 public SslHandler newHandler() {
-                    SessionAwareSslHandler handler =
-                            new SessionAwareSslHandler(
-                                    sslContext.newEngine(),
-                                    sslContext.bufferPool(),
-                                    JavaSslServerConfiguration.this);
-                    handler.setCloseOnSSLException(true);
-                    return handler;
+                    return sslHandler.newHandler();
                 }
             };
         }
