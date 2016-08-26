@@ -27,7 +27,6 @@ import com.facebook.nifty.ssl.SslServerConfiguration;
 import com.facebook.nifty.test.LogEntry;
 import com.facebook.nifty.test.ResultCode;
 import com.facebook.nifty.test.scribe;
-import com.google.common.base.Throwables;
 import io.airlift.log.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -42,16 +41,11 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.net.ssl.*;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import javax.net.ssl.SSLSession;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.security.*;
-import java.security.cert.CertificateException;
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.List;
 
@@ -196,77 +190,6 @@ public class TestNiftyOpenSslServer
         client.Log(Arrays.asList(new LogEntry("client2", "aaa")));
         client.Log(Arrays.asList(new LogEntry("client2", "bbb")));
         client.Log(Arrays.asList(new LogEntry("client2", "ccc")));
-    }
-
-    private void startClientWithCerts() {
-        try {
-            KeyStore keyStore = KeyStore.getInstance("PKCS12");
-            InputStream keyInput = new FileInputStream(Plain.class.getResource("/rsa.p12").getFile());
-            keyStore.load(keyInput, "12345".toCharArray());
-            keyInput.close();
-
-            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            keyManagerFactory.init(keyStore, "12345".toCharArray());
-
-            TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            factory.init(keyStore);
-            SSLContext context = SSLContext.getInstance("TLS");
-            context.init(keyManagerFactory.getKeyManagers(), factory.getTrustManagers(), null);
-
-            Socket sock = new Socket();
-            sock.connect(new InetSocketAddress("localhost", port));
-            SSLSocket sslSocket = (SSLSocket) context.getSocketFactory().createSocket(sock, "localhost", port, true);
-            sslSocket.startHandshake();
-            SSLSession session = sslSocket.getSession();
-            Assert.assertTrue(session.isValid());
-            sslSocket.close();
-        } catch (Throwable t) {
-            throw Throwables.propagate(t);
-        }
-    }
-
-    @Test
-    public void testDefaultServerWithClientCert() {
-        SslServerConfiguration serverConfig = OpenSslServerConfiguration.newBuilder()
-                .certFile(new File(Plain.class.getResource("/rsa.crt").getFile()))
-                .keyFile(new File(Plain.class.getResource("/rsa.key").getFile()))
-                .allowPlaintext(false)
-                .clientCAFile(new File(Plain.class.getResource("/rsa.crt").getFile()))
-                .build();
-
-        startServer(getThriftServerDefBuilder(serverConfig, null));
-        startClientWithCerts();
-    }
-
-    @Test
-    public void testClientAuthenticatingServer() {
-        SslServerConfiguration serverConfig = OpenSslServerConfiguration.newBuilder()
-                .certFile(new File(Plain.class.getResource("/rsa.crt").getFile()))
-                .keyFile(new File(Plain.class.getResource("/rsa.key").getFile()))
-                .allowPlaintext(false)
-                .sslVerification(OpenSslServerConfiguration.SSLVerification.VERIFY_REQUIRE)
-                .clientCAFile(new File(Plain.class.getResource("/rsa.crt").getFile()))
-                .build();
-
-        startServer(getThriftServerDefBuilder(serverConfig, null));
-        startClientWithCerts();
-    }
-
-    @Test(expectedExceptions = TTransportException.class)
-    public void testClientWithoutCerts() throws InterruptedException, TException {
-        SslServerConfiguration serverConfig = OpenSslServerConfiguration.newBuilder()
-                .certFile(new File(Plain.class.getResource("/rsa.crt").getFile()))
-                .keyFile(new File(Plain.class.getResource("/rsa.key").getFile()))
-                .allowPlaintext(false)
-                .sslVerification(OpenSslServerConfiguration.SSLVerification.VERIFY_REQUIRE)
-                .clientCAFile(new File(Plain.class.getResource("/rsa.crt").getFile()))
-                .build();
-
-        startServer(getThriftServerDefBuilder(serverConfig, null));
-        SslClientConfiguration sslClientConfiguration = getClientSSLConfiguration();
-
-        scribe.Client client1 = makeNiftyClient(sslClientConfiguration);
-        client1.Log(Arrays.asList(new LogEntry("client1", "aaa")));
     }
 
     @Test
