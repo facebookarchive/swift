@@ -22,11 +22,11 @@ import org.jboss.netty.handler.ssl.SslHandler;
 
 public class SslPlaintextHandler extends FrameDecoder {
 
-    private final SslHandler sslHandler;
+    private final SslServerConfiguration sslServerConfiguration;
     private final String sslHandlerName;
 
-    public SslPlaintextHandler(SslHandler sslHandler, String sslHandlerName) {
-        this.sslHandler = sslHandler;
+    public SslPlaintextHandler(SslServerConfiguration sslServerConfiguration, String sslHandlerName) {
+        this.sslServerConfiguration = sslServerConfiguration;
         this.sslHandlerName = sslHandlerName;
     }
 
@@ -42,11 +42,9 @@ public class SslPlaintextHandler extends FrameDecoder {
         }
 
         if (looksLikeTLS(buffer)) {
+            SslHandler sslHandler = sslServerConfiguration.createHandler();
+            sslHandler.setIssueHandshake(true);
             ctx.getPipeline().addAfter(ctx.getName(), sslHandlerName, sslHandler);
-        } else {
-            // If the SSL handler is not used, close the ssl engine. This will clean up any native structures
-            // that the ssl engine holds on to.
-            sslHandler.getEngine().closeOutbound();
         }
 
         ctx.getPipeline().remove(this);
