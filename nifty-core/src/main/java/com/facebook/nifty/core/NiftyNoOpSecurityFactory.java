@@ -22,7 +22,7 @@ import org.jboss.netty.channel.SimpleChannelHandler;
 
 public class NiftyNoOpSecurityFactory implements NiftySecurityFactory
 {
-    public static final ChannelHandler noOpHandler = new SimpleChannelHandler() {
+    static final ChannelHandler noOpHandler = new SimpleChannelHandler() {
         @Override
         public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception
         {

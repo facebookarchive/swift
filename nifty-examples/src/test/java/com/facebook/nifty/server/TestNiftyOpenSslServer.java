@@ -20,7 +20,10 @@ import com.facebook.nifty.client.NettyClientConfig;
 import com.facebook.nifty.client.NiftyClient;
 import com.facebook.nifty.client.TNiftyClientChannelTransport;
 import com.facebook.nifty.core.*;
-import com.facebook.nifty.ssl.*;
+import com.facebook.nifty.ssl.OpenSslServerConfiguration;
+import com.facebook.nifty.ssl.SslClientConfiguration;
+import com.facebook.nifty.ssl.TransportAttachObserver;
+import com.facebook.nifty.ssl.SslServerConfiguration;
 import com.facebook.nifty.test.LogEntry;
 import com.facebook.nifty.test.ResultCode;
 import com.facebook.nifty.test.scribe;
@@ -32,7 +35,6 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.apache.tomcat.jni.SessionTicketKey;
-import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.handler.ssl.SslHandler;
 import org.testng.Assert;
@@ -43,11 +45,13 @@ import org.testng.annotations.Test;
 import javax.net.ssl.*;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.security.*;
+import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -221,65 +225,21 @@ public class TestNiftyOpenSslServer
         }
     }
 
-    private SslSession[] addAuthentication(ThriftServerDefBuilder builder, SslServerConfiguration configuration) {
-        final SslSession[] sslSession = new SslSession[1];
-        builder.withSecurityFactory(new NiftySecurityFactory() {
-            @Override
-            public NiftySecurityHandlers getSecurityHandlers(ThriftServerDef def, NettyServerConfig serverConfig) {
-                return new NiftySecurityHandlers() {
-                    @Override
-                    public ChannelHandler getAuthenticationHandler() {
-                        return new SimpleChannelHandler() {
-                            @Override
-                            public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-                                super.channelOpen(ctx, e);
-                                SslHandler handler = (SslHandler) ctx.getPipeline().get("ssl");
-                                handler.handshake().addListener(new ChannelFutureListener() {
-                                    @Override
-                                    public void operationComplete(ChannelFuture future) throws Exception {
-                                        synchronized (TestNiftyOpenSslServer.this) {
-                                            sslSession[0] = configuration.getSession(handler.getEngine());
-                                            TestNiftyOpenSslServer.this.notify();
-                                        }
-                                    }
-                                });
-                                ctx.getPipeline().remove(this);
-                            }
-                        };
-                    }
-
-                    @Override
-                    public ChannelHandler getEncryptionHandler() {
-                        return NiftyNoOpSecurityFactory.noOpHandler;
-                    }
-                };
-            }
-        });
-        return sslSession;
-    }
-
     @Test
-    public void testDefaultServerWithClientCert() throws InterruptedException {
+    public void testDefaultServerWithClientCert() {
         SslServerConfiguration serverConfig = OpenSslServerConfiguration.newBuilder()
                 .certFile(new File(Plain.class.getResource("/rsa.crt").getFile()))
                 .keyFile(new File(Plain.class.getResource("/rsa.key").getFile()))
                 .allowPlaintext(false)
                 .clientCAFile(new File(Plain.class.getResource("/rsa.crt").getFile()))
                 .build();
-        ThriftServerDefBuilder builder = getThriftServerDefBuilder(serverConfig, null);
-        SslSession[] session = addAuthentication(builder, serverConfig);
-        startServer(builder);
+
+        startServer(getThriftServerDefBuilder(serverConfig, null));
         startClientWithCerts();
-        synchronized (this) {
-            if (session[0] == null) {
-                wait(100);
-            }
-        }
-        Assert.assertEquals(session[0].peerCert.getSubjectDN().toString(), "CN=RSA, OU=RSA, O=RSA, L=Default City, C=XX");
     }
 
     @Test
-    public void testClientAuthenticatingServer() throws InterruptedException {
+    public void testClientAuthenticatingServer() {
         SslServerConfiguration serverConfig = OpenSslServerConfiguration.newBuilder()
                 .certFile(new File(Plain.class.getResource("/rsa.crt").getFile()))
                 .keyFile(new File(Plain.class.getResource("/rsa.key").getFile()))
@@ -288,17 +248,8 @@ public class TestNiftyOpenSslServer
                 .clientCAFile(new File(Plain.class.getResource("/rsa.crt").getFile()))
                 .build();
 
-        ThriftServerDefBuilder builder = getThriftServerDefBuilder(serverConfig, null);
-        SslSession[] session = addAuthentication(builder, serverConfig);
-        startServer(builder);
+        startServer(getThriftServerDefBuilder(serverConfig, null));
         startClientWithCerts();
-        // Waits for max of 100ms for the server thread to process the cert
-        synchronized (this) {
-            if (session[0] == null) {
-                wait(100);
-            }
-        }
-        Assert.assertEquals(session[0].peerCert.getSubjectDN().toString(), "CN=RSA, OU=RSA, O=RSA, L=Default City, C=XX");
     }
 
     @Test(expectedExceptions = TTransportException.class)

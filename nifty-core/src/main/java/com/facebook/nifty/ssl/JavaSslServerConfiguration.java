@@ -20,11 +20,7 @@ import org.jboss.netty.handler.ssl.SslContext;
 import org.jboss.netty.handler.ssl.SslHandler;
 import org.jboss.netty.handler.ssl.SslProvider;
 
-import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSession;
-import javax.security.cert.X509Certificate;
 
 public class JavaSslServerConfiguration extends SslServerConfiguration {
 
@@ -68,22 +64,5 @@ public class JavaSslServerConfiguration extends SslServerConfiguration {
         catch (SSLException e) {
             throw Throwables.propagate(e);
         }
-    }
-
-    @Override
-    public SslSession getSession(SSLEngine engine) throws SSLException {
-        SSLSession session = engine.getSession();
-        String cipher = session.getCipherSuite();
-        long establishedTime = session.getCreationTime();
-        X509Certificate peerCert = null;
-        try {
-            X509Certificate[] certs = session.getPeerCertificateChain();
-            peerCert = certs[0];
-        } catch (SSLPeerUnverifiedException e) {
-            // The peer might not have presented a certificate, in which case we consider them
-            // to be an unauthenticated peer.
-        }
-        String version = session.getProtocol();
-        return new SslSession(null, null, version, cipher, establishedTime, peerCert);
     }
 }

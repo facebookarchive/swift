@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableList;
 import org.apache.tomcat.jni.SSL;
 import org.apache.tomcat.jni.SessionTicketKey;
 
-import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLException;
 import java.io.File;
 
@@ -168,10 +167,5 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
         catch (Exception e) {
             throw Throwables.propagate(e);
         }
-    }
-
-    @Override
-    public SslSession getSession(SSLEngine engine) throws SSLException {
-        return OpenSslSessionHelper.getSession(engine);
     }
 }
