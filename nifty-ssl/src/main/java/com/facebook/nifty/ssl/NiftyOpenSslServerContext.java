@@ -302,7 +302,7 @@ public final class NiftyOpenSslServerContext implements SslHandlerFactory {
 
     @Override
     public SslHandler newHandler() {
-        SslHandler handler = new SslHandler(newEngine(), bufferPool);
+        SslHandler handler = new BetterSslHandler(newEngine(), bufferPool);
         handler.setCloseOnSSLException(true);
         return handler;
     }
