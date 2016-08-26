@@ -18,15 +18,14 @@ package com.facebook.nifty.ssl;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.handler.codec.frame.FrameDecoder;
-import org.jboss.netty.handler.ssl.SslHandler;
 
 public class SslPlaintextHandler extends FrameDecoder {
 
-    private final SslHandler sslHandler;
+    private final SslServerConfiguration serverConfiguration;
     private final String sslHandlerName;
 
-    public SslPlaintextHandler(SslHandler sslHandler, String sslHandlerName) {
-        this.sslHandler = sslHandler;
+    public SslPlaintextHandler(SslServerConfiguration serverConfiguration, String sslHandlerName) {
+        this.serverConfiguration = serverConfiguration;
         this.sslHandlerName = sslHandlerName;
     }
 
@@ -37,11 +36,7 @@ public class SslPlaintextHandler extends FrameDecoder {
         }
 
         if (looksLikeTLS(buffer)) {
-            ctx.getPipeline().addAfter(ctx.getName(), sslHandlerName, sslHandler);
-        } else {
-            // If the SSL handler is not used, close the ssl engine. This will clean up any native structures
-            // that the ssl engine holds on to.
-            sslHandler.getEngine().closeOutbound();
+            ctx.getPipeline().addAfter(ctx.getName(), sslHandlerName, serverConfiguration.createHandler());
         }
 
         ctx.getPipeline().remove(this);

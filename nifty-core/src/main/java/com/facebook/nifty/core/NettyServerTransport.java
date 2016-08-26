@@ -130,10 +130,10 @@ public class NettyServerTransport implements ExternalResourceReleasable
 
                 SslServerConfiguration serverConfiguration = sslConfiguration.get();
                 if (serverConfiguration != null) {
-                    SslHandler handler = serverConfiguration.createHandler();
                     if (serverConfiguration.allowPlaintext) {
-                        cp.addFirst("ssl_plaintext", new SslPlaintextHandler(handler, "ssl"));
+                        cp.addFirst("ssl_plaintext", new SslPlaintextHandler(serverConfiguration, "ssl"));
                     } else {
+                        SslHandler handler = serverConfiguration.createHandler();
                         cp.addFirst("ssl", handler);
                     }
                 }
