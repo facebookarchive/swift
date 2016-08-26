@@ -15,10 +15,8 @@
  */
 package com.facebook.nifty.core;
 
-import com.facebook.nifty.ssl.SslSession;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelStateEvent;
-import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 
 public class ConnectionContextHandler extends SimpleChannelUpstreamHandler
@@ -33,13 +31,4 @@ public class ConnectionContextHandler extends SimpleChannelUpstreamHandler
 
         ctx.setAttachment(context);
     }
-
-    @Override
-    public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-        if (e.getMessage() instanceof SslSession) {
-            NiftyConnectionContext context = (NiftyConnectionContext) ctx.getAttachment();
-            context.setSslSession((SslSession) e.getMessage());
-        }
-        super.messageReceived(ctx, e);
-    }
-};
+}

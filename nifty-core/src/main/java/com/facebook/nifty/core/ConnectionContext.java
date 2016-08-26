@@ -15,8 +15,6 @@
  */
 package com.facebook.nifty.core;
 
-import com.facebook.nifty.ssl.SslSession;
-
 import java.net.SocketAddress;
 import java.util.Iterator;
 import java.util.Map;
@@ -29,12 +27,6 @@ public interface ConnectionContext
      * @return The client's remote address as a {@link SocketAddress}
      */
     public SocketAddress getRemoteAddress();
-
-    /**
-     * Returns the SslSession of the connection. This could be null if the
-     * channel is not for an ssl connection.
-     */
-    public SslSession getSslSession();
 
     /**
      * Gets the value of an additional attribute specific to the connection
