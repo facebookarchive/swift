@@ -15,7 +15,6 @@
  */
 package com.facebook.nifty.ssl;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.tomcat.jni.Pool;
 import org.apache.tomcat.jni.SSL;
 import org.apache.tomcat.jni.SSLContext;
@@ -27,6 +26,7 @@ import org.jboss.netty.handler.ssl.SslHandler;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLException;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -44,12 +44,11 @@ public final class NiftyOpenSslServerContext implements SslHandlerFactory {
 
     private final long aprPool;
 
-    private final List<String> ciphers;
+    private final List<String> ciphers = new ArrayList<String>();
+    private final List<String> unmodifiableCiphers = Collections.unmodifiableList(ciphers);
     private final long sessionCacheSize;
     private final long sessionTimeout;
     private final List<String> nextProtocols;
-
-    private final OpenSslServerConfiguration sslServerConfiguration;
 
     private final SslBufferPool bufferPool = newBufferPool();
 
@@ -58,13 +57,36 @@ public final class NiftyOpenSslServerContext implements SslHandlerFactory {
      */
     private final long ctx;
 
-    public NiftyOpenSslServerContext(OpenSslServerConfiguration sslServerConfiguration) throws Exception {
-        this.sslServerConfiguration = sslServerConfiguration;
-        int sslVersion = this.sslServerConfiguration.sslVersion.getValue();
-        File certChainFile = sslServerConfiguration.certFile;
-        File keyFile = sslServerConfiguration.keyFile;
-        File clientCAFile = sslServerConfiguration.clientCAFile;
-        OpenSslServerConfiguration.SSLVerification sslVerification = sslServerConfiguration.sslVerification;
+    /**
+     * Creates a new instance.
+     *
+     * @param certChainFile    an X.509 certificate chain file in PEM format
+     * @param keyFile          a PKCS#8 private key file in PEM format
+     * @param keyPassword      the password of the {@code keyFile}.
+     *                         {@code null} if it's not password-protected.
+     * @param ciphers          the cipher suites to enable, in the order of preference.
+     *                         {@code null} to use the default cipher suites.
+     * @param sslVersion       The version of SSL to support, for example {@code SSL.SSL_PROTOCOL_ALL}
+     * @param nextProtocols    the application layer protocols to accept, in the order of preference.
+     *                         {@code null} to disable TLS NPN/ALPN extension.
+     * @param clientCAFile     CA file to use for client authentication. Null if not specified.
+     * @param sslVerification  SSL verification options.
+     * @param sessionCacheSize the size of the cache used for storing SSL session objects.
+     *                         {@code 0} to use the default value.
+     * @param sessionTimeout   the timeout for the cached SSL session objects, in seconds.
+     *                         {@code 0} to use the default value.
+     */
+    public NiftyOpenSslServerContext(
+            File certChainFile,
+            File keyFile,
+            String keyPassword,
+            Iterable<String> ciphers,
+            int sslVersion,
+            Iterable<String> nextProtocols,
+            File clientCAFile,
+            OpenSslServerConfiguration.SSLVerification sslVerification,
+            long sessionCacheSize,
+            long sessionTimeout) throws Exception {
 
         if (certChainFile == null) {
             throw new NullPointerException("certChainFile");
@@ -78,21 +100,35 @@ public final class NiftyOpenSslServerContext implements SslHandlerFactory {
         if (!keyFile.isFile()) {
             throw new IllegalArgumentException("keyPath is not a file: " + keyFile);
         }
+        if (ciphers == null) {
+            ciphers = SslDefaults.SERVER_DEFAULTS;
+        }
+
+        if (keyPassword == null) {
+            keyPassword = "";
+        }
+        if (nextProtocols == null) {
+            nextProtocols = Collections.emptyList();
+        }
         if (clientCAFile != null && !clientCAFile.isFile()) {
             throw new IllegalArgumentException("clientCAFile is not a file " + clientCAFile);
         }
-        if (sslServerConfiguration.ciphers == null) {
-            ciphers = SslDefaults.SERVER_DEFAULTS;
-        } else {
-            ciphers = ImmutableList.copyOf(sslServerConfiguration.ciphers);
+
+        for (String c : ciphers) {
+            if (c == null) {
+                break;
+            }
+            this.ciphers.add(c);
         }
 
-        String keyPassword = "";
-        if (sslServerConfiguration.nextProtocols == null) {
-            nextProtocols = Collections.emptyList();
-        } else {
-            nextProtocols = ImmutableList.copyOf(sslServerConfiguration.nextProtocols);
+        List<String> nextProtoList = new ArrayList<String>();
+        for (String p : nextProtocols) {
+            if (p == null) {
+                break;
+            }
+            nextProtoList.add(p);
         }
+        this.nextProtocols = Collections.unmodifiableList(nextProtoList);
 
         // Allocate a new APR pool.
         aprPool = Pool.create(0);
@@ -126,7 +162,7 @@ public final class NiftyOpenSslServerContext implements SslHandlerFactory {
                 try {
                     // Convert the cipher list into a colon-separated string.
                     StringBuilder cipherBuf = new StringBuilder();
-                    for (String c : ciphers) {
+                    for (String c : this.ciphers) {
                         cipherBuf.append(c);
                         cipherBuf.append(':');
                     }
@@ -138,7 +174,7 @@ public final class NiftyOpenSslServerContext implements SslHandlerFactory {
                     throw e;
                 }
                 catch (Exception e) {
-                    throw new SSLException("failed to set cipher suite: " + ciphers, e);
+                    throw new SSLException("failed to set cipher suite: " + this.ciphers, e);
                 }
 
                 /* Load the certificate file and private key. */
@@ -177,10 +213,10 @@ public final class NiftyOpenSslServerContext implements SslHandlerFactory {
                 SSLContext.setVerify(ctx, sslVerification.getValue(), DEFAULT_CERT_DEPTH);
 
                 /* Set next protocols for next protocol negotiation extension, if specified */
-                if (!nextProtocols.isEmpty()) {
+                if (!nextProtoList.isEmpty()) {
                     // Convert the protocol list into a comma-separated string.
                     StringBuilder nextProtocolBuf = new StringBuilder();
-                    for (String p : nextProtocols) {
+                    for (String p : nextProtoList) {
                         nextProtocolBuf.append(p);
                         nextProtocolBuf.append(',');
                     }
@@ -188,29 +224,29 @@ public final class NiftyOpenSslServerContext implements SslHandlerFactory {
 
                     SSLContext.setNextProtos(ctx, nextProtocolBuf.toString());
                 }
-                if (nextProtocols != null && !nextProtocols.isEmpty()) {
-                    String[] alpnArray = nextProtocols.toArray(new String[0]);
+                if (this.nextProtocols != null && !this.nextProtocols.isEmpty()) {
+                    String[] alpnArray = this.nextProtocols.toArray(new String[0]);
                     SSLContext.setAlpnProtos(ctx, alpnArray, SSL.SSL_SELECTOR_FAILURE_CHOOSE_MY_LAST_PROTOCOL);
                 }
 
                 /* Set session cache size, if specified */
-                if (sslServerConfiguration.sessionCacheSize > 0) {
-                    sessionCacheSize = sslServerConfiguration.sessionCacheSize;
+                if (sessionCacheSize > 0) {
+                    this.sessionCacheSize = sessionCacheSize;
                     SSLContext.setSessionCacheSize(ctx, sessionCacheSize);
                 } else {
                     // Get the default session cache size using SSLContext.setSessionCacheSize()
-                    sessionCacheSize = SSLContext.setSessionCacheSize(ctx, 20480);
+                    this.sessionCacheSize = sessionCacheSize = SSLContext.setSessionCacheSize(ctx, 20480);
                     // Revert the session cache size to the default value.
                     SSLContext.setSessionCacheSize(ctx, sessionCacheSize);
                 }
 
                 /* Set session timeout, if specified */
-                if (sslServerConfiguration.sessionTimeoutSeconds > 0) {
-                    sessionTimeout = sslServerConfiguration.sessionTimeoutSeconds;
-                    SSLContext.setSessionCacheTimeout(ctx, sslServerConfiguration.sessionTimeoutSeconds);
+                if (sessionTimeout > 0) {
+                    this.sessionTimeout = sessionTimeout;
+                    SSLContext.setSessionCacheTimeout(ctx, sessionTimeout);
                 } else {
                     // Get the default session timeout using SSLContext.setSessionCacheTimeout()
-                    sessionTimeout = SSLContext.setSessionCacheTimeout(ctx, 300);
+                    this.sessionTimeout = sessionTimeout = SSLContext.setSessionCacheTimeout(ctx, 300);
                     // Revert the session timeout to the default value.
                     SSLContext.setSessionCacheTimeout(ctx, sessionTimeout);
                 }
@@ -229,7 +265,7 @@ public final class NiftyOpenSslServerContext implements SslHandlerFactory {
     }
 
     public List<String> cipherSuites() {
-        return ImmutableList.copyOf(ciphers);
+        return unmodifiableCiphers;
     }
 
     public long sessionCacheSize() {
