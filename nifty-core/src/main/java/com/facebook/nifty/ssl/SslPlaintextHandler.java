@@ -40,8 +40,7 @@ public class SslPlaintextHandler extends FrameDecoder {
         }
 
         ctx.getPipeline().remove(this);
-        Channels.fireMessageReceived(ctx, buffer, ctx.getPipeline().getChannel().getRemoteAddress());
-        return null;
+        return buffer.readBytes(buffer.readableBytes());
     }
 
 
