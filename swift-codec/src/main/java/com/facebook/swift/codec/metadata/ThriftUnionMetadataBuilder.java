@@ -22,7 +22,6 @@ import com.facebook.swift.codec.metadata.ThriftStructMetadata.MetadataType;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -33,7 +32,6 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static com.facebook.swift.codec.ThriftField.Requiredness;
 import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_UNION_ID;
@@ -55,8 +53,6 @@ public class ThriftUnionMetadataBuilder
 
         // finally normalize the field metadata using things like
         normalizeThriftFields(catalog);
-
-        checkFieldRequiredness();
     }
 
     @Override
@@ -170,34 +166,6 @@ public class ThriftUnionMetadataBuilder
         return method.getParameterTypes().length == 1;
     }
 
-    private void checkFieldRequiredness()
-    {
-        Set<Short> visitedInvalidFields = Sets.newHashSet();
-
-        for (FieldMetadata field : fields) {
-            if (field.getType() == THRIFT_UNION_ID) {
-                continue;
-            }
-
-            switch (field.getRequiredness()) {
-                case REQUIRED:
-                case OPTIONAL:
-                    if (!visitedInvalidFields.contains(field.getId())) {
-                        metadataErrors.addError(
-                                "Thrift union '%s' field '%s(%s)' should not be marked required or optional",
-                                structName,
-                                field.getName(),
-                                field.getId());
-                        visitedInvalidFields.add(field.getId());
-                    }
-                    break;
-
-                default:
-                    break;
-            }
-        }
-    }
-
     //
     // Build final metadata
     //
@@ -271,6 +239,20 @@ public class ThriftUnionMetadataBuilder
             idlAnnotations = fieldMetadata.getIdlAnnotations();
             fieldType = fieldMetadata.getType();
             thriftTypeReference = catalog.getFieldThriftTypeReference(fieldMetadata);
+
+            switch (requiredness) {
+                case REQUIRED:
+                case OPTIONAL:
+                    metadataErrors.addError(
+                            "Thrift union '%s' field '%s(%s)' should not be marked required or optional",
+                            structName,
+                            name,
+                            id);
+                    break;
+
+                default:
+                    break;
+            }
 
             if (fieldMetadata instanceof FieldInjection) {
                 FieldInjection fieldInjection = (FieldInjection) fieldMetadata;
