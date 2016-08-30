@@ -45,6 +45,7 @@
         <air.check.skip-jacoco>true</air.check.skip-jacoco>
 
         <dep.airlift.version>0.119</dep.airlift.version>
+        <dep.jackson.version>2.8.1</dep.jackson.version>
     </properties>
 
     <url>https://facebook.github.com/nifty</url>
@@ -193,6 +194,18 @@
                 <groupId>org.easymock</groupId>
                 <artifactId>easymock</artifactId>
                 <version>3.2</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${dep.jackson.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${dep.jackson.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
