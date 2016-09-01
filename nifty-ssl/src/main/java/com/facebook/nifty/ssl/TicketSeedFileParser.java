@@ -18,6 +18,7 @@ package com.facebook.nifty.ssl;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.Files;
 import org.apache.tomcat.jni.SessionTicketKey;
 
 import java.io.File;
@@ -34,11 +35,13 @@ import static java.util.Objects.requireNonNull;
 /**
  * To make distribution of ticket keys and rotating ticket keys easier, tickets can be distributed
  * as a seed file in the following format
+ * <pre>
  * {
  *     "current": ["5afc6fb03ba4b15", "9547a3ab68b440ef7"],
  *     "new": ["5afc6fb03ba4b15", "9547a3ab68b440ef7"],
  *     "old": ["5afc6fb03ba4b15", "9547a3ab68b440ef7"]
  * }
+ * </pre>
  *
  * The real ticket keys are generated from the seeds. The seeds can be arbitrary length hex encoded values.
  * The current seeds are used to generate new tickets, and tickets encrypted with the old and new keys are
@@ -46,9 +49,11 @@ import static java.util.Objects.requireNonNull;
  *
  * The algorithm used to compute the session ticket encryption keys is the following:
  *
- * aesKey  = hkdf(seed, "aes")  -> truncated to AES bytes.
- * hmacKey = hkdf(seed, "hmac") -> truncated to HMAC bytes
- * name    = hkdf(seed, "name") -> truncated to name bytes
+ * <pre>
+ * aesKey  = hkdf(seed, "aes")  - truncated to AES bytes.
+ * hmacKey = hkdf(seed, "hmac") - truncated to HMAC bytes
+ * name    = hkdf(seed, "name") - truncated to name bytes
+ * </pre>
  */
 public class TicketSeedFileParser {
 
@@ -89,10 +94,12 @@ public class TicketSeedFileParser {
      * different tiers of machines should use different, unique-per-tier salt values.
      * The salts do not need to be kept secret.
      *
-     * @param salt the binary salt value to use. Must not be null.
+     * @param salt the binary salt value to use. If null, use DEFAULT_TICKET_SALT.
      */
     public TicketSeedFileParser(byte[] salt) {
-        requireNonNull(salt, "salt may not be null");
+        if (salt == null) {
+            salt = DEFAULT_TICKET_SALT;
+        }
         // Copy the salt array to make sure the one we have is not modified later
         this.salt = new byte[salt.length];
         System.arraycopy(salt, 0, this.salt, 0, salt.length);
@@ -108,8 +115,21 @@ public class TicketSeedFileParser {
      * @throws IOException if reading the file or parsing the JSON fails.
      * @throws IllegalArgumentException if the JSON file does not contain any current seeds.
      */
-    public List<SessionTicketKey> parse(File file) throws IOException, IllegalArgumentException {
-        List<String> allSeeds = TicketSeeds.parseFromJSONFile(file, objectMapper).getAllSeeds();
+    public List<SessionTicketKey> parse(File file) throws IOException {
+        return parseBytes(Files.toByteArray(file));
+    }
+
+    /**
+     * Returns a list of tickets parsed from the given JSON bytes. The keys are returned in a format suitable for
+     * use with netty. The first keys are the current keys, following that are the new keys and old keys.
+     *
+     * @param json the JSON bytes containing ticket seed data.
+     * @return a list of ticket keys. Current keys are first, then new keys, then old keys.
+     * @throws IOException if parsing the JSON fails.
+     * @throws IllegalArgumentException if the JSON does not contain any current seeds.
+     */
+    public List<SessionTicketKey> parseBytes(byte[] json) throws IOException {
+        List<String> allSeeds = TicketSeeds.parseFromJSONBytes(json, objectMapper).getAllSeeds();
         return allSeeds.stream().map(this::deriveKeyFromSeed).collect(Collectors.toList());
     }
 
@@ -142,17 +162,17 @@ public class TicketSeedFileParser {
         }
 
         /**
-         * Parses the contents of the given file as JSON to construct a TicketSeeds object. See comment at the
-         * top of this file for example file format.
+         * Parses the contents of the given bytes as JSON to construct a TicketSeeds object. See comment at the
+         * top of this file for example ticket seed file format.
          *
-         * @param file the JSON file containing the ticket seeds data.
+         * @param bytes the contents of a JSON file containing the ticket seeds data.
          * @return a TicketSeeds object.
          * @throws IOException if reading the file or parsing the contents as JSON fails.
          * @throws IllegalArgumentException if the file does not contain any current seeds.
          */
-        static TicketSeeds parseFromJSONFile(File file, ObjectMapper objectMapper) throws IOException {
+        static TicketSeeds parseFromJSONBytes(byte[] bytes, ObjectMapper objectMapper) throws IOException {
             Map<String, List<String>> map = objectMapper.readValue(
-                file, new TypeReference<Map<String, List<String>>>(){});
+                bytes, new TypeReference<Map<String, List<String>>>(){});
             return new TicketSeeds(
                 map.getOrDefault("current", EMPTY_STRING_LIST),
                 map.getOrDefault("new", EMPTY_STRING_LIST),

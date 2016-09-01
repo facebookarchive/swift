@@ -17,6 +17,7 @@ package com.facebook.nifty.core;
 
 import com.facebook.nifty.ssl.SslPlaintextHandler;
 import com.facebook.nifty.ssl.SslServerConfiguration;
+import com.google.common.base.Preconditions;
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 import io.airlift.log.Logger;
 import org.apache.thrift.protocol.TProtocolFactory;
@@ -41,10 +42,7 @@ import org.jboss.netty.handler.timeout.IdleStateHandler;
 import org.jboss.netty.util.ExternalResourceReleasable;
 import org.jboss.netty.util.ThreadNameDeterminer;
 
-import com.google.common.base.Preconditions;
-
 import javax.inject.Inject;
-
 import java.net.InetSocketAddress;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -268,7 +266,33 @@ public class NettyServerTransport implements ExternalResourceReleasable
         return channelStatistics;
     }
 
+    /**
+     * Returns the current {@link SslServerConfiguration}.
+     *
+     * @return the configuration.
+     */
+    public SslServerConfiguration getSSLConfiguration() {
+        return sslConfiguration.get();
+    }
+
+    /**
+     * Atomically replaces the current {@link SslServerConfiguration} with the provided one.
+     *
+     * @param sslServerConfiguration the new configuration.
+     */
     public void updateSSLConfiguration(SslServerConfiguration sslServerConfiguration) {
         sslConfiguration.set(sslServerConfiguration);
+    }
+
+    /**
+     * Atomically replaces the current {@link SslServerConfiguration} with {@code updated} if and only if the
+     * current configuration is {@code ==} to {@code expected}.
+     *
+     * @param expected the expected current configuration.
+     * @param updated the new configuration.
+     * @return true if the update succeeded, or false otherwise.
+     */
+    public boolean compareAndSetSSLConfiguration(SslServerConfiguration expected, SslServerConfiguration updated) {
+        return sslConfiguration.compareAndSet(expected, updated);
     }
 }

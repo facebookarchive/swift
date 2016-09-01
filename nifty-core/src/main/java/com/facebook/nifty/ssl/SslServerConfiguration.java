@@ -16,6 +16,7 @@
 package com.facebook.nifty.ssl;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import org.jboss.netty.handler.ssl.SslHandler;
 
 import java.io.File;
@@ -24,13 +25,14 @@ public abstract class SslServerConfiguration {
 
     public abstract static class BuilderBase<T> {
 
+        // Note: when adding new fields, make sure to update the initFromConfiguration() method below.
         public File keyFile;
         public File certFile;
         public Iterable<String> ciphers;
         boolean allowPlaintext;
 
         public T ciphers(Iterable<String> ciphers) {
-            this.ciphers = ciphers;
+            this.ciphers = ImmutableList.copyOf(ciphers);
             return (T) this;
         }
 
@@ -49,6 +51,19 @@ public abstract class SslServerConfiguration {
          */
         public T allowPlaintext(boolean allowPlaintext) {
             this.allowPlaintext = allowPlaintext;
+            return (T) this;
+        }
+
+        /**
+         * Copies the state of an existing SSL configration into this builder.
+         * @param config the SSL configuration.
+         * @return this builder.
+         */
+        public T initFromConfiguration(SslServerConfiguration config) {
+            keyFile(config.keyFile);
+            certFile(config.certFile);
+            ciphers(config.ciphers);
+            allowPlaintext(config.allowPlaintext);
             return (T) this;
         }
 

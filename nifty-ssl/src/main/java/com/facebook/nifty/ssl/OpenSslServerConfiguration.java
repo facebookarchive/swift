@@ -21,6 +21,8 @@ import org.apache.tomcat.jni.SSL;
 import org.apache.tomcat.jni.SessionTicketKey;
 
 import javax.net.ssl.SSLException;
+import java.util.Arrays;
+import java.util.List;
 
 public class OpenSslServerConfiguration extends SslServerConfiguration {
 
@@ -31,6 +33,7 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
 
     public static class Builder extends SslServerConfiguration.BuilderBase<Builder> {
 
+        // Note: when adding new fields, make sure to update the initFromConfiguration() method below.
         public SessionTicketKey[] ticketKeys;
         // A string that can be used to separate tickets from different entities.
         public String sessionContext = "thrift";
@@ -48,7 +51,7 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
          * Other ticket keys can be used to decrypt tickets and are not active keys.
          */
         public Builder ticketKeys(SessionTicketKey[] ticketKeys) {
-            this.ticketKeys = ticketKeys;
+            this.ticketKeys = Arrays.copyOf(ticketKeys, ticketKeys.length);
             return this;
         }
 
@@ -56,7 +59,7 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
          * Sets the next protocols which will be set to both ALPN as well as NPN.
          */
         public Builder nextProtocols(Iterable<String> nextProtocols) {
-            this.nextProtocols = nextProtocols;
+            this.nextProtocols = ImmutableList.copyOf(nextProtocols);
             return this;
         }
 
@@ -76,6 +79,25 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
 
         public Builder sslVersion(SSLVersion sslVersion) {
             this.sslVersion = sslVersion;
+            return this;
+        }
+
+        /**
+         * Copies the state of an existing configration into this builder.
+         * @param config the SSL configuration.
+         * @return this builder.
+         */
+        @Override
+        public Builder initFromConfiguration(SslServerConfiguration config) {
+            super.initFromConfiguration(config);
+            if (config instanceof OpenSslServerConfiguration) {
+                OpenSslServerConfiguration openSslConfig = (OpenSslServerConfiguration) config;
+                ticketKeys(openSslConfig.ticketKeys);
+                sessionContext(new String(openSslConfig.sessionContext));
+                sessionTimeoutSeconds(openSslConfig.sessionTimeoutSeconds);
+                sslVersion(openSslConfig.sslVersion);
+                nextProtocols(openSslConfig.nextProtocols);
+            }
             return this;
         }
 
