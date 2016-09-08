@@ -294,7 +294,7 @@
                 <configuration>
                     <properties>
                         <inceptionYear>${project.inceptionYear}</inceptionYear>
-                        <year>2013</year>
+                        <year>2016</year>
                     </properties>
                 </configuration>
             </plugin>

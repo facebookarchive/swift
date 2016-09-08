@@ -1,7 +1,7 @@
 package com.facebook.nifty.core;
 
 /*
- * Copyright (C) 2012-2013 Facebook, Inc.
+ * Copyright (C) 2012-2016 Facebook, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
