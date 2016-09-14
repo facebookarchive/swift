@@ -20,15 +20,37 @@ import com.google.common.collect.ImmutableList;
 import org.apache.tomcat.jni.SSL;
 import org.apache.tomcat.jni.SessionTicketKey;
 
+import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLException;
+import java.io.File;
 import java.util.Arrays;
-import java.util.List;
 
 public class OpenSslServerConfiguration extends SslServerConfiguration {
 
     public enum SSLVersion {
-        TLS, // Server will accept all TLS versions
-        TLS1_2, // Server will accept only TLS1.2.
+        TLS(SSL.SSL_PROTOCOL_TLS), // Server will accept all TLS versions
+        TLS1_2(SSL.SSL_PROTOCOL_TLSV1_2); // Server will accept only TLS1.2.
+
+        private final int id;
+
+        SSLVersion(int id) {
+            this.id = id;
+        }
+        public int getValue() { return id; }
+    };
+
+    public enum SSLVerification {
+        VERIFY_NONE(SSL.SSL_CVERIFY_NONE), // No client Certificate is required
+        VERIFY_OPTIONAL(SSL.SSL_CVERIFY_OPTIONAL), // The client may present a valid Certificate
+        VERIFY_REQUIRE(SSL.SSL_CVERIFY_REQUIRE), // The client has to present a valid Certificate
+        VERIFY_OPTIONAL_NO_CA(SSL.SSL_CVERIFY_OPTIONAL_NO_CA); // The client's cert does not need to be verifiable.
+
+        private final int id;
+
+        SSLVerification(int id) {
+            this.id = id;
+        }
+        public int getValue() { return id; }
     };
 
     public static class Builder extends SslServerConfiguration.BuilderBase<Builder> {
@@ -38,8 +60,11 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
         // A string that can be used to separate tickets from different entities.
         public String sessionContext = "thrift";
         public long sessionTimeoutSeconds = 86400;
+        public long sessionCacheSize = 0;
         public SSLVersion sslVersion = SSLVersion.TLS1_2;
         public Iterable<String> nextProtocols = ImmutableList.of("thrift");
+        public File clientCAFile;
+        public SSLVerification sslVerification = SSLVerification.VERIFY_OPTIONAL;
 
         public Builder() {
             this.ciphers = SslDefaults.SERVER_DEFAULTS;
@@ -77,6 +102,11 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
             return this;
         }
 
+        public Builder sessionCacheSize(long sessionCacheSize) {
+            this.sessionCacheSize = sessionCacheSize;
+            return this;
+        }
+
         public Builder sslVersion(SSLVersion sslVersion) {
             this.sslVersion = sslVersion;
             return this;
@@ -95,9 +125,24 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
                 ticketKeys(openSslConfig.ticketKeys);
                 sessionContext(new String(openSslConfig.sessionContext));
                 sessionTimeoutSeconds(openSslConfig.sessionTimeoutSeconds);
+                sessionCacheSize(openSslConfig.sessionCacheSize);
                 sslVersion(openSslConfig.sslVersion);
                 nextProtocols(openSslConfig.nextProtocols);
+                clientCAFile(openSslConfig.clientCAFile);
+                sslVerification(openSslConfig.sslVerification);
+            } else {
+                throw new IllegalArgumentException("Provided configuration is not an OpenSslServerConfiguration");
             }
+            return this;
+        }
+
+        public Builder clientCAFile(File clientCAFile) {
+            this.clientCAFile = clientCAFile;
+            return this;
+        }
+
+        public Builder sslVerification(SSLVerification sslVerification) {
+            this.sslVerification = sslVerification;
             return this;
         }
 
@@ -113,16 +158,22 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
     // A string that can be used to separate tickets from different entities.
     public final byte[] sessionContext;
     public final long sessionTimeoutSeconds;
+    public final long sessionCacheSize;
     public final SSLVersion sslVersion;
     public final Iterable<String> nextProtocols;
+    public final File clientCAFile;
+    public final SSLVerification sslVerification;
 
     private OpenSslServerConfiguration(Builder builder) {
         super(builder);
         this.ticketKeys = builder.ticketKeys;
         this.sessionContext = builder.sessionContext.getBytes();
         this.sessionTimeoutSeconds = builder.sessionTimeoutSeconds;
+        this.sessionCacheSize = builder.sessionCacheSize;
         this.sslVersion = builder.sslVersion;
         this.nextProtocols = builder.nextProtocols;
+        this.clientCAFile = builder.clientCAFile;
+        this.sslVerification = builder.sslVerification;
     }
 
     public static OpenSslServerConfiguration.Builder newBuilder() {
@@ -133,19 +184,7 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
     protected SslHandlerFactory createSslHandlerFactory() {
         NettyTcNativeLoader.ensureAvailable();
         try {
-            int sslVersionInt = SSL.SSL_PROTOCOL_TLS;
-            if (sslVersion == SSLVersion.TLS1_2) {
-                sslVersionInt = SSL.SSL_PROTOCOL_TLSV1_2;
-            }
-            NiftyOpenSslServerContext serverContext = new NiftyOpenSslServerContext(
-                    certFile,
-                    keyFile,
-                    keyPassword,
-                    ciphers,
-                    sslVersionInt,
-                    nextProtocols,
-                    0,
-                    0);
+            NiftyOpenSslServerContext serverContext = new NiftyOpenSslServerContext(this);
             if (this.ticketKeys != null) {
                 serverContext.setTicketKeys(this.ticketKeys);
             }
@@ -153,7 +192,7 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
             serverContext.setSessionCacheTimeout(this.sessionTimeoutSeconds);
             return serverContext;
         }
-        catch (SSLException e) {
+        catch (Exception e) {
             throw Throwables.propagate(e);
         }
     }
