@@ -65,4 +65,13 @@ public class SslSession {
     public X509Certificate getPeerCert() {
         return peerCert;
     }
+
+    public String toString() {
+        return "SslSession(alpn=" + alpn +
+            ", npn=" + npn +
+            ", version=" + version +
+            ", cipher=" + cipher +
+            ", establishedTime=" + Long.toString(establishedTime) +
+            ", peerCert=" + peerCert + ")";
+    }
 }

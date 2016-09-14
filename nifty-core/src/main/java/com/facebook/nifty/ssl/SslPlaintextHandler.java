@@ -16,13 +16,27 @@
 package com.facebook.nifty.ssl;
 
 import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.channel.*;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.Channels;
 import org.jboss.netty.handler.codec.frame.FrameDecoder;
 
 public class SslPlaintextHandler extends FrameDecoder {
 
     private final SslServerConfiguration serverConfiguration;
     private final String sslHandlerName;
+
+    /**
+     * Special message for a SessionAwareSslHandler that tells it to initiate a TLS handshake after the connection
+     * has already been established, if this class determines that it's handling a TLS connection rather than a
+     * plaintext connection.
+     *
+     * By using an enum with a single value, we enforce that it's a singleton and can use == rather than an
+     * instanceof check.
+     */
+    enum TLSConnectedEvent {
+        SINGLETON
+    };
 
     public SslPlaintextHandler(SslServerConfiguration serverConfiguration, String sslHandlerName) {
         this.serverConfiguration = serverConfiguration;
@@ -37,8 +51,9 @@ public class SslPlaintextHandler extends FrameDecoder {
 
         if (looksLikeTLS(buffer)) {
             ctx.getPipeline().addAfter(ctx.getName(), sslHandlerName, serverConfiguration.createHandler());
+            // Tell the SessionAwareSslHandler to handle the TLS handshake.
+            Channels.fireMessageReceived(ctx, TLSConnectedEvent.SINGLETON);
         }
-
         ctx.getPipeline().remove(this);
         return buffer.readBytes(buffer.readableBytes());
     }

@@ -196,4 +196,9 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
             throw Throwables.propagate(e);
         }
     }
+
+    @Override
+    public SslSession getSession(SSLEngine engine) throws SSLException {
+        return OpenSslSessionHelper.getSession(engine);
+    }
 }

@@ -27,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class NiftyConnectionContext implements ConnectionContext
 {
     private SocketAddress remoteAddress;
+    private SslSession sslSession;
     private Map<String, Object> attributes = new ConcurrentHashMap<>();
 
     @Override
@@ -37,7 +38,11 @@ public class NiftyConnectionContext implements ConnectionContext
 
     @Override
     public SslSession getSslSession() {
-        return null; // not implemented yet
+        return sslSession;
+    }
+
+    public void setSslSession(SslSession sslSession) {
+        this.sslSession = sslSession;
     }
 
     public void setRemoteAddress(SocketAddress remoteAddress)

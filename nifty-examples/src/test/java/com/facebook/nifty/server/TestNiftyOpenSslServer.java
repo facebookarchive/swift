@@ -38,6 +38,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.Files;
 import io.airlift.log.Logger;
 import io.airlift.units.Duration;
+import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -45,30 +46,57 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.apache.tomcat.jni.SessionTicketKey;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
+import org.jboss.netty.handler.ssl.HackyJdkSslClientContext;
+import org.jboss.netty.handler.ssl.SslContext;
 import org.jboss.netty.handler.ssl.SslHandler;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.TrustManagerFactory;
+import javax.security.auth.x500.X500Principal;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+
+import static java.util.Objects.requireNonNull;
 
 public class TestNiftyOpenSslServer
 {
     private static final Logger log = Logger.get(TestNiftyOpenSslServer.class);
     private NettyServerTransport server;
     private int port;
+    private PollingMultiFileWatcher fileWatcher = null;
+    // Server-side configs
     private File ticketSeedFile = null;
     private File privateKeyFile = null;
-    private File certificateFile = null;
-    private PollingMultiFileWatcher fileWatcher = null;
+    private File serverCertFile = null;
+    // Client-side configs
+    private File clientCertFile = null;
+    private File clientPKCS12File = null;
+
+    // Password provided to the openssl command line tool when creating the client.pkcs12 file
+    private static final String CLIENT_PKCS12_PASSWORD = "12345";
 
     @BeforeMethod(alwaysRun = true)
     public void setup()
@@ -85,8 +113,13 @@ public class TestNiftyOpenSslServer
             server.stop();
         }
         fileWatcher = null;
-        deleteFilesIfExistIgnoreErrors(ticketSeedFile, privateKeyFile, certificateFile);
-        ticketSeedFile = privateKeyFile = certificateFile = null;
+        deleteFilesIfExistIgnoreErrors(
+            ticketSeedFile,
+            privateKeyFile,
+            serverCertFile,
+            clientCertFile,
+            clientPKCS12File);
+        ticketSeedFile = privateKeyFile = serverCertFile = clientCertFile = clientPKCS12File = null;
     }
 
     private void startServer() {
@@ -101,7 +134,7 @@ public class TestNiftyOpenSslServer
             SslConfigFileWatcher configUpdater = new SslConfigFileWatcher(
                 getTicketSeedFile(),
                 getPrivateKeyFile(),
-                getCertificateFile(),
+                getServerCertFile(),
                 null,
                 fileWatcher);
             SslServerConfiguration config = createSSLServerConfiguration(allowPlaintext, ticketKeys);
@@ -127,7 +160,7 @@ public class TestNiftyOpenSslServer
     SslServerConfiguration createSSLServerConfiguration(boolean allowPlaintext,
                                                         SessionTicketKey[] ticketKeys) throws IOException {
         return OpenSslServerConfiguration.newBuilder()
-                .certFile(getCertificateFile())
+                .certFile(getServerCertFile())
                 .keyFile(getPrivateKeyFile())
                 .allowPlaintext(allowPlaintext)
                 .ticketKeys(ticketKeys)
@@ -135,17 +168,24 @@ public class TestNiftyOpenSslServer
     }
 
     private ThriftServerDefBuilder getThriftServerDefBuilder(
+        SslServerConfiguration sslServerConfiguration,
+        TransportAttachObserver configUpdater) {
+        return getThriftServerDefBuilder(sslServerConfiguration, configUpdater, (List<LogEntry> entries) -> ResultCode.OK);
+    }
+
+    private ThriftServerDefBuilder getThriftServerDefBuilder(
             SslServerConfiguration sslServerConfiguration,
-            TransportAttachObserver configUpdater)
+            TransportAttachObserver configUpdater,
+            final Function<List<LogEntry>, ResultCode> thriftHandler)
     {
+        requireNonNull(thriftHandler);
         return new ThriftServerDefBuilder()
                 .listen(0)
                 .withSSLConfiguration(sslServerConfiguration)
                 .withTransportAttachObserver(configUpdater)
                 .withProcessor(new scribe.Processor<>(new scribe.Iface() {
                     @Override
-                    public ResultCode Log(List<LogEntry> messages)
-                            throws TException {
+                    public ResultCode Log(List<LogEntry> messages) throws TException {
                         RequestContext context = RequestContexts.getCurrentContext();
 
                         for (LogEntry message : messages) {
@@ -154,7 +194,11 @@ public class TestNiftyOpenSslServer
                                     message.getCategory(),
                                     message.getMessage());
                         }
-                        return ResultCode.OK;
+                        try {
+                            return thriftHandler.apply(messages);
+                        } catch (Exception e) {
+                            throw new TException(e);
+                        }
                     }
                 }));
     }
@@ -164,11 +208,21 @@ public class TestNiftyOpenSslServer
     }
 
     private SslClientConfiguration getClientSSLConfiguration(File certFile) throws IOException {
-        return new SslClientConfiguration.Builder()
-                .caFile(certFile == null ? getCertificateFile() : certFile)
-                .sessionCacheSize(10000)
-                .sessionTimeoutSeconds(10000)
-                .build();
+        return getClientSSLConfiguration(certFile, null);
+    }
+
+    private SslClientConfiguration getClientSSLConfiguration(File certFile, KeyManager[] keyManagers) throws IOException {
+        SslContext context = new HackyJdkSslClientContext(
+            null,
+            certFile == null ? getServerCertFile() : certFile,
+            keyManagers,
+            null,
+            null,
+            null,
+            10000,
+            10000
+        );
+        return new SslClientConfiguration.Builder().sslContext(context).build();
     }
 
     private scribe.Client makeNiftyClient(SslClientConfiguration clientSSLConfiguration)
@@ -314,18 +368,43 @@ public class TestNiftyOpenSslServer
     }
 
     /**
-     * Returns the path to a temporary certificate file. If the temp file does not yet exist, it is created on
-     * demand and initialized with the contents of the "/rsa.crt" resource.
+     * Returns the path to a temporary server certificate file. If the temp file does not yet exist,
+     * it is created on demand and initialized with the contents of the "/rsa.crt" resource.
      * The temp file should be deleted by the user when the test finishes.
      *
      * @return the new file.
      * @throws IOException if reading the resource or creating the temp file fails.
      */
-    private File getCertificateFile() throws IOException {
-        if (certificateFile == null) {
-            certificateFile = initTempFileFromResource(Plain.class, "/rsa.crt");
+    private File getServerCertFile() throws IOException {
+        if (serverCertFile == null) {
+            serverCertFile = initTempFileFromResource(Plain.class, "/rsa.crt");
         }
-        return certificateFile;
+        return serverCertFile;
+    }
+
+    /**
+     * Overwrites the contents of the server certificate file with the given byte array.
+     *
+     * @param newContents new certificate file contents.
+     * @throws IOException if writing the file fails.
+     */
+    private void updateServerCertFile(byte[] newContents) throws IOException {
+        overwriteFile(getServerCertFile(), newContents);
+    }
+
+    /**
+     * Returns the path to a temporary client certificate file. If the temp file does not yet exist,
+     * it is created on demand and initialized with the contents of the "/client.crt" resource.
+     * The temp file should be deleted by the user when the test finishes.
+     *
+     * @return the new file.
+     * @throws IOException if reading the resource or creating the temp file fails.
+     */
+    private File getClientCertFile() throws IOException {
+        if (clientCertFile == null) {
+            clientCertFile = initTempFileFromResource(Plain.class, "/client.crt");
+        }
+        return clientCertFile;
     }
 
     /**
@@ -334,8 +413,33 @@ public class TestNiftyOpenSslServer
      * @param newContents new certificate file contents.
      * @throws IOException if writing the file fails.
      */
-    private void updateCertificateFile(byte[] newContents) throws IOException {
-        overwriteFile(getCertificateFile(), newContents);
+    private void updateClientCertFile(byte[] newContents) throws IOException {
+        overwriteFile(getClientCertFile(), newContents);
+    }
+
+    /**
+     * Returns the path to a temporary client PKCS12 key file. If the temp file does not yet exist,
+     * it is created ondemand and initialized with the contents of the "/client.pkcs12" resource.
+     * The temp file should be deleted by the user when the test finishes.
+     *
+     * @return the new file.
+     * @throws IOException if reading the resource or creating the temp file fails.
+     */
+    private File getClientPKCS12File() throws IOException {
+        if (clientPKCS12File == null) {
+            clientPKCS12File = initTempFileFromResource(Plain.class, "/client.pkcs12");
+        }
+        return clientPKCS12File;
+    }
+
+    /**
+     * Overwrites the contents of the client PKCS12 key file with the given byte array.
+     *
+     * @param newContents new certificate file contents.
+     * @throws IOException if writing the file fails.
+     */
+    private void updateClientPKCS12File(byte[] newContents) throws IOException {
+        overwriteFile(getClientPKCS12File(), newContents);
     }
 
     /**
@@ -396,6 +500,194 @@ public class TestNiftyOpenSslServer
         client.Log(Arrays.asList(new LogEntry("client2", "aaa")));
         client.Log(Arrays.asList(new LogEntry("client2", "bbb")));
         client.Log(Arrays.asList(new LogEntry("client2", "ccc")));
+    }
+
+    private KeyManager[] getClientKeyManagers() throws SSLException {
+        try {
+            KeyStore keyStore = KeyStore.getInstance("PKCS12");
+            try (InputStream keyInput = new FileInputStream(getClientPKCS12File())) {
+                keyStore.load(keyInput, CLIENT_PKCS12_PASSWORD.toCharArray());
+            }
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(
+                KeyManagerFactory.getDefaultAlgorithm());
+            keyManagerFactory.init(keyStore, CLIENT_PKCS12_PASSWORD.toCharArray());
+            return keyManagerFactory.getKeyManagers();
+        } catch (Exception e) {
+            throw new SSLException(e);
+        }
+    }
+
+    private void startRawSSLClient(long delay) throws SSLException {
+        try {
+            KeyStore keyStore = KeyStore.getInstance("JKS");
+            keyStore.load(null, null);
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            X509Certificate cert = (X509Certificate) cf.generateCertificate(new FileInputStream(getServerCertFile()));
+            X500Principal principal = cert.getSubjectX500Principal();
+            keyStore.setCertificateEntry(principal.getName("RFC2253"), cert);
+            TrustManagerFactory trustManagerFactory =
+                TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            trustManagerFactory.init(keyStore);
+
+            KeyManager[] clientKeyManagers = getClientKeyManagers();
+            SSLContext context = SSLContext.getInstance("TLS");
+            context.init(clientKeyManagers, trustManagerFactory.getTrustManagers(), null);
+
+            Socket sock = new Socket();
+            sock.connect(new InetSocketAddress("localhost", port));
+            if (delay != 0) {
+                Thread.sleep(delay);
+            }
+
+            SSLSocket sslSocket = (SSLSocket) context.getSocketFactory().createSocket(sock, "localhost", port, true);
+            sslSocket.startHandshake();
+            SSLSession session = sslSocket.getSession();
+            Assert.assertTrue(session.isValid());
+            sslSocket.close();
+        } catch (Throwable t) {
+            throw new SSLException(t);
+        }
+    }
+
+    @Test
+    public void testDefaultServerWithClientCert() throws InterruptedException, IOException, TException {
+        SslServerConfiguration serverConfig = OpenSslServerConfiguration.newBuilder()
+                .certFile(getServerCertFile())
+                .keyFile(getPrivateKeyFile())
+                .allowPlaintext(false)
+                .clientCAFile(getClientCertFile())
+                .build();
+        ThriftServerDefBuilder builder = getThriftServerDefBuilder(serverConfig, null);
+        startServer(builder);
+        scribe.Client client1 = makeNiftyClient(getClientSSLConfiguration(null, getClientKeyManagers()));
+        Assert.assertEquals(client1.Log(Arrays.asList(new LogEntry("client1", "aaa"))), ResultCode.OK);
+    }
+
+    @Test
+    public void testOptionalClientAuthenticatingServer() throws InterruptedException, IOException, TException {
+        SslServerConfiguration serverConfig = OpenSslServerConfiguration.newBuilder()
+            .certFile(getServerCertFile())
+            .keyFile(getPrivateKeyFile())
+            .allowPlaintext(false)
+            .sslVerification(OpenSslServerConfiguration.SSLVerification.VERIFY_OPTIONAL)
+            .clientCAFile(getClientCertFile())
+            .build();
+
+        ThriftServerDefBuilder builder = getThriftServerDefBuilder(serverConfig, null);
+        startServer(builder);
+        scribe.Client client1 = makeNiftyClient(getClientSSLConfiguration(null, getClientKeyManagers()));
+        Assert.assertEquals(client1.Log(Arrays.asList(new LogEntry("client1", "aaa"))), ResultCode.OK);
+
+        scribe.Client client2 = makeNiftyClient(getClientSSLConfiguration());
+        Assert.assertEquals(client2.Log(Arrays.asList(new LogEntry("client2", "aaa"))), ResultCode.OK);
+    }
+
+    @Test
+    public void testClientAuthenticatingServer() throws InterruptedException, IOException, TException {
+        SslServerConfiguration serverConfig = OpenSslServerConfiguration.newBuilder()
+                .certFile(getServerCertFile())
+                .keyFile(getPrivateKeyFile())
+                .allowPlaintext(false)
+                .sslVerification(OpenSslServerConfiguration.SSLVerification.VERIFY_REQUIRE)
+                .clientCAFile(getClientCertFile())
+                .build();
+
+        ThriftServerDefBuilder builder = getThriftServerDefBuilder(serverConfig, null);
+        startServer(builder);
+        scribe.Client client1 = makeNiftyClient(getClientSSLConfiguration(null, getClientKeyManagers()));
+        Assert.assertEquals(client1.Log(Arrays.asList(new LogEntry("client1", "aaa"))), ResultCode.OK);
+    }
+
+    @Test
+    public void testClientAuthenticatingServerAllowPlaintext() throws InterruptedException, IOException, TException {
+        SslServerConfiguration serverConfig = OpenSslServerConfiguration.newBuilder()
+                .certFile(getServerCertFile())
+                .keyFile(getPrivateKeyFile())
+                .allowPlaintext(true)
+                .sslVerification(OpenSslServerConfiguration.SSLVerification.VERIFY_REQUIRE)
+                .clientCAFile(getClientCertFile())
+                .build();
+
+        ThriftServerDefBuilder builder = getThriftServerDefBuilder(serverConfig, null);
+        startServer(builder);
+
+        scribe.Client client1 = makeNiftyClient(getClientSSLConfiguration(null, getClientKeyManagers()));
+        Assert.assertEquals(client1.Log(Arrays.asList(new LogEntry("client1", "aaa"))), ResultCode.OK);
+
+        scribe.Client client2 = makeNiftyPlaintextClient();
+        Assert.assertEquals(client2.Log(Arrays.asList(new LogEntry("client2", "aaa"))), ResultCode.OK);
+    }
+
+    @Test(expectedExceptions = TTransportException.class)
+    public void testClientWithoutCerts() throws InterruptedException, IOException, TException {
+        SslServerConfiguration serverConfig = OpenSslServerConfiguration.newBuilder()
+                .certFile(getServerCertFile())
+                .keyFile(getPrivateKeyFile())
+                .allowPlaintext(false)
+                .sslVerification(OpenSslServerConfiguration.SSLVerification.VERIFY_REQUIRE)
+                .clientCAFile(getClientCertFile())
+                .build();
+
+        startServer(getThriftServerDefBuilder(serverConfig, null));
+        scribe.Client client = makeNiftyClient(getClientSSLConfiguration());
+        client.Log(Arrays.asList(new LogEntry("client", "aaa")));
+    }
+
+    @Test(expectedExceptions = SSLException.class)
+    public void testWithServerIdleTimeout()
+            throws TException, InterruptedException, IOException, NoSuchAlgorithmException {
+        startServer(getThriftServerDefBuilder(createSSLServerConfiguration(false, null), null)
+                .clientIdleTimeout(Duration.succinctDuration(1, TimeUnit.MILLISECONDS)));
+        startRawSSLClient(200);
+    }
+
+    @Test(expectedExceptions = SSLException.class)
+    public void testWithServerIdleTimeoutAllowPlaintext()
+            throws TException, InterruptedException, IOException, NoSuchAlgorithmException {
+        startServer(getThriftServerDefBuilder(createSSLServerConfiguration(true, null), null)
+                .clientIdleTimeout(Duration.succinctDuration(1, TimeUnit.MILLISECONDS)));
+        startRawSSLClient(200);
+    }
+
+    @Test(expectedExceptions = TApplicationException.class,
+          expectedExceptionsMessageRegExp = "Internal error processing Log")
+    public void testPlaintextServerThrowsException() throws InterruptedException, IOException, TException {
+        startServer(getThriftServerDefBuilder(
+            createSSLServerConfiguration(true /* allowPlaintext */, null),
+            null,
+            (List<LogEntry> messages) -> { throw new RuntimeException("Error"); }));
+        scribe.Client client = makeNiftyPlaintextClient();
+        client.Log(Arrays.asList(new LogEntry("client", "aaa")));
+    }
+
+    @Test(expectedExceptions = TApplicationException.class,
+          expectedExceptionsMessageRegExp = "Internal error processing Log")
+    public void testDefaultServerThrowsException() throws InterruptedException, IOException, TException {
+        startServer(getThriftServerDefBuilder(
+            createSSLServerConfiguration(false, null),
+            null,
+            (List<LogEntry> messages) -> { throw new RuntimeException("Error"); }));
+        scribe.Client client = makeNiftyClient(getClientSSLConfiguration());
+        client.Log(Arrays.asList(new LogEntry("client", "aaa")));
+    }
+
+    @Test(expectedExceptions = TApplicationException.class,
+          expectedExceptionsMessageRegExp = "Internal error processing Log")
+    public void testClientAuthenticatingServerThrowsException() throws InterruptedException, IOException, TException {
+        SslServerConfiguration serverConfig = OpenSslServerConfiguration.newBuilder()
+            .certFile(getServerCertFile())
+            .keyFile(getPrivateKeyFile())
+            .allowPlaintext(false)
+            .sslVerification(OpenSslServerConfiguration.SSLVerification.VERIFY_REQUIRE)
+            .clientCAFile(getClientCertFile())
+            .build();
+
+        startServer(getThriftServerDefBuilder(
+            serverConfig,
+            null,
+            (List<LogEntry> messages) -> { throw new RuntimeException("Error"); }));
+        scribe.Client client = makeNiftyClient(getClientSSLConfiguration(null, getClientKeyManagers()));
+        client.Log(Arrays.asList(new LogEntry("client", "aaa")));
     }
 
     @Test
@@ -514,7 +806,7 @@ public class TestNiftyOpenSslServer
 
         // Rotate the cert and private key files
         long callbacksSucceeded = fileWatcher.getStats().getCallbacksSucceeded();
-        updateCertificateFile(getResourceFileContents(Plain.class, "/rsa2.crt"));
+        updateServerCertFile(getResourceFileContents(Plain.class, "/rsa2.crt"));
         updatePrivateKeyFile(getResourceFileContents(Plain.class, "/rsa2.key"));
         while (fileWatcher.getStats().getCallbacksSucceeded() < callbacksSucceeded + 1) {
             Thread.sleep(25);

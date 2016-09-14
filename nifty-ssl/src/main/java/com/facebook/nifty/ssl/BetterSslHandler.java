@@ -26,7 +26,7 @@ import javax.net.ssl.SSLEngine;
  * This SslHandler uses a finalizer to clean up the SslEngine
  * correctly like netty 4 does as well.
  */
-public class BetterSslHandler extends SslHandler {
+public class BetterSslHandler extends SessionAwareSslHandler {
 
     private final OpenSslEngine sslEngine;
     // Effective Java Item 7 - use a finalizer guardian object to make sure a misbehaving subclass cannot
@@ -38,8 +38,8 @@ public class BetterSslHandler extends SslHandler {
         }
     };
 
-    public BetterSslHandler(SSLEngine engine, SslBufferPool bufferPool) {
-        super(engine, bufferPool);
+    public BetterSslHandler(SSLEngine engine, SslBufferPool bufferPool, SslServerConfiguration configuration) {
+        super(engine, bufferPool, configuration);
         sslEngine = (OpenSslEngine) engine;
     }
 }
