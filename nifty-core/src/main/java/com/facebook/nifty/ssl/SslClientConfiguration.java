@@ -31,6 +31,7 @@ public class SslClientConfiguration {
         File caFile;
         long sessionCacheSize = 10000;
         long sessionTimeoutSeconds = 86400;
+        SslContext clientContext;
 
         public Builder ciphers(Iterable<String> ciphers) {
             this.ciphers = ciphers;
@@ -52,37 +53,44 @@ public class SslClientConfiguration {
             return this;
         }
 
+        /**
+         * Overrides the SslContext with one explicitly provided by the caller. If this is not null, the other
+         * builder parameters will be ignored. Currently only used for testing and may be removed in the future,
+         * once we have netty support for client-side certs.
+         *
+         * @param clientContext the client context.
+         * @return a reference to this builder.
+         */
+        public Builder sslContext(SslContext clientContext) {
+            this.clientContext = clientContext;
+            return this;
+        }
+
         public SslClientConfiguration build() {
             return new SslClientConfiguration(this);
         }
     }
 
-    public final Iterable<String> ciphers;
-    public final File caFile;
-    public final long sessionCacheSize;
-    public final long sessionTimeoutSeconds;
-
     private SslContext clientContext;
 
     public SslClientConfiguration(Builder builder) {
-        this.ciphers = builder.ciphers;
-        this.caFile = builder.caFile;
-        this.sessionCacheSize = builder.sessionCacheSize;
-        this.sessionTimeoutSeconds = builder.sessionTimeoutSeconds;
-        try {
-            clientContext =
+        if (builder.clientContext == null) {
+            try {
+                clientContext =
                     SslContext.newClientContext(
-                            null,
-                            null,
-                            caFile,
-                            null,
-                            ciphers,
-                            null,
-                            sessionCacheSize,
-                            sessionTimeoutSeconds);
-        }
-        catch (SSLException e) {
-            Throwables.propagate(e);
+                        null,
+                        null,
+                        builder.caFile,
+                        null,
+                        builder.ciphers,
+                        null,
+                        builder.sessionCacheSize,
+                        builder.sessionTimeoutSeconds);
+            } catch (SSLException e) {
+                Throwables.propagate(e);
+            }
+        } else {
+            clientContext = builder.clientContext;
         }
     }
 
