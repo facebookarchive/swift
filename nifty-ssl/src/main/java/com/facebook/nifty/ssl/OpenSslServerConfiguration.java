@@ -51,7 +51,7 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
          * Other ticket keys can be used to decrypt tickets and are not active keys.
          */
         public Builder ticketKeys(SessionTicketKey[] ticketKeys) {
-            this.ticketKeys = Arrays.copyOf(ticketKeys, ticketKeys.length);
+            this.ticketKeys = ticketKeys == null ? null : Arrays.copyOf(ticketKeys, ticketKeys.length);
             return this;
         }
 
