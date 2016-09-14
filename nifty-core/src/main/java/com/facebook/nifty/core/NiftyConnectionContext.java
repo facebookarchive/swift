@@ -15,6 +15,7 @@
  */
 package com.facebook.nifty.core;
 
+import com.facebook.nifty.ssl.SslSession;
 import com.google.common.base.Preconditions;
 
 import java.net.SocketAddress;
@@ -32,6 +33,11 @@ public class NiftyConnectionContext implements ConnectionContext
     public SocketAddress getRemoteAddress()
     {
         return remoteAddress;
+    }
+
+    @Override
+    public SslSession getSslSession() {
+        return null; // not implemented yet
     }
 
     public void setRemoteAddress(SocketAddress remoteAddress)
