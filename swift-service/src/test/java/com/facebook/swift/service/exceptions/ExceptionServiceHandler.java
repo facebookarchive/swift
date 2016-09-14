@@ -70,4 +70,9 @@ public class ExceptionServiceHandler implements ExceptionService
             TException {
         throw new ThriftCheckedSubclassableException.Subclass("is subclass");
     }
+
+    @Override
+    public void throwExceptionInEventHandlersCode() throws TException {
+
+    }
 }

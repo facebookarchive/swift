@@ -15,7 +15,11 @@
  */
 package com.facebook.swift.service.exceptions;
 
+import com.facebook.swift.service.ThriftEventHandler;
+import com.facebook.swift.service.ThriftServerConfig;
 import com.facebook.swift.service.base.SuiteBase;
+import com.google.common.collect.ImmutableList;
+
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
 import org.testng.annotations.Test;
@@ -26,7 +30,10 @@ import static org.testng.Assert.fail;
 public class ExceptionTest extends SuiteBase<ExceptionService, ExceptionServiceClient>
 {
     public ExceptionTest() {
-        super(ExceptionServiceHandler.class, ExceptionServiceClient.class);
+        super(ExceptionServiceHandler.class,
+              ExceptionServiceClient.class,
+              new ThriftServerConfig(),
+              ImmutableList.<ThriftEventHandler>of(new ExceptionThrowingEventHandler()));
     }
 
     @Test(expectedExceptions = { ThriftCheckedException.class })
@@ -100,6 +107,11 @@ public class ExceptionTest extends SuiteBase<ExceptionService, ExceptionServiceC
         }
     }
 
+    @Test(expectedExceptions = { TApplicationException.class })
+    public void testThrowExceptionInEventHandlersCode() throws TException {
+      getClient().throwExceptionInEventHandlersCode();
+    }
+
     @Test
     public void testMissingMethod() {
         try {
@@ -113,4 +125,18 @@ public class ExceptionTest extends SuiteBase<ExceptionService, ExceptionServiceC
                     "Expected TApplicationException of type UNKNOWN_METHOD");
         }
     }
+
+    /**
+     * This class will be used to test if event handlers' exceptions are propagated back to the client.
+     */
+    private static class ExceptionThrowingEventHandler extends ThriftEventHandler {
+        @Override
+        public void preRead(Object handlerContext, String methodName) throws TApplicationException {
+            if ("ExceptionServiceHandler.throwExceptionInEventHandlersCode".equals(methodName)) {
+                throw new TApplicationException(
+                        "This is an exception for testing if event handler exceptions propagate to the client ");
+            }
+        }
+    }
+
 }

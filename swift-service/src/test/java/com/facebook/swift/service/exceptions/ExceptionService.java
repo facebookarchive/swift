@@ -53,4 +53,8 @@ public interface ExceptionService
 
     @ThriftMethod(exception = { @ThriftException(type = ThriftCheckedSubclassableException.class, id = 1) })
     public void throwSubclassOfSubclassableException() throws ThriftCheckedSubclassableException, TException;
+
+    @ThriftMethod
+    public void throwExceptionInEventHandlersCode() throws TException;
+
 }

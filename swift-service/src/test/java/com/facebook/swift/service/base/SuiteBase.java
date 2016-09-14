@@ -41,6 +41,7 @@ public class SuiteBase<ServiceInterface, ClientInterface> {
     private ClientInterface client;
     private ThriftServer server;
     private ServiceInterface handler;
+    private ImmutableList<ThriftEventHandler> eventHandlers;
     private final ThriftServerConfig serverConfig;
 
     public SuiteBase(
@@ -53,10 +54,20 @@ public class SuiteBase<ServiceInterface, ClientInterface> {
             Class<? extends ServiceInterface> handlerClass,
             Class<? extends ClientInterface> clientClass,
             ThriftServerConfig serverConfig) {
+        this(handlerClass, clientClass, serverConfig, ImmutableList.<ThriftEventHandler>of());
+    }
+
+    public SuiteBase(
+            Class<? extends ServiceInterface> handlerClass,
+            Class<? extends ClientInterface> clientClass,
+            ThriftServerConfig serverConfig,
+            ImmutableList<ThriftEventHandler> eventHandlers) {
         this.clientClass = clientClass;
         this.handlerClass = handlerClass;
         this.serverConfig = serverConfig;
+        this.eventHandlers = eventHandlers;
     }
+
 
     @BeforeClass
     public void setupSuite() throws InstantiationException, IllegalAccessException {
@@ -90,7 +101,7 @@ public class SuiteBase<ServiceInterface, ClientInterface> {
 
     private ThriftServer createServer(ServiceInterface handler)
             throws IllegalAccessException, InstantiationException {
-        ThriftServiceProcessor processor = new ThriftServiceProcessor(codecManager, ImmutableList.<ThriftEventHandler>of(), handler);
+        ThriftServiceProcessor processor = new ThriftServiceProcessor(codecManager, eventHandlers, handler);
         return new ThriftServer(processor, serverConfig);
     }
 

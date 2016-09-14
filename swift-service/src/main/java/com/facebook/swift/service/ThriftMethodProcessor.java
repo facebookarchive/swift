@@ -224,7 +224,7 @@ public class ThriftMethodProcessor
                             // unexpected exception
                             TNiftyTransport requestTransport = requestContext instanceof NiftyRequestContext ? ((NiftyRequestContext)requestContext).getNiftyTransport() : null;
                             TApplicationException applicationException =
-                                    ThriftServiceProcessor.writeApplicationException(
+                                    ThriftServiceProcessor.createAndWriteApplicationException(
                                             out,
                                             requestTransport,
                                             method.getName(),
