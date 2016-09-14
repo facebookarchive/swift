@@ -143,6 +143,7 @@ public final class NiftyOpenSslServerContext implements SslHandlerFactory {
                 SSLContext.setOptions(ctx, SSL.SSL_OP_SINGLE_ECDH_USE);
                 SSLContext.setOptions(ctx, SSL.SSL_OP_SINGLE_DH_USE);
                 SSLContext.setOptions(ctx, SSL.SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION);
+                SSLContext.setOptions(ctx, SSL.SSL_OP_NO_COMPRESSION);
 
                 // We need to enable SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER as the memory address may change between
                 // calling OpenSSLEngine.wrap(...).
