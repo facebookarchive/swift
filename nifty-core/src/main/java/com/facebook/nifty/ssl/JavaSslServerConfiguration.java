@@ -49,7 +49,7 @@ public class JavaSslServerConfiguration extends SslServerConfiguration {
                     null,
                     certFile,
                     keyFile,
-                    null,
+                    keyPassword,
                     ciphers,
                     null,
                     0,

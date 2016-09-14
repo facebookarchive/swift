@@ -140,7 +140,7 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
             NiftyOpenSslServerContext serverContext = new NiftyOpenSslServerContext(
                     certFile,
                     keyFile,
-                    null,
+                    keyPassword,
                     ciphers,
                     sslVersionInt,
                     nextProtocols,

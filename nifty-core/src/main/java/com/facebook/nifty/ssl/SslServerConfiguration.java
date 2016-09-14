@@ -27,6 +27,7 @@ public abstract class SslServerConfiguration {
 
         // Note: when adding new fields, make sure to update the initFromConfiguration() method below.
         public File keyFile;
+        public String keyPassword = "";
         public File certFile;
         public Iterable<String> ciphers;
         boolean allowPlaintext;
@@ -38,6 +39,11 @@ public abstract class SslServerConfiguration {
 
         public T keyFile(File keyFile) {
             this.keyFile = keyFile;
+            return (T) this;
+        }
+
+        public T keyPassword(String keyPassword) {
+            this.keyPassword = keyPassword;
             return (T) this;
         }
 
@@ -61,6 +67,7 @@ public abstract class SslServerConfiguration {
          */
         public T initFromConfiguration(SslServerConfiguration config) {
             keyFile(config.keyFile);
+            keyPassword(config.keyPassword);
             certFile(config.certFile);
             ciphers(config.ciphers);
             allowPlaintext(config.allowPlaintext);
@@ -83,6 +90,7 @@ public abstract class SslServerConfiguration {
 
     public final Iterable<String> ciphers;
     public final File keyFile;
+    public final String keyPassword;
     public final File certFile;
     public final boolean allowPlaintext;
 
@@ -91,6 +99,7 @@ public abstract class SslServerConfiguration {
     protected SslServerConfiguration(BuilderBase builder) {
         this.ciphers = builder.ciphers;
         this.keyFile = builder.keyFile;
+        this.keyPassword = builder.keyPassword;
         this.certFile = builder.certFile;
         this.allowPlaintext = builder.allowPlaintext;
     }
