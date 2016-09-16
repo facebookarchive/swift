@@ -28,6 +28,7 @@ import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.facebook.nifty.processor.NiftyProcessor;
 import com.facebook.nifty.processor.NiftyProcessorFactory;
 import com.facebook.nifty.ssl.SslServerConfiguration;
+import com.facebook.nifty.ssl.TransportAttachObserver;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
@@ -77,6 +78,8 @@ public class ThriftServer implements Closeable
     public static final NiftySecurityFactoryHolder DEFAULT_SECURITY_FACTORY = new NiftySecurityFactoryHolder();
     public static final SslServerConfigurationHolder DEFAULT_SSL_SERVER_CONFIGURATION =
             new SslServerConfigurationHolder();
+    public static final TransportAttachObserverHolder DEFAULT_TRANSPORT_ATTACH_OBSERVER =
+            new TransportAttachObserverHolder();
 
     private enum State {
         NOT_STARTED,
@@ -98,6 +101,8 @@ public class ThriftServer implements Closeable
 
     private final SslServerConfiguration sslServerConfiguration;
 
+    private final TransportAttachObserver transportAttachObserver;
+
     private State state = State.NOT_STARTED;
 
     public ThriftServer(NiftyProcessor processor)
@@ -112,7 +117,16 @@ public class ThriftServer implements Closeable
 
     public ThriftServer(NiftyProcessor processor, ThriftServerConfig config, Timer timer)
     {
-        this(processor, config, timer, DEFAULT_FRAME_CODEC_FACTORIES, DEFAULT_PROTOCOL_FACTORIES, DEFAULT_WORKER_EXECUTORS, DEFAULT_SECURITY_FACTORY, DEFAULT_SSL_SERVER_CONFIGURATION);
+        this(
+                processor,
+                config,
+                timer,
+                DEFAULT_FRAME_CODEC_FACTORIES,
+                DEFAULT_PROTOCOL_FACTORIES,
+                DEFAULT_WORKER_EXECUTORS,
+                DEFAULT_SECURITY_FACTORY,
+                DEFAULT_SSL_SERVER_CONFIGURATION,
+                DEFAULT_TRANSPORT_ATTACH_OBSERVER);
     }
 
     public ThriftServer(
@@ -123,17 +137,19 @@ public class ThriftServer implements Closeable
             Map<String, TDuplexProtocolFactory> availableProtocolFactories,
             Map<String, ExecutorService> availableWorkerExecutors,
             NiftySecurityFactory securityFactory,
-            SslServerConfiguration sslServerConfiguration)
+            SslServerConfiguration sslServerConfiguration,
+            TransportAttachObserver transportAttachObserver)
     {
         this(
-            processor,
-            config,
-            timer,
-            availableFrameCodecFactories,
-            availableProtocolFactories,
-            availableWorkerExecutors,
-            new NiftySecurityFactoryHolder(securityFactory),
-            new SslServerConfigurationHolder(sslServerConfiguration));
+                processor,
+                config,
+                timer,
+                availableFrameCodecFactories,
+                availableProtocolFactories,
+                availableWorkerExecutors,
+                new NiftySecurityFactoryHolder(securityFactory),
+                new SslServerConfigurationHolder(sslServerConfiguration),
+                new TransportAttachObserverHolder(transportAttachObserver));
     }
 
     @Inject
@@ -145,7 +161,8 @@ public class ThriftServer implements Closeable
             Map<String, TDuplexProtocolFactory> availableProtocolFactories,
             @ThriftServerWorkerExecutor Map<String, ExecutorService> availableWorkerExecutors,
             NiftySecurityFactoryHolder securityFactoryHolder,
-            SslServerConfigurationHolder sslServerConfigurationHolder)
+            SslServerConfigurationHolder sslServerConfigurationHolder,
+            TransportAttachObserverHolder transportAttachObserverHolder)
     {
         checkNotNull(availableFrameCodecFactories, "availableFrameCodecFactories cannot be null");
         checkNotNull(availableProtocolFactories, "availableProtocolFactories cannot be null");
@@ -176,6 +193,8 @@ public class ThriftServer implements Closeable
 
         sslServerConfiguration = sslServerConfigurationHolder.sslServerConfiguration;
 
+        transportAttachObserver = transportAttachObserverHolder.transportAttachObserver;
+
         serverChannelFactory = new NioServerSocketChannelFactory(new NioServerBossPool(acceptorExecutor, acceptorThreads, ThreadNameDeterminer.CURRENT),
                                                                  new NioWorkerPool(ioExecutor, ioThreads, ThreadNameDeterminer.CURRENT));
 
@@ -194,6 +213,7 @@ public class ThriftServer implements Closeable
                                                          .taskTimeout(config.getTaskExpirationTimeout())
                                                          .queueTimeout(config.getQueueTimeout())
                                                          .withSSLConfiguration(sslServerConfiguration)
+                                                         .withTransportAttachObserver(transportAttachObserver)
                                                          .build();
 
         NettyServerConfigBuilder nettyServerConfigBuilder = NettyServerConfig.newBuilder();
@@ -223,6 +243,7 @@ public class ThriftServer implements Closeable
         ioExecutor = nettyServerConfig.getWorkerExecutor();
         ioThreads = nettyServerConfig.getWorkerThreadCount();
         sslServerConfiguration = thriftServerDef.getSslConfiguration();
+        transportAttachObserver = thriftServerDef.getTransportAttachObserver();
         serverChannelFactory = new NioServerSocketChannelFactory(new NioServerBossPool(acceptorExecutor, acceptorThreads, ThreadNameDeterminer.CURRENT),
                                                                  new NioWorkerPool(ioExecutor, ioThreads, ThreadNameDeterminer.CURRENT));
         transport = new NettyServerTransport(thriftServerDef, nettyServerConfig, allChannels);
@@ -363,6 +384,24 @@ public class ThriftServer implements Closeable
 
         public SslServerConfigurationHolder(SslServerConfiguration sslServerConfiguration) {
             this.sslServerConfiguration = sslServerConfiguration;
+        }
+    }
+
+    /**
+     * Do not use this class. It is only used to workaround Guice not having @Inject(optional=true) for constructor
+     * arguments. The class is public because it's used in ThriftServerModule, which is in a different package.
+     */
+    public static class TransportAttachObserverHolder
+    {
+        @Inject(optional = true) public TransportAttachObserver transportAttachObserver = null;
+
+        @Inject
+        public TransportAttachObserverHolder()
+        {
+        }
+
+        public TransportAttachObserverHolder(TransportAttachObserver transportAttachObserver) {
+            this.transportAttachObserver = transportAttachObserver;
         }
     }
 }

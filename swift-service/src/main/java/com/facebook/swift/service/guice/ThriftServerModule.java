@@ -21,6 +21,7 @@ import com.facebook.nifty.core.NiftyTimer;
 import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.facebook.nifty.processor.NiftyProcessor;
 import com.facebook.nifty.ssl.SslServerConfiguration;
+import com.facebook.nifty.ssl.TransportAttachObserver;
 import com.facebook.swift.service.ThriftEventHandler;
 import com.facebook.swift.service.ThriftServer;
 import com.facebook.swift.service.ThriftServerConfig;
@@ -82,6 +83,7 @@ public class ThriftServerModule implements Module
         binder.bind(ThriftServer.NiftySecurityFactoryHolder.class);
         binder.bind(ThriftServer.class).in(Scopes.SINGLETON);
         binder.bind(ThriftServer.SslServerConfigurationHolder.class);
+        binder.bind(ThriftServer.TransportAttachObserverHolder.class);
     }
 
     // helpers for binding frame codec factories

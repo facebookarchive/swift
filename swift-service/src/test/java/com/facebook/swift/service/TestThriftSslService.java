@@ -129,7 +129,8 @@ public class TestThriftSslService
                 ThriftServer.DEFAULT_PROTOCOL_FACTORIES,
                 ThriftServer.DEFAULT_WORKER_EXECUTORS,
                 ThriftServer.DEFAULT_SECURITY_FACTORY,
-                new ThriftServer.SslServerConfigurationHolder(sslConfiguration)).start()) {
+                new ThriftServer.SslServerConfigurationHolder(sslConfiguration),
+                ThriftServer.DEFAULT_TRANSPORT_ATTACH_OBSERVER).start()) {
             assertEquals(logThrift(server.getPort(), messages), ResultCode.OK);
             assertEquals(logSwift(server.getPort(), toSwiftLogEntry(messages)), com.facebook.swift.service.ResultCode.OK);
         }
