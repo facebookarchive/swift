@@ -28,15 +28,8 @@ public void <field.javaSetterName>(final <field.javaType> <field.javaName>) {
 }
 >>
 
-
 _union_body(context) ::= <<
-
-private Object value;
-private int id = -1;
-private String name;
-
-public <context.javaName>() {
-}
+<_union_constructor(context)>
 
 <context.fields : { field |<_union_setter(field)>}; separator="\n\n">
 >>

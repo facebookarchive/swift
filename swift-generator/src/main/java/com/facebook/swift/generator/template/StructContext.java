@@ -16,8 +16,11 @@
 package com.facebook.swift.generator.template;
 
 import java.util.List;
+import java.util.Set;
 
+import com.google.common.base.Function;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 public class StructContext implements JavaContext
 {
@@ -37,6 +40,15 @@ public class StructContext implements JavaContext
     public void addField(final FieldContext field)
     {
         this.fields.add(field);
+    }
+
+    public boolean getHasUniqueFieldTypes()
+    {
+      List<String> fieldTypesList = Lists.transform(this.fields, new Function<FieldContext, String>() {
+          public String apply(FieldContext field) { return field.getJavaType(); }
+      });
+      Set<String> fieldTypesSet = Sets.newHashSet(fieldTypesList);
+      return fieldTypesSet.size() == fieldTypesList.size();
     }
 
     public List<FieldContext> getFields()
