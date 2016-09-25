@@ -29,7 +29,7 @@
 
   <groupId>com.facebook.swift</groupId>
   <artifactId>swift-root</artifactId>
-  <version>0.22.0</version>
+  <version>0.23.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>${project.artifactId}</name>
   <description>Annotation based Thrift implementation</description>
@@ -42,7 +42,7 @@
     <connection>scm:git:git://github.com/facebook/swift.git</connection>
     <developerConnection>scm:git:git@github.com:facebook/swift.git</developerConnection>
     <url>https://github.com/facebook/swift</url>
-    <tag>swift-root-0.22.0</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <distributionManagement>
@@ -142,19 +142,19 @@
       <dependency>
         <groupId>com.facebook.nifty</groupId>
         <artifactId>nifty-core</artifactId>
-        <version>0.22.0</version>
+        <version>0.23.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>com.facebook.nifty</groupId>
         <artifactId>nifty-ssl</artifactId>
-        <version>0.22.0</version>
+        <version>0.23.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>com.facebook.nifty</groupId>
         <artifactId>nifty-client</artifactId>
-        <version>0.22.0</version>
+        <version>0.23.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
