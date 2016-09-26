@@ -61,6 +61,7 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
         public String sessionContext = "thrift";
         public long sessionTimeoutSeconds = 86400;
         public long sessionCacheSize = 0;
+        public boolean enableStatefulSessionCache = true;
         public SSLVersion sslVersion = SSLVersion.TLS1_2;
         public Iterable<String> nextProtocols = ImmutableList.of("thrift");
         public File clientCAFile;
@@ -112,6 +113,11 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
             return this;
         }
 
+        public Builder enableStatefulSessionCache(boolean enabled) {
+            this.enableStatefulSessionCache = enabled;
+            return this;
+        }
+
         /**
          * Copies the state of an existing configration into this builder.
          * @param config the SSL configuration.
@@ -159,6 +165,7 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
     public final byte[] sessionContext;
     public final long sessionTimeoutSeconds;
     public final long sessionCacheSize;
+    public final boolean enableStatefulSessionCache;
     public final SSLVersion sslVersion;
     public final Iterable<String> nextProtocols;
     public final File clientCAFile;
@@ -170,6 +177,7 @@ public class OpenSslServerConfiguration extends SslServerConfiguration {
         this.sessionContext = builder.sessionContext.getBytes();
         this.sessionTimeoutSeconds = builder.sessionTimeoutSeconds;
         this.sessionCacheSize = builder.sessionCacheSize;
+        this.enableStatefulSessionCache = builder.enableStatefulSessionCache;
         this.sslVersion = builder.sslVersion;
         this.nextProtocols = builder.nextProtocols;
         this.clientCAFile = builder.clientCAFile;

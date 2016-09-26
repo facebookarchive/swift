@@ -72,6 +72,7 @@ public class Plain
                                                         .allowPlaintext(true)
                                                         .ticketKeys(keys)
                                                         .sslVersion(OpenSslServerConfiguration.SSLVersion.TLS1_2)
+                                                        .enableStatefulSessionCache(false)
                                                         .build())
                                         .build()
                         );
