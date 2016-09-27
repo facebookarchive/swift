@@ -153,7 +153,7 @@ public class ThriftServiceProcessor implements NiftyProcessor
                         @Override
                         public void onFailure(Throwable t)
                         {
-                            LOG.error("Failed to process method [" + method.getName() + "] of service [" + method.getServiceName() + "]", t);
+                            LOG.error(t, "Failed to process method [" + method.getName() + "] of service [" + method.getServiceName() + "]");
                             context.done();
                             resultFuture.setException(t);
                         }
