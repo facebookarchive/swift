@@ -101,7 +101,6 @@ public class ThriftServiceProcessor implements NiftyProcessor
     {
         String methodName = null;
         int sequenceId = 0;
-        TNiftyTransport requestTransport = null;
 
         try {
             final SettableFuture<Boolean> resultFuture = SettableFuture.create();
@@ -109,13 +108,11 @@ public class ThriftServiceProcessor implements NiftyProcessor
             methodName = message.name;
             sequenceId = message.seqid;
 
-            requestTransport = requestContext instanceof NiftyRequestContext ? ((NiftyRequestContext)requestContext).getNiftyTransport() : null;
-
             // lookup method
             ThriftMethodProcessor method = methods.get(methodName);
             if (method == null) {
                 TProtocolUtil.skip(in, TType.STRUCT);
-                createAndWriteApplicationException(out, requestTransport, methodName, sequenceId, UNKNOWN_METHOD, "Invalid method name: '" + methodName + "'", null);
+                createAndWriteApplicationException(out, requestContext, methodName, sequenceId, UNKNOWN_METHOD, "Invalid method name: '" + methodName + "'", null);
                 return Futures.immediateFuture(true);
             }
 
@@ -131,7 +128,7 @@ public class ThriftServiceProcessor implements NiftyProcessor
 
                 default:
                     TProtocolUtil.skip(in, TType.STRUCT);
-                    createAndWriteApplicationException(out, requestTransport, methodName, sequenceId, INVALID_MESSAGE_TYPE, "Received invalid message type " + message.type + " from client", null);
+                    createAndWriteApplicationException(out, requestContext, methodName, sequenceId, INVALID_MESSAGE_TYPE, "Received invalid message type " + message.type + " from client", null);
                     return Futures.immediateFuture(true);
             }
 
@@ -164,7 +161,7 @@ public class ThriftServiceProcessor implements NiftyProcessor
         catch (TApplicationException e) {
             // If TApplicationException was thrown send it to the client.
             // This could happen if for example, some of event handlers method threw an exception.
-            writeApplicationException(out, requestTransport, methodName, sequenceId, e);
+            writeApplicationException(out, requestContext, methodName, sequenceId, e);
             return Futures.immediateFuture(true);
         }
         catch (Exception e) {
@@ -174,7 +171,7 @@ public class ThriftServiceProcessor implements NiftyProcessor
 
     public static TApplicationException createAndWriteApplicationException(
             TProtocol outputProtocol,
-            TNiftyTransport requestTransport,
+            RequestContext requestContext,
             String methodName,
             int sequenceId,
             int errorCode,
@@ -190,18 +187,19 @@ public class ThriftServiceProcessor implements NiftyProcessor
 
         LOG.error(applicationException, errorMessage);
 
-        return writeApplicationException(outputProtocol, requestTransport, methodName, sequenceId, applicationException);
+        return writeApplicationException(outputProtocol, requestContext, methodName, sequenceId, applicationException);
     }
 
     public static TApplicationException writeApplicationException(
             TProtocol outputProtocol,
-            TNiftyTransport requestTransport,
+            RequestContext requestContext,
             String methodName,
             int sequenceId,
             TApplicationException applicationException)
             throws TException
     {
         LOG.error(applicationException, applicationException.getMessage());
+        TNiftyTransport requestTransport = requestContext instanceof NiftyRequestContext ? ((NiftyRequestContext)requestContext).getNiftyTransport() : null;
 
         // Application exceptions are sent to client, and the connection can be reused
         outputProtocol.writeMessageBegin(new TMessage(methodName, TMessageType.EXCEPTION, sequenceId));

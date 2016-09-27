@@ -222,11 +222,10 @@ public class ThriftMethodProcessor
                         } else {
                             contextChain.undeclaredUserException(t);
                             // unexpected exception
-                            TNiftyTransport requestTransport = requestContext instanceof NiftyRequestContext ? ((NiftyRequestContext)requestContext).getNiftyTransport() : null;
                             TApplicationException applicationException =
                                     ThriftServiceProcessor.createAndWriteApplicationException(
                                             out,
-                                            requestTransport,
+                                            requestContext,
                                             method.getName(),
                                             sequenceId,
                                             INTERNAL_ERROR,
