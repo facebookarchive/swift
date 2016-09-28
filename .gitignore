@@ -1,6 +1,5 @@
 target/
 pom.xml.versionsBackup
-dependency-reduced-pom.xml
 test-output/
 /atlassian-ide-plugin.x
 .idea/
@@ -18,3 +17,6 @@ eclipse-classes
 .arc
 .pmd
 .pmdruleset
+*.releaseBackup
+release.properties
+dependency-reduced-pom.xml
