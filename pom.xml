@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (C) 2012 Facebook, Inc.
+    Copyright (C) 2012-2013 Facebook, Inc.
 
-    Licensed under the Apache License, Version 2.0 (the "License"); you may
-    not use this file except in compliance with the License. You may obtain
-    a copy of the License at
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-        http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
     Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-    License for the specific language governing permissions and limitations
-    under the License.
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -64,6 +64,11 @@
     <module>swift-maven-plugin</module>
     <module>swift-load-generator</module>
     <module>swift2thrift-generator-cli</module>
+    <module>nifty-core</module>
+    <module>nifty-client</module>
+    <module>nifty-examples</module>
+    <module>nifty-load-tester</module>
+    <module>nifty-ssl</module>    
   </modules>
 
   <inceptionYear>2012</inceptionYear>
@@ -73,6 +78,16 @@
       <id>dain</id>
       <name>Dain Sundstrom</name>
       <email>dain@fb.com</email>
+    </developer>
+    <developer>
+        <id>jaxlaw</id>
+        <name>Jax Law</name>
+        <email>jaxlaw@fb.com</email>
+    </developer>
+    <developer>
+        <id>andrewcox</id>
+        <name>Andrew Cox</name>
+        <email>andrewcox@fb.com</email>
     </developer>
   </developers>
 
@@ -85,7 +100,7 @@
     <dep.airlift.version>0.119</dep.airlift.version>
     <dep.antlr.version>3.5.2</dep.antlr.version>
     <dep.maven-api.version>3.2.5</dep.maven-api.version>
-    <dep.fb.nifty.version>0.22.0-SNAPSHOT</dep.fb.nifty.version>
+    <dep.jackson.version>2.4.4</dep.jackson.version>
   </properties>
 
   <dependencyManagement>
@@ -140,21 +155,33 @@
       </dependency>
 
       <dependency>
-        <groupId>com.facebook.nifty</groupId>
-        <artifactId>nifty-core</artifactId>
-        <version>0.23.0-SNAPSHOT</version>
+          <groupId>com.facebook.nifty</groupId>
+          <artifactId>nifty-core</artifactId>
+          <version>${project.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>com.facebook.nifty</groupId>
-        <artifactId>nifty-ssl</artifactId>
-        <version>0.23.0-SNAPSHOT</version>
+          <groupId>com.facebook.nifty</groupId>
+          <artifactId>nifty-client</artifactId>
+          <version>${project.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>com.facebook.nifty</groupId>
-        <artifactId>nifty-client</artifactId>
-        <version>0.23.0-SNAPSHOT</version>
+          <groupId>com.facebook.nifty</groupId>
+          <artifactId>nifty-examples</artifactId>
+          <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+          <groupId>com.facebook.nifty</groupId>
+          <artifactId>nifty-load-tester</artifactId>
+          <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+          <groupId>com.facebook.nifty</groupId>
+          <artifactId>nifty-ssl</artifactId>
+          <version>${project.version}</version>
       </dependency>
 
       <dependency>
@@ -209,6 +236,12 @@
         <groupId>io.netty</groupId>
         <artifactId>netty</artifactId>
         <version>3.10.5.Final</version>
+      </dependency>
+
+      <dependency>
+          <groupId>io.netty</groupId>
+          <artifactId>netty-tcnative-boringssl-static</artifactId>
+          <version>1.1.33.Fork17</version>
       </dependency>
 
       <dependency>
@@ -321,6 +354,54 @@
         <artifactId>junit</artifactId>
         <version>4.12</version>
       </dependency>
+
+      <dependency>
+          <groupId>com.google.inject</groupId>
+          <artifactId>guice</artifactId>
+          <version>4.0</version>
+      </dependency>
+
+      <dependency>
+          <groupId>com.google.inject.extensions</groupId>
+          <artifactId>guice-multibindings</artifactId>
+          <version>4.0</version>
+      </dependency>
+
+      <dependency>
+          <groupId>commons-codec</groupId>
+          <artifactId>commons-codec</artifactId>
+          <version>1.9</version>
+      </dependency>
+
+      <dependency>
+          <groupId>commons-beanutils</groupId>
+          <artifactId>commons-beanutils</artifactId>
+          <version>1.9</version>
+      </dependency>
+
+      <dependency>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+          <version>1.2</version>
+      </dependency>
+
+      <dependency>
+          <groupId>org.easymock</groupId>
+          <artifactId>easymock</artifactId>
+          <version>3.2</version>
+      </dependency>
+
+      <dependency>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-core</artifactId>
+          <version>${dep.jackson.version}</version>
+      </dependency>
+
+      <dependency>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-databind</artifactId>
+          <version>${dep.jackson.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -418,8 +499,60 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <configuration>
+          <configuration combine.children="append">
             <redirectTestOutputToFile>true</redirectTestOutputToFile>
+            <systemPropertyVariables>
+                <java.util.logging.SimpleFormatter.format>%1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS %4$s %5$s%6$s%n</java.util.logging.SimpleFormatter.format>
+            </systemPropertyVariables>
+          </configuration>
+        </plugin>
+
+        <!-- Configure findbugs plugin to skip checking of thrift-generated files -->
+        <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>findbugs-maven-plugin</artifactId>
+            <configuration>
+                <!--
+                    NOTE: It would make more sense to have an exclude filter file per sub-module
+                    but findbugs-maven-plugin has a bug that it will continue using the first
+                    filter file it saw for the rest of the mvn process (even in different sub-modules).
+                -->
+                <excludeFilterFile>src/findbugs/findbugs-exclude-filter.xml</excludeFilterFile>
+            </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>com.ning.maven.plugins</groupId>
+          <artifactId>maven-duplicate-finder-plugin</artifactId>
+          <configuration>
+            <exceptions>
+              <exception>
+                <conflictingDependencies>
+                  <dependency>
+                    <groupId>commons-beanutils</groupId>
+                    <artifactId>commons-beanutils</artifactId>
+                  </dependency>
+                  <dependency>
+                    <groupId>commons-beanutils</groupId>
+                    <artifactId>commons-beanutils-core</artifactId>
+                  </dependency>
+                  <dependency>
+                    <groupId>commons-collections</groupId>
+                    <artifactId>commons-collections</artifactId>
+                  </dependency>
+                </conflictingDependencies>
+                <!-- Well done, Apache! -->
+                <classes>
+                  <class>org.apache.commons.collections.ArrayStack</class>
+                  <class>org.apache.commons.collections.Buffer</class>
+                  <class>org.apache.commons.collections.BufferUnderflowException</class>
+                  <class>org.apache.commons.collections.FastHashMap</class>
+                </classes>
+                <!-- <packages> -->
+                <!--   <package>org.apache.commons.beanutils</package> -->
+                <!-- </packages> -->
+              </exception>
+            </exceptions>
           </configuration>
         </plugin>
       </plugins>
@@ -429,10 +562,11 @@
       <plugin>
         <groupId>com.mycila</groupId>
         <artifactId>license-maven-plugin</artifactId>
+        <version>3.0</version>
         <configuration>
           <properties>
             <inceptionYear>${project.inceptionYear}</inceptionYear>
-            <year>2013</year>
+            <year>2016</year>
           </properties>
           <excludes combine.children="append">
             <exclude>**/*.g</exclude>
