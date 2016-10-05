@@ -27,17 +27,7 @@ import com.facebook.swift.codec.internal.coercion.DefaultJavaCoercions;
 import com.facebook.swift.codec.metadata.ThriftCatalog;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
 import com.facebook.swift.codec.metadata.ThriftType;
-import com.facebook.swift.codec.recursion.CoRecursive;
-import com.facebook.swift.codec.recursion.CoRecursiveHelper;
-import com.facebook.swift.codec.recursion.CoRecursiveTree;
-import com.facebook.swift.codec.recursion.CoRecursiveTreeHelper;
-import com.facebook.swift.codec.recursion.RecursiveUnion;
-import com.facebook.swift.codec.recursion.ViaListElementType;
-import com.facebook.swift.codec.recursion.ViaMapKeyAndValueTypes;
-import com.facebook.swift.codec.recursion.ViaNestedListElementType;
-import com.facebook.swift.codec.recursion.WithIdlRecursiveAnnotation;
-import com.facebook.swift.codec.recursion.WithSwiftRecursiveAnnotation;
-import com.facebook.swift.codec.recursion.WithoutRecursiveAnnotation;
+import com.facebook.swift.codec.recursion.*;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -582,6 +572,14 @@ public abstract class AbstractThriftCodecManagerTest
     {
         RecursiveUnion recursiveUnion = new RecursiveUnion(new RecursiveUnion("child"));
         testRoundTripSerialize(recursiveUnion, new TCompactProtocol.Factory());
+    }
+
+    @Test
+    public void testRecursiveDefaultUnion()
+            throws Exception
+    {
+        RecursiveDefaultUnion recursiveDefaultUnion = new RecursiveDefaultUnion(new RecursiveDefaultUnion("child"));
+        testRoundTripSerialize(recursiveDefaultUnion, new TCompactProtocol.Factory());
     }
 
     private void assertAllFieldsSet(IsSetBean isSetBean, boolean expected)

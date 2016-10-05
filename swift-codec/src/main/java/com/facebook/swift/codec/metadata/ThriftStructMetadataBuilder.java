@@ -207,6 +207,12 @@ public class ThriftStructMetadataBuilder
             coercion = catalog.getDefaultCoercion(thriftTypeReference.get().getJavaType());
         }
 
+        if (recursive && requiredness != Requiredness.OPTIONAL) {
+            metadataErrors.addError("Struct '%s' field '%s' is recursive but not marked optional",
+                    structName,
+                    name);
+        }
+
         ThriftFieldMetadata thriftFieldMetadata = new ThriftFieldMetadata(
                 id,
                 isLegacyId,
