@@ -70,12 +70,11 @@ package <context.javaPackage>;
 import com.facebook.swift.codec.*;
 import com.facebook.swift.codec.ThriftField.Requiredness;
 import com.facebook.swift.codec.ThriftField.Recursiveness;
-import com.google.common.base.Preconditions;
 import java.util.*;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
 
-@ThriftUnion(value = "<context.name>", builder = <context.javaName>.Builder.class)
+@ThriftUnion("<context.name>")
 public final class <context.javaName>
 {
     <_union_body(context)>
@@ -83,7 +82,7 @@ public final class <context.javaName>
     <context.fields : { field |<_union_field(field)>}; separator="\n\n">
 
     @ThriftUnionId
-    public int getThriftId()
+    public short getThriftId()
     {
         return this.id;
     }
@@ -95,7 +94,9 @@ public final class <context.javaName>
 
     <_union_toString(context)>
 
-    <_union_builder(context)>
+    <_union_equalsImpl(context)>
+
+    <_union_hashCodeImpl(context)>
 }<\n>
 >>
 
@@ -298,6 +299,35 @@ public boolean equals(Object o) {
 }
 >>
 
+_union_equalsImpl(context) ::= <<
+@Override
+public boolean equals(Object o) {
+    if (this == o) {
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+        return false;
+    }
+
+    <context.javaName> other = (<context.javaName>)o;
+
+    return Objects.equals(this.id, other.id)
+            && Objects.equals(this.value, other.value)
+            && Objects.equals(this.name, other.name);
+}
+>>
+
+_union_hashCodeImpl(context) ::= <<
+@Override
+public int hashCode() {
+    return Arrays.deepHashCode(new Object[] {
+        id,
+        value,
+        name
+    });
+}
+>>
+
 _checkFieldEquality(field) ::= <<
 <if(field.arrayType)><_checkArrayFieldEquality(field)><else><_checkObjectFieldEquality(field)><endif>
 >>
@@ -349,46 +379,23 @@ public <context.javaName>(final <field.javaType> <field.javaName>) {
 _union_constructor(context) ::= <<
 
 private Object value;
-private int id = -1;
+private short id = -1;
 private String name;
 
+@ThriftConstructor
 public <context.javaName>() {
 }
 
 <if(context.hasUniqueFieldTypes)>
 <context.fields : { field |<_union_field_constructor(context, field)>}; separator="\n\n">
 <endif>
-
-private <context.javaName>(Object value, int id, String name) {
-    this.value = value;
-    this.id = id;
-    this.name = name;
-}
 >>
 
-_union_builder_setter(field) ::= <<
-<_fieldAnnotation(field)>
-public Builder <field.javaSetterName>(<field.javaType> <field.javaName>) {
-    Preconditions.checkState(name == null, "can't set <field.javaName> - already set to %s", name);
-    value = <field.javaName>;
-    id = <field.id>;
-    name = "<field.name>";
-    return this;
-}
->>
-
-_union_builder(context) ::= <<
-public static class Builder {
-
-    private Object value;
-    private int id = -1;
-    private String name;
-
-    @ThriftConstructor
-    public <context.javaName> build() {
-        return new <context.javaName>(value, id, name);
-    }
-
-    <context.fields : { field |<_union_builder_setter(field)>}; separator="\n\n">
+_union_setter(field) ::= <<
+@ThriftField
+public void <field.javaSetterName>(final <field.javaType> <field.javaName>) {
+    this.value = <field.javaName>;
+    this.id = <field.id>;
+    this.name = "<field.name>";
 }
 >>

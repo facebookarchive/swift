@@ -152,6 +152,22 @@ public abstract class AbstractThriftCodecManagerTest
 
         unionConstructor = new UnionConstructor(Fruit.APPLE);
         testRoundTripSerialize(unionConstructor, new TCompactProtocol.Factory());
+
+        unionConstructor = new UnionConstructor();
+        testRoundTripSerialize(unionConstructor, new TCompactProtocol.Factory());
+    }
+
+    @Test
+    public void testUnionConstructorDuplicateTypes()
+            throws Exception
+    {
+        UnionConstructorDuplicateTypes unionConstructor = new UnionConstructorDuplicateTypes();
+        unionConstructor.setFirstIntValue(1);
+        testRoundTripSerialize(unionConstructor, new TCompactProtocol.Factory());
+
+        unionConstructor = new UnionConstructorDuplicateTypes();
+        unionConstructor.setSecondIntValue(2);
+        testRoundTripSerialize(unionConstructor, new TCompactProtocol.Factory());
     }
 
     @Test

@@ -15,81 +15,68 @@
  */
 package com.facebook.swift.codec;
 
+import com.facebook.swift.codec.ThriftField.Requiredness;
+
 import java.util.Arrays;
 import java.util.Objects;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
 
-@ThriftUnion("Union")
-public final class UnionConstructor
-{
+@ThriftUnion("UnionConstructorDuplicateTypes")
+public class UnionConstructorDuplicateTypes {
     private Object value;
     private short id = -1;
     private String name;
 
     @ThriftConstructor
-    public UnionConstructor() {}
+    public UnionConstructorDuplicateTypes() {
+    }
 
-    @ThriftConstructor
-    public UnionConstructor(String stringValue)
-    {
-        this.value = stringValue;
+    @ThriftField
+    public void setFirstIntValue(final int firstIntValue) {
+        this.value = firstIntValue;
         this.id = 1;
-        this.name = "stringValue";
+        this.name = "firstIntValue";
     }
 
-    @ThriftConstructor
-    public UnionConstructor(Long longValue)
-    {
-        this.value = longValue;
+    @ThriftField
+    public void setSecondIntValue(final int secondIntValue) {
+        this.value = secondIntValue;
         this.id = 2;
-        this.name = "longValue";
+        this.name = "secondIntValue";
     }
 
-    @ThriftConstructor
-    public UnionConstructor(Fruit fruitValue)
-    {
-        this.value = fruitValue;
-        this.id = 3;
-        this.name = "fruitValue";
+    @ThriftField(value = 1, name = "firstIntValue", requiredness = Requiredness.NONE)
+    public int getFirstIntValue() {
+        if (this.id != 1) {
+            throw new IllegalStateException("Not a firstIntValue element!");
+        }
+        return (int) value;
+    }
+
+    public boolean isSetFirstIntValue() {
+        return this.id == 1;
+    }
+
+    @ThriftField(value = 2, name = "secondIntValue", requiredness = Requiredness.NONE)
+    public int getSecondIntValue() {
+        if (this.id != 2) {
+            throw new IllegalStateException("Not a secondIntValue element!");
+        }
+        return (int) value;
+    }
+
+    public boolean isSetSecondIntValue() {
+        return this.id == 2;
     }
 
     @ThriftUnionId
-    public short getThriftId()
-    {
+    public short getThriftId() {
         return this.id;
     }
 
-    public String getThriftName()
-    {
+    public String getThriftName() {
         return this.name;
-    }
-
-    @ThriftField(value = 1, name = "stringValue")
-    public String getStringValue()
-    {
-        if (id != 1) {
-            throw new IllegalStateException("not a stringValue");
-        }
-        return (String) value;
-    }
-
-    @ThriftField(value = 2, name = "longValue")
-    public Long getLongValue()
-    {
-        if (id != 2) {
-            throw new IllegalStateException("not a longValue");
-        }
-        return (Long) value;
-    }
-
-    @ThriftField(value = 3, name = "fruitValue")
-    public Fruit getFruitValue()
-    {
-        if (id != 3) {
-            throw new IllegalStateException("not a fruitValue");
-        }
-        return (Fruit) value;
     }
 
     @Override
@@ -103,24 +90,21 @@ public final class UnionConstructor
     }
 
     @Override
-    public boolean equals(Object obj)
-    {
+    public boolean equals(Object obj) {
         if (this == obj) {
             return true;
-        }
-        else if (obj == null || getClass() != obj.getClass()) {
+        } else if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
 
-        UnionConstructor that = (UnionConstructor) obj;
+        UnionConstructorDuplicateTypes that = (UnionConstructorDuplicateTypes) obj;
         return Objects.equals(this.id, that.id)
                 && Objects.equals(this.value, that.value)
                 && Objects.equals(this.name, that.name);
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return toStringHelper(this)
                 .add("value", value)
                 .add("id", id)

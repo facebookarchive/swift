@@ -27,14 +27,6 @@ _ctorAssignment(field) ::= <<
 this.<field.javaName> = <field.javaName>;
 >>
 
-_union_setter(field) ::= <<
-public void <field.javaSetterName>(final <field.javaType> <field.javaName>) {
-    this.value = <field.javaName>;
-    this.id = <field.id>;
-    this.name = "<field.name>";
-}
->>
-
 _union_body(context) ::= <<
 <_union_constructor(context)>
 

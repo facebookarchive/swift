@@ -19,15 +19,6 @@ public <element.javaName>() {
 }
 >>
 
-_union_setter(field) ::= <<
-@ThriftField
-public void <field.javaSetterName>(final <field.javaType> <field.javaName>) {
-    this.value = <field.javaName>;
-    this.id = <field.id>;
-    this.name = "<field.name>";
-}
->>
-
 _union_body(context) ::= <<
 <_union_constructor(context)>
 
