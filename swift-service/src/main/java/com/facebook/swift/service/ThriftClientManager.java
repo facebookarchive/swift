@@ -227,7 +227,7 @@ public class ThriftClientManager implements Closeable
             @Override
             public T apply(@NotNull C channel)
             {
-                String name = Strings.isNullOrEmpty(clientName) ? connector.toString() : clientName;
+                String name = Strings.isNullOrEmpty(clientName) ? DEFAULT_NAME : clientName;
 
                 try {
                     return createClient(channel, type, name, eventHandlers);
