@@ -30,7 +30,7 @@ public class TestSwiftGenerator
     public static void main(final String ... args) throws Exception
     {
         final SwiftGeneratorConfig config = SwiftGeneratorConfig.builder()
-                        .inputBase(Resources.getResource(TestSwiftGenerator.class, "/").toURI())
+                        .inputBase(Resources.getResource(TestSwiftGenerator.class, "/basic/").toURI())
                         .outputFolder(new File(args.length == 0 ? OUTPUT_FOLDER : args[0]))
                         .generateIncludedCode(true)
                         .codeFlavor("java-immutable")
