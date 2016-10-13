@@ -27,3 +27,13 @@ union foo_duplicate_types {
   1: i32 bar;
   2: i32 baz;
 }
+
+union foo_same_erasure {
+  1: list<i32> bar;
+  2: list<string> baz;
+}
+
+union foo_complicated_container {
+  1: list<set<i32>> bar;
+  2: list<set<string>> baz;
+}

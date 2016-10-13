@@ -42,6 +42,7 @@ public class StructContext implements JavaContext
         this.fields.add(field);
     }
 
+    @Deprecated
     public boolean getHasUniqueFieldTypes()
     {
       List<String> fieldTypesList = Lists.transform(this.fields, new Function<FieldContext, String>() {
@@ -49,6 +50,26 @@ public class StructContext implements JavaContext
       });
       Set<String> fieldTypesSet = Sets.newHashSet(fieldTypesList);
       return fieldTypesSet.size() == fieldTypesList.size();
+    }
+
+    public boolean getHasUniqueFieldTypesUnderErasure()
+    {
+        List<String> fieldTypesList = Lists.transform(this.fields, new Function<FieldContext, String>() {
+            public String apply(FieldContext field) {
+                // remove generics
+                String javaType = field.getJavaType();
+                int startTypeParameter = javaType.indexOf('<');
+                if (startTypeParameter >= 0) {
+                    // there can't be anything after the type parameter, so the > needs
+                    // to be the last character
+                    // we omit the <> as container types are required to have the type parameter
+                    javaType = javaType.substring(0, startTypeParameter);
+                }
+                return javaType;
+            }
+        });
+        Set<String> fieldTypesSet = Sets.newHashSet(fieldTypesList);
+        return fieldTypesSet.size() == fieldTypesList.size();
     }
 
     public List<FieldContext> getFields()
