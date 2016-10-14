@@ -22,7 +22,9 @@ import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
-public class StructContext implements JavaContext
+import com.facebook.swift.generator.SwiftDocumentContext;
+
+public class StructContext extends BaseJavaContext
 {
     private final String name;
     private final String javaPackage;
@@ -30,8 +32,9 @@ public class StructContext implements JavaContext
 
     private final List<FieldContext> fields = Lists.newArrayList();
 
-    StructContext(String name, String javaPackage, String javaName)
+    StructContext(SwiftDocumentContext swiftDocumentContext, String name, String javaPackage, String javaName)
     {
+        super(swiftDocumentContext);
         this.name = name;
         this.javaPackage = javaPackage;
         this.javaName = javaName;

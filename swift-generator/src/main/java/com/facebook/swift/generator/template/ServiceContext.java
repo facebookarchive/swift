@@ -17,12 +17,14 @@ package com.facebook.swift.generator.template;
 
 import com.google.common.collect.Lists;
 
+import com.facebook.swift.generator.SwiftDocumentContext;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 
-public class ServiceContext implements JavaContext
+public class ServiceContext extends BaseJavaContext
 {
     private final String name;
     private final String javaPackage;
@@ -32,8 +34,9 @@ public class ServiceContext implements JavaContext
 
     private final List<MethodContext> methods = Lists.newArrayList();
 
-    ServiceContext(String name, String javaPackage, String javaName, Set<String> javaParents)
+    ServiceContext(SwiftDocumentContext swiftDocumentContext, String name, String javaPackage, String javaName, Set<String> javaParents)
     {
+        super(swiftDocumentContext);
         this.name = name;
         this.javaPackage = javaPackage;
         this.javaName = javaName;

@@ -19,15 +19,18 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 
-public class EnumContext implements JavaContext
+import com.facebook.swift.generator.SwiftDocumentContext;
+
+public class EnumContext extends BaseJavaContext
 {
     private final String javaPackage;
     private final String javaName;
 
     private final List<EnumFieldContext> fields = Lists.newArrayList();
 
-    EnumContext(String javaPackage, String javaName)
+    EnumContext(SwiftDocumentContext swiftDocumentContext, String javaPackage, String javaName)
     {
+        super(swiftDocumentContext);
         this.javaPackage = javaPackage;
         this.javaName = javaName;
     }

@@ -16,6 +16,7 @@
 package com.facebook.swift.generator.template;
 
 import com.facebook.swift.generator.ConstantRenderer;
+import com.facebook.swift.generator.SwiftDocumentContext;
 import com.facebook.swift.generator.SwiftGeneratorConfig;
 import com.facebook.swift.generator.SwiftGeneratorTweak;
 import com.facebook.swift.generator.SwiftJavaType;
@@ -41,6 +42,7 @@ public class TemplateContextGenerator
 {
     private static final MethodContext CLOSE_METHOD_CONTEXT = new MethodContext(null, true, "close", "void", "Void", false /* allow async = false */);
 
+    private final SwiftDocumentContext swiftDocumentContext;
     private final SwiftGeneratorConfig generatorConfig;
     private final TypeRegistry typeRegistry;
     private final TypeToJavaConverter typeConverter;
@@ -48,12 +50,14 @@ public class TemplateContextGenerator
     private final ConstantRenderer constantRenderer;
 
     public TemplateContextGenerator(
+            final SwiftDocumentContext swiftDocumentContext,
             final SwiftGeneratorConfig generatorConfig,
             final TypeRegistry typeRegistry,
             final TypeToJavaConverter typeConverter,
             final ConstantRenderer constantRenderer,
             final String defaultNamespace)
     {
+        this.swiftDocumentContext = swiftDocumentContext;
         this.generatorConfig = generatorConfig;
         this.typeRegistry = typeRegistry;
         this.defaultNamespace = defaultNamespace;
@@ -75,7 +79,8 @@ public class TemplateContextGenerator
         if (addCloseableInterface) {
             javaParents.add("Closeable");
         }
-        final ServiceContext serviceContext = new ServiceContext(name,
+        final ServiceContext serviceContext = new ServiceContext(swiftDocumentContext,
+                                                                 name,
                                                                  javaType.getPackage(),
                                                                  javaType.getSimpleName(),
                                                                  javaParents);
@@ -92,7 +97,8 @@ public class TemplateContextGenerator
         final String thriftTypeName = struct.getName();
         final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, thriftTypeName);
 
-        return new StructContext(thriftTypeName,
+        return new StructContext(swiftDocumentContext,
+                                 thriftTypeName,
                                  javaType.getPackage(),
                                  javaType.getSimpleName());
     }
@@ -135,7 +141,8 @@ public class TemplateContextGenerator
         final String thriftTypeName = "Constants";
         final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, thriftTypeName);
 
-        return new ConstantsContext(thriftTypeName,
+        return new ConstantsContext(swiftDocumentContext,
+                                    thriftTypeName,
                                     javaType.getPackage(),
                                     javaType.getSimpleName());
     }
@@ -158,14 +165,14 @@ public class TemplateContextGenerator
     {
         final String thriftTypeName = integerEnum.getName();
         final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, thriftTypeName);
-        return new EnumContext(javaType.getPackage(), javaType.getSimpleName());
+        return new EnumContext(swiftDocumentContext, javaType.getPackage(), javaType.getSimpleName());
     }
 
     public EnumContext enumFromThrift(final StringEnum stringEnum)
     {
         final String thriftTypeName = stringEnum.getName();
         final SwiftJavaType javaType = typeRegistry.findType(defaultNamespace, thriftTypeName);
-        return new EnumContext(javaType.getPackage(), javaType.getSimpleName());
+        return new EnumContext(swiftDocumentContext, javaType.getPackage(), javaType.getSimpleName());
     }
 
     public EnumFieldContext fieldFromThrift(final IntegerEnumField field)

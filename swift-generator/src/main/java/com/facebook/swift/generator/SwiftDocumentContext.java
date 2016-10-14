@@ -34,16 +34,16 @@ public class SwiftDocumentContext
     private final TypedefRegistry typedefRegistry;
     private final TypeToJavaConverter typeConverter;
     private final ConstantRenderer constantRenderer;
-    private final URI thriftUri;
+    private final URI thriftIdlUri;
 
-    public SwiftDocumentContext(final URI thriftUri,
+    public SwiftDocumentContext(final URI thriftIdlUri,
                                 final String namespace,
                                 final SwiftGeneratorConfig generatorConfig,
                                 final TypeRegistry typeRegistry,
                                 final TypedefRegistry typedefRegistry) throws IOException
     {
-        this.document = ThriftIdlParser.parseThriftIdl(Resources.asCharSource(thriftUri.toURL(), Charsets.UTF_8));
-        this.thriftUri = thriftUri;
+        this.document = ThriftIdlParser.parseThriftIdl(Resources.asCharSource(thriftIdlUri.toURL(), Charsets.UTF_8));
+        this.thriftIdlUri = thriftIdlUri;
         this.namespace = namespace;
         this.generatorConfig = generatorConfig;
         this.typeRegistry = typeRegistry;
@@ -87,7 +87,7 @@ public class SwiftDocumentContext
 
     public TemplateContextGenerator getTemplateContextGenerator()
     {
-        return new TemplateContextGenerator(generatorConfig, typeRegistry, typeConverter, constantRenderer, namespace);
+        return new TemplateContextGenerator(this, generatorConfig, typeRegistry, typeConverter, constantRenderer, namespace);
     }
 
     public String getJavaPackage()
@@ -109,8 +109,17 @@ public class SwiftDocumentContext
         }
 
         // If none of the above options get us a package to use, fail
-        Preconditions.checkState(javaPackage != null, "thrift uri %s does not declare a '%s' namespace!", thriftUri, effectiveJavaNamespace);
+        Preconditions.checkState(javaPackage != null, "thrift uri %s does not declare a '%s' namespace!",
+            getThriftIdlUri(), effectiveJavaNamespace);
 
         return javaPackage;
+    }
+
+    public URI getThriftIdlUri() {
+        return thriftIdlUri;
+    }
+
+    public SwiftGeneratorConfig getSwiftGeneratorConfig() {
+        return generatorConfig;
     }
 }

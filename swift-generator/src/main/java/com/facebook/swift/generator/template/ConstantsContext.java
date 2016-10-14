@@ -18,11 +18,13 @@ package com.facebook.swift.generator.template;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 
+import com.facebook.swift.generator.SwiftDocumentContext;
+
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-public class ConstantsContext implements JavaContext
+public class ConstantsContext extends BaseJavaContext
 {
     private final String name;
     private final String javaPackage;
@@ -30,8 +32,9 @@ public class ConstantsContext implements JavaContext
 
     private final SortedSet<ConstantContext> constants = new TreeSet<>();
 
-    ConstantsContext(final String name, final String javaPackage, final String javaName)
+    ConstantsContext(final SwiftDocumentContext swiftDocumentContext, final String name, final String javaPackage, final String javaName)
     {
+        super(swiftDocumentContext);
         this.name = name;
         this.javaPackage = javaPackage;
         this.javaName = javaName;
