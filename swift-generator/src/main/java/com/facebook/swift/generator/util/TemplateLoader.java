@@ -37,17 +37,6 @@ import java.util.Map;
 
 public class TemplateLoader
 {
-    private static final Function<String,CharSource> FILE_TO_INPUT_SUPPLIER_TRANSFORM =
-            new Function<String, CharSource>()
-            {
-                @Nonnull
-                @Override
-                public CharSource apply(@Nonnull String templateFileName)
-                {
-                    return Resources.asCharSource(Resources.getResource(this.getClass(), "/templates/" + templateFileName), Charsets.UTF_8);
-                }
-            };
-
     private static final Logger LOG = Logger.get(TemplateLoader.class);
 
     private final STErrorListener ERROR_LISTENER = new ErrorListener();
@@ -77,10 +66,6 @@ public class TemplateLoader
     protected STGroup getTemplateGroup(Iterable<String> templateFileNames) throws IOException
     {
         if (stg == null) {
-            // Convert set of relative paths to .st files into a set of input suppliers
-            Iterable<CharSource> templateInputSuppliers =
-                    Iterables.transform(templateFileNames, FILE_TO_INPUT_SUPPLIER_TRANSFORM);
-
             // Combine the header and all .st files and load everything into a StringTemplateGroup
             stg = new STGroup();
             stg.setListener(ERROR_LISTENER);
