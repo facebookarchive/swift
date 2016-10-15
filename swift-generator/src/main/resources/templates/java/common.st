@@ -386,7 +386,7 @@ private String name;
 public <context.javaName>() {
 }
 
-<if(context.hasUniqueFieldTypes)>
+<if(context.hasUniqueFieldTypesUnderErasure)>
 <context.fields : { field |<_union_field_constructor(context, field)>}; separator="\n\n">
 <endif>
 >>

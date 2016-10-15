@@ -57,7 +57,7 @@ public Builder <field.javaSetterName>(<field.javaType> <field.javaName>) {
 _union_body(context) ::= <<
 <_union_constructor(context)>
 
-<if(!context.hasUniqueFieldTypes)>
+<if(!context.hasUniqueFieldTypesUnderErasure)>
 <context.fields : { field |<_union_setter(field)>}; separator="\n\n">
 <endif>
 >>
