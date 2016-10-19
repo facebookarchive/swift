@@ -27,6 +27,8 @@ import java.net.URI;
 
 public class SwiftDocumentContext
 {
+    public static final String JAVA_SWIFT_NAMESPACE = "java.swift";
+    public static final String PLAIN_JAVA_NAMESPACE = "java";
     private final Document document;
     private final String namespace;
     private final SwiftGeneratorConfig generatorConfig;
@@ -92,9 +94,9 @@ public class SwiftDocumentContext
 
     public String getJavaPackage()
     {
-        String effectiveJavaNamespace = "java.swift";
+        String effectiveJavaNamespace = JAVA_SWIFT_NAMESPACE;
         if (generatorConfig.containsTweak(SwiftGeneratorTweak.USE_PLAIN_JAVA_NAMESPACE)) {
-            effectiveJavaNamespace = "java";
+            effectiveJavaNamespace = PLAIN_JAVA_NAMESPACE;
         }
 
         // Override takes precedence
@@ -103,6 +105,12 @@ public class SwiftDocumentContext
         if (javaPackage == null) {
             javaPackage = getDocument().getHeader().getNamespace(effectiveJavaNamespace);
         }
+        // Try to fallback to plain Java namespace if java.swift is not present in IDL
+        if (javaPackage == null &&
+            generatorConfig.containsTweak(SwiftGeneratorTweak.FALLBACK_TO_PLAIN_JAVA_NAMESPACE)) {
+            javaPackage = getDocument().getHeader().getNamespace(PLAIN_JAVA_NAMESPACE);
+        }
+
         // Or the default if we don't have an override package or a package in the .thrift file
         if (javaPackage == null) {
             javaPackage = generatorConfig.getDefaultPackage();

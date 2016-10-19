@@ -72,7 +72,11 @@ public class Main
             configBuilder.addTweak(SwiftGeneratorTweak.USE_PLAIN_JAVA_NAMESPACE);
         }
 
-        Iterable<URI> inputs = Iterables.transform(cliConfig.inputFiles, FILE_TO_URI_TRANSFORM);
+        if (cliConfig.fallbackToPlainJavaNamespace) {
+          configBuilder.addTweak(SwiftGeneratorTweak.FALLBACK_TO_PLAIN_JAVA_NAMESPACE);
+        }
+
+      Iterable<URI> inputs = Iterables.transform(cliConfig.inputFiles, FILE_TO_URI_TRANSFORM);
 
         new SwiftGenerator(configBuilder.build()).parse(inputs);
     }

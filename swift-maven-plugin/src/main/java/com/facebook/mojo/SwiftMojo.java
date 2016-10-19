@@ -125,6 +125,12 @@ public class SwiftMojo extends AbstractMojo
     @Parameter(defaultValue = "false")
     private boolean usePlainJavaNamespace = false;
 
+    /**
+     * Use the 'java' namespace if 'java.swift' namespace is not present.
+     */
+    @Parameter(defaultValue = "false")
+    private boolean fallbackToPlainJavaNamespace = false;
+
     @Parameter(defaultValue = "${project}", required = true, readonly = true)
     private MavenProject project = null;
 
@@ -151,6 +157,11 @@ public class SwiftMojo extends AbstractMojo
                 if (usePlainJavaNamespace)
                 {
                     configBuilder.addTweak(SwiftGeneratorTweak.USE_PLAIN_JAVA_NAMESPACE);
+                }
+
+                if (fallbackToPlainJavaNamespace)
+                {
+                    configBuilder.addTweak(SwiftGeneratorTweak.FALLBACK_TO_PLAIN_JAVA_NAMESPACE);
                 }
 
                 if (addThriftExceptions)

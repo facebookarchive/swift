@@ -74,4 +74,10 @@ public class SwiftGeneratorCommandLineConfig
             description = "Use 'java' namespace instead of 'java.swift' namespace"
     )
     public boolean usePlainJavaNamespace = false;
+
+  @Parameter(
+      names = "-fallback_to_java_namespace",
+      description = "Use 'java' namespace if 'java.swift' namespace is not present"
+  )
+  public boolean fallbackToPlainJavaNamespace = false;
 }

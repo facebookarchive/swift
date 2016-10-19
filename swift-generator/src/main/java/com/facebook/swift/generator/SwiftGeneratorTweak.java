@@ -23,6 +23,8 @@ public enum SwiftGeneratorTweak
     ADD_THRIFT_EXCEPTION,     // Add TException to generated method signatures
     EXTEND_RUNTIME_EXCEPTION, // Make generated exceptions extend RuntimeException instead of Exception
     ADD_CLOSEABLE_INTERFACE,  // Make generated Services extend Closeable and add a close() method
-    USE_PLAIN_JAVA_NAMESPACE  // Use the java namespace, not the java.swift namespace
+    USE_PLAIN_JAVA_NAMESPACE,  // Use the java namespace, not the java.swift namespace
+    FALLBACK_TO_PLAIN_JAVA_NAMESPACE  // First try to use java.swift namespace if it is present in IDL,
+                                      // otherwise use the java namespace
 }
 

@@ -50,17 +50,24 @@ public class SwiftIntegrationTest
     public void testBasic()
             throws Exception
     {
-       assertOutcomes("basic");
+       assertOutcomes("basic", "com/facebook/swift/its/test");
     }
     
     @Test
     public void testShortCircuit() 
         throws Exception
     {
-        assertOutcomes("shortcircuit");            
+        assertOutcomes("shortcircuit", "com/facebook/swift/its/test");
     }
-    
-    private void assertOutcomes(String project) 
+
+    @Test
+    public void testNamespaceFallback()
+        throws Exception
+    {
+        assertOutcomes("namespace_fallback", "com/facebook/swift/service/scribe");
+    }
+
+    private void assertOutcomes(String project, String expectedJavaNamespace)
         throws Exception
     {
         File basedir = resources.getBasedir(project);
@@ -68,8 +75,8 @@ public class SwiftIntegrationTest
                 .execute("generate-sources")
                 .assertErrorFreeLog();
 
-        File generated = new File(basedir, "target/generated-sources");
-        File output = new File(generated, "swift/com/facebook/swift/its/test");
+        File generated = new File(basedir, "target/generated-sources/swift");
+        File output = new File(generated, expectedJavaNamespace);
 
         assertTrue(new File(output, "LogEntry.java").isFile());
         assertTrue(new File(output, "ResultCode.java").isFile());
