@@ -237,6 +237,36 @@ public abstract class AbstractThriftCodecManagerTest
     }
 
     @Test
+    public void testBuilderAbstract()
+            throws Exception
+    {
+        BonkBuilderAbstract bonkBuilderAbstract =
+                new BonkBuilderAbstract.Builder()
+                        .setMessage("message")
+                        .setType(42)
+                        .create();
+        testRoundTripSerialize(
+                TypeToken.of(BonkBuilderAbstract.class),
+                bonkBuilderAbstract,
+                new TCompactProtocol.Factory());
+    }
+
+    @Test
+    public void testBuilderInterface()
+            throws Exception
+    {
+        BonkBuilderInterface bonkBuilderInterface =
+                new BonkBuilderInterface.Builder()
+                        .setMessage("message")
+                        .setType(42)
+                        .create();
+        testRoundTripSerialize(
+                TypeToken.of(BonkBuilderInterface.class),
+                bonkBuilderInterface,
+                new TCompactProtocol.Factory());
+    }
+
+    @Test
     public void testArraysManual()
             throws Exception
     {

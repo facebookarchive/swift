@@ -1,0 +1,126 @@
+/*
+ * Copyright (C) 2015 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package com.facebook.swift.codec;
+
+import javax.annotation.concurrent.Immutable;
+
+@Immutable
+@ThriftStruct(value = "Bonk", builder = BonkBuilderAbstract.Builder.class)
+public abstract class BonkBuilderAbstract
+{
+    BonkBuilderAbstract()
+    {
+        // hidden
+    }
+
+    @ThriftField(1)
+    public abstract String getMessage();
+
+    @ThriftField(2)
+    public abstract int getType();
+
+    public static final class Builder
+    {
+        @Immutable
+        static final class ImmutableBonk extends BonkBuilderAbstract
+        {
+            private final String message;
+            private final int type;
+
+            public ImmutableBonk(String message, int type)
+            {
+                this.message = message;
+                this.type = type;
+            }
+
+            @Override
+            public String getMessage()
+            {
+                return message;
+            }
+
+            @Override
+            public int getType()
+            {
+                return type;
+            }
+
+            @Override
+            public int hashCode()
+            {
+                int result = message != null ? message.hashCode() : 0;
+                result = 31 * result + type;
+                return result;
+            }
+
+            @Override
+            public boolean equals(Object o)
+            {
+                if (this == o) {
+                    return true;
+                }
+                if (o == null || getClass() != o.getClass()) {
+                    return false;
+                }
+
+                BonkBuilderAbstract that = (BonkBuilderAbstract) o;
+
+                if (type != that.getType()) {
+                    return false;
+                }
+                if (message != null ? !message.equals(that.getMessage()) : that.getMessage() != null) {
+                    return false;
+                }
+
+                return true;
+            }
+
+            @Override
+            public String toString()
+            {
+                final StringBuilder sb = new StringBuilder();
+                sb.append("BonkBuilderAbstract");
+                sb.append("{message='").append(message).append('\'');
+                sb.append(", type=").append(type);
+                sb.append('}');
+                return sb.toString();
+            }
+        }
+
+        private String message;
+        private int type;
+
+        @ThriftField
+        public Builder setMessage(String message)
+        {
+            this.message = message;
+            return this;
+        }
+
+        @ThriftField
+        public Builder setType(int type)
+        {
+            this.type = type;
+            return this;
+        }
+
+        @ThriftConstructor
+        public BonkBuilderAbstract create()
+        {
+            return new ImmutableBonk(message, type);
+        }
+    }
+}
