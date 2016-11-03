@@ -16,6 +16,7 @@
 package com.facebook.swift.codec;
 
 import com.facebook.swift.codec.internal.TProtocolReader;
+import com.facebook.swift.codec.internal.TProtocolSizer;
 import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftType;
 import org.apache.thrift.protocol.TProtocol;
@@ -84,5 +85,25 @@ public class BonkFieldThriftCodec implements ThriftCodec<BonkField>
 
         writer.writeI32Field("type", (short) 2, value.type);
         writer.writeStructEnd();
+    }
+
+    @Override
+    public int serializedSize(BonkField value, TProtocolSizer sizer)
+    {
+        int size = 0;
+
+        size += sizer.serializedSizeStructBegin("bonk");
+
+        String message = value.message;
+        if (message != null) {
+            size += sizer.serializedSizeField("message", ThriftProtocolType.STRING, (short) 1);
+            size += sizer.serializedSizeString(message);
+        }
+        size += sizer.serializedSizeField("type", ThriftProtocolType.I32, (short) 2);
+        size += sizer.serializedSizeI32(value.type);
+
+        size += sizer.serializedSizeStop();
+
+        return size;
     }
 }

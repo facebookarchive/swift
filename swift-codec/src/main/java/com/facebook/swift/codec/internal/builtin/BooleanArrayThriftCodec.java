@@ -17,6 +17,7 @@ package com.facebook.swift.codec.internal.builtin;
 
 import com.facebook.swift.codec.ThriftCodec;
 import com.facebook.swift.codec.internal.TProtocolReader;
+import com.facebook.swift.codec.internal.TProtocolSizer;
 import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftType;
 import org.apache.thrift.protocol.TProtocol;
@@ -50,5 +51,11 @@ public class BooleanArrayThriftCodec
         checkNotNull(value, "value is null");
         checkNotNull(protocol, "protocol is null");
         new TProtocolWriter(protocol).writeBoolArray(value);
+    }
+
+    @Override
+    public int serializedSize(boolean[] value, TProtocolSizer sizer)
+    {
+        return sizer.serializedSizeBoolArray(value);
     }
 }

@@ -16,6 +16,7 @@
 package com.facebook.swift.codec;
 
 import com.facebook.swift.codec.internal.TProtocolReader;
+import com.facebook.swift.codec.internal.TProtocolSizer;
 import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftType;
 import org.apache.thrift.protocol.TProtocol;
@@ -136,5 +137,48 @@ public class ArrayFieldThriftCodec
         }
 
         writer.writeStructEnd();
+    }
+
+    @Override
+    public int serializedSize(ArrayField value, TProtocolSizer sizer)
+    {
+        int size = 0;
+
+        size += sizer.serializedSizeStructBegin("array");
+
+        boolean[] booleanArray = value.booleanArray;
+        if (booleanArray != null) {
+            size += sizer.serializedSizeField("booleanArray", ThriftProtocolType.LIST, (short) 1);
+            size += sizer.serializedSizeBoolArray(booleanArray);
+        }
+        short[] shortArray = value.shortArray;
+        if (shortArray != null) {
+            size += sizer.serializedSizeField("shortArray", ThriftProtocolType.LIST, (short) 2);
+            size += sizer.serializedSizeI16Array(shortArray);
+        }
+        int[] intArray = value.intArray;
+        if (intArray != null) {
+            size += sizer.serializedSizeField("intArray", ThriftProtocolType.LIST, (short) 3);
+            size += sizer.serializedSizeI32Array(intArray);
+        }
+        long[] longArray = value.longArray;
+        if (longArray != null) {
+            size += sizer.serializedSizeField("longArray", ThriftProtocolType.LIST, (short) 4);
+            size += sizer.serializedSizeI64Array(longArray);
+        }
+        double[] doubleArray = value.doubleArray;
+        if (doubleArray != null) {
+            size += sizer.serializedSizeField("doubleArray", ThriftProtocolType.LIST, (short) 5);
+            size += sizer.serializedSizeDoubleArray(doubleArray);
+        }
+        byte[] byteArray = value.byteArray;
+        if (byteArray != null) {
+            size += sizer.serializedSizeField("byteArray", ThriftProtocolType.BINARY, (short) 6);
+            size += sizer.serializedSizeBinary(ByteBuffer.wrap(byteArray));
+        }
+
+        size += sizer.serializedSizeStop();
+
+        return size;
     }
 }

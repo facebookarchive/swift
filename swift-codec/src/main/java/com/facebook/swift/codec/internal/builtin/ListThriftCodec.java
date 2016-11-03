@@ -17,6 +17,7 @@ package com.facebook.swift.codec.internal.builtin;
 
 import com.facebook.swift.codec.ThriftCodec;
 import com.facebook.swift.codec.internal.TProtocolReader;
+import com.facebook.swift.codec.internal.TProtocolSizer;
 import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.base.Preconditions;
@@ -61,5 +62,11 @@ public class ListThriftCodec<T> implements ThriftCodec<List<T>>
         Preconditions.checkNotNull(value, "value is null");
         Preconditions.checkNotNull(protocol, "protocol is null");
         new TProtocolWriter(protocol).writeList(elementCodec, value);
+    }
+
+    @Override
+    public int serializedSize(List<T> value, TProtocolSizer sizer)
+    {
+        return sizer.serializedSizeListElementCodec(elementCodec, value);
     }
 }

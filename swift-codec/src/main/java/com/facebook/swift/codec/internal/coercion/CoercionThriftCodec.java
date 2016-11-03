@@ -16,6 +16,7 @@
 package com.facebook.swift.codec.internal.coercion;
 
 import com.facebook.swift.codec.ThriftCodec;
+import com.facebook.swift.codec.internal.TProtocolSizer;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.facebook.swift.codec.metadata.TypeCoercion;
 import org.apache.thrift.protocol.TProtocol;
@@ -61,5 +62,11 @@ public class CoercionThriftCodec<T> implements ThriftCodec<T>
     {
         Object thriftValue = typeCoercion.getToThrift().invoke(null, javaValue);
         codec.write(thriftValue, protocol);
+    }
+
+    @Override
+    public int serializedSize(T javaValue, TProtocolSizer sizer)
+    {
+        return codec.serializedSize(javaValue, sizer);
     }
 }

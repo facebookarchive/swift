@@ -16,6 +16,7 @@
 package com.facebook.swift.codec;
 
 import com.facebook.swift.codec.internal.TProtocolReader;
+import com.facebook.swift.codec.internal.TProtocolSizer;
 import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftType;
 
@@ -135,5 +136,38 @@ public class OneOfEverythingThriftCodec implements ThriftCodec<OneOfEverything>
         writer.writeEnumField("aEnum", (short) 9, aFruitCodec, oneOfEverything.aEnum);
         writer.writeStructField("aUnion", (short) 61, aUnionCodec, oneOfEverything.aUnion);
         writer.writeStructEnd();
+    }
+
+    @Override
+    public int serializedSize(OneOfEverything value, TProtocolSizer sizer)
+    {
+        int size = 0;
+
+        size += sizer.serializedSizeStructBegin("OneOfEverything");
+
+        size += sizer.serializedSizeField("aBoolean", ThriftProtocolType.BOOL, (short) 1);
+        size += sizer.serializedSizeBool(value.aBoolean);
+        size += sizer.serializedSizeField("aByte", ThriftProtocolType.BYTE, (short) 2);
+        size += sizer.serializedSizeByte(value.aByte);
+        size += sizer.serializedSizeField("aShort", ThriftProtocolType.I16, (short) 3);
+        size += sizer.serializedSizeI16(value.aShort);
+        size += sizer.serializedSizeField("aInt", ThriftProtocolType.I32, (short) 4);
+        size += sizer.serializedSizeI32(value.aInt);
+        size += sizer.serializedSizeField("aLong", ThriftProtocolType.I64, (short) 5);
+        size += sizer.serializedSizeI64(value.aLong);
+        size += sizer.serializedSizeField("aDouble", ThriftProtocolType.DOUBLE, (short) 6);
+        size += sizer.serializedSizeDouble(value.aDouble);
+        size += sizer.serializedSizeField("aString", ThriftProtocolType.STRING, (short) 7);
+        size += sizer.serializedSizeString(value.aString);
+        size += sizer.serializedSizeField("aStruct", ThriftProtocolType.STRUCT, (short) 8);
+        size += sizer.serializedSizeStruct(aStructCodec, value.aStruct);
+        size += sizer.serializedSizeField("aEnum", ThriftProtocolType.ENUM, (short) 9);
+        size += sizer.serializedSizeEnum(aFruitCodec, value.aEnum);
+        size += sizer.serializedSizeField("aUnion", ThriftProtocolType.STRUCT, (short) 61);
+        size += sizer.serializedSizeStruct(aUnionCodec, value.aUnion);
+
+        size += sizer.serializedSizeStop();
+
+        return size;
     }
 }

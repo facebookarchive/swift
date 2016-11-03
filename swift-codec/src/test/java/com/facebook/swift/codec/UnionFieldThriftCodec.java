@@ -16,6 +16,7 @@
 package com.facebook.swift.codec;
 
 import com.facebook.swift.codec.internal.TProtocolReader;
+import com.facebook.swift.codec.internal.TProtocolSizer;
 import com.facebook.swift.codec.internal.TProtocolWriter;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.base.Preconditions;
@@ -96,5 +97,32 @@ public class UnionFieldThriftCodec implements ThriftCodec<UnionField>
             break;
         }
         writer.writeStructEnd();
+    }
+
+    @Override
+    public int serializedSize(UnionField value, TProtocolSizer sizer)
+    {
+        int size = 0;
+
+        size += sizer.serializedSizeStructBegin("union");
+
+        switch (value._id) {
+            case 1:
+                size += sizer.serializedSizeField("stringValue", ThriftProtocolType.STRING, (short) 1);
+                size += sizer.serializedSizeString(value.stringValue);
+                break;
+            case 2:
+                size += sizer.serializedSizeField("longValue", ThriftProtocolType.I64, (short) 2);
+                size += sizer.serializedSizeI64(value.longValue);
+                break;
+            case 3:
+                size += sizer.serializedSizeField("fruitValue", ThriftProtocolType.ENUM, (short) 3);
+                size += sizer.serializedSizeEnum(fruitCodec, value.fruitValue);
+                break;
+        }
+
+        size += sizer.serializedSizeStop();
+
+        return size;
     }
 }

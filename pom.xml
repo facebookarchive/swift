@@ -64,6 +64,7 @@
     <module>swift-maven-plugin</module>
     <module>swift-load-generator</module>
     <module>swift2thrift-generator-cli</module>
+    <module>swift-benchmarks</module>
   </modules>
 
   <inceptionYear>2012</inceptionYear>

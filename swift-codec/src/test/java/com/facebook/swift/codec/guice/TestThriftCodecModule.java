@@ -17,6 +17,7 @@ package com.facebook.swift.codec.guice;
 
 import com.facebook.swift.codec.BonkConstructor;
 import com.facebook.swift.codec.ThriftCodec;
+import com.facebook.swift.codec.internal.TProtocolSizer;
 import com.facebook.swift.codec.metadata.ThriftType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -79,6 +80,12 @@ public class TestThriftCodecModule
                                     throws Exception
                             {
                                 protocol.writeString(value.getValue());
+                            }
+
+                            @Override
+                            public int serializedSize(ValueClass value, TProtocolSizer sizer)
+                            {
+                                return sizer.serializedSizeString(value.getValue());
                             }
                         });
                     }
