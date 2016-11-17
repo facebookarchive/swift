@@ -173,7 +173,9 @@ public class SwiftGenerator
                 }
 
                 if (foundIncludeUri == null) {
-                    foundIncludeUri = swiftGeneratorConfig.getInputBase().resolve(include);
+                    foundIncludeUri = swiftGeneratorConfig.isIncludePathsRelativeToFile() ?
+                        thriftUri.resolve(include) :
+                        swiftGeneratorConfig.getInputBase().resolve(include);
                 }
 
                 LOG.debug("Found %s included from %s.", foundIncludeUri, thriftUri);
