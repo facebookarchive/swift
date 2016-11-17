@@ -75,9 +75,15 @@ public class SwiftGeneratorCommandLineConfig
     )
     public boolean usePlainJavaNamespace = false;
 
-  @Parameter(
-      names = "-fallback_to_java_namespace",
-      description = "Use 'java' namespace if 'java.swift' namespace is not present"
-  )
-  public boolean fallbackToPlainJavaNamespace = false;
+    @Parameter(
+            names = "-fallback_to_java_namespace",
+            description = "Use 'java' namespace if 'java.swift' namespace is not present"
+    )
+    public boolean fallbackToPlainJavaNamespace = false;
+
+    @Parameter(
+            names = "-include_paths_relative_to_file",
+            description = "Include paths are relative to the file in which they are contained"
+    )
+    public boolean includePathsRelativeToFile = false;
 }

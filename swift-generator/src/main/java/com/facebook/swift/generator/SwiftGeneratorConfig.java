@@ -33,6 +33,7 @@ public class SwiftGeneratorConfig
     private final Set<SwiftGeneratorTweak> generatorTweaks;
     private final boolean generateIncludedCode;
     private final String codeFlavor;
+    private final boolean includePathsRelativeToFile;
 
     private SwiftGeneratorConfig(
             final URI inputBase,
@@ -41,7 +42,8 @@ public class SwiftGeneratorConfig
             final String defaultPackage,
             final Set<SwiftGeneratorTweak> generatorTweaks,
             final boolean generateIncludedCode,
-            final String codeFlavor)
+            final String codeFlavor,
+            final boolean includePathsRelativeToFile)
     {
         this.inputBase = inputBase;
         this.includeSearchPaths = includeSearchPaths;
@@ -51,6 +53,7 @@ public class SwiftGeneratorConfig
         this.generatorTweaks = generatorTweaks;
         this.generateIncludedCode = generateIncludedCode;
         this.codeFlavor = codeFlavor;
+        this.includePathsRelativeToFile = includePathsRelativeToFile;
     }
 
     public static Builder builder()
@@ -123,6 +126,14 @@ public class SwiftGeneratorConfig
         return codeFlavor;
     }
 
+    /**
+     * The template to use for generating source code.
+     */
+    public boolean isIncludePathsRelativeToFile()
+    {
+        return includePathsRelativeToFile;
+    }
+
     public static class Builder
     {
         private URI inputBase = null;
@@ -133,6 +144,7 @@ public class SwiftGeneratorConfig
         private Set<SwiftGeneratorTweak> generatorTweaks = EnumSet.noneOf(SwiftGeneratorTweak.class);
         private boolean generateIncludedCode = false;
         private String codeFlavor = null;
+        private boolean includePathsRelativeToFile = false;
 
         private Builder()
         {
@@ -157,7 +169,8 @@ public class SwiftGeneratorConfig
                     defaultPackage,
                     generatorTweaks,
                     generateIncludedCode,
-                    codeFlavor);
+                    codeFlavor,
+                    includePathsRelativeToFile);
         }
 
         public Builder inputBase(final URI inputBase)
@@ -205,6 +218,12 @@ public class SwiftGeneratorConfig
         public Builder codeFlavor(final String codeFlavor)
         {
             this.codeFlavor = codeFlavor;
+            return this;
+        }
+
+        public Builder includePathsRelativeToFile(final boolean includePathsRelativeToFile)
+        {
+            this.includePathsRelativeToFile = includePathsRelativeToFile;
             return this;
         }
     }
