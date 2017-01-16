@@ -1,6 +1,6 @@
 # Swift Code Generator Tool
 
-The code generator tool transltes existing .thrift files into Swift interfaces.
+The code generator tool translates existing .thrift files into Swift interfaces.
 
 ## Installing the code generator
 
