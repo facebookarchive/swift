@@ -49,6 +49,7 @@ import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.protocol.TStruct;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.util.CheckClassAdapter;
@@ -329,7 +330,7 @@ public class ThriftCodecByteCodeGenerator<T>
         read.loadVariable(protocol).invokeVirtual(
                 TProtocolReader.class,
                 "readStructBegin",
-                void.class
+                TStruct.class
         );
 
         // while (protocol.nextField())
