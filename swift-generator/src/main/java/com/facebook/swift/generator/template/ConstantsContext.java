@@ -15,11 +15,12 @@
  */
 package com.facebook.swift.generator.template;
 
-import com.google.common.base.Objects;
-
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+
+import static com.google.common.base.MoreObjects.toStringHelper;
 
 public class ConstantsContext implements JavaContext
 {
@@ -66,7 +67,7 @@ public class ConstantsContext implements JavaContext
     @Override
     public int hashCode()
     {
-        return Objects.hashCode(javaName, javaPackage, name);
+        return Objects.hash(javaName, javaPackage, name);
     }
 
     @Override
@@ -83,15 +84,15 @@ public class ConstantsContext implements JavaContext
         }
         ConstantsContext that = (ConstantsContext) obj;
 
-        return Objects.equal(this.javaName, that.javaName)
-            && Objects.equal(this.javaPackage, that.javaPackage)
-            && Objects.equal(this.name, that.name);
+        return Objects.equals(this.javaName, that.javaName)
+            && Objects.equals(this.javaPackage, that.javaPackage)
+            && Objects.equals(this.name, that.name);
     }
 
     @Override
     public String toString()
     {
-        return Objects.toStringHelper(this)
+        return toStringHelper(this)
             .add("name", name)
             .add("javaName", javaName)
             .add("javaPackage", javaPackage)

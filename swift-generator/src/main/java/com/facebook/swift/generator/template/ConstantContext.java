@@ -15,7 +15,9 @@
  */
 package com.facebook.swift.generator.template;
 
-import com.google.common.base.Objects;
+import java.util.Objects;
+
+import static com.google.common.base.MoreObjects.toStringHelper;
 
 public class ConstantContext
     implements Comparable<ConstantContext>
@@ -59,7 +61,7 @@ public class ConstantContext
     @Override
     public int hashCode()
     {
-        return Objects.hashCode(javaName, javaValue, javaType, name);
+        return Objects.hash(javaName, javaValue, javaType, name);
     }
 
     @Override
@@ -76,16 +78,16 @@ public class ConstantContext
         }
         ConstantContext that = (ConstantContext) obj;
 
-        return Objects.equal(this.javaName, that.javaName)
-            && Objects.equal(this.javaValue, that.javaValue)
-            && Objects.equal(this.javaType, that.javaType)
-            && Objects.equal(this.name, that.name);
+        return Objects.equals(this.javaName, that.javaName)
+            && Objects.equals(this.javaValue, that.javaValue)
+            && Objects.equals(this.javaType, that.javaType)
+            && Objects.equals(this.name, that.name);
     }
 
     @Override
     public String toString()
     {
-        return Objects.toStringHelper(this)
+        return toStringHelper(this)
             .add("name", name)
             .add("javaType", javaType)
             .add("javaName", javaName)

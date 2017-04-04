@@ -15,13 +15,13 @@
  */
 package com.facebook.swift.parser.model;
 
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.List;
 import java.util.Map;
 
+import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Header
@@ -71,7 +71,7 @@ public class Header
     @Override
     public String toString()
     {
-        return Objects.toStringHelper(this)
+        return toStringHelper(this)
                 .add("includes", includes)
                 .add("cppIncludes", cppIncludes)
                 .add("defaultNamespace", defaultNamespace)

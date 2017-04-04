@@ -17,11 +17,10 @@ package com.facebook.swift.parser.model;
 
 import com.facebook.swift.parser.visitor.DocumentVisitor;
 import com.facebook.swift.parser.visitor.Visitable;
-import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
 
 import java.io.IOException;
 
+import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class TypeAnnotation implements Visitable
@@ -48,7 +47,7 @@ public class TypeAnnotation implements Visitable
     @Override
     public String toString()
     {
-        return Objects.toStringHelper(this)
+        return toStringHelper(this)
                 .add("name", name)
                 .add("value", value)
                 .toString();

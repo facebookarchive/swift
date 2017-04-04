@@ -15,7 +15,9 @@
  */
 package com.facebook.swift.codec;
 
-import com.google.common.base.Objects;
+import java.util.Objects;
+
+import static com.google.common.base.MoreObjects.toStringHelper;
 
 @ThriftUnion("Union")
 public final class UnionField
@@ -57,7 +59,7 @@ public final class UnionField
     @Override
     public int hashCode()
     {
-        return Objects.hashCode(stringValue, longValue, fruitValue);
+        return Objects.hash(stringValue, longValue, fruitValue);
     }
 
     @Override
@@ -72,15 +74,15 @@ public final class UnionField
 
         UnionField that = (UnionField) obj;
         return this._id == that._id
-            && Objects.equal(this.stringValue, that.stringValue)
-            && Objects.equal(this.longValue, that.longValue)
-            && Objects.equal(this.fruitValue, that.fruitValue);
+            && Objects.equals(this.stringValue, that.stringValue)
+            && Objects.equals(this.longValue, that.longValue)
+            && Objects.equals(this.fruitValue, that.fruitValue);
     }
 
     @Override
     public String toString()
     {
-        return Objects.toStringHelper(this)
+        return toStringHelper(this)
             .add("_id", _id)
             .add("stringValue", stringValue)
             .add("longValue", longValue)

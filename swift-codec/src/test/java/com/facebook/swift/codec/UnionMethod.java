@@ -15,8 +15,11 @@
  */
 package com.facebook.swift.codec;
 
-import com.google.common.base.Objects;
-import com.google.common.base.Objects.ToStringHelper;
+import com.google.common.base.MoreObjects.ToStringHelper;
+
+import java.util.Objects;
+
+import static com.google.common.base.MoreObjects.toStringHelper;
 
 @ThriftUnion("Union")
 public final class UnionMethod
@@ -66,7 +69,7 @@ public final class UnionMethod
     @Override
     public int hashCode()
     {
-        return Objects.hashCode(value, type);
+        return Objects.hash(value, type);
     }
 
     @Override
@@ -80,14 +83,14 @@ public final class UnionMethod
         }
 
         UnionMethod that = (UnionMethod) obj;
-        return Objects.equal(this.type, that.type)
-            && Objects.equal(this.value, that.value);
+        return Objects.equals(this.type, that.type)
+            && Objects.equals(this.value, that.value);
     }
 
     @Override
     public String toString()
     {
-        ToStringHelper helper = Objects.toStringHelper(this);
+        ToStringHelper helper = toStringHelper(this);
 
         if (type == 1) {
             helper.add("stringValue", (String) value);

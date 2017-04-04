@@ -17,12 +17,13 @@ package com.facebook.swift.parser.model;
 
 import com.facebook.swift.parser.visitor.DocumentVisitor;
 import com.facebook.swift.parser.visitor.Visitable;
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
 import java.util.List;
 
+import static com.google.common.base.MoreObjects.firstNonNull;
+import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class ThriftMethod implements Visitable
@@ -46,8 +47,7 @@ public class ThriftMethod implements Visitable
         this.returnType = checkNotNull(returnType, "returnType");
         this.arguments = ImmutableList.copyOf(checkNotNull(arguments, "arguments"));
         this.oneway = oneway;
-        this.throwsFields = ImmutableList.copyOf(Objects.firstNonNull(throwsFields,
-                 ImmutableList.<ThriftField>of()));
+        this.throwsFields = ImmutableList.copyOf(firstNonNull(throwsFields, ImmutableList.of()));
         this.annotations = ImmutableList.copyOf(checkNotNull(annotations, "annotations"));
     }
 
@@ -90,7 +90,7 @@ public class ThriftMethod implements Visitable
     @Override
     public String toString()
     {
-        return Objects.toStringHelper(this)
+        return toStringHelper(this)
                 .add("name", name)
                 .add("returnType", returnType)
                 .add("arguments", arguments)

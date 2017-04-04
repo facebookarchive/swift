@@ -15,14 +15,12 @@
  */
 package com.facebook.swift.parser.model;
 
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
 
+import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.base.Preconditions.checkNotNull;
-
-import static java.lang.String.format;
 
 public class ConstMap
         extends ConstValue
@@ -43,7 +41,7 @@ public class ConstMap
     @Override
     public String toString()
     {
-        return Objects.toStringHelper(this)
+        return toStringHelper(this)
                 .add("values", values)
                 .toString();
     }

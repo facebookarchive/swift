@@ -15,9 +15,9 @@
  */
 package com.facebook.swift.parser.model;
 
-import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 
+import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class IntegerEnumField
@@ -52,7 +52,7 @@ public class IntegerEnumField
     @Override
     public String toString()
     {
-        return Objects.toStringHelper(this)
+        return toStringHelper(this)
                 .add("name", name)
                 .add("value", effectiveValue)
                 .add("explicitValue", explicitValue)

@@ -15,7 +15,7 @@
  */
 package com.facebook.swift.parser.model;
 
-import com.google.common.base.Objects;
+import static com.google.common.base.MoreObjects.toStringHelper;
 
 public class VoidType
     extends ThriftType
@@ -23,6 +23,6 @@ public class VoidType
     @Override
     public String toString()
     {
-        return Objects.toStringHelper(this).toString();
+        return toStringHelper(this).toString();
     }
 }
