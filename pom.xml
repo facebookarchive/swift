@@ -23,7 +23,7 @@
   <parent>
     <groupId>io.airlift</groupId>
     <artifactId>airbase</artifactId>
-    <version>36</version>
+    <version>62</version>
   </parent>
 
   <groupId>com.facebook.swift</groupId>
@@ -72,12 +72,14 @@
 
   <properties>
     <!-- This actually wants to be fixed -->
+    <air.check.skip-modernizer>true</air.check.skip-modernizer>
     <air.check.skip-findbugs>true</air.check.skip-findbugs>
     <air.check.skip-pmd>true</air.check.skip-pmd>
     <air.check.skip-jacoco>true</air.check.skip-jacoco>
 
-    <dep.airlift.version>0.106</dep.airlift.version>
+    <dep.airlift.version>0.145</dep.airlift.version>
     <dep.antlr.version>3.5</dep.antlr.version>
+    <dep.jetty.version>9.3.17.v20170317</dep.jetty.version>
     <dep.maven-api.version>3.2.5</dep.maven-api.version>
     <dep.fb.nifty.version>0.15.1</dep.fb.nifty.version>
   </properties>
@@ -159,7 +161,7 @@
       <dependency>
         <groupId>io.airlift</groupId>
         <artifactId>units</artifactId>
-        <version>${dep.airlift.version}</version>
+        <version>1.0</version>
       </dependency>
 
       <dependency>
@@ -222,6 +224,18 @@
         <version>4.0.2</version>
       </dependency>
 
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-server</artifactId>
+        <version>${dep.jetty.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-servlet</artifactId>
+        <version>${dep.jetty.version}</version>
+      </dependency>
+
       <!-- maven -->
       <dependency>
         <groupId>org.apache.maven</groupId>
@@ -274,7 +288,7 @@
       <dependency>
         <groupId>com.beust</groupId>
         <artifactId>jcommander</artifactId>
-        <version>1.30</version>
+        <version>1.64</version>
       </dependency>
 
       <dependency>
@@ -403,6 +417,27 @@
           <excludes combine.children="append">
             <exclude>**/*.g</exclude>
           </excludes>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>com.ning.maven.plugins</groupId>
+        <artifactId>maven-dependency-versions-check-plugin</artifactId>
+        <configuration>
+          <exceptions>
+            <exception>
+              <groupId>com.google.inject</groupId>
+              <artifactId>guice</artifactId>
+              <expectedVersion>4.0-beta5</expectedVersion>
+              <resolvedVersion>4.0</resolvedVersion>
+            </exception>
+            <exception>
+              <groupId>com.google.inject.extensions</groupId>
+              <artifactId>guice-multibindings</artifactId>
+              <expectedVersion>4.0-beta5</expectedVersion>
+              <resolvedVersion>4.0</resolvedVersion>
+            </exception>
+          </exceptions>
         </configuration>
       </plugin>
     </plugins>
