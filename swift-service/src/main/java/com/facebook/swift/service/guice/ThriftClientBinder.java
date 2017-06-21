@@ -116,12 +116,12 @@ public class ThriftClientBinder
                 name,
                 Key.get(ThriftClientConfig.class, thriftClientConfigKey),
                 Key.get(new TypeLiteral<Set<ThriftClientEventHandler>>() {}, thriftClientConfigKey));
-        TypeLiteral<ThriftClient<T>> typeLiteral = toThriftClientTypeLiteral(clientInterface);
-        binder.bind(Key.get(typeLiteral, annotationType)).toProvider(provider).in(Scopes.SINGLETON);
+        Key<ThriftClient<T>> clientKey = Key.get(toThriftClientTypeLiteral(clientInterface), annotationType);
+        binder.bind(clientKey).toProvider(provider).in(Scopes.SINGLETON);
 
         // Export client to jmx
         ExportBinder.newExporter(binder)
-                .export(Key.get(typeLiteral))
+                .export(clientKey)
                 .as(format("com.facebook.swift.client:type=%s,clientName=%s",
                            typeName,
                            name));
