@@ -311,7 +311,6 @@ public class ThriftMethodProcessor
 
                     if (argumentType instanceof Class) {
                         Class<?> argumentClass = (Class<?>) argumentType;
-                        argumentClass = Primitives.unwrap(argumentClass);
                         args[argumentPosition] = Defaults.defaultValue(argumentClass);
                     }
                 }
