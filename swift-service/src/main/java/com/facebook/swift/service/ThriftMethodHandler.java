@@ -293,9 +293,6 @@ public class ThriftMethodHandler
             return null;
         }
 
-        if (results == null) {
-            throw new TApplicationException(TApplicationException.MISSING_RESULT, name + " failed: unknown result");
-        }
         return results;
     }
 
