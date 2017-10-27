@@ -823,7 +823,7 @@ public class ThriftCodecByteCodeGenerator<T>
 
         classDefinition.addMethod(write);
 
-        // TProtocolReader reader = new TProtocolReader(protocol);
+        // TProtocolWriter writer = new TProtocolWriter(protocol);
         write.addLocalVariable(type(TProtocolWriter.class), "writer");
         write.newObject(TProtocolWriter.class);
         write.dup();
