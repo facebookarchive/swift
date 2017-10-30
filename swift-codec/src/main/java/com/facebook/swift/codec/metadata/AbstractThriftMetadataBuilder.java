@@ -452,7 +452,7 @@ public abstract class AbstractThriftMetadataBuilder
         return method.getParameterTypes().length == 0 && method.getReturnType() != void.class;
     }
 
-    protected final List<ParameterInjection> getParameterInjections(Type type, Annotation[][] parameterAnnotations, Type[] parameterTypes, String[] parameterNames)
+    protected final List<ParameterInjection> getParameterInjections(Type type, Annotation[][] parameterAnnotations, Type[] parameterTypes, List<String> parameterNames)
     {
         List<ParameterInjection> parameters = newArrayListWithCapacity(parameterAnnotations.length);
         for (int parameterIndex = 0; parameterIndex < parameterAnnotations.length; parameterIndex++) {
@@ -470,7 +470,7 @@ public abstract class AbstractThriftMetadataBuilder
                     type,
                     parameterIndex,
                     thriftField,
-                    parameterNames[parameterIndex],
+                    parameterNames.get(parameterIndex),
                     parameterType
             );
 

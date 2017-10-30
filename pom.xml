@@ -184,6 +184,12 @@
 
       <dependency>
         <groupId>io.airlift</groupId>
+        <artifactId>parameternames</artifactId>
+        <version>1.0</version>
+      </dependency>
+      
+      <dependency>
+        <groupId>io.airlift</groupId>
         <artifactId>testing</artifactId>
         <version>${dep.airlift.version}</version>
       </dependency>
@@ -192,12 +198,6 @@
         <groupId>io.netty</groupId>
         <artifactId>netty</artifactId>
         <version>3.7.0.Final</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.thoughtworks.paranamer</groupId>
-        <artifactId>paranamer</artifactId>
-        <version>2.5.2</version>
       </dependency>
 
       <dependency>

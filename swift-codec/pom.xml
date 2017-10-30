@@ -58,8 +58,8 @@
     </dependency>
 
     <dependency>
-      <groupId>com.thoughtworks.paranamer</groupId>
-      <artifactId>paranamer</artifactId>
+      <groupId>io.airlift</groupId>
+      <artifactId>parameternames</artifactId>
     </dependency>
 
     <dependency>

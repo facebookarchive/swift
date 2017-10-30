@@ -91,7 +91,7 @@ public class ThriftMethodMetadata
 
         ImmutableList.Builder<ThriftFieldMetadata> builder = ImmutableList.builder();
         Type[] parameterTypes = method.getGenericParameterTypes();
-        String[] parameterNames = extractParameterNames(method);
+        List<String> parameterNames = extractParameterNames(method);
         Annotation[][] parameterAnnotations = method.getParameterAnnotations();
         for (int index = 0; index < parameterTypes.length; index++) {
             ThriftField thriftField = null;
@@ -116,7 +116,7 @@ public class ThriftMethodMetadata
                 parameterId = (short) (index + 1);
             }
             if (parameterName == null) {
-                parameterName = parameterNames[index];
+                parameterName = parameterNames.get(index);
             }
 
             Type parameterType = parameterTypes[index];

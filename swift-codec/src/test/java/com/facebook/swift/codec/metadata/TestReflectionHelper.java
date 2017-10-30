@@ -16,6 +16,7 @@
 package com.facebook.swift.codec.metadata;
 
 import com.facebook.swift.codec.ThriftField;
+import com.google.common.collect.ImmutableList;
 import org.testng.annotations.Test;
 
 import static com.facebook.swift.codec.metadata.ReflectionHelper.extractParameterNames;
@@ -29,7 +30,7 @@ public class TestReflectionHelper
             throws Exception
     {
         assertEquals(extractParameterNames(getClass().getDeclaredMethod("noAnnotations", String.class, String.class, String.class)),
-                new String[]{"a", "b", "c"});
+                ImmutableList.of("a", "b", "c"));
     }
 
     private static void noAnnotations(String a, String b, String c)
@@ -41,7 +42,7 @@ public class TestReflectionHelper
             throws Exception
     {
         assertEquals(extractParameterNames(getClass().getDeclaredMethod("thriftFieldAnnotation", String.class, String.class, String.class)),
-                new String[]{"a", "b", "c"});
+                ImmutableList.of("a", "b", "c"));
     }
 
     private static void thriftFieldAnnotation(
