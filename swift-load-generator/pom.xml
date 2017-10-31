@@ -23,7 +23,7 @@
   <parent>
     <groupId>com.facebook.swift</groupId>
     <artifactId>swift-root</artifactId>
-    <version>0.15.4</version>
+    <version>0.15.5-SNAPSHOT</version>
   </parent>
 
   <artifactId>swift-load-generator</artifactId>
