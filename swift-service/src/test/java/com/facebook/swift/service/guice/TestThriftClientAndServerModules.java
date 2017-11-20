@@ -47,6 +47,7 @@ import com.google.inject.TypeLiteral;
 import io.airlift.configuration.ConfigurationFactory;
 import io.airlift.configuration.ConfigurationModule;
 import io.airlift.jmx.testing.TestingJmxModule;
+import io.airlift.units.DataSize;
 import io.airlift.units.Duration;
 import org.testng.annotations.Test;
 import org.weakref.jmx.guice.MBeanModule;
@@ -253,7 +254,7 @@ public class TestThriftClientAndServerModules
     {
         final String SOCKS_PROXY_HOSTNAME = "proxyserver";
         final int SOCKS_PROXY_PORT = 1080;
-        final int SIXTEEN_MB_IN_BYTES = 16777216;
+        final String TEST_FRAME_SIZE = "22MB";
         final String TEST_MEDIUM_TIMEOUT = "1s";
         final String TEST_SHORT_TIMEOUT = "150ms";
         final String TEST_LONG_TIMEOUT = "1m";
@@ -264,7 +265,7 @@ public class TestThriftClientAndServerModules
                 .put("scribe.thrift.client.connect-timeout", TEST_MEDIUM_TIMEOUT)
                 .put("scribe.thrift.client.receive-timeout", TEST_MEDIUM_TIMEOUT)
                 .put("scribe.thrift.client.read-timeout", TEST_SHORT_TIMEOUT)
-                .put("scribe.thrift.client.max-frame-size", Integer.toString(SIXTEEN_MB_IN_BYTES))
+                .put("scribe.thrift.client.max-frame-size", TEST_FRAME_SIZE)
                 .put("PumaReadService.thrift.client.write-timeout", TEST_LONG_TIMEOUT)
                 .put("PumaReadService.thrift.client.socks-proxy", proxy.toString())
                 .build();
@@ -288,7 +289,7 @@ public class TestThriftClientAndServerModules
         assertEquals(Duration.valueOf(scribeClient.getReceiveTimeout()), Duration.valueOf(TEST_MEDIUM_TIMEOUT));
         assertEquals(Duration.valueOf(scribeClient.getReadTimeout()), Duration.valueOf(TEST_SHORT_TIMEOUT));
         assertEquals(Duration.valueOf(scribeClient.getWriteTimeout()), ThriftClientConfig.DEFAULT_WRITE_TIMEOUT);
-        assertEquals(scribeClient.getMaxFrameSize(), SIXTEEN_MB_IN_BYTES);
+        assertEquals(scribeClient.getMaxFrameSize(), DataSize.valueOf(TEST_FRAME_SIZE).toBytes());
         assertEquals(scribeClient.getSocksProxy(), null);
 
         ThriftClient<PumaReadService> pumaClient = injector.getInstance(Key.get(new TypeLiteral<ThriftClient<PumaReadService>>() {}));
@@ -296,7 +297,7 @@ public class TestThriftClientAndServerModules
         assertEquals(Duration.valueOf(pumaClient.getReadTimeout()), ThriftClientConfig.DEFAULT_READ_TIMEOUT);
         assertEquals(Duration.valueOf(pumaClient.getReceiveTimeout()), ThriftClientConfig.DEFAULT_RECEIVE_TIMEOUT);
         assertEquals(Duration.valueOf(pumaClient.getWriteTimeout()), Duration.valueOf(TEST_LONG_TIMEOUT));
-        assertEquals(pumaClient.getMaxFrameSize(), ThriftClientConfig.DEFAULT_MAX_FRAME_SIZE);
+        assertEquals(pumaClient.getMaxFrameSize(), ThriftClientConfig.DEFAULT_MAX_FRAME_SIZE.toBytes());
         assertEquals(HostAndPort.fromString(pumaClient.getSocksProxy()), proxy);
     }
 

@@ -23,6 +23,8 @@ import com.google.inject.Module;
 
 import io.airlift.bootstrap.Bootstrap;
 import io.airlift.configuration.testing.ConfigAssertions;
+import io.airlift.units.DataSize;
+import io.airlift.units.DataSize.Unit;
 import io.airlift.units.Duration;
 
 import org.testng.Assert;
@@ -43,7 +45,7 @@ public class TestThriftClientConfig
                                                 .setReadTimeout(Duration.valueOf("10s"))
                                                 .setWriteTimeout(Duration.valueOf("1m"))
                                                 .setSocksProxy(null)
-                                                .setMaxFrameSize(16777216));
+                                                .setMaxFrameSize(new DataSize(16, Unit.MEGABYTE)));
     }
 
     @Test
@@ -55,7 +57,7 @@ public class TestThriftClientConfig
             .put("thrift.client.read-timeout", "10h")
             .put("thrift.client.write-timeout", "1s")
             .put("thrift.client.socks-proxy", "localhost:8080")
-            .put("thrift.client.max-frame-size", "200")
+            .put("thrift.client.max-frame-size", "200B")
             .build();
 
         ThriftClientConfig expected = new ThriftClientConfig()
@@ -64,7 +66,7 @@ public class TestThriftClientConfig
             .setReadTimeout(Duration.valueOf("10h"))
             .setWriteTimeout(Duration.valueOf("1s"))
             .setSocksProxy(HostAndPort.fromParts("localhost", 8080))
-            .setMaxFrameSize(200);
+            .setMaxFrameSize(new DataSize(200, Unit.BYTE));
 
         ConfigAssertions.assertFullMapping(properties, expected);
     }

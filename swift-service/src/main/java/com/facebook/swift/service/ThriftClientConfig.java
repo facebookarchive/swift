@@ -17,12 +17,15 @@ package com.facebook.swift.service;
 
 import com.google.common.net.HostAndPort;
 import io.airlift.configuration.Config;
+import io.airlift.units.DataSize;
+import io.airlift.units.DataSize.Unit;
 import io.airlift.units.Duration;
+import io.airlift.units.MaxDataSize;
 import io.airlift.units.MinDuration;
 
-import java.util.concurrent.TimeUnit;
+import javax.validation.constraints.NotNull;
 
-import javax.validation.constraints.Min;
+import java.util.concurrent.TimeUnit;
 
 public class ThriftClientConfig
 {
@@ -30,10 +33,9 @@ public class ThriftClientConfig
     public static final Duration DEFAULT_RECEIVE_TIMEOUT = new Duration(1, TimeUnit.MINUTES);
     public static final Duration DEFAULT_READ_TIMEOUT = new Duration(10, TimeUnit.SECONDS);
     public static final Duration DEFAULT_WRITE_TIMEOUT = new Duration(1, TimeUnit.MINUTES);
-    // Default max frame size of 16 MB
-    public static final int DEFAULT_MAX_FRAME_SIZE = 16777216;
+    public static final DataSize DEFAULT_MAX_FRAME_SIZE = new DataSize(16, Unit.MEGABYTE);
 
-    private int maxFrameSize = DEFAULT_MAX_FRAME_SIZE;
+    private DataSize maxFrameSize = DEFAULT_MAX_FRAME_SIZE;
     private Duration connectTimeout = DEFAULT_CONNECT_TIMEOUT;
     private Duration receiveTimeout = DEFAULT_RECEIVE_TIMEOUT;
     private Duration readTimeout = DEFAULT_READ_TIMEOUT;
@@ -104,14 +106,15 @@ public class ThriftClientConfig
         return this;
     }
 
-    @Min(0)
-    public int getMaxFrameSize()
+    @NotNull
+    @MaxDataSize("1GB")
+    public DataSize getMaxFrameSize()
     {
         return maxFrameSize;
     }
 
     @Config("thrift.client.max-frame-size")
-    public ThriftClientConfig setMaxFrameSize(int maxFrameSize)
+    public ThriftClientConfig setMaxFrameSize(DataSize maxFrameSize)
     {
         this.maxFrameSize = maxFrameSize;
         return this;

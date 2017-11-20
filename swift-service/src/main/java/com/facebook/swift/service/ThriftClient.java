@@ -23,12 +23,16 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
+import io.airlift.units.DataSize;
+import io.airlift.units.DataSize.Unit;
 import io.airlift.units.Duration;
 import org.weakref.jmx.Managed;
 
 import javax.annotation.Nullable;
 
 import java.util.List;
+
+import static java.lang.Math.toIntExact;
 
 public class ThriftClient<T>
 {
@@ -41,7 +45,7 @@ public class ThriftClient<T>
     private final Duration writeTimeout;
 
     private final HostAndPort socksProxy;
-    private final int maxFrameSize;
+    private final DataSize maxFrameSize;
     private final List<? extends ThriftClientEventHandler> eventHandlers;
 
     @Inject
@@ -87,7 +91,7 @@ public class ThriftClient<T>
             Duration readTimeout,
             Duration writeTimeout,
             @Nullable HostAndPort socksProxy,
-            int maxFrameSize,
+            DataSize maxFrameSize,
             List<? extends ThriftClientEventHandler> eventHandlers)
     {
         Preconditions.checkNotNull(clientManager, "clientManager is null");
@@ -97,7 +101,8 @@ public class ThriftClient<T>
         Preconditions.checkNotNull(receiveTimeout, "receiveTimeout is null");
         Preconditions.checkNotNull(readTimeout, "readTimeout is null");
         Preconditions.checkNotNull(writeTimeout, "writeTimeout is null");
-        Preconditions.checkArgument(maxFrameSize >= 0, "maxFrameSize cannot be negative");
+        Preconditions.checkNotNull(maxFrameSize, "maxFrameSize is null");
+        Preconditions.checkArgument(maxFrameSize.compareTo(new DataSize(1, Unit.GIGABYTE)) < 0, "maxFrameSize must be less than 1GB");
         Preconditions.checkNotNull(eventHandlers, "eventHandlers is null");
 
         this.clientManager = clientManager;
@@ -220,7 +225,7 @@ public class ThriftClient<T>
     @Managed
     public int getMaxFrameSize()
     {
-        return maxFrameSize;
+        return toIntExact(maxFrameSize.toBytes());
     }
 
     /***

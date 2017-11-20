@@ -41,6 +41,7 @@ import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
+import io.airlift.units.DataSize;
 import io.airlift.units.Duration;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
@@ -73,6 +74,7 @@ import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_READ_TIMEOUT
 import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_RECEIVE_TIMEOUT;
 import static com.facebook.swift.service.ThriftClientConfig.DEFAULT_WRITE_TIMEOUT;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.Math.toIntExact;
 import static org.apache.thrift.TApplicationException.UNKNOWN_METHOD;
 
 @ThreadSafe
@@ -137,7 +139,7 @@ public class ThriftClientManager implements Closeable
             @Nullable final Duration receiveTimeout,
             @Nullable final Duration readTimeout,
             @Nullable final Duration writeTimeout,
-            final int maxFrameSize,
+            final DataSize maxFrameSize,
             @Nullable HostAndPort socksProxy)
     {
         final ListenableFuture<C> connectFuture = niftyClient.connectAsync(
@@ -146,7 +148,7 @@ public class ThriftClientManager implements Closeable
                 receiveTimeout,
                 readTimeout,
                 writeTimeout,
-                maxFrameSize,
+                toIntExact(maxFrameSize.toBytes()),
                 socksProxy);
 
         return connectFuture;
@@ -179,7 +181,7 @@ public class ThriftClientManager implements Closeable
             @Nullable final Duration connectTimeout,
             @Nullable final Duration readTimeout,
             @Nullable final Duration writeTimeout,
-            final int maxFrameSize,
+            final DataSize maxFrameSize,
             @Nullable final String clientName,
             final List<? extends ThriftClientEventHandler> eventHandlers,
             @Nullable HostAndPort socksProxy)
@@ -204,7 +206,7 @@ public class ThriftClientManager implements Closeable
             @Nullable final Duration receiveTimeout,
             @Nullable final Duration readTimeout,
             @Nullable final Duration writeTimeout,
-            final int maxFrameSize,
+            final DataSize maxFrameSize,
             @Nullable final String clientName,
             final List<? extends ThriftClientEventHandler> eventHandlers,
             @Nullable HostAndPort socksProxy)
