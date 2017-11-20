@@ -172,7 +172,7 @@ public class ThriftClientManager implements Closeable
     }
 
     /**
-     * @deprecated Use {@link ThriftClientManager#createClient(NiftyClientConnector, Class, Duration, Duration, Duration, Duration, int, String, List, HostAndPort)}.
+     * @deprecated Use {@link ThriftClientManager#createClient(NiftyClientConnector, Class, Duration, Duration, Duration, Duration, DataSize, String, List, HostAndPort)}.
      */
     @Deprecated
     public <T, C extends NiftyClientChannel> ListenableFuture<T> createClient(
