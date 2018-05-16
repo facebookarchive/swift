@@ -1,3 +1,10 @@
+# Project Status: 🚨 Unmaintained 🚨
+
+This project is archived and no longer maintained. At the time of archiving,
+open issues and pull requests were closed and tagged with `2018-05-archive`.
+For pre-existing users who need an open source alternative, we recommend taking
+a look at [airlift/drift](https://github.com/airlift/drift).
+
 # Swift2Thrift Code Generator
 
 Swift2Thrift generates `.thrift` files from Swift-annotated Java files. The generated `.thrift` files can be fed to a Thrift compiler to generate client and/or server code for other languages.

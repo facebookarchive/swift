@@ -1,3 +1,10 @@
+# Project Status: 🚨 Unmaintained 🚨
+
+This project is archived and no longer maintained. At the time of archiving,
+open issues and pull requests were closed and tagged with `2018-05-archive`.
+For pre-existing users who need an open source alternative, we recommend taking
+a look at [airlift/drift](https://github.com/airlift/drift).
+
 # Swift Maven Plugin
 
 Generate Swift compatible java code from thrift IDL files.
@@ -132,4 +139,3 @@ created exceptions are checked exceptions and inherit from <tt>java.lang.Excepti
 # Maven lifecycle
 
 The <tt>generate</tt> goal of the plugin is by default hooked into the <tt>generate-sources</tt> phase of the maven lifecycle.
-
